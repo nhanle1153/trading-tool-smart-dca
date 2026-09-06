@@ -81,3 +81,26 @@ trước khi commit đụng `TASKS.md`, không bao giờ tin một dòng ✅ mà
 **Rủi ro tồn dư đã chấp nhận có ý thức:** kỷ luật git là biện pháp con người, không phải cơ chế kỹ
 thuật — vẫn có thể tái diễn nếu một phiên quên đối chiếu diff. Không có lớp chặn tự động nào khác
 được dựng thêm theo quyết định này.
+
+## 06/09/2026 (buổi tối) — TD-0080: xác nhận Open Interest chỉ có ~30 ngày lịch sử
+
+Gọi thật `GET /futures/data/openInterestHist?symbol=BTCUSDT&period=1d&limit=500` (xin tối đa 500
+bản ghi) — Binance chỉ trả về **31 bản ghi**, từ 2026-08-07 đến 2026-09-06 (**30 ngày**). Xác nhận
+đúng nghi vấn spec dòng 4457-4460: endpoint OI history của Binance USDⓈ-M Futures **KHÔNG** giữ lịch
+sử dài — giới hạn cứng ~30 ngày, không phụ thuộc `limit` xin nhiều hơn.
+
+Xác nhận qua hai đường độc lập: (1) `curl` trực tiếp trong container, (2)
+`entrypoints/backfill_data.py --probe-coverage` (TD-0080, gọi qua `src/tool_d/api_client/binance_public.py`
+— điểm gọi mạng DUY NHẤT, R1 Single Egress). Cả hai cho cùng kết quả.
+
+**Ảnh hưởng thiết kế (cần chủ dự án lưu ý khi tới D1 — chưa xử lý ở D0-PRE):**
+- Bất kỳ ý tưởng dùng OI làm chỉ báo (VD Idea Queue IQ-0001 ví dụ trong fixture test) chỉ có thể
+  backtest trên **cửa sổ 30 ngày gần nhất**, không thể dùng OI cho CALIB dài hạn (thường cần nhiều
+  tháng). Đây là giới hạn CỨNG của nguồn dữ liệu, không phải thứ có thể "tải thêm" hay "trả tiền để
+  có nhiều hơn" — Binance đơn giản không giữ dữ liệu đó.
+- Nếu về sau muốn OI dài hạn hơn 30 ngày, phải tự lưu trữ liên tục từ bây giờ (bắt đầu tích luỹ lịch
+  sử của chính mình) hoặc tìm nguồn thứ ba — cả hai đều là quyết định lớn, không tự động áp dụng.
+- **Không ảnh hưởng D0-PRE hay Zone Absorption cốt lõi** (không dùng OI) — chỉ ảnh hưởng nếu Idea
+  Queue sau này chọn một giả thuyết liên quan OI.
+
+Không cần DR (không phải quyết định, chỉ là một sự thật đo được về hạ tầng dữ liệu bên ngoài).
