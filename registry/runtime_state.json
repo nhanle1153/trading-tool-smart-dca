@@ -6,5 +6,18 @@
     "lock_tests": "docker compose run --rm tests -q tests/lock -> 215 passed, 0 failed (06/09/2026)",
     "trial_ledger_audit": "đã audit 4/6 (4 đạt, 0 chưa đạt, 2 chưa đo được)",
     "periodic_report": "docker compose run --rm freqtrade entrypoints/periodic_report.py -> exit 0, 22/22 chưa đo được, 0 sentinel lọt (06/09/2026)"
+  },
+  "d1_complete": true,
+  "d1_closed_at": "2026-09-06T20:07:54.872055Z",
+  "d1_git_sha": "c329210dd21b2f90562e3614230ed9119146bc73",
+  "d1_evidence": {
+    "full_suite": {
+      "nguon": "do-duoc",
+      "noi_dung": "492 passed in 62.58s (0:01:02)"
+    },
+    "trial_ledger_audit": {
+      "nguon": "do-duoc",
+      "noi_dung": "đã audit 4/6 (4 đạt, 0 chưa đạt, 2 chưa đo được)"
+    }
   }
 }
