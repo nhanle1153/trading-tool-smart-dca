@@ -1,0 +1,181 @@
+# dof_inventory.yaml — Kiểm kê bậc tự do (DOF), TD-0031
+#
+# Mã hoá đầy đủ bảng đối chiếu DR-010 (tool-d-smart-dca.md dòng 3152-3244)
+# thành dữ liệu kiểm được bằng máy — nguồn duy nhất cho `dof_report()`.
+# Nuôi L-Z29 (spec §9c.6, dòng 3918-3925).
+#
+# DOF_gốc = 28 = Σ(v5 của 26 dòng "rows") + Σ(v5_đúng_ra của 2 dòng "bo_sot")
+#              = 26 + 1(DG7) + 1(w_tranche)
+# Đẳng thức này trích NGUYÊN VĂN từ chính spec ("Kiểm kê gốc 26 + DG7(1) +
+# w_tranche(1) = 28") — không có gì mơ hồ, kiểm được trực tiếp bằng tổng.
+dof_goc: 28
+
+# 26 dòng bảng đối chiếu gốc. "v5" = số DOF bản v5 đã khai (0 nếu chưa từng
+# đếm — xem "bo_sot" bên dưới cho các mục đó). "dof_v6" = 1 nếu VẪN tunable
+# ở v6 (thuộc tier_b), 0 nếu không (xoá / đóng băng / chuyển B0 / Cấp C).
+rows:
+  - muc: "§0.3"
+    ten: "tiêu chí pool (i)-(iv)"
+    v5: 4
+    xu_ly_v6: "B0 — chốt 1 lần bằng tiêu chí hạ tầng, không tune"
+    dof_v6: 0
+  - muc: "§1.2"
+    ten: "w_a/w_b/w_c"
+    v5: 2
+    xu_ly_v6: "đóng băng 1/3 (tier_frozen.w_zss, dof=-2)"
+    dof_v6: 0
+  - muc: "§1.3"
+    ten: "ngưỡng ZSS"
+    v5: 1
+    xu_ly_v6: "tunable #1 (tier_b.zss_threshold)"
+    dof_v6: 1
+  - muc: "§2.3"
+    ten: "tuổi trend"
+    v5: 1
+    xu_ly_v6: "đóng băng có điều kiện (tier_frozen.trend_age_days, dof=-1)"
+    dof_v6: 0
+  - muc: "§2.4"
+    ten: "\"ngược hẳn\""
+    v5: 1
+    xu_ly_v6: "XOÁ (§2.4)"
+    dof_v6: 0
+  - muc: "§3.1"
+    ten: "buf_sl"
+    v5: 1
+    xu_ly_v6: "tunable #2 (tier_b.buf_sl_atr)"
+    dof_v6: 1
+  - muc: "§3.3"
+    ten: "zone_width min"
+    v5: 1
+    xu_ly_v6: "XOÁ — CHẾT, xác nhận ở DR-D0PRE-01 (TD-0030)"
+    dof_v6: 0
+  - muc: "§3.3b"
+    ten: "ngưỡng rejection wick"
+    v5: 1
+    xu_ly_v6: "tunable #3 (tier_b.wick_close_upper_frac)"
+    dof_v6: 1
+  - muc: "§3.3b"
+    ten: "v_min"
+    v5: 1
+    xu_ly_v6: "tunable #4 (tier_b.v_min)"
+    dof_v6: 1
+  - muc: "§3.3c"
+    ten: "số nến khung 15 phút"
+    v5: 1
+    xu_ly_v6: "XOÁ (§3.3c)"
+    dof_v6: 0
+  - muc: "§3.3d"
+    ten: "funding rate"
+    v5: 1
+    xu_ly_v6: "đóng băng -0.05%, gộp DG6-D (tier_b.funding_rate_pct — 🔴 xem ghi chú bên dưới)"
+    dof_v6: 0
+  - muc: "§3.3d"
+    ten: "ngưỡng hồi 50%"
+    v5: 1
+    xu_ly_v6: "tunable #6 (tier_b.dg6d_retrace_frac)"
+    dof_v6: 1
+  - muc: "§4"
+    ten: "DG4"
+    v5: 1
+    xu_ly_v6: "tunable #7 (tier_b.dg4_bars_1h)"
+    dof_v6: 1
+  - muc: "§4.1"
+    ten: "DG6-A tỉ lệ ATR"
+    v5: 1
+    xu_ly_v6: "tunable #8 (tier_b.dg6a_atr_ratio)"
+    dof_v6: 1
+  - muc: "§4.1"
+    ten: "DG6-B số nến"
+    v5: 1
+    xu_ly_v6: "đóng băng = DG4 = 8 (tier_frozen.dg6b_bars_1h, dof=-1)"
+    dof_v6: 0
+  - muc: "§4.1"
+    ten: "DG6-C/D funding"
+    v5: 1
+    xu_ly_v6: "tunable #5, gộp với §3.3d (tier_b.funding_rate_pct)"
+    dof_v6: 1
+  - muc: "§5.1"
+    ten: "TP1 trừ hao"
+    v5: 1
+    xu_ly_v6: "tunable #9 (tier_b.tp1_haircut_pct)"
+    dof_v6: 1
+  - muc: "§5.1"
+    ten: "TP2 trail"
+    v5: 1
+    xu_ly_v6: "đóng băng 1.5 (tier_frozen.tp2_trail_atr, dof=-1)"
+    dof_v6: 0
+  - muc: "§6.2"
+    ten: "hệ số 1 — L-BASE (tên biến cũ, đã xoá v4/v6)"
+    v5: 1
+    xu_ly_v6: "XOÁ → thay bằng mult_regime, đóng băng (tier_frozen.mult_regime, dof=-1)"
+    dof_v6: 0
+  - muc: "§6.2"
+    ten: "hệ số 3 — mult_corr"
+    v5: 1
+    xu_ly_v6: "tunable #10 (tier_b.mult_corr_thresholds)"
+    dof_v6: 1
+  - muc: "§6.2"
+    ten: "hệ số 4 — mult_dd"
+    v5: 1
+    xu_ly_v6: "Cấp C — cầu dao, không tune (tier_c.dd_ladder_pct)"
+    dof_v6: 0
+  - muc: "§4b.3"
+    ten: "max_hold_bars"
+    v5: 1
+    xu_ly_v6: "tunable #11 (tier_b.max_hold_bars_4h)"
+    dof_v6: 1
+
+# 🔴 Ghi chú đối chiếu funding: bảng DR-010 liệt kê "§3.3d funding rate"
+# (v5=1) VÀ "§4.1 DG6-C/D funding" (v5=1) là HAI dòng riêng, nhưng v6 gộp
+# chúng thành MỘT khoá YAML duy nhất `tier_b.funding_rate_pct` (đúng như
+# spec ghi "tunable #5 (gộp với §3.3d)"). Vì vậy dòng "§3.3d funding rate"
+# ở trên có dof_v6=0 (không tự nó là một khoá riêng nữa) — tránh đếm khoá
+# funding_rate_pct HAI LẦN trong tier_b=12. Xác nhận: len(tier_b keys)=12,
+# không phải 13, khớp test tunable_param_names().
+
+# Hai mục v5 CHƯA TỪNG đếm ("bỏ sót") — cộng thêm để DOF_gốc = 26 + 2 = 28.
+bo_sot:
+  - muc: "§4c"
+    ten: "DG7 0.3×R_eff"
+    v5_dung_ra: 1
+    xu_ly_v6: "tunable #12 (tier_b.dg7_funding_frac)"
+    dof_v6: 1
+  - muc: "§3.1"
+    ten: "w tranche"
+    v5_dung_ra: 1
+    xu_ly_v6: "đóng băng 1/3 (tier_frozen.w_tranche, dof=0 — bản thân chưa từng tự do, xem ghi chú)"
+    dof_v6: 0
+
+# Ba mục KHÁC trong tier_frozen KHÔNG bao giờ được đếm vào DOF_gốc (chính
+# spec ghi rõ đây là điều v5 làm SAI — "LỖI 1: đóng băng thứ chưa từng
+# được đếm" — liệt kê ở đây để không ai vô tình cộng ngược lại sau này:
+khong_dem_vao_dof_goc:
+  - khoa: "adx_threshold"
+    ly_do: "\"chưa từng có trong 26\" (spec dòng 3168, LỖI 1 của v5)"
+  - khoa: "mult_edge_thr"
+    ly_do: "\"chưa định nghĩa\" trước v6 — định nghĩa MỚI, không phải tham số cũ bị đóng băng"
+  - khoa: "mult_deploy_thr"
+    ly_do: "\"chưa định nghĩa\" trước v6 — định nghĩa MỚI"
+  - khoa: "diag_thresholds"
+    ly_do: "bổ sung v7/v8 (thang time-stop/TP-fallback), không thuộc bảng DR-010 gốc"
+  - khoa: "k_swing_confirm"
+    ly_do: "sống ở tier_c (Cấp C), không phải tier_frozen; \"chưa từng có trong 26\" (spec dòng 3167)"
+
+# ═══════════════ PHÁT HIỆN CẦN GHI NHẬN (TD-0031) ═══════════════
+# Chuỗi trừ trực tiếp trong comment gốc của §6.9.5 (spec, chép lại ở
+# tool_d_config.yaml trước khi sửa ở TD-0031):
+#   "28 - 6 (đóng băng) - 4 (pool→B0) - 2 (xoá §2.4,§3.3c)
+#    - 1 (mult_dd→Cấp C) - 1 (L_BASE→mult_regime đóng băng)
+#    - 1 (zone_width, có điều kiện) = 12"
+# Tính literal: 28-6-4-2-1-1-1 = 13, KHÔNG PHẢI 12 — lệch 1.
+# Nguyên nhân: "L_BASE → mult_regime đóng băng" (-1) bị đếm HAI LẦN — nó
+# đã nằm sẵn trong "-6 (đóng băng)" (mult_regime LÀ một trong các khoá
+# tier_frozen đóng góp vào Σdof=-6), không phải một khoản trừ độc lập.
+# KHÔNG SỬA comment đó trong lịch sử spec (không phải phạm vi D0-PRE sửa
+# nội dung spec) — nhưng file dof_inventory.yaml này dùng cách kiểm ĐỘC
+# LẬP, không đi qua chuỗi trừ có lỗi: cộng trực tiếp cột "dof_v6" của
+# TỪNG DÒNG (rows + bo_sot) để ra 12, và cộng trực tiếp cột "v5"/"v5_dung_ra"
+# để ra 28 — cả hai phép cộng trực tiếp đều xác nhận đúng số cuối cùng của
+# spec (12 và 28), chỉ riêng CHUỖI TRỪ TRUNG GIAN trong comment là có lỗi.
+# Ghi vào docs/research-log.md — không phải mâu thuẫn 🔴 chặn tiến độ vì
+# không đổi bất kỳ số quyết định nào (tier_b=12, N_ĐĂNG_KÝ=114 không đổi).
