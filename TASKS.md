@@ -31,6 +31,8 @@
 | TD-0003 | Tạo repo GitHub **private**, push `main` | 🔓 | TD-0002 | `git remote -v` có origin; `git log origin/main` khớp local |
 | TD-0004 | `docker/Dockerfile` (base Freqtrade **pin theo digest** + `git` + pytest + `safe.directory`) và `docker-compose.yml` (3 service; **KHÔNG mount `lockbox/`** vào `tests`; `TZ=UTC`) | 🔓 | TD-0001 | `docker compose run --rm tests python -c "import freqtrade,pytest,yaml;print('ok')"` |
 | TD-0005 | Xác minh `git_sha` lấy được **từ trong container** | 🔓 | TD-0004 | `docker compose run --rm tests git rev-parse HEAD` in đúng SHA của host, không phải rỗng |
+| TD-0006 | Quyết định số phận `dashboard-ui/` (project Node có `.git` riêng và có `.env`) — submodule / repo riêng / gộp thẳng vào. Hiện đang bị `.gitignore` chặn | 🔓 | TD-0001 | Chốt xong, `.gitignore` phản ánh đúng quyết định, không còn repo lồng repo |
+| TD-0007 | Xác nhận `tool-d-dashboard-thiet-ke.html` (651KB, ảnh chụp giao diện Tool A dùng làm tham chiếu) có nên nằm trong repo này không | 🔓 | TD-0001 | Hoặc giữ lại có lý do ghi trong `ARCHITECTURE.md`, hoặc chuyển sang `docs/` , hoặc bỏ ra ngoài |
 
 ### Khối 1 — PHẦN 0d, tầng chống nhiễm phép đo (LÀM TRƯỚC MỌI THỨ)
 
@@ -141,4 +143,5 @@
 | Mã việc | Loại | Nội dung cũ | Nội dung mới | Lý do | Ngày |
 |---|---|---|---|---|---|
 | TD-0001…TD-0086 | ➕ Thêm mới | — | Khởi tạo backlog D0-PRE, 9 khối, 41 việc | Cuối Giai đoạn 2 của quy trình vibe-code | 06/09/2026 |
+| TD-0006, TD-0007 | ➕ Thêm mới | — | Hai việc xử lý `dashboard-ui/` và file HTML thiết kế | Hai thứ này xuất hiện trong thư mục project trong lúc khởi tạo repo, do một tiến trình khác ghi vào — không nằm trong phạm vi đã chốt ở Giai đoạn 1 | 06/09/2026 |
 | TD-0001, TD-0002 | ♻️ Sửa đổi | 🔓 | ✅ | Đã hoàn thành trong cùng buổi khởi tạo | 06/09/2026 |
