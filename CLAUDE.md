@@ -191,7 +191,23 @@ với dòng phiên kia đang gõ dở cùng lúc — đã gây ít nhất 3 lầ
 > Mục này có thể lệch nhịp vài phút so với phiên kia — luôn `git log --oneline` +
 > đọc lại `TASKS.md` (cột 🔓/🔒/✅) trước khi chọn việc tiếp theo, đừng chỉ tin mục này.
 
-**Đang ở (cập nhật 06/09/2026, đêm khuya):** 🚪 **D0-PRE ĐÓNG — 62/62 việc xong, tag `d0-pre-complete`.**
+**Đang ở (cập nhật 07/09/2026):** 🚪 **D1 ĐÓNG — tag `d1-complete`, gỡ blocker B2.** Hai nhánh
+việc chạy song song suốt D1, không giẫm nhau (kiểm `git log`/`git status`/diff trước mỗi lần đụng
+file chung): nhánh H1-D/backfill (TD-0090→0097 + TD-0107 review) và nhánh zone detection/H4-D/H13
+(TD-0100→0106). TD-0093 bắt được bug thật: `freqtrade download-data --timerange` không tôn trọng
+mốc kết thúc — dữ liệu LOCKBOX lọt vào thư mục làm việc, đã cắt lại đúng phạm vi, mở TD-0094 (nối
+`assert_dataset_timerange()`/L-Z55 có sẵn với cấu hình thật — **chưa** wiring được vào E1/E2/E3 vì
+ba entrypoint đó chưa có logic tải dữ liệu thật, để dành cho task D2+ viết logic đó). TD-0095 tìm
+được nguồn thật cho symbol đã huỷ niêm yết (`data.binance.vision`, 219 mã) thay vì chấp nhận
+survivorship bias như dự kiến ban đầu. TD-0106 chạy `lookahead-analysis` thật — không thấy bias.
+Review độc lập (subagent context sạch) bắt được 1 bug thật ở `touch_count()` (đã sửa, TD-0107).
+`close_d1_gate()` (E6, `--close-d1-gate`) tự chạy `pytest` thật trong chính lần đóng cổng — nhãn
+bằng chứng `do-duoc` đúng nghĩa theo MT-10 (khác cổng D0-PRE cũ, có 2/3 mục evidence là chuỗi gõ
+tay). Chạy thật: 492 passed, audit sổ trial 4/6 đạt. **Bước tiếp theo:** D2 (chưa mở) — verify giả
+định D1-D7, H15.
+*(Đoạn "Đang ở" cũ bên dưới giữ nguyên làm lịch sử.)*
+
+Cũ (06/09/2026, đêm khuya): 🚪 **D0-PRE ĐÓNG — 62/62 việc xong, tag `d0-pre-complete`.**
 Ba điều kiện chạy THẬT xác nhận: lock tests 215/215, `trial_ledger_audit.py` 4/6 đạt (0 fail),
 `periodic_report.py` sạch 22/22 pending — ghi vào `registry/runtime_state.json.d0_pre_complete: true`
 qua `trial_ledger_audit.py --close-gate` (E6, TD-0086), bất biến (đã test từ chối ghi lại). Suite
