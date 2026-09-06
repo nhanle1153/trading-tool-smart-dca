@@ -76,6 +76,7 @@ Hợp đồng dữ liệu tương ứng nằm ở §8 của spec (Decision Log) 
 | OQ-07 | Tiêu chí chọn ý tưởng của quý (§9c.7.4) | Phải commit **trước khi** mở Idea Queue — mở trước là điều cấm (spec dòng 4935) | 🟡 |
 | OQ-08 | Backup lockbox ra ngoài git **đã test khôi phục** — để ở đâu, chu kỳ nào | Mất ổ đĩa = mất khả năng xác nhận cuối cùng, và **không có lockbox thứ hai** (dòng 4002) | 🟡 Phải giải quyết trước D9.5 |
 | OQ-09 | Ngưỡng Circuit Breaker cho Risk Supervisor (§6.6): số lỗi liên tiếp kích hoạt + backoff khởi điểm/tối đa — `api-integration-rules.md` (TD-0079) tạm đề xuất 5 lỗi / 1s→60s, spec KHÔNG có số cụ thể | Không chặn D0-PRE (chi tiết triển khai R3, không phải tham số tín hiệu — không tính vào N_ĐĂNG_KÝ theo Nguyên tắc 9) nhưng cần chốt trước khi implement Risk Supervisor thật (D1) | 🟡 Chốt trước D1 |
+| OQ-10 | Số lệnh/năm thật (sàn 150, §10.2) — ước lượng tay (`docs/estimate-trades-per-year.md`, TD-0081) cho khoảng **129–1.652 lệnh/năm** (long-only, 102 mã), vắt ngang sàn 150, không kết luận nhị phân được bằng suy luận | Không chặn D0-PRE. Chặn D4 nếu số đo thật ở D1 (H1-D + zone detection trên CALIB) < 150 | 🟡 Đo lại thật ở D1, không coi ước lượng tay là kết luận cuối |
 
 ---
 
