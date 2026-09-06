@@ -191,14 +191,18 @@ với dòng phiên kia đang gõ dở cùng lúc — đã gây ít nhất 3 lầ
 > Mục này có thể lệch nhịp vài phút so với phiên kia — luôn `git log --oneline` +
 > đọc lại `TASKS.md` (cột 🔓/🔒/✅) trước khi chọn việc tiếp theo, đừng chỉ tin mục này.
 
-**Đang ở (cập nhật 06/09/2026, đêm):** **Giai đoạn 3**, D0-PRE **54/62 việc xong**. Khối 1→7 xong;
-Khối 8 còn **TD-0084** (chia CALIB/WFO/LOCKBOX + niêm phong, OQ-05), **TD-0085** (backup lockbox),
-**TD-0086** (GATE D0-PRE). Trong phiên đêm: chủ dự án đã chốt **ba con số** — DSR-adjusted
-expectancy **0,10 R_realized** (DR-D0PRE-03, **blocker B6 gỡ**), thang drawdown **5/8/20%**
-(DR-D0PRE-04, Cấp C), `E_D` **500 / 3x / 0,375% / 8%** (DR-D0PRE-06; `tradable_balance_ratio` sửa
-0.99→0.5); TD-0082 min notional 102/102 qua, 8–21 mã bị L-Z20 từ chối theo zone (không sửa gì).
-OQ-01/02/03 đóng trong `back-end-note.md`. Suite Docker: 333 test xanh. Bước tiếp: TD-0084 (cần
-chủ dự án chốt mốc T0–T3 — sẽ đề xuất dựa trên độ dài lịch sử thật của 102 mã).
+**Đang ở (cập nhật 06/09/2026, đêm khuya):** 🚪 **D0-PRE ĐÓNG — 62/62 việc xong, tag `d0-pre-complete`.**
+Ba điều kiện chạy THẬT xác nhận: lock tests 215/215, `trial_ledger_audit.py` 4/6 đạt (0 fail),
+`periodic_report.py` sạch 22/22 pending — ghi vào `registry/runtime_state.json.d0_pre_complete: true`
+qua `trial_ledger_audit.py --close-gate` (E6, TD-0086), bất biến (đã test từ chối ghi lại). Suite
+Docker cuối: **352 passed**. Trong đêm cũng chốt nốt: ba con số Tầng A/C (DR-D0PRE-03/04/06 — DSR
+0,10 R_realized/blocker B6 gỡ, drawdown 5/8/20%, `E_D` 500/3x), TD-0082 (min notional 102/102 qua),
+TD-0084 (mốc CALIB/WFO/LOCKBOX bằng giá BTC thật — T0=09/04/24, T1=12/06/25, T2=29/01/26, T3=hôm nay
+— niêm phong `lockbox_seal_1.json`, 510 file OHLCV thật; **bắt được và sửa 1 bug thật**:
+`verify_all_seals()` trỏ sai thư mục, tồn tại từ TD-0071/72, không bị bắt vì trước đó chưa có seal
+thật), TD-0085 (backup lockbox + khôi phục thật PASS). OQ-01/02/03/05/08 đóng trong `back-end-note.md`.
+**Bước tiếp theo (D1):** bắt đầu viết logic chiến lược thật (zone detection, tranche, gate DG1–DG8) —
+nối `is_d0_pre_complete()` vào đầu E1/E2/E3/E7/E8 là việc đầu tiên của D1, chưa làm ở D0-PRE.
 *(Đoạn "Đang ở" cũ bên dưới giữ nguyên làm lịch sử.)*
 Cũ: **Giai đoạn 3**, backend đã qua hết **Khối 1** (cổng L-Z36→L-Z41 sạch, tag
 `d0pre-0d-live`) và đang ở **Khối 2** (DR-013 xong, config Freqtrade + TD-0028 đang làm).
