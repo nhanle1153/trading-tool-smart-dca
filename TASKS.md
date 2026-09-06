@@ -177,7 +177,7 @@
 
 | Mã | Tên việc | TT | Phụ thuộc | Verify |
 |---|---|---|---|---|
-| TD-0110 | 🚪 **GATE D1** — H1-D + H4-D + H4-D-b + H13 + H19 đều PASS → **gỡ blocker B2** | 🔓 | TD-0093…TD-0106 | Toàn bộ test khoá D1 xanh trong Docker; ghi `runtime_state.json.d1_complete` từ một lần chạy thật; `git tag d1-complete` |
+| TD-0110 | 🚪 **GATE D1** — H1-D + H4-D + H4-D-b + H13 + H19 đều PASS → **gỡ blocker B2** | 🔓 | TD-0093…TD-0106 | Toàn bộ test khoá D1 xanh trong Docker; ghi `runtime_state.json.d1_complete` từ một lần chạy thật; `git tag d1-complete`. 🔴 **Khối `evidence` phải gắn nhãn nguồn `{nguon: do-duoc\|nguoi-khai, noi_dung: …}` theo MT-10** — `do-duoc` chỉ cho chuỗi do code sinh trong chính lần chạy đó |
 
 ---
 
