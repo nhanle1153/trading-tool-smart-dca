@@ -32,12 +32,23 @@ from datetime import datetime, timezone
 
 from pathlib import Path
 
-from tool_d.api_client.binance_public import BinancePublicApiError, get_open_interest_hist
+from tool_d.api_client.binance_public import (
+    BinancePublicApiError,
+    get_klines,
+    get_open_interest_hist,
+)
 from tool_d.data.backfill_guard import (
     RangeDigest,
     backup_data_dir,
+    read_candles,
     snapshot_dir,
     verify_old_candles_preserved,
+)
+from tool_d.data.coverage import (
+    TIMEFRAME_MS,
+    cause_from_source_probe,
+    compute_coverage,
+    render_table,
 )
 from tool_d.gates.d0_pre import require_d0_pre_complete
 from tool_d.measurement.guard import EXIT_GUARD_BLOCKED, GuardOutcome, measurement_guard
@@ -87,6 +98,25 @@ def build_parser() -> argparse.ArgumentParser:
         help=f"Nơi đặt bản sao lưu, NGOÀI repo (mặc định {DEFAULT_BACKUP_ROOT}).",
     )
     parser.add_argument(
+        "--coverage",
+        action="store_true",
+        help="H19 — in bảng ĐỘ PHỦ DỮ LIỆU cho --data-dir trong khoảng --from/--to. KHÔNG kết luận nguyên nhân khoảng trống.",
+    )
+    parser.add_argument(
+        "--probe-gap",
+        metavar="SYMBOL",
+        help="H19/LD-28 — hỏi LẠI SÀN đúng cửa sổ --from/--to cho SYMBOL (vd BTCUSDT). Đây là cách DUY NHẤT kết luận nguyên nhân khoảng trống.",
+    )
+    parser.add_argument("--from", dest="range_from", help="Mốc đầu, YYYY-MM-DD (UTC).")
+    parser.add_argument("--to", dest="range_to", help="Mốc cuối, YYYY-MM-DD (UTC).")
+    parser.add_argument("--timeframe", default="1h", help="Khung thời gian (mặc định 1h).")
+    parser.add_argument(
+        "--candle-type",
+        default="futures",
+        choices=("futures", "mark"),
+        help="Loại nến để tính độ phủ (mặc định futures). `funding_rate` KHÔNG tính được theo khung file — xem ghi chú khi chạy.",
+    )
+    parser.add_argument(
         "--snapshot-out",
         default="runs/backfill_snapshot.json",
         help="Nơi ghi file snapshot (mặc định runs/backfill_snapshot.json).",
@@ -130,6 +160,81 @@ def do_verify_after(*, data_dir: Path, snapshot_path: Path) -> int:
     return 0
 
 
+def _to_ms(day: str) -> int:
+    return int(datetime.strptime(day, "%Y-%m-%d").replace(tzinfo=timezone.utc).timestamp() * 1000)
+
+
+def do_coverage(
+    *, data_dir: Path, timeframe: str, candle_type: str, range_from: str, range_to: str
+) -> int:
+    """H19 — bảng độ phủ. CỐ Ý không kết luận nguyên nhân bất kỳ khoảng
+    trống nào; mọi dòng thiếu đều hiện "chưa kiểm nguồn trực tiếp" cho tới
+    khi người vận hành chạy `--probe-gap` cho đúng cửa sổ đó.
+
+    🔴 Chỉ tính cho `futures`/`mark`. File `*-1h-funding_rate.feather` mang
+    nhãn `1h` trong TÊN nhưng sàn trả funding mỗi 8 giờ (một số mã 4 giờ) —
+    đo nó theo bước 1h ra "thiếu 87,5%" trên 102 file hoàn toàn lành lặn.
+    Phát hiện khi chạy lần đầu trên dữ liệu thật. Nhịp funding là thứ SÀN
+    quy định, không suy từ chính dữ liệu được (suy ra thì một chuỗi mất
+    đều đặn một nửa số điểm vẫn "đủ 100%" — đúng loại chỉ số tự khen mình
+    mà H19 sinh ra để chặn). Muốn đo độ phủ funding thì phải khai nhịp từ
+    nguồn sàn trước; chưa khai thì KHÔNG in ra một con số nào.
+    """
+    if not data_dir.is_dir():
+        print(f"🛑 {data_dir} không tồn tại.")
+        return EXIT_BACKFILL_UNSAFE
+    start_ms, end_ms = _to_ms(range_from), _to_ms(range_to)
+    n_funding = len(list(data_dir.glob(f"*-{timeframe}-funding_rate.feather")))
+    if n_funding:
+        print(
+            f"ℹ️  Bỏ qua {n_funding} file `funding_rate`: nhịp funding do SÀN quy định "
+            "(8h, một số mã 4h), không phải khung ghi trong tên file — chưa khai nhịp "
+            "từ nguồn thì không in độ phủ, thay vì in một con số sai.\n"
+        )
+    rows = []
+    for path in sorted(data_dir.glob(f"*-{timeframe}-{candle_type}.feather")):
+        m = read_candles(path)
+        if not m.is_ok():
+            print(f"⚠️  {path.name}: {m.render()}")
+            continue
+        rows.append(
+            compute_coverage(
+                m.value,
+                name=path.name,
+                timeframe=timeframe,
+                range_start_ms=start_ms,
+                range_end_ms=end_ms,
+            )
+        )
+    if not rows:
+        print(f"🛑 không đọc được file {timeframe}-{candle_type} nào trong {data_dir}.")
+        return EXIT_BACKFILL_UNSAFE
+    print(render_table(rows, only_incomplete=True))
+    return 0
+
+
+def do_probe_gap(*, symbol: str, timeframe: str, range_from: str, range_to: str) -> int:
+    """H19/LD-28 — hỏi LẠI SÀN đúng cửa sổ bị trống. Đây là phép kiểm Tool A
+    đã bỏ qua và mất nhiều ngày vì nó; nó rẻ tới mức không có lý do bỏ qua."""
+    start_ms, end_ms = _to_ms(range_from), _to_ms(range_to)
+    try:
+        candles = get_klines(
+            symbol=symbol, interval=timeframe, start_time_ms=start_ms, end_time_ms=end_ms
+        )
+    except BinancePublicApiError as exc:
+        print(f"🛑 hỏi lại sàn thất bại: {exc} — CHƯA kết luận được nguyên nhân, thử lại.")
+        return EXIT_PROBE_FAILED
+
+    expected = (end_ms - start_ms) // TIMEFRAME_MS[timeframe] + 1
+    cause = cause_from_source_probe(len(candles))
+    print(
+        f"Hỏi lại sàn {symbol} {timeframe} [{range_from} → {range_to}]: "
+        f"sàn trả về {len(candles)}/{expected} nến."
+    )
+    print(f"Kết luận (từ nguồn thật, không suy đoán): {cause}")
+    return 0
+
+
 def probe_oi_coverage(symbol: str = "BTCUSDT") -> str:
     """Gọi `GET /futures/data/openInterestHist` với `limit=500` (tối đa
     Binance cho phép) — nếu sàn thật sự giữ ít hơn 500 ngày, số bản ghi
@@ -163,6 +268,28 @@ def main(argv: list[str] | None = None) -> int:
             print(f"🛑 probe thất bại: {exc}")
             return EXIT_PROBE_FAILED
         return 0
+
+    if args.coverage or args.probe_gap:
+        gate_exit = require_d0_pre_complete(ENTRYPOINT)
+        if gate_exit is not None:
+            return gate_exit
+        if not (args.range_from and args.range_to):
+            print("🛑 cần --from và --to (YYYY-MM-DD).")
+            return EXIT_BACKFILL_UNSAFE
+        if args.probe_gap:
+            return do_probe_gap(
+                symbol=args.probe_gap,
+                timeframe=args.timeframe,
+                range_from=args.range_from,
+                range_to=args.range_to,
+            )
+        return do_coverage(
+            data_dir=Path(args.data_dir),
+            timeframe=args.timeframe,
+            candle_type=args.candle_type,
+            range_from=args.range_from,
+            range_to=args.range_to,
+        )
 
     if args.snapshot_before or args.verify_after:
         gate_exit = require_d0_pre_complete(ENTRYPOINT)

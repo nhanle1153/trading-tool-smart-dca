@@ -65,6 +65,21 @@ class RangeDigest:
     digest: str
 
 
+def timestamps_ms(df: "pd.DataFrame") -> "pd.Series":
+    """Mốc thời gian của từng nến, tính bằng **mili-giây** kể từ epoch.
+
+    🔴 Không dùng thẳng `astype("int64")`: kết quả phụ thuộc ĐƠN VỊ của
+    cột (`datetime64[ms]` ra ms, `datetime64[ns]` ra ns). Freqtrade hiện
+    ghi `datetime64[ms, UTC]`, nhưng dựa vào đó là dựa vào một chi tiết
+    có thể đổi theo phiên bản — và nếu hai file khác đơn vị thì mọi phép
+    so mốc thời gian sai lệch 10^6 lần mà không báo lỗi. Chuẩn hoá về ms
+    trước rồi mới đổi sang số nguyên.
+    """
+    import pandas as pd
+
+    return pd.to_datetime(df[TIMESTAMP_COLUMN], utc=True).astype("datetime64[ms, UTC]").astype("int64")
+
+
 def _digest_frame(df: "pd.DataFrame") -> str:
     """SHA-256 trên các cột nến, băm thẳng bộ nhớ numpy.
 
@@ -79,7 +94,7 @@ def _digest_frame(df: "pd.DataFrame") -> str:
     không lưu xuống đĩa để so giữa các máy.
     """
     h = hashlib.sha256()
-    h.update(df[TIMESTAMP_COLUMN].astype("int64").to_numpy().tobytes())
+    h.update(timestamps_ms(df).to_numpy().tobytes())
     for col in sorted(c for c in df.columns if c != TIMESTAMP_COLUMN):
         h.update(col.encode("utf-8"))
         h.update(df[col].to_numpy(dtype="float64").tobytes())
@@ -123,7 +138,7 @@ def snapshot_dir(data_dir: Path, pattern: str = "*.feather") -> dict[str, RangeD
         if not m.is_ok():
             continue
         df = m.value
-        ts = df["date"].astype("int64") // 1_000_000  # ns -> ms
+        ts = timestamps_ms(df)
         out[path.name] = RangeDigest(
             name=path.name,
             n_rows=len(df),
@@ -152,7 +167,7 @@ def verify_old_candles_preserved(
             errors.append(f"{name}: mất hoặc không đọc được sau khi tải ({m.note})")
             continue
         df = m.value
-        ts = df["date"].astype("int64") // 1_000_000
+        ts = timestamps_ms(df)
         old_part = df[(ts >= snap.first_ts_ms) & (ts <= snap.last_ts_ms)].reset_index(drop=True)
         if len(old_part) != snap.n_rows:
             errors.append(
