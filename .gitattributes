@@ -1,0 +1,12 @@
+# Ép LF cho mọi file text.
+# Lý do: host là Windows, runtime đo lường là container Linux. Nếu git checkout
+# CRLF thì cùng một file cho hai sha256 khác nhau -> data_hashes và
+# reproducible_from_sha (ràng buộc 0d.5, dòng 597-616 của spec) trở thành nhiễu.
+* text=auto eol=lf
+
+# File nhị phân - không đụng vào
+*.parquet binary
+*.feather binary
+*.png binary
+*.jpg binary
+*.sqlite binary

@@ -1,0 +1,55 @@
+# ── Dữ liệu thị trường: KHÔNG commit ───────────────────────────────
+user_data/data/**
+!user_data/data/.gitkeep
+user_data/logs/**
+!user_data/logs/.gitkeep
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# ── Lockbox: dữ liệu KHÔNG commit, nhưng seal + sổ truy cập THÌ CÓ ──
+# (DR-011: mất lockbox = mất khả năng xác nhận cuối cùng, và KHÔNG có
+#  lockbox thứ hai - dòng 4002. Backup ngoài git là bắt buộc, xem TASKS.md)
+lockbox/data/**
+!lockbox/data/.gitkeep
+
+# ── Kết quả chạy: sinh lại được, không commit ───────────────────────
+runs/**
+!runs/.gitkeep
+
+# ── Bí mật ──────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# ── Python ──────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+.venv/
+venv/
+
+# ── 🔴 FILE THAM SỐ ẨN CỦA FREQTRADE ────────────────────────────────
+# KHÔNG ignore. Đây chính là cái bẫy LD-01/LD-02 đã hạ Tool A ba lần:
+# Freqtrade tự ghi <TênStrategy>.json cạnh file strategy sau mỗi hyperopt,
+# file đó ĐÈ mọi tham số ở mọi lần chạy sau, và thường nằm trong .gitignore
+# nên không ai thấy. Ở đây nó phải HIỆN RA trong git status.
+# Xem ràng buộc 0d.1 (dòng 538-550) và test L-Z37.
+# (dòng dưới cố ý để trống - đừng thêm user_data/strategies/*.json)
+
+# ── IDE / OS ────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# ── Tạm giữ ngoài repo, chờ chủ dự án quyết ────────────────────────
+# dashboard-ui/ là một project Node có .git riêng và có file .env.
+# Không gộp vào repo này cho tới khi chốt: submodule, hay repo riêng,
+# hay gộp thẳng vào (phải xoá .git con trước). Xem TASKS.md TD-0006.
+dashboard-ui/
