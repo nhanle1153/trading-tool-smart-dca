@@ -58,16 +58,33 @@ class AlreadyFinalizedError(LedgerError):
 class TrialProjection:
     """Bản chiếu trạng thái của MỘT trial — tính lại từ sổ sự kiện,
     KHÔNG phải trường lưu sẵn trên đĩa.
+
+    `state` là THUỘC TÍNH TÍNH, không phải cờ set thủ công — đúng DR-014
+    §1: "CÓ con dấu ⇒ CONSUMED" là một quy tắc ĐỊNH NGHĨA, không phụ
+    thuộc việc sự kiện CONSUME (mang outcome thật) đã được ghi hay chưa.
+    Một tiến trình bị giết NGAY SAU khi seal nhưng TRƯỚC khi kịp ghi
+    outcome vẫn phải tính là CONSUMED (L-Z53) — nếu `state` chỉ đổi khi
+    thấy sự kiện CONSUME, kịch bản đó sẽ bị đếm sai thành RESERVED mãi
+    mãi, làm N_ĐÃ_DÙNG hụt so với thực tế đã "nhìn thấy" kết quả.
     """
 
     trial_id: str
-    state: TrialState
     contribution: int
     hypothesis_slot: str
     param_under_test: str
     param_value: Any
     sealed: bool = False
+    outcome_written: bool = False
     outcome: dict[str, Any] | None = field(default=None)
+    refunded: bool = False
+
+    @property
+    def state(self) -> TrialState:
+        if self.refunded:
+            return TrialState.REFUNDED
+        if self.sealed or self.outcome_written:
+            return TrialState.CONSUMED
+        return TrialState.RESERVED
 
 
 def _utcnow_iso() -> str:
@@ -102,7 +119,6 @@ class TrialLedger:
             if kind == "RESERVE":
                 result[tid] = TrialProjection(
                     trial_id=tid,
-                    state=TrialState.RESERVED,
                     contribution=e["contribution"],
                     hypothesis_slot=e["hypothesis_slot"],
                     param_under_test=e["param_under_test"],
@@ -111,10 +127,10 @@ class TrialLedger:
             elif kind == "SEAL":
                 result[tid].sealed = True
             elif kind == "CONSUME":
-                result[tid].state = TrialState.CONSUMED
                 result[tid].outcome = e["outcome"]
+                result[tid].outcome_written = True
             elif kind == "REFUND":
-                result[tid].state = TrialState.REFUNDED
+                result[tid].refunded = True
             elif kind == "CONTAMINATE":
                 pass  # dấu vết audit — không đổi state
         return result
@@ -244,12 +260,16 @@ class TrialLedger:
     ) -> None:
         """Ghi outcome — ĐÚNG MỘT LẦN (spec dòng 3762: sửa dòng cũ = sổ
         mất hiệu lực; ở đây thể hiện bằng raise nếu gọi lần hai).
+
+        Được phép gọi cả khi trial ĐÃ `seal()` (đúng luồng bình thường:
+        seal trước, rồi mới ghi outcome thật) — chỉ chặn khi outcome đã
+        được ghi rồi, hoặc trial đã REFUNDED.
         """
         proj = self.get(trial_id)
-        if proj.state is not TrialState.RESERVED:
-            raise AlreadyFinalizedError(
-                f"{trial_id} đã ở trạng thái {proj.state.value}, không consume lại được"
-            )
+        if proj.refunded:
+            raise AlreadyFinalizedError(f"{trial_id} đã REFUNDED, không thể consume")
+        if proj.outcome_written:
+            raise AlreadyFinalizedError(f"{trial_id} đã có outcome, không ghi lại lần hai")
         self._append(
             {
                 "event": "CONSUME",
@@ -278,8 +298,10 @@ class TrialLedger:
         proj = self.get(trial_id)
         if proj.sealed:
             raise SealedTrialError(f"{trial_id} đã có con dấu — không được hoàn trả (L-Z53)")
-        if proj.state is not TrialState.RESERVED:
-            raise AlreadyFinalizedError(f"{trial_id} đã ở trạng thái {proj.state.value}")
+        if proj.outcome_written:
+            raise AlreadyFinalizedError(f"{trial_id} đã có outcome (CONSUMED), không hoàn trả")
+        if proj.refunded:
+            raise AlreadyFinalizedError(f"{trial_id} đã REFUNDED trước đó")
 
         key = HypothesisKey(proj.hypothesis_slot, proj.param_under_test, proj.param_value)
         if self.refund_count(key) >= REFUND_CAP_PER_HYPOTHESIS:

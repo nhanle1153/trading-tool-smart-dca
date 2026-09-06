@@ -181,3 +181,36 @@ class TestHypothesisKey:
         assert key.matches(hypothesis_slot="A-03", param_under_test="zss_threshold", param_value=0.55)
         assert not key.matches(hypothesis_slot="A-03", param_under_test="zss_threshold", param_value=0.60)
         assert not key.matches(hypothesis_slot="A-04", param_under_test="zss_threshold", param_value=0.55)
+
+
+class TestSealTuTinhLaConsumed:
+    """DR-014 §1: "CÓ con dấu ⇒ CONSUMED" — một quy tắc ĐỊNH NGHĨA, không
+    phụ thuộc việc sự kiện CONSUME (mang outcome thật) đã ghi hay chưa.
+    Đây là bất biến L-Z53 dựa vào (TD-0053) — kiểm riêng ở đây vì nó
+    thuộc cơ chế nền của TrialLedger, không riêng kịch bản giết tiến trình.
+    """
+
+    def test_da_seal_nhung_chua_ghi_outcome_van_tinh_la_consumed(self, tmp_path: Path) -> None:
+        ledger = TrialLedger(tmp_path / "reg.jsonl")
+        tid = _reserve(ledger)
+        ledger.seal(tid, seal_path=f"runs/{tid}/metrics.seal")
+        # CHƯA gọi consume() — vẫn phải tính là CONSUMED cho mục đích
+        # kế toán (n_used), vì "có con dấu" đã đủ theo DR-014 §1.
+        assert ledger.get(tid).state is TrialState.CONSUMED
+        assert ledger.n_used() == 1
+        assert ledger.n_reserved() == 0
+
+    def test_sau_do_van_ghi_outcome_that_duoc_binh_thuong(self, tmp_path: Path) -> None:
+        # Luồng bình thường: seal() rồi consume() vẫn phải chạy được —
+        # sửa lỗi thiết kế không được làm hỏng luồng đã có (TD-0051).
+        ledger = TrialLedger(tmp_path / "reg.jsonl")
+        tid = _reserve(ledger)
+        ledger.seal(tid, seal_path=f"runs/{tid}/metrics.seal")
+        ledger.consume(
+            tid,
+            outcome={"expectancy": 0.02, "sharpe": 0.9, "n_trades": 200, "max_single_loss_ratio": 1.0},
+            verdict="REJECTED",
+        )
+        assert ledger.get(tid).outcome_written is True
+        assert ledger.get(tid).state is TrialState.CONSUMED
+        assert ledger.n_used() == 1  # không đếm hai lần dù sealed lẫn outcome_written đều True
