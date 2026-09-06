@@ -11,7 +11,6 @@ user_data/logs/**
 # (DR-011: mất lockbox = mất khả năng xác nhận cuối cùng, và KHÔNG có
 #  lockbox thứ hai - dòng 4002. Backup ngoài git là bắt buộc, xem TASKS.md)
 lockbox/data/**
-!lockbox/data/.gitkeep
 
 # ── Kết quả chạy: sinh lại được, không commit ───────────────────────
 runs/**

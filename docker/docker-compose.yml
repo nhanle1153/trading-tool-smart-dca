@@ -1,0 +1,48 @@
+# docker-compose.yml — Tool D (D0-PRE)
+#
+# Ba service, không service nào chạy nền (mọi thứ là `run --rm`).
+# Mount nào, vì sao — xem docker/Dockerfile và ARCHITECTURE.md mục 3.1/3.2.
+
+x-base: &base
+  build:
+    context: ..
+    dockerfile: docker/Dockerfile
+  environment:
+    - TZ=UTC
+    - PYTHONHASHSEED=0
+    - PYTHONPATH=/workspace/src
+  working_dir: /workspace
+  volumes:
+    # Repo của ta -> /workspace. KHÔNG BAO GIỜ mount vào /freqtrade
+    # (xem cảnh báo trong Dockerfile — đó là mã nguồn Freqtrade editable).
+    - ..:/workspace
+    # 🔴 lockbox/data/ (dữ liệu thị trường thật của lockbox) KHÔNG có mặt ở
+    # đây — service `tests`/`freqtrade` bên dưới che nó bằng volume ẩn danh.
+    # CHỈ che lockbox/data/, KHÔNG che cả lockbox/: lockbox/lockbox_seal_*.json
+    # và lockbox/lockbox_access.log vẫn phải đọc được để L-Z13/L-Z14 kiểm tra
+    # và để H17 verify_seal() gọi được từ đầu E1/E2/E3 (TD-0072). Đây là chỗ
+    # duy nhất biến "không được chạm dữ liệu lockbox" thành "không chạm được
+    # ở tầng hệ điều hành" (ARCHITECTURE.md 3.1) — không phá khả năng đọc
+    # con dấu.
+
+services:
+  tests:
+    <<: *base
+    entrypoint: ["pytest"]
+    volumes:
+      - ..:/workspace
+      - /workspace/lockbox/data
+
+  freqtrade:
+    <<: *base
+    entrypoint: ["python"]
+    volumes:
+      - ..:/workspace
+      - /workspace/lockbox/data
+
+  lockbox:
+    <<: *base
+    entrypoint: ["python"]
+    # Service DUY NHẤT thấy lockbox/data/ thật — dùng khi chạy E4
+    # touch_lockbox.py ở chế độ chạm dữ liệu thật (chỉ hợp lệ sau D9).
+    # (kế thừa nguyên khối ..:/workspace từ *base, không che gì ở đây)

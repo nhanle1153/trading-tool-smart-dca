@@ -1,0 +1,16 @@
+# Build context là gốc repo (context: ..) nhưng Dockerfile không COPY gì —
+# mọi thứ được bind-mount ở runtime (xem docker-compose.yml). File này chỉ
+# để build context không phải gửi 373KB spec + dữ liệu lên Docker daemon.
+.git
+tool-d-smart-dca.md
+tool-d-dashboard-thiet-ke.html
+dashboard-ui
+template
+docs
+user_data/data
+user_data/logs
+lockbox/data
+runs
+**/__pycache__
+**/*.pyc
+.pytest_cache
