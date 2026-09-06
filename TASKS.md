@@ -104,7 +104,7 @@
 |---|---|---|---|---|
 | TD-0070 | `lockbox/seal.py` + `access_log.py` + test **L-Z13 / L-Z14** | ✅ | TD-0012 | Sổ truy cập rỗng → PASS (`validate_before_d9([])==[]`); thêm 1 bản ghi trước D9 → FAIL; sửa 1 byte dữ liệu → `verify_seal` FAIL. `docker compose run --rm tests -k "lz13 or lz14"` → 25 passed (xác nhận trong Docker) |
 | TD-0071 | E4 `touch_lockbox.py` chế độ `--verify-seal` (H17); chế độ chạm thật vẫn TỪ CHỐI tới sau D9 | ✅ | TD-0070 | Chạy được, **0 bản ghi** được thêm vào sổ truy cập — xác nhận: `--verify-seal` PASS (0 seal ở D0-PRE) và chế độ mặc định TỪ CHỐI, cả hai đều không tạo `lockbox_access.log`. `pytest -k "lz14 or touch_lockbox"` → 34 passed trong Docker |
-| TD-0072 | Nối H17 vào đầu pipeline E1/E2/E3 | 🔓 | TD-0071 | Test AST: `verify_seal` được gọi trong `main()` |
+| TD-0072 | Nối H17 vào đầu pipeline E1/E2/E3 | 🔒 | TD-0071 | Test AST: `verify_seal` được gọi trong `main()` |
 
 ### Khối 8 — Việc chạm dữ liệu (CHỈ SAU khi Khối 1–7 xanh)
 
