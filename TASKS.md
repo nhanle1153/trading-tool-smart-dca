@@ -116,7 +116,7 @@
 | TD-0079 | Hoàn thành Mục 2–4 của `api-integration-rules.md` (R1–R12) + `provider-map.md` cho Binance. **Bắt buộc trước dòng code gọi mạng đầu tiên** | ✅ | TD-0020 | Bản điền ở gốc repo, Mục 4 đủ 4 bảng (dịch vụ, endpoint, mã lỗi, ngưỡng) |
 | TD-0080 | E8 chế độ `--probe-coverage`: verify độ dài lịch sử **Open Interest** Binance thật sự trả về | ✅ | TD-0079 | In số ngày thật; nếu chỉ ~30 ngày → ghi research-log, ảnh hưởng thiết kế chỉ báo |
 | TD-0081 | Ước lượng **số lệnh/năm** bằng tính tay. **< 150 → hỏng từ thiết kế, xử lý ngay** | ✅ | TD-0083 | `docs/estimate-trades-per-year.md` có phép tính và kết luận nhị phân |
-| TD-0082 | Kiểm **min notional** từng cặp vs notional tranche 1 nhỏ nhất | 🔒 | TD-0043, TD-0079 | Bảng đối chiếu; có vi phạm → nâng `E_D` hoặc đặt sàn, ghi DR |
+| TD-0082 | Kiểm **min notional** từng cặp vs notional tranche 1 nhỏ nhất | ✅ | TD-0043, TD-0079 | Bảng đối chiếu; có vi phạm → nâng `E_D` hoặc đặt sàn, ghi DR |
 | TD-0083 | Chốt pool ~100 mã, loại BTC/ETH khỏi giao dịch, tách tập EXPLORE (OQ-04) | ✅ | TD-0079, TD-0056 | E7 chạy, ghi **4 trial B0** vào sổ; `pytest -k lz11` vẫn xanh |
 | TD-0084 | Chia CALIB / WFO / LOCKBOX, kiểm 4 điều kiện DR-011, niêm phong `lockbox_seal_1.json` (OQ-05) | 🔓 | TD-0083, TD-0070 | `touch_lockbox.py --verify-seal` PASS; sổ truy cập vẫn **0 bản ghi** |
 | TD-0085 | Thiết lập **backup lockbox ngoài git + test khôi phục thật một lần** (OQ-08) | 🔓 | TD-0084 | Khôi phục từ backup vào thư mục tạm → `verify_seal` PASS trên bản khôi phục |
