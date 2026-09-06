@@ -13,7 +13,9 @@ không nhận nhãn dataset do người/code gọi tự xưng.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
+
+from tool_d.config.loader import ToolDConfig, resolve
 
 
 class TimerangeViolationError(RuntimeError):
@@ -62,3 +64,26 @@ def assert_dataset_timerange(
             f"ranh giới dataset {dataset!r} [{boundary.start}, {boundary.end}] "
             "— coi là CHẠM TẬP ĐÁNH GIÁ (L-Z55)."
         )
+
+
+def dataset_boundaries_from_config(cfg: ToolDConfig) -> dict[str, DatasetBoundary]:
+    """TD-0094 — `DatasetBoundary` cho CALIB/WFO/LOCKBOX đọc từ
+    `tier_c.data_split` (T0-T3, DR-D0PRE-07, niêm phong "commit, không
+    sửa") — nguồn sự thật DUY NHẤT (N4), không hardcode ngày ở nơi gọi.
+
+    Sinh ra để nối với `assert_dataset_timerange()`: bên gọi (backtest/
+    WFO/ablation, TD-0093 đã chứng minh KHÔNG được tin file trên đĩa về
+    phạm vi ngày) đọc `[observed_start, observed_end]` THẬT từ dataframe
+    đã tải, rồi assert với đúng `boundary` tương ứng ở đây — không được
+    tính `observed_*` và `boundary` từ cùng một nguồn không đáng tin
+    (xem docstring `DatasetBoundary`).
+    """
+    split = resolve(cfg, "tier_c.data_split")
+    t0, t1, t2, t3 = (
+        datetime.strptime(split[k], "%Y-%m-%d").date() for k in ("t0", "t1", "t2", "t3")
+    )
+    return {
+        "CALIB": DatasetBoundary("CALIB", t0, t1),
+        "WFO": DatasetBoundary("WFO", t1, t2),
+        "LOCKBOX": DatasetBoundary("LOCKBOX", t2, t3),
+    }

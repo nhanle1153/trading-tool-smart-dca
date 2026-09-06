@@ -97,6 +97,7 @@ tier_c: # 🔒 KHOÁ — KHÔNG có ô nhập, ghi ở đây
   dg8_enabled: true # bật/tắt: CẤM
   k_swing_confirm: 3 # 🆕 v6 — CHUYỂN TỪ tier_b/frozen
   dd_ladder_pct: { soft: 5, halt: 8, abort: 20 } # 🆕 v6 — §12c.5 ✅ DR-D0PRE-04 (TD-0042), Hạng 0. halt == tier_a.daily_loss_budget_pct
+  data_split: { t0: "2024-04-09", t1: "2025-06-12", t2: "2026-01-29", t3: "2026-09-06" } # 🆕 TD-0094 — ✅ DR-D0PRE-07 (TD-0084), niêm phong "commit, không sửa". t2 = ranh giới LOCKBOX tuyệt đối, E1/E2/E3 cấm mọi timerange vượt t2
   api_calls_per_min: 30 # 🆕 v7 — §6.6(3), LD-23. Điền theo nhịp
     # thật: 100 mã / 60 phút + lề. KHÔNG polling.
   entry_order_ttl_bars_1h: 3 # 🆕 v7 — §3.5, = §3.3b chờ
