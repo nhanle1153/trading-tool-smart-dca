@@ -115,3 +115,43 @@ def pairlist_point_in_time(
         if s.onboard_date <= t and (s.delisted_at is None or s.delisted_at > t)
     ]
     return compute_pool(eligible, age_floor_days=age_floor_days, volume_floor_usdt=volume_floor_usdt, now=t)
+
+
+def pairlist_over_time(
+    stats_by_checkpoint: dict[datetime, list[SymbolStat]],
+    *,
+    age_floor_days: int,
+    volume_floor_usdt: float,
+) -> dict[datetime, PoolResult]:
+    """H1-D (TD-0097, §9c.4b) — quét nhiều mốc `t` THEO THỨ TỰ THỜI GIAN,
+    cưỡng chế ràng buộc cứng (b): *"Coin nào đã ở EXPLORE thì KHÔNG BAO
+    GIỜ được đưa vào pool giao dịch sau này — kể cả khi nó bắt đầu thoả
+    tiêu chí §0.3. Không có ngoại lệ."*
+
+    `pairlist_point_in_time()` một mình KHÔNG đủ: nó vô trạng thái, mỗi
+    lần gọi tính lại từ đầu — một mã trượt tiêu chí ở mốc sớm rồi hồi
+    phục volume/tuổi ở mốc muộn sẽ được tính lại vào `trading`, đúng
+    thứ "biến EXPLORE thành tập train" mà spec cấm tuyệt đối. Hàm này
+    cộng dồn một tập cấm VĨNH VIỄN qua các mốc: mã nào từng rơi vào
+    `explore` ở bất kỳ mốc nào (khi nó ĐÃ TỒN TẠI, không phải mốc trước
+    khi nó lên sàn) thì bị khoá khỏi `trading` ở mọi mốc SAU đó.
+
+    `stats_by_checkpoint[t]` là ảnh chụp `SymbolStat` (gồm volume TẠI
+    `t`) dùng riêng cho mốc đó — volume thật đổi theo thời gian, không
+    phải một con số cố định dùng chung cho mọi mốc.
+    """
+    permanently_excluded: set[str] = set()
+    results: dict[datetime, PoolResult] = {}
+    for t in sorted(stats_by_checkpoint):
+        raw = pairlist_point_in_time(
+            stats_by_checkpoint[t],
+            t=t,
+            age_floor_days=age_floor_days,
+            volume_floor_usdt=volume_floor_usdt,
+        )
+        trading = tuple(s for s in raw.trading if s not in permanently_excluded)
+        demoted_now = set(raw.trading) & permanently_excluded
+        explore = tuple(sorted(set(raw.explore) | demoted_now))
+        permanently_excluded |= set(raw.explore)
+        results[t] = PoolResult(trading=trading, explore=explore)
+    return results

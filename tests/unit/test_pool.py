@@ -9,6 +9,7 @@ from tool_d.pool import (
     SymbolStat,
     build_symbol_stats,
     compute_pool,
+    pairlist_over_time,
     pairlist_point_in_time,
 )
 
@@ -175,3 +176,56 @@ class TestPairlistPointInTime:
         ]
         result = pairlist_point_in_time(stats, t=T_PAST, age_floor_days=180, volume_floor_usdt=15_000_000)
         assert result.trading == () and result.explore == ("BTCUSDT",)
+
+
+T0, T1, T2 = (
+    T_PAST,
+    T_PAST + timedelta(days=90),
+    T_PAST + timedelta(days=180),
+)
+
+
+def _flaky(volume_at_t0, volume_at_t1, volume_at_t2, onboard=T_PAST - timedelta(days=400)):
+    return {
+        T0: [SymbolStat(symbol="FLAKYUSDT", onboard_date=onboard, quote_volume_24h=volume_at_t0)],
+        T1: [SymbolStat(symbol="FLAKYUSDT", onboard_date=onboard, quote_volume_24h=volume_at_t1)],
+        T2: [SymbolStat(symbol="FLAKYUSDT", onboard_date=onboard, quote_volume_24h=volume_at_t2)],
+    }
+
+
+class TestPairlistOverTime:
+    """TD-0097, §9c.4b(b) — EXPLORE là VĨNH VIỄN, không được quay lại trading."""
+
+    def test_ma_bi_explore_hoa_khong_bao_gio_quay_lai_trading(self) -> None:
+        # Đủ volume ở T0 (trading) -> tụt volume ở T1 (explore) -> hồi phục ở T2.
+        # Không có cưỡng chế thì T2 sẽ lại là "trading" — spec cấm tuyệt đối điều đó.
+        stats_by_t = _flaky(volume_at_t0=20_000_000, volume_at_t1=1_000_000, volume_at_t2=50_000_000)
+        results = pairlist_over_time(stats_by_t, age_floor_days=180, volume_floor_usdt=15_000_000)
+        assert results[T0].trading == ("FLAKYUSDT",)
+        assert results[T1].trading == () and results[T1].explore == ("FLAKYUSDT",)
+        assert results[T2].trading == (), "hồi phục volume KHÔNG được đưa mã trở lại trading"
+        assert results[T2].explore == ("FLAKYUSDT",)
+
+    def test_ma_moi_thoa_tieu_chi_ngay_lan_dau_van_vao_trading(self) -> None:
+        # Mã CHƯA từng bị explore-hoá -> lần đầu thoả tiêu chí thì vào trading bình thường.
+        stats_by_t = {
+            T0: [],
+            T1: [SymbolStat(symbol="NEWUSDT", onboard_date=T1 - timedelta(days=200), quote_volume_24h=20_000_000)],
+        }
+        results = pairlist_over_time(stats_by_t, age_floor_days=180, volume_floor_usdt=15_000_000)
+        assert results[T1].trading == ("NEWUSDT",)
+
+    def test_btc_eth_explore_moi_moc(self) -> None:
+        stats_by_t = {
+            T0: [SymbolStat(symbol="BTCUSDT", onboard_date=T_PAST - timedelta(days=2000), quote_volume_24h=1e9)],
+            T1: [SymbolStat(symbol="BTCUSDT", onboard_date=T_PAST - timedelta(days=2000), quote_volume_24h=1e9)],
+        }
+        results = pairlist_over_time(stats_by_t, age_floor_days=180, volume_floor_usdt=15_000_000)
+        assert all("BTCUSDT" not in r.trading and "BTCUSDT" in r.explore for r in results.values())
+
+    def test_khong_phu_thuoc_thu_tu_truyen_vao_checkpoint(self) -> None:
+        # Dict truyền vào không sắp xếp -> hàm phải tự sắp theo t, không theo thứ tự khai báo.
+        stats_by_t = _flaky(volume_at_t0=20_000_000, volume_at_t1=1_000_000, volume_at_t2=50_000_000)
+        shuffled = {T2: stats_by_t[T2], T0: stats_by_t[T0], T1: stats_by_t[T1]}
+        results = pairlist_over_time(shuffled, age_floor_days=180, volume_floor_usdt=15_000_000)
+        assert results[T2].trading == ()
