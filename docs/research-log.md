@@ -359,3 +359,30 @@ mốc sau cao hơn cả mốc đầu; mã mới lần đầu thoả tiêu chí v
 mọi mốc; kết quả không đổi khi xáo thứ tự khai báo checkpoint.
 
 Suite Docker: 443 passed (tăng 4).
+
+## 07/09/2026 — Review độc lập zone_detection.py/zone_strength.py (không thuộc task nào, chủ động trước cổng D1)
+
+Với D1 chỉ còn TD-0106 mở (trên track zone detection do phiên song song đang giữ), thay vì tranh
+việc trên file người khác vừa viết, chạy một subagent context sạch (chưa thấy hội thoại nào sinh ra
+code này — đúng tinh thần rule 18 "clean-context reviewing") để rà lại 6 file: `zone_detection.py`,
+`zone_strength.py`, và 4 test khoá/unit tương ứng (TD-0100→0105).
+
+**Kết luận về causality/lookahead (H4-D, H4-D-b, H13): giữ nguyên, không bắt được lỗi.** Kiểm độc
+lập từng phép toán: `la_diem_swing` biên đúng, không tràn chỉ số âm; `confirm_ratio` không có tham
+số mảng nên KHÔNG THỂ đọc dữ liệu tương lai dù muốn; `zone_da_bi_huy` cắt đúng `[i+1, t]`;
+`touch_count` vòng lặp đúng `(i_swing, t]`; `compression` dùng TA-Lib ATR toàn mảng nhưng AN TOÀN vì
+ATR kiểu Wilder tự nó nhân quả (giá trị tại n chỉ phụ thuộc dữ liệu ≤ n) — khớp đúng với những gì
+`test_td0105` thật sự kiểm.
+
+🐛 **Bắt được một lỗi thật, KHÔNG phải lookahead — mở TD-0107:** `touch_count()`
+(`zone_strength.py:56-61`) — máy trạng thái "đang trong cụm chờ bật ra" chỉ kiểm `bat_ra`, không
+bao giờ kiểm `vo_huong_nguoc` MỘT KHI đã vào cụm (điều kiện đó chỉ áp dụng lúc QUYẾT ĐỊNH vào cụm).
+Tái hiện thật: zone đáy `[100,102]`, giá `[101, 101, 90, 103]` (chạm 101 → vỡ sâu dưới 90 giữa chừng
+→ sau đó bật lên 103) → `touch_count()` trả **1**, dù giá đã vỡ hẳn qua `zone_low` ở giữa. Không có
+test nào trong 22 test của `test_zone_strength.py` phủ trường hợp vỡ-giữa-cụm (mọi test cụm giữ giá
+trong `[zone_low, zone_high]` suốt lúc chờ). Không tự sửa — file thuộc track TD-0104/0106 phiên song
+song đang giữ, ghi TD-0107 để họ xử lý, tránh giẫm code đang chạy `lookahead-analysis`.
+
+Ghi nhận thêm (không mở task, mức nitpick): NaN ở `gia_cham`/`volume` bị so sánh im lặng thành
+`False` thay vì raise; không có kiểm `t >= i_swing`; test chưa phủ swing có nhiều đáy/đỉnh bằng nhau
+(plateau). Không nghiêm trọng bằng lỗi touch_count, ghi lại để không quên nếu có thời gian.
