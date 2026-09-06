@@ -204,3 +204,11 @@ Quy trình gốc viết cho web app trên Render. Tool D là bot chạy local. �
    kiến trúc trước. Phương án (b) tận dụng `periodic_report` sẵn có, không đụng kiến trúc.
    Chi tiết + bảng đánh đổi: mục `OQ-FE-01` trong `TASKS.md` của repo front-end.
    **Không tự chọn bên nào** — chờ chủ dự án quyết khi tới lượt nối API.
+
+**Ghi chú song song (phiên chạy TD-0070, tách khỏi Khối 5 mà phiên kia đang làm):**
+TD-0070 ✅ Xong 06/09/2026 — **Khối 7 (Lockbox)** mở đầu: `src/tool_d/lockbox/seal.py`
+(`build_seal`/`write_seal` bất biến — từ chối ghi đè/`verify_seal` cho L-Z14) +
+`access_log.py` (sổ JSONL append-only, tối đa 3 đoạn niêm phong không trùng seal cho
+L-Z13). Chưa đụng dữ liệu lockbox thật (N2 — D0-PRE chưa đóng), toàn bộ test dùng
+seal/dữ liệu giả trong `tmp_path`. `docker compose run --rm tests -k "lz13 or lz14"` →
+25 passed; toàn bộ `pytest` → 224 passed. TD-0071/TD-0072 (Khối 7, còn lại) vẫn 🔓.
