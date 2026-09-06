@@ -57,6 +57,10 @@ def touch_count(
             if bat_ra:
                 dem += 1
                 dang_trong_cum = False
+            elif vo_huong_nguoc:
+                # TD-0107: vỡ NGƯỢC HƯỚNG giữa lúc đang chờ bật ra — cụm
+                # coi như đã hỏng, không được tính dù sau đó có bật ra.
+                dang_trong_cum = False
             # còn lại: vẫn kẹt trong zone, cụm tiếp tục chờ nến sau
             continue
 

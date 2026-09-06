@@ -69,6 +69,17 @@ class TestTouchCountDay:
         # tại t=2 mới chỉ có 1 touch xảy ra (index1); touch thứ 2 (index3) ở tương lai
         assert touch_count(thap, dong, ZONE_LOW, ZONE_HIGH, i_swing=0, t=2, loai="day") == 1
 
+    def test_vo_giua_cum_roi_bat_ra_sau_khong_duoc_tinh_la_touch(self) -> None:
+        # TD-0107 (bug thật, phát hiện qua review độc lập): index1 chạm và
+        # mở cụm; index2 giá VỠ SÂU dưới zone_low NGAY GIỮA lúc đang chờ
+        # bật ra; index3 mới bật ra thật. Bản lỗi cũ chỉ kiểm `bat_ra` khi
+        # `dang_trong_cum=True`, bỏ sót cú vỡ giữa chừng -> đếm nhầm thành
+        # 1. Đúng theo spec (close < zone_low -> KHÔNG phải touch, "zone bị
+        # phá"), cụm đã vỡ này không được tính.
+        thap = [100, 101, 90, 103]
+        dong = [100, 101, 90, 103]
+        assert touch_count(thap, dong, ZONE_LOW, ZONE_HIGH, i_swing=0, t=3, loai="day") == 0
+
 
 class TestTouchCountDinh:
     """Zone đỉnh — đảo dấu: CHẠM dùng `high`, BẬT RA khi `close` < zone_low."""
