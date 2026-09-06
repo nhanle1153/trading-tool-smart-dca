@@ -187,3 +187,26 @@ sạch (không có tải Docker khác chạy song song) → 347/347 passed, hai 
 nhiễu tải hệ thống, không phải hồi quy thật.
 
 Toàn bộ suite Docker: 347 passed (tăng 5 so với TD-0084 — thêm `test_lockbox_backup.py`).
+
+## 06/09/2026 (khuya, cuối) — TD-0086: 🚪 GATE D0-PRE ĐÓNG
+
+Ba điều kiện chạy THẬT (không mock), theo đúng thứ tự spec đòi:
+
+1. `docker compose run --rm tests -q tests/lock` → **215 passed, 0 failed**.
+2. `entrypoints/trial_ledger_audit.py` → exit 0, "đã audit 4/6 (4 đạt, 0 chưa đạt, 2 chưa đo được)".
+3. `entrypoints/periodic_report.py` → exit 0, 22/22 chỉ số "chưa đo được" (đúng thiết kế D0-PRE, chưa
+   có lệnh đóng thật nào), không sentinel nào lọt (L-Z41 tự kiểm trong chính E5).
+
+Thêm `--close-gate` vào E6 (`trial_ledger_audit.py`) — chạy `run_audit()` thật, chỉ ghi
+`registry/runtime_state.json.d0_pre_complete: true` nếu audit sạch (fail=0), và tự từ chối ghi lại
+nếu khoá đó đã có (bất biến, cùng triết lý "commit, không sửa" của lockbox seal). Chạy thật ngày
+06/09/2026, xác nhận `is_d0_pre_complete()` trả `True`; chạy lại `--close-gate` một lần nữa → từ chối
+đúng như thiết kế, không ghi đè.
+
+Gắn tag `d0-pre-complete` tại commit đóng cổng. **D0-PRE (Khối 0→8) hoàn tất — 62/62 việc trong
+TASKS.md.** `E1/E2/E3/E7/E8` từ nay có thể chạm CALIB/WFO/LOCKBOX thật khi Khối chiến lược (D1) tới
+lượt — điều kiện tiên quyết là `is_d0_pre_complete()` (đã tồn tại từ trước, chưa từng được nối vào
+entrypoint nào; nối vào E1/E2/E3/E7/E8 là việc của D1, ngoài phạm vi D0-PRE này).
+
+Toàn bộ suite Docker cuối cùng của D0-PRE: **352 passed**, hai lần chạy liên tiếp không có test nào
+gián đoạn (loại trừ hẳn nghi ngờ nhiễu tải hệ thống ở lần chạy trước, TD-0085).
