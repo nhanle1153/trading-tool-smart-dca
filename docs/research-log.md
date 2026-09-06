@@ -292,3 +292,28 @@ chụp làm phép thử không đổi gì → PASS (xác nhận cơ chế H19 ho
   TD-0092), in rõ lý do thay vì một con số sai.
 
 Suite Docker: 422 passed.
+
+## 07/09/2026 — TD-0095: khảo sát nguồn danh sách lịch sử — tìm được nguồn thật, KHÔNG chấp nhận bias
+
+Giả định mặc định trong TASKS.md ("Binance API không trả danh sách symbol đã huỷ niêm yết → chấp
+nhận survivorship bias") **sai** — không kiểm tra kỹ trước khi ghi vào backlog. Đo thật trước khi
+kết luận (đúng N6/N10): gọi trực tiếp kho lưu trữ tĩnh công khai `data.binance.vision`
+(`GET https://s3-ap-northeast-1.amazonaws.com/data.binance.vision/`, ListObjects chuẩn S3, phân
+trang qua `NextMarker`) — kho này giữ nguyên thư mục nến lịch sử của MỌI symbol từng có trên
+futures, kể cả đã huỷ niêm yết (khác `exchangeInfo` chỉ phản ánh hiện tại).
+
+Kết quả đo thật: 1.027 thư mục symbol trong archive → loại 51 hợp đồng kỳ hạn + 103 không phải
+quote USDT → còn 874 ứng viên perpetual/USDT. Đối chiếu `exchangeInfo` thật cùng lúc: 658 symbol
+đang có (528 TRADING, 129 SETTLING, 1 PENDING_TRADING). **874 − 658 = 219 symbol đã thật sự huỷ
+niêm yết**, còn dấu vết trong archive. Xác nhận archive cho ra được MỐC NGÀY thật (không chỉ tên):
+liệt kê thư mục `BTTUSDT/1h/` → file đầu `2021-04-06`, file cuối `2022-01-26` — đúng khoảng tồn tại
+thật của một symbol đã biết là bị huỷ từ lâu.
+
+Ghi `docs/decisions/DR-D1-01-nguon-danh-sach-lich-su.md`: TD-0096 (`pairlist_point_in_time(t)`)
+phải nạp 219 symbol này vào tập ứng viên khi tính pool tại mốc `t` quá khứ, không mở DR chấp nhận
+bias. Giới hạn thẳng thắn: đây là kho cộng đồng/tĩnh, không có SLA chính thức (rủi ro tồn dư chấp
+nhận được — kho đã ổn định nhiều năm, được `python-binance`/`freqtrade` dùng làm nguồn chuẩn); chỉ
+cho biết khoảng tồn tại, không cho volume lịch sử trực tiếp (việc đó thuộc TD-0096).
+
+Đây không phải "chạm dữ liệu" theo MT-02 — chỉ là dò xem symbol nào từng tồn tại và khi nào, không
+đánh giá cấu hình chiến lược nào trên CALIB/WFO/LOCKBOX.
