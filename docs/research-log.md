@@ -445,3 +445,31 @@ backtest/WFO/ablation) là việc của bất kỳ task tương lai nào viết 
 wiring chưa có chỗ để nối.
 
 Suite Docker: 486 passed.
+
+## 07/09/2026 — TD-0110: đóng cổng D1 thật — gỡ blocker B2
+
+Cả hai nhánh việc D1 xong: track H1-D/backfill (TD-0093→0097, phiên này) và track zone
+detection/H4-D/H13 (TD-0100→0107, phiên song song) — không giẫm việc nhau suốt toàn bộ D1, kiểm
+`git log`/`git status`/diff trước mỗi lần đụng file dùng chung.
+
+Xây `close_d1_gate()` (E6, `--close-d1-gate`) thay vì lặp lại khuôn cũ của `close_d0_pre_gate()`
+(TD-0086) — MT-10 đã chỉ đúng lỗ hổng của khuôn cũ: 2/3 mục `evidence` là chuỗi gõ tay giả làm bằng
+chứng máy. Hàm mới tự `subprocess` chạy `pytest -q` THẬT trong chính lần gọi (image đã có sẵn pytest,
+không cần lồng `docker compose` bên trong container đang chạy) rồi ghi lại đúng output — nhãn
+`do-duoc` (MT-10) đúng nghĩa cho MỌI mục `d1_evidence`, không còn mục nào là lời khai.
+
+Test `close_d1_gate()` dùng `pytest_cmd` thay bằng lệnh giả nhanh (không đệ quy chạy lại suite thật
+bên trong chính suite đang chạy nó) + monkeypatch `is_d0_pre_complete` trực tiếp trên module thay vì
+`chdir` (chdir sẽ phá các đường dẫn tương đối mặc định khác như `config/tool_d_config.yaml`).
+
+**Chạy thật, một lần:** `docker compose run --rm freqtrade entrypoints/trial_ledger_audit.py
+--close-d1-gate` → 492 passed (toàn suite), audit sổ trial 4/6 đạt (L-Z10/11/12/15), 0 chưa đạt.
+`registry/runtime_state.json` giữ nguyên khối `d0_pre_complete` cũ, thêm `d1_complete: true` +
+`d1_evidence` gắn nhãn nguồn. Gắn tag `git tag d1-complete`.
+
+**Còn tồn dư, ghi rõ thay vì giả vờ hết:** TD-0094 chỉ nối được `assert_dataset_timerange()` (L-Z55)
+với cấu hình thật — CHƯA wiring được vào E1/E2/E3 vì ba entrypoint đó chưa có logic tải dữ liệu thật
+(vẫn `NotImplementedError`, Khối 1). Việc nối self-check vào đúng điểm sau bước tải là trách nhiệm
+của bất kỳ task D2+ nào viết logic backtest/WFO/ablation thật.
+
+Suite Docker cuối: 492 passed.
