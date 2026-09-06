@@ -4,7 +4,13 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 
-from tool_d.pool import EXCLUDE_FROM_TRADING, build_symbol_stats, compute_pool
+from tool_d.pool import (
+    EXCLUDE_FROM_TRADING,
+    SymbolStat,
+    build_symbol_stats,
+    compute_pool,
+    pairlist_point_in_time,
+)
 
 NOW = datetime(2026, 9, 6, tzinfo=timezone.utc)
 
@@ -93,3 +99,79 @@ class TestComputePool:
 
     def test_exclude_from_trading_dung_dung_hai_ma(self) -> None:
         assert EXCLUDE_FROM_TRADING == frozenset({"BTCUSDT", "ETHUSDT"})
+
+
+T_PAST = datetime(2025, 9, 6, tzinfo=timezone.utc)  # "1 năm trước" so với NOW
+
+
+class TestPairlistPointInTime:
+    """TD-0096, H1-D — pool hợp lệ tại quá khứ `t`, không lệch sống sót."""
+
+    def test_ma_niem_yet_sau_t_khong_co_mat(self) -> None:
+        stats = [
+            SymbolStat(symbol="OLDUSDT", onboard_date=T_PAST - timedelta(days=400), quote_volume_24h=20_000_000),
+            SymbolStat(symbol="FUTUREUSDT", onboard_date=T_PAST + timedelta(days=10), quote_volume_24h=100_000_000),
+        ]
+        result = pairlist_point_in_time(stats, t=T_PAST, age_floor_days=180, volume_floor_usdt=15_000_000)
+        assert result.trading == ("OLDUSDT",)
+        assert "FUTUREUSDT" not in result.trading and "FUTUREUSDT" not in result.explore
+
+    def test_ma_da_huy_niem_yet_truoc_t_khong_co_mat(self) -> None:
+        stats = [
+            SymbolStat(
+                symbol="DEADUSDT",
+                onboard_date=T_PAST - timedelta(days=400),
+                quote_volume_24h=20_000_000,
+                delisted_at=T_PAST - timedelta(days=1),  # huỷ NGAY TRƯỚC t
+            ),
+        ]
+        result = pairlist_point_in_time(stats, t=T_PAST, age_floor_days=180, volume_floor_usdt=15_000_000)
+        assert result.trading == () and result.explore == ()  # không tồn tại, không phải "trượt tiêu chí"
+
+    def test_ma_huy_niem_yet_sau_t_van_co_mat(self) -> None:
+        stats = [
+            SymbolStat(
+                symbol="SOONDEADUSDT",
+                onboard_date=T_PAST - timedelta(days=400),
+                quote_volume_24h=20_000_000,
+                delisted_at=T_PAST + timedelta(days=30),  # huỷ SAU t -> vẫn đang sống tại t
+            ),
+        ]
+        result = pairlist_point_in_time(stats, t=T_PAST, age_floor_days=180, volume_floor_usdt=15_000_000)
+        assert result.trading == ("SOONDEADUSDT",)
+
+    def test_ket_qua_khong_doi_khi_them_du_lieu_sau_t(self) -> None:
+        base_stats = [
+            SymbolStat(symbol="AAAUSDT", onboard_date=T_PAST - timedelta(days=400), quote_volume_24h=20_000_000),
+        ]
+        # "Dữ liệu sau t" xuất hiện thêm: một mã mới lên sàn sau t, và một mã bị huỷ sau t.
+        extra_stats = base_stats + [
+            SymbolStat(symbol="LATERUSDT", onboard_date=T_PAST + timedelta(days=5), quote_volume_24h=999_999_999),
+            SymbolStat(
+                symbol="AAAUSDT2",
+                onboard_date=T_PAST - timedelta(days=400),
+                quote_volume_24h=20_000_000,
+                delisted_at=T_PAST + timedelta(days=200),
+            ),
+        ]
+        r1 = pairlist_point_in_time(base_stats, t=T_PAST, age_floor_days=180, volume_floor_usdt=15_000_000)
+        r2 = pairlist_point_in_time(extra_stats, t=T_PAST, age_floor_days=180, volume_floor_usdt=15_000_000)
+        assert r1.trading == ("AAAUSDT",)
+        # Thêm mã mới (chưa đủ tuổi tại t) và mã sẽ-huỷ-sau-t (còn sống tại t, thoả tiêu chí)
+        # -> AAAUSDT2 hợp lệ và được thêm vào, nhưng AAAUSDT không đổi kết quả của chính nó.
+        assert "AAAUSDT" in r2.trading
+        assert "LATERUSDT" not in r2.trading and "LATERUSDT" not in r2.explore
+
+    def test_volume_va_tuoi_van_ap_dung_binh_thuong_tai_t(self) -> None:
+        stats = [
+            SymbolStat(symbol="THINUSDT", onboard_date=T_PAST - timedelta(days=400), quote_volume_24h=500_000),
+        ]
+        result = pairlist_point_in_time(stats, t=T_PAST, age_floor_days=180, volume_floor_usdt=15_000_000)
+        assert result.trading == () and result.explore == ("THINUSDT",)
+
+    def test_btc_eth_van_luon_explore_tai_qua_khu(self) -> None:
+        stats = [
+            SymbolStat(symbol="BTCUSDT", onboard_date=T_PAST - timedelta(days=2000), quote_volume_24h=1_000_000_000),
+        ]
+        result = pairlist_point_in_time(stats, t=T_PAST, age_floor_days=180, volume_floor_usdt=15_000_000)
+        assert result.trading == () and result.explore == ("BTCUSDT",)

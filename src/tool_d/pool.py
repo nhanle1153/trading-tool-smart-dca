@@ -26,6 +26,10 @@ class SymbolStat:
     symbol: str
     onboard_date: datetime
     quote_volume_24h: float
+    # H1-D (TD-0096, DR-D1-01) — mốc huỷ niêm yết THẬT, đo được từ
+    # data.binance.vision cho mã không còn trong exchangeInfo hiện tại.
+    # `None` = còn đang giao dịch (hoặc chưa biết mốc huỷ).
+    delisted_at: datetime | None = None
 
 
 @dataclass(frozen=True)
@@ -82,3 +86,32 @@ def compute_pool(
         (trading if passes else explore).append(stat.symbol)
 
     return PoolResult(trading=tuple(sorted(trading)), explore=tuple(sorted(explore)))
+
+
+def pairlist_point_in_time(
+    stats: list[SymbolStat],
+    *,
+    t: datetime,
+    age_floor_days: int,
+    volume_floor_usdt: float,
+) -> PoolResult:
+    """H1-D (TD-0096) — pool hợp lệ tại một thời điểm `t` trong QUÁ KHỨ,
+    không lệch sống sót (survivorship bias).
+
+    Khác `compute_pool()` (chỉ tính đúng cho "bây giờ", dùng danh sách
+    mã đang TRADING của `exchangeInfo` hiện tại): mã đã huỷ niêm yết
+    TRƯỚC `t` phải KHÔNG có mặt (đã rời sàn, không thể giao dịch tại t),
+    và mã CHƯA lên sàn tại `t` cũng KHÔNG có mặt (đã có ở `compute_pool`
+    qua điều kiện tuổi, nhưng lọc thẳng ở đây để không phụ thuộc dấu của
+    `age_days`). Không lọc hai trường hợp này → pool tại quá khứ sẽ
+    "sạch" hơn thực tế, đúng chiều lệch mà DR-D1-01 đo được (219 mã).
+
+    🔴 `stat.quote_volume_24h` PHẢI là volume TẠI thời điểm `t` (người
+    gọi tự cung cấp từ dữ liệu lịch sử) — hàm này không tự suy volume.
+    """
+    eligible = [
+        s
+        for s in stats
+        if s.onboard_date <= t and (s.delisted_at is None or s.delisted_at > t)
+    ]
+    return compute_pool(eligible, age_floor_days=age_floor_days, volume_floor_usdt=volume_floor_usdt, now=t)
