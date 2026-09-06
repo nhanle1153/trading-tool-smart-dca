@@ -28,7 +28,7 @@
 |---|---|---|---|---|
 | TD-0001 | `git init`, `.gitignore`, `.gitattributes` (ép LF), cây thư mục | ✅ | — | `git check-attr text -- src/tool_d/x.py` → `text: set` |
 | TD-0002 | Khởi tạo 4 file quy trình: `CLAUDE.md`, `ARCHITECTURE.md`, `back-end-note.md`, `TASKS.md` | ✅ | TD-0001 | 4 file tồn tại; `back-end-note.md` có đủ mục 0–8 |
-| TD-0003 | Tạo repo GitHub **private**, push `main` | 🔓 | TD-0002 | `git remote -v` có origin; `git log origin/main` khớp local |
+| TD-0003 | Tạo repo GitHub **private**, push `main` | ✅ | TD-0002 | `git remote -v` có origin (`github.com/nhanle1153/trading-tool-smart-dca`); `git log origin/main` khớp local — đã push thành công |
 | TD-0004 | `docker/Dockerfile` (base Freqtrade **pin theo digest** + `git` + pytest + `safe.directory`) và `docker-compose.yml` (3 service; **KHÔNG mount `lockbox/data/`** vào `tests`; `TZ=UTC`) | ✅ | TD-0001 | `docker compose run --rm tests python -c "import freqtrade,pytest,yaml;print('ok')"` |
 | TD-0005 | Xác minh `git_sha` lấy được **từ trong container** | ✅ | TD-0004 | `docker compose run --rm tests git rev-parse HEAD` in đúng SHA của host, không phải rỗng |
 | TD-0006 | Quyết định số phận `dashboard-ui/` (project Node có `.git` riêng và có `.env`) — submodule / repo riêng / gộp thẳng vào. Hiện đang bị `.gitignore` chặn | 🔓 | TD-0001 | Chốt xong, `.gitignore` phản ánh đúng quyết định, không còn repo lồng repo |
@@ -44,7 +44,7 @@
 | TD-0013 | `config/tool_d_config.yaml` chép nguyên §6.9.5 + `config/loader.py`. Áp MT-03: `_budget_remaining_B3: null # derived` | ✅ | TD-0004 | `tunable_param_names()` trả về **đúng 12** |
 | TD-0014 | Test **L-Z37** (cấm `*Parameter`, cấm `<Strategy>.json`) và **L-Z39** (cấm env đọc tham số Tầng B/C) | ✅ | TD-0013 | `pytest -k "lz37 or lz39"` xanh |
 | TD-0015 | `measurement/guard.py` — `measurement_guard()` | ✅ | TD-0013 | Tạo `user_data/strategies/Fake.json` **hỏng** → exit **86**, stdout in nội dung, và **file vẫn còn nguyên** |
-| TD-0016 | 8 khung entrypoint E1–E8, mỗi file gọi guard ở dòng đầu `main()` | 🔓 | TD-0015 | `ls entrypoints/*.py` đúng 8 file, không hơn |
+| TD-0016 | 8 khung entrypoint E1–E8, mỗi file gọi guard ở dòng đầu `main()` | 🔒 | TD-0015 | `ls entrypoints/*.py` đúng 8 file, không hơn |
 | TD-0017 | Test **L-Z36** — AST + danh sách đóng | 🔓 | TD-0016 | `pytest -k lz36` xanh; thêm `entrypoints/e9_tmp.py` → test phải **FAIL** (chứng minh test có răng) |
 | TD-0018 | `assert_cache_none()` trong E1 — **từ chối**, không tự chèn | 🔓 | TD-0016 | `python entrypoints/run_backtest.py --timerange X` → exit **87** |
 | TD-0019 | Bộ test grep: **L-Z32** (tên biến đã xoá), **L-Z33** (cấm 15m), **L-Z46** (cấm `profit_ratio` ở tầng đo), **L-Z48c** (cấm nhãn "R" trần) | 🔓 | TD-0016 | `pytest -k "lz32 or lz33 or lz46 or lz48c"` xanh |
@@ -146,3 +146,4 @@
 | TD-0006, TD-0007 | ➕ Thêm mới | — | Hai việc xử lý `dashboard-ui/` và file HTML thiết kế | Hai thứ này xuất hiện trong thư mục project trong lúc khởi tạo repo, do một tiến trình khác ghi vào — không nằm trong phạm vi đã chốt ở Giai đoạn 1 | 06/09/2026 |
 | TD-0001, TD-0002 | ♻️ Sửa đổi | 🔓 | ✅ | Đã hoàn thành trong cùng buổi khởi tạo | 06/09/2026 |
 | TD-0007 | ♻️ Sửa đổi | 🔓 | ✅ | Chủ dự án chọn phương án "chuyển vào docs/" trong 3 phương án đề xuất | 06/09/2026 |
+| TD-0003 | ♻️ Sửa đổi | 🔓 | ✅ | Chủ dự án cung cấp link repo GitHub, đã thêm remote `origin` và push thành công | 06/09/2026 |
