@@ -419,3 +419,29 @@ hiệu/mã) nên độ bao phủ thống kê thấp — không phải bằng ch�
 thấy trong lần thử này". `lookahead-analysis` bản thân công cụ cũng có false positive đã biết (FP-1/2/3,
 §7.2) nên kết quả "No" ở đây không cần đối chiếu thêm gì — nếu có `has_bias=Yes` mới cần bảng quy lớp FP.
 Nên chạy lại khi có nhiều mã/timerange hơn một khi D2 cần con số đáng tin hơn.
+
+## 07/09/2026 — TD-0094: suýt viết cơ chế song song với L-Z55, dừng lại khi phát hiện
+
+Bắt tay viết `enforce_timerange_ceiling()` (kiểm chuỗi `--timerange` yêu cầu so với `t2`) trước khi
+kiểm xem đã có cơ chế nào tương tự chưa. Đọc lại `tests/lock/test_lz55_ctrl_explore_timerange_self_check.py`
+mới phát hiện **đã có sẵn** `assert_dataset_timerange()` (`src/tool_d/ledger/timerange.py`, DR-014
+§2, L-Z55) — đúng cơ chế cần, và ĐÚNG hơn bản đang viết dở: nó kiểm dữ liệu THẬT đã tải
+(`observed_start/end` từ dataframe), không phải chuỗi CLI người dùng gõ — đúng bài học TD-0093 (yêu
+cầu `--timerange` đúng không có nghĩa dữ liệu tải về đúng phạm vi). Xoá file vừa viết, không commit.
+
+Vấn đề thật của L-Z55: viết từ TD-0055 (Khối 5, DR-014), có test khoá đầy đủ, nhưng **chưa từng được
+nối với cấu hình thật** — không nơi nào trong code tạo `DatasetBoundary` từ `tool_d_config.yaml`,
+mọi test đều tự dựng boundary tay. Đây đúng dạng "công cụ tồn tại nhưng không ai gọi" — nguy hiểm
+ngang với không có công cụ, vì tạo cảm giác an toàn giả.
+
+Việc thật đã làm: thêm `tier_c.data_split` (T0-T3, DR-D0PRE-07) vào `tool_d_config.yaml` + hàm
+`dataset_boundaries_from_config()` nối config với `assert_dataset_timerange()`. 4 test mới, gồm tái
+hiện đúng kịch bản TD-0093 (khai WFO, dữ liệu lấn qua LOCKBOX) bị `TimerangeViolationError` bắt.
+
+**Giới hạn thật, ghi rõ thay vì giả vờ xong:** E1/E2/E3 hiện chỉ là khung guard (TD-0016), rơi thẳng
+xuống `NotImplementedError` — CHƯA có bước tải dữ liệu thật để mà gọi self-check sau đó. Nối
+`assert_dataset_timerange()` vào đúng điểm (ngay sau khi dataframe được tải, trước khi đưa vào logic
+backtest/WFO/ablation) là việc của bất kỳ task tương lai nào viết logic đó thật — không đóng giả một
+wiring chưa có chỗ để nối.
+
+Suite Docker: 486 passed.
