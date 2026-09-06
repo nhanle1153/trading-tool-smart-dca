@@ -17,6 +17,12 @@ tham số (canh bởi L-Z36, TD-0017). TD-0071 nối hai chế độ (H17):
                     CHẠM để đánh giá (DR-014 mục 2, MT-02). `write_seal()`
                     tự từ chối nếu file seal đã tồn tại — chỉ chạy được
                     một lần trong đời repo.
+    --backup-to DIR TD-0085 (OQ-08) — sao chép seal + `lockbox/data/` sang
+                    `DIR/lockbox/` NGOÀI git (spec dòng 4002: không có
+                    "lockbox thứ hai" — mất ổ đĩa này là mất vĩnh viễn).
+                    Không ghi sổ truy cập (không phải chạm để đánh giá).
+                    Ghi đè bản backup cũ mỗi lần chạy — backup phản ánh
+                    trạng thái MỚI NHẤT, không phải append-only.
     (mặc định)      chế độ chạm dữ liệu THẬT — TỪ CHỐI vô điều kiện. Việc
                     chạm lockbox để đánh giá là D9 (spec dòng 4493), ngoài
                     phạm vi backlog D0-PRE này; TD-0084 (Khối 8) chỉ NIÊM
@@ -31,7 +37,8 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from tool_d.lockbox.seal import build_seal, verify_all_seals, write_seal
+from tool_d.lockbox.backup import backup_lockbox
+from tool_d.lockbox.seal import build_seal, verify_all_seals, verify_seal, write_seal
 from tool_d.measurement.guard import EXIT_GUARD_BLOCKED, GuardOutcome, measurement_guard
 
 ENTRYPOINT = "E4"
@@ -54,6 +61,7 @@ DATE_RANGE_SEGMENT_1 = {
 EXIT_LOCKBOX_VERIFY_FAILED = 89
 EXIT_LOCKBOX_TOUCH_BLOCKED = 90
 EXIT_LOCKBOX_SEAL_FAILED = 91
+EXIT_LOCKBOX_BACKUP_FAILED = 88  # dải riêng 86-91 đã kín (86 guard, 87 cache, 89/90/91 lockbox) — 88 còn trống, không phải cache_policy
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -72,6 +80,16 @@ def build_parser() -> argparse.ArgumentParser:
         "--seal-initial",
         action="store_true",
         help="TD-0084 — ghi lockbox_seal_1.json lần đầu cho đoạn LOCKBOX (DR-D0PRE-07). Chạy được đúng một lần.",
+    )
+    parser.add_argument(
+        "--backup-to",
+        metavar="DIR",
+        help="TD-0085 (OQ-08) — sao chép lockbox/ (seal + data) sang DIR/lockbox/, ngoài git.",
+    )
+    parser.add_argument(
+        "--verify-backup",
+        metavar="DIR",
+        help="TD-0085 — verify_seal trên bản backup tại DIR/lockbox/ (mô phỏng khôi phục sau mất ổ đĩa).",
     )
     return parser
 
@@ -99,6 +117,35 @@ def _seal_initial() -> int:
     return 0
 
 
+def _backup_to(dest_dir: Path) -> int:
+    try:
+        dest_lockbox = backup_lockbox(source_lockbox_dir=LOCKBOX_DIR, dest_dir=dest_dir)
+    except FileNotFoundError as exc:
+        print(f"🛑 {exc}")
+        return EXIT_LOCKBOX_BACKUP_FAILED
+    print(f"✅ Đã backup {LOCKBOX_DIR} -> {dest_lockbox}")
+    return 0
+
+
+def _verify_backup(dest_dir: Path) -> int:
+    dest_lockbox = dest_dir / LOCKBOX_DIR.name
+    seal_paths = sorted(dest_lockbox.glob("lockbox_seal_*.json"))
+    if not seal_paths:
+        print(f"🛑 Không thấy lockbox_seal_*.json nào ở {dest_lockbox}.")
+        return EXIT_LOCKBOX_BACKUP_FAILED
+    all_errors: list[str] = []
+    for seal_path in seal_paths:
+        errors = verify_seal(seal_path, dest_lockbox / "data" / "futures")
+        all_errors.extend(f"{seal_path.name}: {e}" for e in errors)
+    if all_errors:
+        print(f"🛑 Khôi phục từ {dest_lockbox} KHÔNG khớp seal:")
+        for e in all_errors:
+            print(f"  - {e}")
+        return EXIT_LOCKBOX_BACKUP_FAILED
+    print(f"✅ Khôi phục từ {dest_lockbox} khớp {len(seal_paths)} seal — backup dùng được.")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else list(argv)
     args, _ = build_parser().parse_known_args(argv)
@@ -122,6 +169,12 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.seal_initial:
         return _seal_initial()
+
+    if args.backup_to:
+        return _backup_to(Path(args.backup_to))
+
+    if args.verify_backup:
+        return _verify_backup(Path(args.verify_backup))
 
     print(
         "🛑 TỪ CHỐI: chế độ chạm lockbox THẬT bị khoá tới sau D9 (DR-011, "

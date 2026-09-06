@@ -158,3 +158,32 @@ dịch — EXCLUDE_FROM_TRADING) trước khi niêm phong, tránh lẫn vào sea
 Toàn bộ suite Docker: 342 passed sau khi cập nhật 3 file test theo trạng thái mới (seal thật tồn tại;
 service `tests` che `lockbox/data/` nên `--verify-seal` ở đó PHẢI báo lệch — đúng thiết kế cách ly,
 không phải lỗi; xác nhận PASS thật chỉ làm được qua service `lockbox`).
+
+## 06/09/2026 (khuya, tiếp) — TD-0085: backup lockbox + test khôi phục thật
+
+Chủ dự án chọn nơi lưu: một thư mục khác trên cùng máy (`E:\lockbox-backup-tool-d\`) — nhanh, làm
+ngay được, nhưng chưa chống mất máy vật lý (nâng cấp cloud để sau, ghi ở DR-D0PRE-08 mục 4).
+
+Dựng `src/tool_d/lockbox/backup.py` (sao chép seal + `lockbox/data/`, không sao chép sổ truy cập —
+backup không phải một điểm chạm) + hai cờ CLI mới trên E4: `--backup-to`, `--verify-backup`.
+
+**Chạy backup thật + khôi phục thật một lần (không phải seal giả trong `tmp_path`):**
+1. `--backup-to E:/lockbox-backup-tool-d` → 510 file, 39MB, khớp nguồn.
+2. `--verify-backup` trên bản backup → PASS.
+3. Mô phỏng mất ổ đĩa gốc: copy bản BACKUP sang thư mục tạm hoàn toàn mới, `verify_seal()` độc lập →
+   510/510 khớp, PASS. Xoá thư mục tạm sau khi xác nhận.
+
+**Sự cố kỹ thuật gặp phải (không phải lỗi logic, môi trường Docker-trên-Windows):** thử backup ra
+ngoài bind-mount qua đường dẫn container (`/workspace/../...`) thất bại vì đường dẫn đó nằm ngoài mọi
+volume mount — không map được ra ổ đĩa host. `backup_lockbox()` là I/O file thuần (không cần
+Freqtrade), nên chạy trực tiếp bằng Python host hợp lệ theo đúng phạm vi N7 (N7 chỉ áp cho BẰNG CHỨNG
+đo lường/backtest, không áp cho thao tác vận hành copy file).
+
+**Sự cố dây chuyền khi chạy full suite lần đầu sau TD-0085:** 3 test `periodic_report` fail thoáng qua
+vì `git status --porcelain` (bên trong `get_git_info()`) timeout 10s — do hệ thống đang chạy nhiều
+lệnh Docker liên tiếp (backup, download, nhiều lần `docker compose run`) cùng lúc, không phải do
+lockbox/data (thư mục đó bị volume ẩn danh che trong service `tests`, không hề lớn ra ở đó). Chạy lại
+sạch (không có tải Docker khác chạy song song) → 347/347 passed, hai lần liên tiếp — xác nhận đây là
+nhiễu tải hệ thống, không phải hồi quy thật.
+
+Toàn bộ suite Docker: 347 passed (tăng 5 so với TD-0084 — thêm `test_lockbox_backup.py`).
