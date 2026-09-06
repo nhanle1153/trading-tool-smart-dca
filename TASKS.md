@@ -86,7 +86,7 @@
 | TD-0052 | Test **L-Z52** — hết ngân sách thì từ chối, chưa chạm dữ liệu | ✅ | TD-0051 | `pytest -k lz52` xanh; spy khẳng định **0 lần** đọc `user_data/data` |
 | TD-0053 | Test **L-Z53** — giết tiến trình sau khi có kết quả fold đầu → CONSUMED, hoàn trả phải RAISE | ✅ | TD-0051 | `docker compose run --rm tests -k lz53` xanh |
 | TD-0054 | Test **L-Z54** — 4 dòng bảng DR-014 + trần trả lại 3 lần | ✅ | TD-0051 | `pytest -k lz54` — 5 ca xanh |
-| TD-0055 | `assert_dataset_timerange()` + test **L-Z55** — bộ chạy tự kiểm, không nhận lời khai | 🔓 | TD-0051 | `pytest -k lz55` xanh |
+| TD-0055 | `assert_dataset_timerange()` + test **L-Z55** — bộ chạy tự kiểm, không nhận lời khai | 🔒 | TD-0051 | `pytest -k lz55` xanh |
 | TD-0056 | E6 `trial_ledger_audit.py` **đầy đủ** (H16) + test L-Z10/11/12/15/16/17 | 🔓 | TD-0051 | Sổ rỗng → exit 0, in `"đã audit N/M (X đạt, Y chưa đạt, Z chưa đo được)"`; sổ bẩn → exit≠0 |
 | TD-0057 | Nối E6 vào **đầu** E1/E2/E3 (chạy trước mỗi lần backtest) | 🔓 | TD-0056 | Test AST: `run_audit` được gọi trong `main()` của E1–E3 |
 
