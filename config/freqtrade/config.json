@@ -1,0 +1,124 @@
+{
+  "$schema": "https://schema.freqtrade.io/schema.json",
+  "_comment_scope": "TD-0026, D0-PRE. Chưa có strategy code (Khối tương ứng D1+) — file này chỉ khoá đúng các trường mà §0c.3/§0c.4/§3.5 bắt buộc cho MỌI strategy sẽ viết sau. Đối chiếu bằng L-Z24 (TD-0027).",
+
+  "trading_mode": "futures",
+  "margin_mode": "isolated",
+  "_comment_exchange_mode": "§0c.1 — Binance USDⓈ-M, isolated margin.",
+
+  "stake_currency": "USDT",
+  "stake_amount": 10,
+  "_comment_stake_amount": "PLACEHOLDER kỹ thuật, không phải quyết định vốn — Freqtrade không cho cả stake_amount và max_open_trades cùng 'unlimited'. Định cỡ THẬT theo rho×E_D (D0.1) qua custom_stake_amount() (chưa viết, D1+) sẽ GHI ĐÈ số này ở mọi lệnh thật; giá trị 10 ở đây không bao giờ thật sự được dùng.",
+
+  "max_open_trades": 100,
+  "_comment_max_open_trades": "Trần AN TOÀN phía Freqtrade = pool_size_target (config/tool_d_config.yaml tier_a, 100 mã) — không thể có nhiều vị thế hơn số mã trong pool. Số vị thế đồng thời THẬT (6-20 theo spec) do kiểm tra kết nạp động §6.8f quyết định trong code (chưa viết, D1+) và LUÔN chặt hơn trần này — spec không đặt hằng số riêng cho trường 'max_open_trades' (không tìm thấy trong toàn bộ spec).",
+
+  "dry_run": true,
+  "dry_run_wallet": 1000,
+  "tradable_balance_ratio": 0.99,
+  "fiat_display_currency": "USD",
+
+  "timeframe": "1h",
+  "_comment_timeframe": "L-Z33 — 1H chính. 4H/1D informative ghép bằng merge_informative_pair (code chiến lược, D1+); 5m chỉ cho timeframe_detail của backtest engine, không phải trường này.",
+
+  "cancel_open_orders_on_exit": false,
+
+  "trailing_stop": false,
+  "use_exit_signal": true,
+  "position_adjustment_enable": true,
+  "_comment_l_z24": "Bốn cờ trên + freqai.enabled + edge.enabled + protections=[] là toàn bộ nội dung L-Z24 (§0c.4).",
+
+  "minimal_roi": {
+    "0": 10
+  },
+  "_comment_minimal_roi": "§0c.3 — {\"0\": 10} = tắt trên thực tế (10 = 1000% lợi nhuận, không bao giờ chạm). TP thật do §5.1 (custom_exit, D1+) quyết định.",
+
+  "stoploss": -0.99,
+  "_comment_stoploss": "§0c.3 — 'lưới cuối' rất rộng, không phải SL thật. SL thật do custom_stoploss neo zone (D0.2, D1+).",
+
+  "order_types": {
+    "entry": "limit",
+    "exit": "limit",
+    "emergency_exit": "market",
+    "force_exit": "market",
+    "force_entry": "market",
+    "stoploss": "market",
+    "stoploss_on_exchange": false,
+    "stoploss_on_exchange_interval": 60
+  },
+  "_comment_order_types": "entry='limit' bắt buộc theo §3.5 dòng 1191. stoploss_on_exchange=false vì custom_stoploss (§0c.1) xử lý nội bộ, không đẩy SL lên sàn. Các trường còn lại không được spec quy định — giữ mặc định freqtrade (config_full.example.json trong image).",
+
+  "order_time_in_force": {
+    "entry": "PO",
+    "exit": "GTC"
+  },
+  "_comment_order_time_in_force": "entry='PO' bắt buộc theo §3.5 dòng 1192 — post-only THẬT trên Binance Futures ('limit_maker' KHÔNG phải giá trị hợp lệ của order_types, đây là thuộc tính CỦA SÀN áp qua time-in-force). exit giữ mặc định freqtrade (không được spec quy định).",
+
+  "unfilledtimeout": {
+    "entry": 180,
+    "exit": 10,
+    "exit_timeout_count": 0,
+    "unit": "minutes"
+  },
+  "_comment_unfilledtimeout": "entry=180 phút = 3 nến 1H, bắt buộc theo §3.5 dòng 1198 (khớp 'tối đa 3 nến chờ' của §3.3b, tuổi thọ lệnh tranche 1). unit='minutes' bắt buộc dòng 1200. exit giữ mặc định freqtrade.",
+
+  "entry_pricing": {
+    "price_side": "same",
+    "use_order_book": true,
+    "order_book_top": 1,
+    "price_last_balance": 0.0,
+    "check_depth_of_market": {
+      "enabled": false,
+      "bids_to_ask_delta": 1
+    }
+  },
+  "_comment_entry_pricing": "price_side='same' bắt buộc theo §3.5 dòng 1197 ('other' là cho taker). Giá THẬT do custom_entry_price() trả p1_order/p2/p3 (D1+) — các trường use_order_book/... giữ mặc định freqtrade.",
+
+  "exit_pricing": {
+    "price_side": "same",
+    "use_order_book": true,
+    "order_book_top": 1
+  },
+
+  "exchange": {
+    "name": "binance",
+    "api_key": "",
+    "secret": "",
+    "ccxt_config": {
+      "options": {
+        "defaultType": "future"
+      }
+    },
+    "ccxt_async_config": {},
+    "pair_whitelist": [
+      "BTC/USDT:USDT",
+      "ETH/USDT:USDT"
+    ],
+    "pair_blacklist": []
+  },
+  "_comment_exchange": "api_key/secret PHẢI rỗng trong file đã commit — bí mật thật nạp qua env/secrets riêng lúc chạy (KHÔNG BAO GIỜ commit key thật vào đây, xem CLAUDE.md global mục Bí mật). pair_whitelist chỉ 2 mã PLACEHOLDER để show-config chạy được — pool ~100 mã THẬT do H1-D point-in-time viết riêng (§0.3c, chưa viết, N2: KHÔNG chạm dữ liệu trước D0-PRE xong), không dùng VolumePairList mặc định.",
+
+  "pairlists": [
+    {
+      "method": "StaticPairList"
+    }
+  ],
+  "_comment_pairlists": "StaticPairList là placeholder D0-PRE. Pool thật thay bằng pairlist provider H1-D point-in-time viết riêng khi tới Khối tương ứng — không dùng VolumePairList (có lookahead, §0.3c).",
+
+  "edge": {
+    "enabled": false
+  },
+  "_comment_protections_edge_freqai": "Ba module cấm/có điều kiện theo §0c.2/§0c.3. `edge.enabled=false` đặt tường minh ở đây. `freqai` KHÔNG đặt key ở đây dù giá trị mong muốn là 'tắt': schema của freqtrade 2026.8 (ảnh Docker đang dùng) đòi đủ bộ khoá bắt buộc (feature_parameters, data_split_parameters, ...) MỘT KHI khoá 'freqai' xuất hiện trong config, bất kể enabled=false — thêm khoá rỗng để 'khai báo tắt' lại làm show-config lỗi. Freqtrade coi freqai là tắt theo mặc định khi vắng mặt hoàn toàn, đúng ý muốn của §0c.2 (CẤM TUYỆT ĐỐI). TD-0027/L-Z24 kiểm 'freqai vắng mặt HOẶC enabled=false', không chỉ đúng một dạng. `protections` KHÔNG đặt ở đây: freqtrade 2026.8 đã DEPRECATE khoá 'protections' trong config.json — chặn show-config với lỗi nếu còn khoá này. Protections giờ khai báo ở THUỘC TÍNH CLASS của strategy (D1+, chưa viết); quyết định 'dùng logic Tool D, tắt protections' của §0c.3 áp dụng ở tầng đó khi viết code chiến lược.",
+
+  "_comment_telegram_api_server": "Không khai báo 'telegram' / 'api_server' — cả hai đều đòi khoá con bắt buộc (token/chat_id, jwt_secret_key độ dài tối thiểu 32) NGAY CẢ KHI enabled=false trong schema freqtrade 2026.8; vắng mặt hoàn toàn = tắt theo mặc định, đúng ý muốn (§0c.1: Telegram/WebUI CHỈ theo dõi, không dùng ở D0-PRE) mà không phải bịa secret giả. Bật thật (nếu cần theo dõi) là quyết định vận hành riêng khi tới lúc, nạp secret qua env, không commit vào đây.",
+
+  "bot_name": "tool_d",
+  "initial_state": "stopped",
+  "_comment_initial_state": "'stopped' — bot không tự chạy khi khởi động container; đúng tinh thần N2 (không chạm dữ liệu/lệnh cho tới khi được kích hoạt tường minh).",
+
+  "force_entry_enable": false,
+
+  "internals": {
+    "process_throttle_secs": 5
+  }
+}
