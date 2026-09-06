@@ -103,7 +103,9 @@ tool-d-smart-dca/                  ← git root = E:\Trading Tool_Smart DCA
 ├─ docs/
 │  ├─ research-log.md              ← append-only (§0d.7)
 │  ├─ freqtrade-source-read.md     ← đọc mã nguồn Freqtrade cho D2a/D2b/D6/D7
-│  └─ decisions/DR-D0PRE-*.md
+│  ├─ decisions/DR-D0PRE-*.md
+│  └─ tool-d-dashboard-thiet-ke.html ← ảnh chụp giao diện Tool A, dùng tham
+│                                      chiếu khi code UI dashboard (TD-0007)
 ├─ config/
 │  ├─ tool_d_config.yaml           ← §6.9.5 — NGUỒN SỰ THẬT tham số
 │  ├─ dof_inventory.yaml           ← nuôi L-Z29

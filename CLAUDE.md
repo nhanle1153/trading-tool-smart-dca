@@ -162,20 +162,21 @@ Quy trình gốc viết cho web app trên Render. Tool D là bot chạy local. �
 
 **Cập nhật lần cuối: 06/09/2026**
 
-**Đang ở:** kết thúc **Giai đoạn 2** của quy trình vibe-code. Chưa có một dòng mã nguồn nào —
-đúng quy tắc gốc số 1 (chỉ code khi người dùng gõ "bắt đầu code").
+**Đang ở:** **Giai đoạn 3** của quy trình vibe-code (đã có lệnh "bắt đầu code"). Đang làm
+**Khối 1 — PHẦN 0d, tầng chống nhiễm phép đo** (phải xong trước mọi thứ khác).
 
 **Đã xong:**
-- Repo git local (`main`, 1 commit). `.gitignore` cố ý **không** ẩn `user_data/strategies/*.json`.
+- Repo git local (`main`). `.gitignore` cố ý **không** ẩn `user_data/strategies/*.json`.
 - 4 file quy trình: `CLAUDE.md`, `back-end-note.md`, `ARCHITECTURE.md`, `TASKS.md`.
 - `docs/research-log.md` với 2 rủi ro tồn dư đã ghi nhận.
 - Chốt 7 quyết định nền tảng; ghi nhận 8 Open Questions và 7 Mâu thuẫn (5 đã chốt cách giải).
+- **TD-0004, TD-0005** — Docker (`docker/Dockerfile` + `docker-compose.yml`), xác minh `git_sha` lấy từ trong container.
+- **TD-0007** — file tham chiếu thiết kế `tool-d-dashboard-thiet-ke.html` đã chuyển vào `docs/`, lý do ghi ở `ARCHITECTURE.md` mục 3.
+- **TD-0010→0014** — bắt đầu tầng chống nhiễm phép đo: `tri_state`, `provenance`, config loader (đã commit).
 
 **Còn thiếu / bước tiếp theo:**
 1. **TD-0003** — tạo repo GitHub private và push (chờ chủ dự án đồng ý).
-2. **TD-0006** — quyết định số phận `dashboard-ui/` và `tool-d-dashboard-thiet-ke.html`
-   (hiện đang để ngoài repo, chưa theo dõi).
-3. **Gõ "bắt đầu code"** → vào Giai đoạn 3, bắt đầu từ **TD-0004** (Docker) rồi **Khối 1**
-   (tầng chống nhiễm phép đo — phải xong trước mọi thứ khác).
+2. **TD-0006** — quyết định số phận `dashboard-ui/` (project Node có `.git`/`.env` riêng): submodule / repo riêng / gộp thẳng — vẫn 🔓.
+3. Có file chưa commit đang nằm trong working tree (`src/tool_d/measurement/guard.py`, `tests/unit/test_guard.py`, `user_data/strategies/Fake.json`) — cần rà lại trước khi tiếp tục Khối 1, đặc biệt `Fake.json` (đối chiếu N3 — tránh trùng với bẫy file tham số ẩn của Freqtrade).
 4. Ba con số chặn tiến độ cần chủ dự án quyết khi tới lượt: **OQ-01** (ngưỡng DSR — blocker B6),
    **OQ-02** (vốn `E_D`), **OQ-03** (thang drawdown).
