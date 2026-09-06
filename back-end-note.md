@@ -49,7 +49,7 @@
 
 - [x] **Nhiều loại người dùng/vai trò?** → **KHÔNG** (1 người). Không dùng `form-phan-quyen.md`.
 - [x] **Pipeline đa-agent + tối ưu KPI (Phụ lục A)?** → **KHÔNG.** Ba điều kiện kích hoạt đều chưa đúng. Không dùng `form-sow-kpi.md`.
-- [x] **Gate G1–G4 của `api-integration-rules.md`?** → 🔴 **CÓ** (G1, G2, G4 đều CÓ: gọi REST/WebSocket Binance; dùng SDK ccxt qua Freqtrade; poll dữ liệu OHLCV/OI). → **Bắt buộc** hoàn thành Mục 2–4 của module **trước khi** viết dòng code gọi mạng đầu tiên, và dùng thêm `provider-map.md`. Xem `TASKS.md` khối 8.
+- [x] **Gate G1–G4 của `api-integration-rules.md`?** → 🔴 **CÓ** (G1, G2, G4 đều CÓ: gọi REST/WebSocket Binance; dùng SDK ccxt qua Freqtrade; poll dữ liệu OHLCV/OI). → ✅ **Đã hoàn thành** (TD-0079, 06/09/2026): `api-integration-rules.md` Mục 4.1–4.4 điền đủ 4 bảng (dịch vụ, endpoint, mã lỗi, ngưỡng) cho cả nhóm đọc dữ liệu (D0-PRE) lẫn nhóm đặt lệnh (D3.5+); `provider-map.md` điền cho Binance USDⓈ-M Futures (không có provider dự phòng — lý do ghi trong file, spec gắn chặt với hành vi riêng của Binance). Bảng nghiệm thu R1-R12 (Mục 5) chưa chạy — chờ tới khi có `api_client` thật gọi mạng lần đầu (Khối 8).
 
 ---
 
@@ -75,6 +75,7 @@ Hợp đồng dữ liệu tương ứng nằm ở §8 của spec (Decision Log) 
 | OQ-06 | `v_min` (§3.3b) — hiện `null` | Không được điền ở D0-PRE (phải calibrate bằng dữ liệu ở B1), nhưng L-Z15 đòi nó **có trạng thái**, không được "im lặng" → ghi `TUNED_PENDING` | 🟡 |
 | OQ-07 | Tiêu chí chọn ý tưởng của quý (§9c.7.4) | Phải commit **trước khi** mở Idea Queue — mở trước là điều cấm (spec dòng 4935) | 🟡 |
 | OQ-08 | Backup lockbox ra ngoài git **đã test khôi phục** — để ở đâu, chu kỳ nào | Mất ổ đĩa = mất khả năng xác nhận cuối cùng, và **không có lockbox thứ hai** (dòng 4002) | 🟡 Phải giải quyết trước D9.5 |
+| OQ-09 | Ngưỡng Circuit Breaker cho Risk Supervisor (§6.6): số lỗi liên tiếp kích hoạt + backoff khởi điểm/tối đa — `api-integration-rules.md` (TD-0079) tạm đề xuất 5 lỗi / 1s→60s, spec KHÔNG có số cụ thể | Không chặn D0-PRE (chi tiết triển khai R3, không phải tham số tín hiệu — không tính vào N_ĐĂNG_KÝ theo Nguyên tắc 9) nhưng cần chốt trước khi implement Risk Supervisor thật (D1) | 🟡 Chốt trước D1 |
 
 ---
 

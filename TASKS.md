@@ -113,7 +113,7 @@
 
 | Mã | Tên việc | TT | Phụ thuộc | Verify |
 |---|---|---|---|---|
-| TD-0079 | Hoàn thành Mục 2–4 của `api-integration-rules.md` (R1–R12) + `provider-map.md` cho Binance. **Bắt buộc trước dòng code gọi mạng đầu tiên** | 🔒 | TD-0020 | Bản điền ở gốc repo, Mục 4 đủ 4 bảng (dịch vụ, endpoint, mã lỗi, ngưỡng) |
+| TD-0079 | Hoàn thành Mục 2–4 của `api-integration-rules.md` (R1–R12) + `provider-map.md` cho Binance. **Bắt buộc trước dòng code gọi mạng đầu tiên** | ✅ | TD-0020 | Bản điền ở gốc repo, Mục 4 đủ 4 bảng (dịch vụ, endpoint, mã lỗi, ngưỡng) |
 | TD-0080 | E8 chế độ `--probe-coverage`: verify độ dài lịch sử **Open Interest** Binance thật sự trả về | 🔓 | TD-0079 | In số ngày thật; nếu chỉ ~30 ngày → ghi research-log, ảnh hưởng thiết kế chỉ báo |
 | TD-0081 | Ước lượng **số lệnh/năm** bằng tính tay. **< 150 → hỏng từ thiết kế, xử lý ngay** | 🔓 | TD-0083 | `docs/estimate-trades-per-year.md` có phép tính và kết luận nhị phân |
 | TD-0082 | Kiểm **min notional** từng cặp vs notional tranche 1 nhỏ nhất | 🔓 | TD-0043, TD-0079 | Bảng đối chiếu; có vi phạm → nâng `E_D` hoặc đặt sàn, ghi DR |
