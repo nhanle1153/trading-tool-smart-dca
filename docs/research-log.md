@@ -210,3 +210,36 @@ entrypoint nào; nối vào E1/E2/E3/E7/E8 là việc của D1, ngoài phạm vi
 
 Toàn bộ suite Docker cuối cùng của D0-PRE: **352 passed**, hai lần chạy liên tiếp không có test nào
 gián đoạn (loại trừ hẳn nghi ngờ nhiễu tải hệ thống ở lần chạy trước, TD-0085).
+
+## 07/09/2026 — TD-0092 (H19 phần 2): độ phủ dữ liệu + cấm suy nguyên nhân khoảng trống
+
+Quy tắc LD-28 là quy tắc về **hành vi con người** ("cấm quy một khoảng trống cho *sàn thiếu dữ liệu*
+khi chưa hỏi lại sàn" — Tool A mất nhiều ngày vì đúng điều này). Viết vào tài liệu thì sẽ bị vi phạm
+đúng lúc đang vội, nên cưỡng chế bằng **kiểu dữ liệu**, cùng thủ pháp `Measured` cấm bịa số: `Gap`
+không có trường nào chứa được phỏng đoán; `Coverage.gap_cause` luôn khởi tạo `pending`; chỉ hai hàm
+quy trách nhiệm đặt được nó, và cả hai đòi dữ liệu nguồn thật (`onboardDate` của sàn, hoặc hỏi lại
+sàn đúng cửa sổ trống).
+
+**Ba lỗi chỉ lộ ra khi chạy trên dữ liệu thật, test tự dựng không bắt được:**
+
+1. **Sai đơn vị thời gian 10⁶ lần.** Cột `date` của Freqtrade là `datetime64[ms]`, `astype("int64")`
+   đã ra mili-giây, nhưng code chia thêm 1e6 như thể nó là nano-giây. `backfill_guard` (TD-0091)
+   cũng dính, nhưng vô hại vì sai nhất quán ở cả hai vế phép so — đúng loại lỗi ngủ yên tới khi có
+   file khác đơn vị. Sửa bằng `timestamps_ms()` dùng chung, chuẩn hoá về ms trước khi đổi số nguyên.
+2. **Báo động giả trên 102 file lành lặn.** `*-1h-funding_rate.feather` mang nhãn `1h` trong TÊN,
+   nhưng sàn trả funding mỗi 8 giờ → đo theo bước 1h ra "thiếu 87,5%". Một công cụ cảnh báo sai 102
+   lần thì lần thứ 103 (đúng) cũng bị bỏ qua — đúng cơ chế làm một lớp gác trở thành vô dụng. Loại
+   nhóm này khỏi bảng tính-theo-khung kèm giải thích, KHÔNG suy nhịp từ chính dữ liệu (suy ra thì một
+   chuỗi mất đều đặn nửa số điểm vẫn "đủ 100%" — chỉ số tự khen mình).
+3. `Measured.render()` in `GapCause.LOI_CUA_TA` thay vì câu chữ người đọc được.
+
+**Kết quả đo thật trên 102 mã pool, khung 1h, khoảng [T2,T3] của lockbox:** 101 file đủ, **1 file
+thiếu — TRIAUSDT, 204 nến** (29/01 → 06/02/2026). Đối chiếu `onboardDate` thật từ `exchangeInfo`:
+mã lên sàn **06/02/2026 12:15 UTC**, tức khoảng trống kết thúc ngay trước ngày niêm yết → kết luận
+"chưa niêm yết tại thời điểm đó", **từ metadata sàn, không phải suy đoán**.
+
+**Cả hai đường `--probe-gap` đã chạy thật với sàn:** cửa sổ trước niêm yết → sàn trả 0/169 nến →
+"sàn thật sự không có"; cửa sổ bình thường (01→05/03) → sàn trả 97/97 nến → nếu ta thiếu cửa sổ đó
+thì kết luận là "🔴 lỗi ở phía ta". Đây chính là phép kiểm Tool A đã bỏ qua, và nó mất 2 giây.
+
+Suite Docker: 414 passed.
