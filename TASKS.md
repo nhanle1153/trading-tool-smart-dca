@@ -31,7 +31,7 @@
 | TD-0003 | Tạo repo GitHub **private**, push `main` | ✅ | TD-0002 | `git remote -v` có origin (`github.com/nhanle1153/trading-tool-smart-dca`); `git log origin/main` khớp local — đã push thành công |
 | TD-0004 | `docker/Dockerfile` (base Freqtrade **pin theo digest** + `git` + pytest + `safe.directory`) và `docker-compose.yml` (3 service; **KHÔNG mount `lockbox/data/`** vào `tests`; `TZ=UTC`) | ✅ | TD-0001 | `docker compose run --rm tests python -c "import freqtrade,pytest,yaml;print('ok')"` |
 | TD-0005 | Xác minh `git_sha` lấy được **từ trong container** | ✅ | TD-0004 | `docker compose run --rm tests git rev-parse HEAD` in đúng SHA của host, không phải rỗng |
-| TD-0006 | Quyết định số phận `dashboard-ui/` (project Node có `.git` riêng và có `.env`) — submodule / repo riêng / gộp thẳng vào. Hiện đang bị `.gitignore` chặn | 🔓 | TD-0001 | Chốt xong, `.gitignore` phản ánh đúng quyết định, không còn repo lồng repo |
+| TD-0006 | Quyết định số phận `dashboard-ui/` (project Node có `.git` riêng và có `.env`) — submodule / repo riêng / gộp thẳng vào. Hiện đang bị `.gitignore` chặn | ✅ | TD-0001 | Chủ dự án chọn "repo riêng" (lý do: backend D0-PRE có spec kiến trúc khoá cứng + Docker context riêng, không muốn ~1500 gói npm của front-end lẫn vào). `dashboard-ui/` giữ nguyên `.git` riêng, tiếp tục bị `.gitignore` chặn khỏi repo backend (đúng như hiện trạng) — cần đẩy lên 1 repo GitHub riêng (chờ chủ dự án tạo repo trống + cấp link, theo đúng cách đã làm ở TD-0003) |
 | TD-0007 | Xác nhận `tool-d-dashboard-thiet-ke.html` (651KB, ảnh chụp giao diện Tool A dùng làm tham chiếu) có nên nằm trong repo này không | ✅ | TD-0001 | Đã chuyển sang `docs/tool-d-dashboard-thiet-ke.html`, lý do ghi trong `ARCHITECTURE.md` mục 3, `.dockerignore` đã hết trùng lặp |
 
 ### Khối 1 — PHẦN 0d, tầng chống nhiễm phép đo (LÀM TRƯỚC MỌI THỨ)
@@ -48,7 +48,7 @@
 | TD-0017 | Test **L-Z36** — AST + danh sách đóng | ✅ | TD-0016 | `pytest -k lz36` xanh (14 ca, gồm 5 ca "răng"); thêm `entrypoints/e9_tmp.py` thật vào thư mục → FAIL đúng như spec, đã xoá; `pytest` toàn bộ 82 passed trong Docker |
 | TD-0018 | `assert_cache_none()` trong E1 — **từ chối**, không tự chèn | ✅ | TD-0016 | `python entrypoints/run_backtest.py --timerange X` → exit **87** — đã xác nhận trong Docker (service `freqtrade`); `--cache none` rơi xuống `NotImplementedError` (Khối 2/3, chưa phải lỗi); `pytest -k run_backtest_cache` 3 ca xanh |
 | TD-0019 | Bộ test grep: **L-Z32** (tên biến đã xoá), **L-Z33** (cấm 15m), **L-Z46** (cấm `profit_ratio` ở tầng đo), **L-Z48c** (cấm nhãn "R" trần) | ✅ | TD-0016 | `pytest -k "lz32 or lz33 or lz46 or lz48c"` xanh (17 ca, gồm 8 ca "răng") trong Docker; toàn bộ suite 99 passed |
-| TD-0020 | 🚪 **CỔNG KHỐI 1** — chạy toàn bộ L-Z36→L-Z41 trong Docker | 🔓 | TD-0010…0019 | `docker compose run --rm tests tests/lock -k "lz3[6-9] or lz4[01]"` → 0 failed. Gắn tag `d0pre-0d-live` |
+| TD-0020 | 🚪 **CỔNG KHỐI 1** — chạy toàn bộ L-Z36→L-Z41 trong Docker | 🔒 | TD-0010…0019 | `docker compose run --rm tests tests/lock -k "lz3[6-9] or lz4[01]"` → 0 failed. Gắn tag `d0pre-0d-live` |
 
 ### Khối 2 — Đơn vị đo + cấu hình Freqtrade
 
@@ -148,3 +148,4 @@
 | TD-0007 | ♻️ Sửa đổi | 🔓 | ✅ | Chủ dự án chọn phương án "chuyển vào docs/" trong 3 phương án đề xuất | 06/09/2026 |
 | TD-0003 | ♻️ Sửa đổi | 🔓 | ✅ | Chủ dự án cung cấp link repo GitHub, đã thêm remote `origin` và push thành công | 06/09/2026 |
 | TD-0018 | ♻️ Sửa đổi | 🔓 | ✅ | Nối `assert_cache_none()` (đã có sẵn ở `gates/cache_policy.py`) vào `main()` của E1 ngay sau `measurement_guard()`; thêm `tests/unit/test_run_backtest_cache.py` (3 ca, gọi E1 qua subprocess vì `entrypoints/` không nằm trên `pythonpath`) | 06/09/2026 |
+| TD-0006 | ♻️ Sửa đổi | 🔓 | ✅ | Chủ dự án chọn phương án "repo riêng" trong 3 phương án đề xuất (submodule / repo riêng / gộp thẳng) — lúc này `dashboard-ui/` đã có nội dung thật (8 trang dashboard Tool A/D dựng trên horizon-ui-chakra), không còn là thư mục rỗng. Đã gỡ remote `origin` cũ (trỏ về repo gốc `horizon-ui/horizon-ui-chakra`, nguy cơ push nhầm) và commit local trong `dashboard-ui/`; còn thiếu bước chủ dự án tạo repo GitHub trống + cấp link để đẩy lên | 06/09/2026 |
