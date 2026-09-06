@@ -155,3 +155,27 @@ Quy trình gốc viết cho web app trên Render. Tool D là bot chạy local. �
 | Rollback về image tag cũ | ✅ giữ, nhưng phải qua DR-012 Hạng 1 |
 
 **Giai đoạn 4 không áp cho D0-PRE.**
+
+---
+
+## TRẠNG THÁI HIỆN TẠI
+
+**Cập nhật lần cuối: 06/09/2026**
+
+**Đang ở:** kết thúc **Giai đoạn 2** của quy trình vibe-code. Chưa có một dòng mã nguồn nào —
+đúng quy tắc gốc số 1 (chỉ code khi người dùng gõ "bắt đầu code").
+
+**Đã xong:**
+- Repo git local (`main`, 1 commit). `.gitignore` cố ý **không** ẩn `user_data/strategies/*.json`.
+- 4 file quy trình: `CLAUDE.md`, `back-end-note.md`, `ARCHITECTURE.md`, `TASKS.md`.
+- `docs/research-log.md` với 2 rủi ro tồn dư đã ghi nhận.
+- Chốt 7 quyết định nền tảng; ghi nhận 8 Open Questions và 7 Mâu thuẫn (5 đã chốt cách giải).
+
+**Còn thiếu / bước tiếp theo:**
+1. **TD-0003** — tạo repo GitHub private và push (chờ chủ dự án đồng ý).
+2. **TD-0006** — quyết định số phận `dashboard-ui/` và `tool-d-dashboard-thiet-ke.html`
+   (hiện đang để ngoài repo, chưa theo dõi).
+3. **Gõ "bắt đầu code"** → vào Giai đoạn 3, bắt đầu từ **TD-0004** (Docker) rồi **Khối 1**
+   (tầng chống nhiễm phép đo — phải xong trước mọi thứ khác).
+4. Ba con số chặn tiến độ cần chủ dự án quyết khi tới lượt: **OQ-01** (ngưỡng DSR — blocker B6),
+   **OQ-02** (vốn `E_D`), **OQ-03** (thang drawdown).
