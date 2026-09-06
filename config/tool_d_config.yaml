@@ -13,7 +13,7 @@
 # ✅ Tầng A (E_D, L_exchange, rho_pct, daily_loss_budget_pct) ĐÃ CHỐT bằng
 #    DR-D0PRE-06 (TD-0043, 06/09/2026) — trùng giá trị minh hoạ của spec
 #    nhưng giờ là quyết định của chủ dự án, không còn là ví dụ.
-#      - dd_ladder_pct (thang drawdown 5/8/20%)            -> OQ-03 (TD-0042)
+# ✅ Tầng C dd_ladder_pct (5/8/20%) ĐÃ CHỐT bằng DR-D0PRE-04 (TD-0042) — Hạng 0.
 
 tier_a: # chỉnh tự do, 0 trial
   E_D: 500 # USDT — KHÔNG phải số dư ví. ✅ DR-D0PRE-06 (TD-0043)
@@ -96,7 +96,7 @@ tier_c: # 🔒 KHOÁ — KHÔNG có ô nhập, ghi ở đây
   dg7_enabled: true # bật/tắt: CẤM   🆕 v6
   dg8_enabled: true # bật/tắt: CẤM
   k_swing_confirm: 3 # 🆕 v6 — CHUYỂN TỪ tier_b/frozen
-  dd_ladder_pct: { soft: 5, halt: 8, abort: 20 } # 🆕 v6 — §12c.5 [CHỜ DR — OQ-03]
+  dd_ladder_pct: { soft: 5, halt: 8, abort: 20 } # 🆕 v6 — §12c.5 ✅ DR-D0PRE-04 (TD-0042), Hạng 0. halt == tier_a.daily_loss_budget_pct
   api_calls_per_min: 30 # 🆕 v7 — §6.6(3), LD-23. Điền theo nhịp
     # thật: 100 mã / 60 phút + lề. KHÔNG polling.
   entry_order_ttl_bars_1h: 3 # 🆕 v7 — §3.5, = §3.3b chờ
