@@ -317,3 +317,25 @@ cho biết khoảng tồn tại, không cho volume lịch sử trực tiếp (vi
 
 Đây không phải "chạm dữ liệu" theo MT-02 — chỉ là dò xem symbol nào từng tồn tại và khi nào, không
 đánh giá cấu hình chiến lược nào trên CALIB/WFO/LOCKBOX.
+
+## 07/09/2026 — TD-0096: pairlist_point_in_time(t) — pool tại quá khứ, chống lệch sống sót
+
+Mở rộng `SymbolStat` (`src/tool_d/pool.py`) thêm `delisted_at: datetime | None`, và thêm
+`pairlist_point_in_time(stats, *, t, age_floor_days, volume_floor_usdt)`: loại mã chưa lên sàn tại
+`t` (`onboard_date > t`) và mã đã huỷ niêm yết trước `t` (`delisted_at <= t`, dữ liệu thật đến từ
+DR-D1-01) — cả hai trường hợp là KHÔNG TỒN TẠI tại `t`, không phải "trượt tiêu chí", nên bị loại
+khỏi cả `trading` lẫn `explore`. Sau đó tái dùng `compute_pool()` cho hai tiêu chí thật (tuổi,
+volume) tại đúng `t`.
+
+`stat.quote_volume_24h` trong lời gọi point-in-time PHẢI là volume TẠI `t` do người gọi cung cấp —
+hàm không tự suy hay tải dữ liệu (giữ đúng pattern thuần/không mạng như `compute_pool()`). Việc kết
+nối thật với nguồn volume lịch sử theo ngày (tải qua `data.binance.vision`, DR-D1-01) và toàn bộ 219
+mã đã huỷ là việc của TD-0097 (verify trên dữ liệu thật) — TD-0096 chỉ đảm bảo hàm ĐÚNG khi được cấp
+dữ liệu đúng, kiểm bằng dữ liệu dựng tay (đúng pattern TD-0100/0101).
+
+6 test mới (`tests/unit/test_pool.py::TestPairlistPointInTime`): mã lên sàn sau `t` không có mặt; mã
+huỷ trước `t` không có mặt (khác mã huỷ SAU `t` — vẫn còn sống tại `t`, có mặt bình thường); thêm dữ
+liệu về tương lai (mã mới, mã sắp huỷ) vào input không đổi kết quả của các mã khác — đúng tính nhân
+quả H1-D đòi; volume/tuổi vẫn áp dụng bình thường tại `t`; BTC/ETH vẫn luôn vào EXPLORE ở quá khứ.
+
+Suite Docker: 439 passed (tăng 6, đúng số test mới thêm).
