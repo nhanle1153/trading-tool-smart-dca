@@ -56,7 +56,7 @@
 |---|---|---|---|---|
 | TD-0025 | `docs/decisions/DR-013-don-vi-do.md` — mọi chỉ số trên `pnl_abs`, bảng phân biệt ba chữ "R" | ✅ | TD-0020 | File có bảng ba chữ "R" (R_eff/r_eff_pct, planned_risk_usdt, R_realized) đúng spec dòng 2777-2787; mục "cấm chữ R trần" có ví dụ đúng/sai; bảng test L-Z46/47/48/48b/48c đối chiếu trạng thái D0-PRE |
 | TD-0026 | `config/freqtrade/config.json` theo §0c.3 + ánh xạ lệnh chờ §3.5 | ✅ | TD-0020 | `docker compose run --rm freqtrade -m freqtrade show-config -c config/freqtrade/config.json` → exit 0, không lỗi (xác nhận trong Docker). Ghi chú: `protections` bị freqtrade 2026.8 DEPRECATE khỏi config.json (chuyển sang thuộc tính class của strategy, D1+) — TD-0027/L-Z24 phải kiểm ở đúng chỗ mới, xem comment trong file config |
-| TD-0027 | Test **L-Z24** (cờ cấm), **L-Z25** (không dấu vết hyperopt), **L-Z42** (config khớp hằng số spec) | 🔒 | TD-0026 | `pytest -k "lz24 or lz25 or lz42"` xanh |
+| TD-0027 | Test **L-Z24** (cờ cấm), **L-Z25** (không dấu vết hyperopt), **L-Z42** (config khớp hằng số spec) | ✅ | TD-0026 | `pytest -k "lz24 or lz25 or lz42"` xanh |
 | TD-0028 | Đọc mã nguồn Freqtrade **đang cài** cho giả định D2a/D2b/D6/D7 → `docs/freqtrade-source-read.md`. **Làm TRƯỚC khi viết bất kỳ test nào về chúng** | ✅ | TD-0004 | File có 4 mục, mỗi mục trích đường dẫn + số dòng trong image, kèm image digest |
 
 ### Khối 3 — 🔴 THỨ TỰ CỨNG 1→2→3, KHÔNG SONG SONG
@@ -83,11 +83,11 @@
 |---|---|---|---|---|
 | TD-0050 | Schema JSON cho `trial_registry.jsonl` (**dạng sổ sự kiện**, theo MT-01) và `idea_queue.jsonl`; tạo hai file rỗng | ✅ | TD-0012 | `jsonschema` validate fixture mẫu cho cả 5 loại sự kiện |
 | TD-0051 | `ledger/registry.py` + `budget.py` — reserve / seal / consume / refund, công thức Khả dụng, bản chiếu trạng thái. Áp MT-03 | ✅ | TD-0050 | Chuỗi reserve→seal→consume: `available()` đúng ở từng bước |
-| TD-0052 | Test **L-Z52** — hết ngân sách thì từ chối, chưa chạm dữ liệu | ✅ | TD-0051 | `pytest -k lz52` xanh; spy khẳng định **0 lần** đọc `user_data/data` |
-| TD-0053 | Test **L-Z53** — giết tiến trình sau khi có kết quả fold đầu → CONSUMED, hoàn trả phải RAISE | ✅ | TD-0051 | `docker compose run --rm tests -k lz53` xanh |
-| TD-0054 | Test **L-Z54** — 4 dòng bảng DR-014 + trần trả lại 3 lần | ✅ | TD-0051 | `pytest -k lz54` — 5 ca xanh |
-| TD-0055 | `assert_dataset_timerange()` + test **L-Z55** — bộ chạy tự kiểm, không nhận lời khai | ✅ | TD-0051 | `pytest -k lz55` xanh |
-| TD-0056 | E6 `trial_ledger_audit.py` **đầy đủ** (H16) + test L-Z10/11/12/15/16/17 | ✅ | TD-0051 | Sổ rỗng → exit 0, in `"đã audit N/M (X đạt, Y chưa đạt, Z chưa đo được)"`; sổ bẩn → exit≠0 |
+| TD-0052 | Test **L-Z52** — hết ngân sách thì từ chối, chưa chạm dữ liệu | 🔓 | TD-0051 | `pytest -k lz52` xanh; spy khẳng định **0 lần** đọc `user_data/data` |
+| TD-0053 | Test **L-Z53** — giết tiến trình sau khi có kết quả fold đầu → CONSUMED, hoàn trả phải RAISE | 🔓 | TD-0051 | `docker compose run --rm tests -k lz53` xanh |
+| TD-0054 | Test **L-Z54** — 4 dòng bảng DR-014 + trần trả lại 3 lần | 🔓 | TD-0051 | `pytest -k lz54` — 5 ca xanh |
+| TD-0055 | `assert_dataset_timerange()` + test **L-Z55** — bộ chạy tự kiểm, không nhận lời khai | 🔓 | TD-0051 | `pytest -k lz55` xanh |
+| TD-0056 | E6 `trial_ledger_audit.py` **đầy đủ** (H16) + test L-Z10/11/12/15/16/17 | 🔓 | TD-0051 | Sổ rỗng → exit 0, in `"đã audit N/M (X đạt, Y chưa đạt, Z chưa đo được)"`; sổ bẩn → exit≠0 |
 | TD-0057 | Nối E6 vào **đầu** E1/E2/E3 (chạy trước mỗi lần backtest) | 🔓 | TD-0056 | Test AST: `run_audit` được gọi trong `main()` của E1–E3 |
 
 ### Khối 6 — Báo cáo định kỳ
