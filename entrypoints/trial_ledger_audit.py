@@ -24,11 +24,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 from tool_d.config.loader import DEFAULT_CONFIG_PATH
+from tool_d.gates.d0_pre import is_d0_pre_complete
 from tool_d.gates.dsr import N_DANG_KY
 from tool_d.ledger.audit_checks import (
     DEFAULT_IDEA_QUEUE_PATH,
@@ -66,6 +68,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--close-gate",
         action="store_true",
         help="TD-0086 — đóng cổng D0-PRE, ghi registry/runtime_state.json. Chạy được đúng một lần.",
+    )
+    parser.add_argument(
+        "--close-d1-gate",
+        action="store_true",
+        help="TD-0110 — đóng cổng D1, ghi runtime_state.json.d1_complete. Chạy được đúng một lần.",
     )
     return parser
 
@@ -161,6 +168,82 @@ def close_d0_pre_gate(
     return 0, f"✅ Đã đóng cổng D0-PRE — ghi {runtime_state_path}.\n{audit_text}"
 
 
+def close_d1_gate(
+    *,
+    runtime_state_path: Path = DEFAULT_RUNTIME_STATE_PATH,
+    repo_dir: Path = Path("."),
+    pytest_cmd: list[str] | None = None,
+    **run_audit_kwargs,
+) -> tuple[int, str]:
+    """TD-0110 — ghi `d1_complete: true`, gỡ blocker B2.
+
+    Khác `close_d0_pre_gate()` (TD-0086): bằng chứng "toàn bộ test khoá
+    D1 xanh" KHÔNG nhận lời khai người vận hành — hàm này tự CHẠY
+    `pytest` thật trong CHÍNH lần gọi này (image đã có sẵn pytest, xem
+    `docker/Dockerfile`; chạy được từ service `freqtrade`/`lockbox`,
+    không cần lồng `docker compose` bên trong container) rồi ghi lại
+    đúng output đó — nhãn `do-duoc` (MT-10) ĐÚNG NGHĨA, không phải một
+    chuỗi gõ tay giả làm bằng chứng máy như hai mục còn lại của
+    `close_d0_pre_gate()`.
+
+    TỪ CHỐI nếu: D0-PRE chưa đóng (D1 không thể đứng trước D0-PRE); đã
+    có `d1_complete: true` (bất biến — đóng đúng một lần); suite pytest
+    có ca fail; hoặc audit sổ trial chưa sạch.
+
+    `pytest_cmd` cho phép test thay bằng một lệnh giả nhanh (không chạy
+    lại toàn bộ suite thật bên trong chính suite đang chạy) — lần đóng
+    cổng THẬT không truyền tham số này, dùng mặc định `pytest -q`.
+    """
+    if not is_d0_pre_complete():
+        return EXIT_GATE_AUDIT_DIRTY, "🛑 TỪ CHỐI đóng cổng D1 — D0-PRE chưa đóng (§N2)."
+
+    if runtime_state_path.exists():
+        try:
+            existing = json.loads(runtime_state_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            existing = {}
+        if existing.get("d1_complete") is True:
+            return (
+                EXIT_GATE_ALREADY_CLOSED,
+                f"🛑 {runtime_state_path} đã có d1_complete=true — cổng đã đóng, không ghi lại.",
+            )
+
+    suite = subprocess.run(
+        pytest_cmd or [sys.executable, "-m", "pytest", "-q"],
+        cwd=repo_dir,
+        capture_output=True,
+        text=True,
+    )
+    suite_summary = suite.stdout.strip().splitlines()[-1] if suite.stdout.strip() else "(không có output)"
+    if suite.returncode != 0:
+        return (
+            EXIT_GATE_AUDIT_DIRTY,
+            f"🛑 TỪ CHỐI đóng cổng D1 — suite pytest CHƯA sạch:\n{suite_summary}\n{suite.stdout[-2000:]}",
+        )
+
+    audit_exit, audit_text = run_audit(**run_audit_kwargs)
+    if audit_exit != 0:
+        return EXIT_GATE_AUDIT_DIRTY, f"🛑 TỪ CHỐI đóng cổng D1 — audit sổ trial chưa sạch:\n{audit_text}"
+
+    git_info = get_git_info(repo_dir)
+    state_raw = (
+        json.loads(runtime_state_path.read_text(encoding="utf-8")) if runtime_state_path.exists() else {}
+    )
+    state_raw["d1_complete"] = True
+    state_raw["d1_closed_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    state_raw["d1_git_sha"] = git_info.sha
+    state_raw["d1_evidence"] = {
+        "full_suite": {"nguon": "do-duoc", "noi_dung": suite_summary},
+        "trial_ledger_audit": {"nguon": "do-duoc", "noi_dung": audit_text.splitlines()[0]},
+    }
+    runtime_state_path.parent.mkdir(parents=True, exist_ok=True)
+    runtime_state_path.write_text(
+        json.dumps(state_raw, ensure_ascii=False, indent=2, sort_keys=False) + "\n",
+        encoding="utf-8",
+    )
+    return 0, f"✅ Đã đóng cổng D1 — ghi {runtime_state_path}.\n{suite_summary}\n{audit_text}"
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else list(argv)
     args, _ = build_parser().parse_known_args(argv)
@@ -171,6 +254,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.close_gate:
         exit_code, text = close_d0_pre_gate()
+        print(text)
+        return exit_code
+
+    if args.close_d1_gate:
+        exit_code, text = close_d1_gate()
         print(text)
         return exit_code
 
