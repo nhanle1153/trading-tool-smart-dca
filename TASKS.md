@@ -29,8 +29,8 @@
 | TD-0001 | `git init`, `.gitignore`, `.gitattributes` (ép LF), cây thư mục | ✅ | — | `git check-attr text -- src/tool_d/x.py` → `text: set` |
 | TD-0002 | Khởi tạo 4 file quy trình: `CLAUDE.md`, `ARCHITECTURE.md`, `back-end-note.md`, `TASKS.md` | ✅ | TD-0001 | 4 file tồn tại; `back-end-note.md` có đủ mục 0–8 |
 | TD-0003 | Tạo repo GitHub **private**, push `main` | 🔓 | TD-0002 | `git remote -v` có origin; `git log origin/main` khớp local |
-| TD-0004 | `docker/Dockerfile` (base Freqtrade **pin theo digest** + `git` + pytest + `safe.directory`) và `docker-compose.yml` (3 service; **KHÔNG mount `lockbox/`** vào `tests`; `TZ=UTC`) | 🔓 | TD-0001 | `docker compose run --rm tests python -c "import freqtrade,pytest,yaml;print('ok')"` |
-| TD-0005 | Xác minh `git_sha` lấy được **từ trong container** | 🔓 | TD-0004 | `docker compose run --rm tests git rev-parse HEAD` in đúng SHA của host, không phải rỗng |
+| TD-0004 | `docker/Dockerfile` (base Freqtrade **pin theo digest** + `git` + pytest + `safe.directory`) và `docker-compose.yml` (3 service; **KHÔNG mount `lockbox/data/`** vào `tests`; `TZ=UTC`) | ✅ | TD-0001 | `docker compose run --rm tests python -c "import freqtrade,pytest,yaml;print('ok')"` |
+| TD-0005 | Xác minh `git_sha` lấy được **từ trong container** | ✅ | TD-0004 | `docker compose run --rm tests git rev-parse HEAD` in đúng SHA của host, không phải rỗng |
 | TD-0006 | Quyết định số phận `dashboard-ui/` (project Node có `.git` riêng và có `.env`) — submodule / repo riêng / gộp thẳng vào. Hiện đang bị `.gitignore` chặn | 🔓 | TD-0001 | Chốt xong, `.gitignore` phản ánh đúng quyết định, không còn repo lồng repo |
 | TD-0007 | Xác nhận `tool-d-dashboard-thiet-ke.html` (651KB, ảnh chụp giao diện Tool A dùng làm tham chiếu) có nên nằm trong repo này không | 🔓 | TD-0001 | Hoặc giữ lại có lý do ghi trong `ARCHITECTURE.md`, hoặc chuyển sang `docs/` , hoặc bỏ ra ngoài |
 
@@ -38,11 +38,11 @@
 
 | Mã | Tên việc | TT | Phụ thuộc | Verify |
 |---|---|---|---|---|
-| TD-0010 | `measurement/tri_state.py` — `Measured[T]`, ba trạng thái, `render()` không có nhánh "số cũ kèm cảnh báo" | 🔓 | TD-0004 | `pytest -k lz41` xanh |
-| TD-0011 | `measurement/hashing.py` + `gitinfo.py` — sha256 file (thiếu → `"MISSING"`), git sha + cờ working tree bẩn | 🔓 | TD-0005 | file thiếu → trả `"MISSING"`, không nuốt exception |
-| TD-0012 | `measurement/provenance.py` — 7+1 khoá, `validate_provenance()`. Chốt luôn định dạng `cache_key(prov)` để D3 không phải sửa ngược | 🔓 | TD-0011 | `pytest -k lz40` xanh, **8 ca** (đủ khoá + thiếu từng khoá) |
-| TD-0013 | `config/tool_d_config.yaml` chép nguyên §6.9.5 + `config/loader.py`. Áp MT-03: `_budget_remaining_B3: null # derived` | 🔓 | TD-0004 | `tunable_param_names()` trả về **đúng 12** |
-| TD-0014 | Test **L-Z37** (cấm `*Parameter`, cấm `<Strategy>.json`) và **L-Z39** (cấm env đọc tham số Tầng B/C) | 🔓 | TD-0013 | `pytest -k "lz37 or lz39"` xanh |
+| TD-0010 | `measurement/tri_state.py` — `Measured[T]`, ba trạng thái, `render()` không có nhánh "số cũ kèm cảnh báo" | ✅ | TD-0004 | `pytest -k lz41` xanh |
+| TD-0011 | `measurement/hashing.py` + `gitinfo.py` — sha256 file (thiếu → `"MISSING"`), git sha + cờ working tree bẩn | ✅ | TD-0005 | file thiếu → trả `"MISSING"`, không nuốt exception |
+| TD-0012 | `measurement/provenance.py` — 7+1 khoá, `validate_provenance()`. Chốt luôn định dạng `cache_key(prov)` để D3 không phải sửa ngược | ✅ | TD-0011 | `pytest -k lz40` xanh, **8 ca** (đủ khoá + thiếu từng khoá) |
+| TD-0013 | `config/tool_d_config.yaml` chép nguyên §6.9.5 + `config/loader.py`. Áp MT-03: `_budget_remaining_B3: null # derived` | ✅ | TD-0004 | `tunable_param_names()` trả về **đúng 12** |
+| TD-0014 | Test **L-Z37** (cấm `*Parameter`, cấm `<Strategy>.json`) và **L-Z39** (cấm env đọc tham số Tầng B/C) | ✅ | TD-0013 | `pytest -k "lz37 or lz39"` xanh |
 | TD-0015 | `measurement/guard.py` — `measurement_guard()` | 🔓 | TD-0013 | Tạo `user_data/strategies/Fake.json` **hỏng** → exit **86**, stdout in nội dung, và **file vẫn còn nguyên** |
 | TD-0016 | 8 khung entrypoint E1–E8, mỗi file gọi guard ở dòng đầu `main()` | 🔓 | TD-0015 | `ls entrypoints/*.py` đúng 8 file, không hơn |
 | TD-0017 | Test **L-Z36** — AST + danh sách đóng | 🔓 | TD-0016 | `pytest -k lz36` xanh; thêm `entrypoints/e9_tmp.py` → test phải **FAIL** (chứng minh test có răng) |

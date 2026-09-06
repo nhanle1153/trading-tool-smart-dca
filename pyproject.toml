@@ -1,0 +1,8 @@
+[tool.pytest.ini_options]
+# Chỉ quét tests/ — tránh pytest lạc vào template/, docker/, docs/.
+testpaths = ["tests"]
+# Cho phép `import tool_d...` mà không cần cài đặt package (nhất quán với
+# ENV PYTHONPATH=/workspace/src trong docker/Dockerfile — khai báo ở cả hai
+# nơi để test cũng chạy được ngoài container khi cần đọc nhanh, dù bằng
+# chứng chính thức luôn phải lấy từ trong Docker — xem CLAUDE.md mục N7).
+pythonpath = ["src"]
