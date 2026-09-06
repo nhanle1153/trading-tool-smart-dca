@@ -84,7 +84,7 @@ def _scan_hidden_param_files(strategy_dir: Path) -> dict[str, str]:
     return found
 
 
-def _extract_cache_mode(argv: Sequence[str]) -> str | None:
+def extract_cache_mode(argv: Sequence[str]) -> str | None:
     """Đọc giá trị theo sau `--cache` trong argv, nếu có. Không tự suy đoán
     giá trị mặc định — trả None nếu cờ vắng mặt, để `assert_cache_none()`
     (L-Z38) tự quyết định coi vắng mặt là vi phạm.
@@ -121,7 +121,7 @@ def measurement_guard(
     load_tool_d_config(config_path)  # raise ConfigError nếu env vi phạm
 
     hidden = _scan_hidden_param_files(strategy_dir)
-    cache_mode = _extract_cache_mode(argv)
+    cache_mode = extract_cache_mode(argv)
     checked_at = _utcnow()
 
     if hidden and not with_params_file:
