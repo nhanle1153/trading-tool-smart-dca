@@ -182,14 +182,25 @@ Quy trình gốc viết cho web app trên Render. Tool D là bot chạy local. �
   nhận cơ chế an toàn + phát hiện phụ (phải assert `trade.id != 0` trước khi gọi custom_data khi
   implement thật, tránh trộn dữ liệu giữa các cặp giao dịch khác nhau).
 - `dashboard-ui/` (front-end, việc riêng): dựng xong khung React + Chakra UI cho 8 trang dashboard
-  Tool A/D từ mock JSON, đã tách thành **repo GitHub riêng** (không gộp vào repo backend) — xem
-  chi tiết ở mục TD-0006/TD-0007 trong `TASKS.md`. Chưa nối API thật.
+  Tool A/D từ mock JSON, đã tách thành **repo GitHub riêng** (không gộp vào repo backend), đã push
+  lên `github.com/nhanle1153/front-end-trading-tool-smart-dca` (nhánh `main`) — xem chi tiết ở mục
+  TD-0006/TD-0007 trong `TASKS.md`. Chưa nối API thật.
 
 **Còn thiếu / bước tiếp theo:**
 1. **TD-0003** — tạo repo GitHub private cho backend và push (chờ chủ dự án đồng ý).
-2. `dashboard-ui/` cần chủ dự án tạo repo GitHub trống (private) rồi cấp link để thêm remote + push.
-3. Khối 2 còn TD-0026 (config Freqtrade thật) + TD-0027 (test L-Z24/L-Z25/L-Z42).
+2. ~~`dashboard-ui/` cần chủ dự án tạo repo GitHub trống (private) rồi cấp link để thêm remote + push.~~
+   ✅ Xong 06/09/2026 — đã push lên `github.com/nhanle1153/front-end-trading-tool-smart-dca`.
+3. ~~Khối 2 còn TD-0026 (config Freqtrade thật) + TD-0027 (test L-Z24/L-Z25/L-Z42).~~
+   ✅ Xong 06/09/2026 — `config/freqtrade/config.json` + 3 test khoá
+   (`tests/lock/test_lz24_*`, `test_lz25_*`, `test_lz42_*`), 179 test xanh trong Docker.
 4. Khối 3 (thứ tự cứng 1→2→3, không song song): verify `zone_width` chết hay không → xác nhận
    bảng DOF → chốt `N_ĐĂNG_KÝ`.
 5. Ba con số chặn tiến độ cần chủ dự án quyết khi tới lượt: **OQ-01** (ngưỡng DSR — blocker B6),
    **OQ-02** (vốn `E_D`), **OQ-03** (thang drawdown).
+6. 🔵 **Câu hỏi mở do phía front-end nêu (ghi nhận, chưa chốt, chưa chặn việc gì bên backend):**
+   dashboard sẽ lấy số thật bằng cách nào — (a) backend mở API REST, hay (b) backend xuất file
+   JSON định kỳ để front-end đọc? Liên quan trực tiếp tới backend vì hiện `entrypoints/` bị khoá
+   cứng ở **đúng 8 file** (test L-Z36); phương án (a) cần thêm entrypoint thứ 9 → phải sửa đặc tả
+   kiến trúc trước. Phương án (b) tận dụng `periodic_report` sẵn có, không đụng kiến trúc.
+   Chi tiết + bảng đánh đổi: mục `OQ-FE-01` trong `TASKS.md` của repo front-end.
+   **Không tự chọn bên nào** — chờ chủ dự án quyết khi tới lượt nối API.
