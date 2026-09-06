@@ -18,6 +18,7 @@ import sys
 from datetime import datetime, timezone
 
 from tool_d.api_client.binance_public import BinancePublicApiError, get_open_interest_hist
+from tool_d.gates.d0_pre import require_d0_pre_complete
 from tool_d.measurement.guard import EXIT_GUARD_BLOCKED, GuardOutcome, measurement_guard
 
 ENTRYPOINT = "E8"
@@ -74,6 +75,13 @@ def main(argv: list[str] | None = None) -> int:
             print(f"🛑 probe thất bại: {exc}")
             return EXIT_PROBE_FAILED
         return 0
+
+    # TD-0090 — từ đây trở xuống là nhánh CHẠM DỮ LIỆU thật (ghi lịch sử
+    # giá vào đĩa). `--probe-coverage` ở trên KHÔNG bị gác vì đó là đo
+    # metadata, MT-02 cho phép trước cổng (và TD-0080 đã chạy đúng như vậy).
+    gate_exit = require_d0_pre_complete(ENTRYPOINT)
+    if gate_exit is not None:
+        return gate_exit
 
     raise NotImplementedError(
         "Logic backfill an toàn (H19) chưa viết — chỉ --probe-coverage (TD-0080) đã có."

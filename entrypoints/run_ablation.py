@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import sys
 
+from tool_d.gates.d0_pre import require_d0_pre_complete
 from tool_d.lockbox.seal import verify_all_seals
 from tool_d.measurement.guard import EXIT_GUARD_BLOCKED, GuardOutcome, measurement_guard
 from touch_lockbox import EXIT_LOCKBOX_VERIFY_FAILED, LOCKBOX_DIR, LOCKBOX_FUTURES_DIR
@@ -38,6 +39,10 @@ def main(argv: list[str] | None = None) -> int:
     report = measurement_guard(ENTRYPOINT, argv=argv, with_params_file=args.with_params_file)
     if report.outcome is GuardOutcome.BLOCKED:
         return EXIT_GUARD_BLOCKED
+
+    gate_exit = require_d0_pre_complete(ENTRYPOINT)
+    if gate_exit is not None:
+        return gate_exit
 
     audit_exit, audit_text = run_audit()
     if audit_exit != 0:
