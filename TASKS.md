@@ -163,7 +163,7 @@
 
 | Mã | Tên việc | TT | Phụ thuộc | Verify |
 |---|---|---|---|---|
-| TD-0100 | Swing detection §1.1 (k=3, xác nhận 2 phía) — hàm THUẦN, không đọc dữ liệu sau `t` | 🔓 | TD-0090 | Test trên chuỗi giá dựng tay: swing tại `i` chỉ được xác nhận tại `i+3`, không sớm hơn |
+| TD-0100 | Swing detection §1.1 (k=3, xác nhận 2 phía) — hàm THUẦN, không đọc dữ liệu sau `t` | 🔒 | TD-0090 | Test trên chuỗi giá dựng tay: swing tại `i` chỉ được xác nhận tại `i+3`, không sớm hơn |
 | TD-0101 | `confirm_ratio(i, t)` §7.4 — liên tục 0/0.33/0.67/1.0 + điều kiện **HUỶ** khi giá tạo cực trị vượt qua `i` | 🔓 | TD-0100 | Test đúng 4 mốc; vượt cực trị → zone chết **vĩnh viễn**, không phải "chưa đủ tin cậy" |
 | TD-0102 | 🔴 **H4-D** (§7.2) — `assert confirmed_at_bar − swing_bar == 3`; mọi tranche fill có timestamp ≥ `confirmed_at_bar` | 🔓 | TD-0101, TD-0093 | Chạy trên dữ liệu **CALIB thật**: 0 vi phạm. Là test khoá, chạy trong Docker |
 | TD-0103 | 🔴 **H4-D-b** (§7.5) — cắt dữ liệu tại `t`, tính lại, `confirm_ratio(i,t)` KHÔNG đổi | 🔓 | TD-0101 | Test với mọi cặp (i,t) mẫu: giá trị trước/sau khi cắt bằng nhau tuyệt đối |
