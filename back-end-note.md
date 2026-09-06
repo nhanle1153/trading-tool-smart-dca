@@ -67,9 +67,9 @@ Hợp đồng dữ liệu tương ứng nằm ở §8 của spec (Decision Log) 
 
 | # | Câu hỏi mở | Ảnh hưởng nếu chưa trả lời | Mức độ |
 |---|---|---|---|
-| OQ-01 | Ngưỡng **DSR-adjusted expectancy** của Nhánh 1 §10.2 (spec dòng 4260 để trống) | Đây chính là **hard blocker B6**. GATE D0.9 không tính được. Hiện fail-closed ở `+inf` nên không có gì lọt qua — an toàn, nhưng cũng nghĩa là D4 không chạy được | 🔴 Chặn D4 (không chặn D0-PRE) |
-| OQ-02 | `E_D` (vốn cấp cho Tool D), `L_exchange`, % lỗ tối đa một ngày xấu | Không định cỡ được vị thế; L-Z20 / L-Z22 không kiểm được | 🔴 Chặn TD-0043 |
-| OQ-03 | Thang drawdown 5/8/20% — xác nhận theo khẩu vị rủi ro thật | Sau khi commit là **Hạng 0, không sửa được nữa** | 🔴 Chặn TD-0042 |
+| OQ-01 | ✅ **Đã giải** (TD-0041, 06/09/2026) — Ngưỡng **DSR-adjusted expectancy** Nhánh 1 §10.2 | `docs/decisions/DR-D0PRE-03-nguong-dsr-expectancy.md`: công thức `mean(R) − √(2·ln N)·std(R)/√n`, ngưỡng **0,10 R** (suy từ chi phí backtest không thấy × hệ số an toàn). **Blocker B6 gỡ.** L-Z35 sang biến thể best-known (−inf, chưa đo) vẫn FAIL | — |
+| OQ-02 | ✅ **Đã giải** (TD-0043, 06/09/2026) — `E_D`, `L_exchange`, `rho`, % lỗ/ngày | `docs/decisions/DR-D0PRE-06-von-va-don-bay.md`: **500 USDT / 3x / 0,375% / 8%**; `tradable_balance_ratio` 0.99→0.5. Chủ dự án chọn 500 dù khuyến nghị ≥ 1.000 — chấp nhận ~20% pool bị L-Z20 từ chối ở zone rộng (`docs/min-notional-check.md`, TD-0082) | — |
+| OQ-03 | ✅ **Đã giải** (TD-0042, 06/09/2026) — Thang drawdown | `docs/decisions/DR-D0PRE-04-thang-drawdown.md`: giữ **5/8/20%**, Cấp C Hạng 0. Test khoá `halt == daily_loss_budget_pct` | — |
 | OQ-04 | ✅ **Đã giải** (TD-0083, 06/09/2026) — Ngưỡng lọc pool §0.3 (i)–(iv) | `docs/decisions/DR-D0PRE-05-pool-criteria.md`: volume 24h ≥15tr USDT (i), tuổi niêm yết ≥180 ngày (ii), (iii)/(iv) không cần ngưỡng riêng — thoả gián tiếp/kiểm tại thời điểm vào lệnh. Trên dữ liệu thật 06/09/2026 (528 hợp đồng): **102 mã** vào pool giao dịch, 426 vào EXPLORE (gồm BTC/ETH). `config/pool.yaml` đã ghi, tiêu 4 trial B0 (D-0001→D-0004) | — |
 | OQ-05 | Mốc chia dữ liệu T0/T1/T2/T3 cho CALIB / WFO / LOCKBOX | Chưa niêm phong được lockbox | 🟡 Chặn TD-0084 |
 | OQ-06 | `v_min` (§3.3b) — hiện `null` | Không được điền ở D0-PRE (phải calibrate bằng dữ liệu ở B1), nhưng L-Z15 đòi nó **có trạng thái**, không được "im lặng" → ghi `TUNED_PENDING` | 🟡 |

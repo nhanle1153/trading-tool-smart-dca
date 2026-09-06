@@ -80,7 +80,52 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Thực sự tiêu 4 trial B0 và ghi config/pool.yaml. Thiếu cờ này chỉ IN kết quả (chạy thử, không ghi sổ).",
     )
+    parser.add_argument(
+        "--check-min-notional",
+        action="store_true",
+        help="TD-0082: đối chiếu min notional + độ thô bước lot của pool đã chốt với tranche 1 nhỏ nhất (chỉ đọc, 0 trial).",
+    )
     return parser
+
+
+# TD-0082 — ba độ rộng zone spec dùng minh hoạ ở §6.8f (rộng / trung bình / hẹp).
+R_EFF_GRID = (0.03, 0.015, 0.009)
+
+
+def check_min_notional() -> int:
+    """In bảng đối chiếu (markdown) cho pool đã chốt. Chỉ đọc metadata sàn —
+    không phải "chạm dữ liệu" (DR-014 mục 2), không ghi sổ."""
+    from tool_d.config.loader import load_tool_d_config
+    from tool_d.api_client.binance_public import get_ticker_price
+    from tool_d.notional import build_symbol_filters, check_symbol
+
+    if not POOL_OUTPUT_PATH.exists():
+        print(f"🛑 {POOL_OUTPUT_PATH} chưa có — chốt pool (TD-0083) trước.")
+        return EXIT_FETCH_FAILED
+    pool = set(yaml.safe_load(POOL_OUTPUT_PATH.read_text(encoding="utf-8"))["trading"])
+    cfg = load_tool_d_config()
+    e_d, rho, n_tr = cfg.tier_a["E_D"], cfg.tier_a["rho_pct"], cfg.tier_c["n_tranches"]
+    try:
+        filters = build_symbol_filters(get_exchange_info(), get_ticker_price(), pool)
+    except (BinancePublicApiError, ValueError) as exc:
+        print(f"🛑 Tải/ghép dữ liệu thất bại: {exc}")
+        return EXIT_FETCH_FAILED
+
+    print(f"Pool: {len(filters)} mã | E_D={e_d} | rho={rho}% | n_tranches={n_tr}")
+    print("\n| R_eff | Tranche 1 (USDT) | Qua min notional | Qua L-Z20 (làm tròn lot ≤ 1%) |")
+    print("|---|---|---|---|")
+    failing_lz20: dict[str, list[str]] = {}
+    for r in R_EFF_GRID:
+        checks = [check_symbol(f, e_d=e_d, rho_pct=rho, r_eff=r, n_tranches=n_tr) for f in filters]
+        ok_mn = sum(c.passes_min_notional for c in checks)
+        ok_lz = sum(c.passes_lz20 for c in checks)
+        failing_lz20[f"{r:.1%}"] = [c.symbol for c in checks if not c.passes_lz20]
+        bad_mn = [c.symbol for c in checks if not c.passes_min_notional]
+        print(f"| {r:.1%} | {checks[0].tranche1_notional_usdt:.1f} | {ok_mn}/{len(checks)}"
+              f"{' — RỚT: ' + ', '.join(bad_mn) if bad_mn else ''} | {ok_lz}/{len(checks)} |")
+    for r, syms in failing_lz20.items():
+        print(f"\nRớt L-Z20 ở R_eff {r} ({len(syms)}): {', '.join(syms) if syms else '—'}")
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -90,6 +135,9 @@ def main(argv: list[str] | None = None) -> int:
     report = measurement_guard(ENTRYPOINT, argv=argv, with_params_file=args.with_params_file)
     if report.outcome is GuardOutcome.BLOCKED:
         return EXIT_GUARD_BLOCKED
+
+    if args.check_min_notional:
+        return check_min_notional()
 
     if args.commit and POOL_OUTPUT_PATH.exists():
         print(

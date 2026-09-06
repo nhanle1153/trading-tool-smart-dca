@@ -48,6 +48,20 @@ def get_ticker_24hr(*, timeout: float = DEFAULT_TIMEOUT_S) -> list[dict]:
         raise BinancePublicApiError(f"gọi {url} thất bại: {exc}") from exc
 
 
+def get_ticker_price(*, timeout: float = DEFAULT_TIMEOUT_S) -> list[dict]:
+    """`GET /fapi/v1/ticker/price` — giá hiện tại MỌI hợp đồng, payload nhỏ
+    hơn nhiều so với `ticker/24hr` (TD-0082: `ticker/24hr` từng timeout ở
+    10s khi chỉ cần giá để quy bước lot ra USDT). Một lệnh gọi cho toàn bộ
+    (R2/bounded loop).
+    """
+    url = f"{BASE_URL}/fapi/v1/ticker/price"
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as resp:  # noqa: S310
+            return json.loads(resp.read())
+    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as exc:
+        raise BinancePublicApiError(f"gọi {url} thất bại: {exc}") from exc
+
+
 def get_open_interest_hist(
     *,
     symbol: str,

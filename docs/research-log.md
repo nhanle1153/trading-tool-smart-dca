@@ -104,3 +104,26 @@ Xác nhận qua hai đường độc lập: (1) `curl` trực tiếp trong conta
   Queue sau này chọn một giả thuyết liên quan OI.
 
 Không cần DR (không phải quyết định, chỉ là một sự thật đo được về hạ tầng dữ liệu bên ngoài).
+
+## 06/09/2026 (đêm) — TD-0041/0042/0043: ba con số Tầng A/C và ngưỡng DSR đã chốt; TD-0082 kiểm min notional
+
+Chủ dự án chốt sau khi xem bảng đánh đổi (không có backtest nào chạy — đúng yêu cầu spec là điền TRƯỚC
+khi thấy số, dòng 3956-3958, 4425-4449):
+
+- **DR-D0PRE-03** — ngưỡng `DSR-adjusted expectancy` Nhánh 1 = **0,10 R**. Spec để lộ hai khoảng trống
+  (chưa có công thức, chưa có số); công thức chốt `mean(R) − √(2·ln N)·std(R)/√n_trades`, số suy từ chi
+  phí backtest không thấy (trượt giá SL 0,02–0,04 R/lệnh) × hệ số an toàn 2–3. **Blocker B6 gỡ.**
+  L-Z35 chuyển sang biến thể "kết quả tốt nhất hiện có vẫn FAIL" với best-known = −inf (chưa đo, N6).
+- **DR-D0PRE-04** — thang drawdown giữ **5/8/20%** (Cấp C, Hạng 0). Test mới canh `halt == daily_loss_budget_pct`.
+- **DR-D0PRE-06** — `E_D` **500**, `L_exchange` **3x**, `rho` 0,375%, lỗ/ngày 8%. Tôi khuyến nghị ≥ 1.000
+  (giữ 91–98/102 mã qua L-Z20), chủ dự án chọn 500 và chấp nhận mất ~20% pool ở zone rộng.
+  Phát hiện kèm: `tradable_balance_ratio` trong `config/freqtrade/config.json` là 0.99 (mặc định
+  Freqtrade sót từ TD-0026), spec §6.8 đòi 0.5 với ví 1.000/E_D 500 → đã sửa.
+- **TD-0082** — bảng `docs/min-notional-check.md` (E7 `--check-min-notional`, metadata thật): min notional
+  **102/102 qua** ở ca xấu nhất (tranche 1 = 20,8 USDT; 4 mã sàn 20 USDT sát sàn — `E_D` < 480 sẽ rớt).
+  L-Z20 làm tròn lot: 21/11/8 mã rớt ở R_eff 3%/1,5%/0,9% — hệ thống từ chối theo zone, không mất tiền,
+  không sửa gì ở D0-PRE. Không cần DR (không có vi phạm min notional).
+
+Ghi nhận từ phiên song song (front-end), chưa xử lý, không phải của phiên này: CLAUDE.md (chưa commit)
+nêu mâu thuẫn `CTRL` có tính vào N hay không — `registry.n_used()` hiện cộng mọi trial CONSUMED kể cả
+CTRL. Sẽ xử lý theo Quy tắc gốc #11 khi phiên kia commit xong (đợi để không giẫm file).
