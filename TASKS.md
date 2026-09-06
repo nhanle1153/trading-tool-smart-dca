@@ -75,7 +75,7 @@
 | TD-0040 | `gates/thresholds.py` fail-closed + test **L-Z35** | ✅ | TD-0020 | `pytest -k lz35` xanh; đưa kết quả cực tốt giả lập qua gate → vẫn **FAIL** |
 | TD-0041 | 🔴 **ĐIỀN ngưỡng DSR-adjusted expectancy §10.2 — blocker B6** (OQ-01). Viết DR **trước** khi biết kết quả lần đánh giá tiếp theo | 🔓 | TD-0040, TD-0033 | `DR-D0PRE-03` có SỐ; hằng số không còn `inf`; L-Z35 chuyển sang biến thể "best-known vẫn FAIL" và vẫn xanh |
 | TD-0042 | 🔴 **ĐIỀN thang drawdown 5/8/20%** (OQ-03). Sau bước này là **Hạng 0, không sửa được** | 🔓 | TD-0013 | `DR-D0PRE-04` commit; giá trị trong YAML khớp DR |
-| TD-0043 | 🔴 **ĐIỀN `E_D`, `L_exchange`, `rho_pct`, % lỗ tối đa ngày xấu** theo vốn thật (OQ-02) | 🔓 | TD-0013 | Commit riêng; `pytest -k lz29` vẫn xanh |
+| TD-0043 | 🔴 **ĐIỀN `E_D`, `L_exchange`, `rho_pct`, % lỗ tối đa ngày xấu** theo vốn thật (OQ-02) | 🔒 | TD-0013 | Commit riêng; `pytest -k lz29` vẫn xanh |
 
 ### Khối 5 — Sổ phép thử + audit
 
