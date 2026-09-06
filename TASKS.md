@@ -44,9 +44,9 @@
 | TD-0013 | `config/tool_d_config.yaml` chép nguyên §6.9.5 + `config/loader.py`. Áp MT-03: `_budget_remaining_B3: null # derived` | ✅ | TD-0004 | `tunable_param_names()` trả về **đúng 12** |
 | TD-0014 | Test **L-Z37** (cấm `*Parameter`, cấm `<Strategy>.json`) và **L-Z39** (cấm env đọc tham số Tầng B/C) | ✅ | TD-0013 | `pytest -k "lz37 or lz39"` xanh |
 | TD-0015 | `measurement/guard.py` — `measurement_guard()` | ✅ | TD-0013 | Tạo `user_data/strategies/Fake.json` **hỏng** → exit **86**, stdout in nội dung, và **file vẫn còn nguyên** |
-| TD-0016 | 8 khung entrypoint E1–E8, mỗi file gọi guard ở dòng đầu `main()` | 🔒 | TD-0015 | `ls entrypoints/*.py` đúng 8 file, không hơn |
+| TD-0016 | 8 khung entrypoint E1–E8, mỗi file gọi guard ở dòng đầu `main()` | ✅ | TD-0015 | `ls entrypoints/*.py` đúng 8 file, không hơn — đã xác nhận (8/8: run_backtest, run_wfo, run_ablation, touch_lockbox, periodic_report, trial_ledger_audit, build_pool, backfill_data); import sạch + `pytest` 65 passed trong Docker |
 | TD-0017 | Test **L-Z36** — AST + danh sách đóng | 🔓 | TD-0016 | `pytest -k lz36` xanh; thêm `entrypoints/e9_tmp.py` → test phải **FAIL** (chứng minh test có răng) |
-| TD-0018 | `assert_cache_none()` trong E1 — **từ chối**, không tự chèn | 🔓 | TD-0016 | `python entrypoints/run_backtest.py --timerange X` → exit **87** |
+| TD-0018 | `assert_cache_none()` trong E1 — **từ chối**, không tự chèn | 🔒 | TD-0016 | `python entrypoints/run_backtest.py --timerange X` → exit **87** |
 | TD-0019 | Bộ test grep: **L-Z32** (tên biến đã xoá), **L-Z33** (cấm 15m), **L-Z46** (cấm `profit_ratio` ở tầng đo), **L-Z48c** (cấm nhãn "R" trần) | 🔓 | TD-0016 | `pytest -k "lz32 or lz33 or lz46 or lz48c"` xanh |
 | TD-0020 | 🚪 **CỔNG KHỐI 1** — chạy toàn bộ L-Z36→L-Z41 trong Docker | 🔓 | TD-0010…0019 | `docker compose run --rm tests tests/lock -k "lz3[6-9] or lz4[01]"` → 0 failed. Gắn tag `d0pre-0d-live` |
 
