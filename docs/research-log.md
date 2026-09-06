@@ -339,3 +339,23 @@ liệu về tương lai (mã mới, mã sắp huỷ) vào input không đổi k�
 quả H1-D đòi; volume/tuổi vẫn áp dụng bình thường tại `t`; BTC/ETH vẫn luôn vào EXPLORE ở quá khứ.
 
 Suite Docker: 439 passed (tăng 6, đúng số test mới thêm).
+
+## 07/09/2026 — TD-0097: EXPLORE là vĩnh viễn — chặn lỗ hổng "hồi phục rồi quay lại trading"
+
+Spec (§9c.4b, ràng buộc (b)) cấm tuyệt đối: mã đã vào EXPLORE không bao giờ được đưa vào pool giao
+dịch sau này dù sau đó thoả tiêu chí — "ngoại lệ sẽ biến EXPLORE thành tập train". `pairlist_point_in_time()`
+(TD-0096) một mình KHÔNG thi hành được ràng buộc này: nó vô trạng thái, mỗi lần gọi độc lập tính lại
+từ dữ liệu tại đúng mốc `t` đó — một mã tụt volume ở mốc sớm (vào explore) rồi hồi phục ở mốc muộn sẽ
+được tính lại là "trading" nếu chỉ gọi hàm đó riêng lẻ cho từng mốc.
+
+Thêm `pairlist_over_time(stats_by_checkpoint, ...)`: quét các mốc THEO THỨ TỰ THỜI GIAN (tự sắp,
+không phụ thuộc thứ tự khai báo của dict truyền vào — có test riêng cho việc này), cộng dồn một tập
+cấm vĩnh viễn từ `explore` của mỗi mốc đã đi qua, áp lên `trading` của mọi mốc sau. Mã CHƯA từng bị
+explore-hoá thì lần đầu thoả tiêu chí vẫn vào trading bình thường — ràng buộc chỉ áp cho mã ĐÃ có
+tiền sử bị loại, không áp cho mã mới xuất hiện.
+
+4 test mới (`TestPairlistOverTime`): mã tụt-rồi-hồi-volume vẫn ở explore vĩnh viễn kể cả khi volume
+mốc sau cao hơn cả mốc đầu; mã mới lần đầu thoả tiêu chí vào trading bình thường; BTC/ETH explore ở
+mọi mốc; kết quả không đổi khi xáo thứ tự khai báo checkpoint.
+
+Suite Docker: 443 passed (tăng 4).
