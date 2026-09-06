@@ -243,3 +243,52 @@ mã lên sàn **06/02/2026 12:15 UTC**, tức khoảng trống kết thúc ngay 
 thì kết luận là "🔴 lỗi ở phía ta". Đây chính là phép kiểm Tool A đã bỏ qua, và nó mất 2 giây.
 
 Suite Docker: 414 passed.
+
+## 07/09/2026 — TD-0093: backfill THẬT CALIB [T0,T1] + WFO [T1,T2] cho 102 mã — bắt được bug tải quá phạm vi
+
+Tải qua `freqtrade download-data` (service `freqtrade`, KHÔNG phải `lockbox` — thư mục làm việc
+`user_data/data/binance/futures`, tách biệt vật lý với lockbox theo đúng DR-011): 510 file (102 mã ×
+5 loại — `1h/4h/1d-futures`, `1h-mark`, `1h-funding_rate`), pairs lấy từ `config/pool.yaml.trading`
+(102 mã, ghi ra `runs/pool_pairs.json`), `--timerange 20240409-20260129` (T0→T2, gộp CALIB+WFO một
+lần tải vì hai đoạn dùng chung thư mục — chỉ LOCKBOX cần thư mục riêng theo spec DR-011).
+
+🔴 **Bug thật bắt được TRƯỚC khi lan rộng, không phải lỗi dữ liệu:** freqtrade 2026.8
+`download-data --timerange <start>-<end>` **KHÔNG tôn trọng mốc `<end>`** — log in đúng
+"From ... to 2026-01-29T00:00:00" nhưng file thật trên đĩa chứa nến tới tận **2026-09-05**
+(gần T3, tức đã lấn hẳn vào phạm vi LOCKBOX). Tái hiện độc lập với 1 mã/1 khung duy nhất
+(`BTC/USDT:USDT`, 1d) trong thư mục rỗng riêng — 880 nến thay vì 661 nến đáng lẽ có, xác nhận không
+phải do 102 mã hay do trộn nhiều lệnh gọi. Mức lấn khác nhau giữa các mã/khung (không phải một hằng
+số "làm tròn tới hôm nay" đơn giản), khớp giả thuyết: freqtrade tải theo lô (batch theo `limit` của
+Binance) rồi giữ nguyên cả lô cuối vượt mốc, không cắt lại theo `--timerange` sau khi tải xong OHLCV
+(nó chỉ dùng `--timerange` để LỌC khi backtest đọc lại, không phải để cắt file lúc tải).
+
+**Vì sao đáng dừng lại thay vì bỏ qua:** dữ liệu THẬT của khoảng LOCKBOX [T2,T3] giờ nằm thêm một bản
+sao trong thư mục làm việc bình thường — đúng nơi mọi entrypoint D1 sẽ đọc — trong khi toàn bộ cơ chế
+DR-011 dựa vào lockbox là nơi DUY NHẤT chứa dữ liệu đó, tách biệt vật lý. Nếu về sau `run_wfo.py`
+hay `run_backtest.py` quên áp đúng cận trên `--timerange` (lỗi con người, không phải lý thuyết), dữ
+liệu tương lai vẫn ngồi sẵn trong cùng file để lọt vào. Không sửa vì đây "chỉ là file trên đĩa, giới
+hạn thật nằm ở tham số chạy" — đúng tinh thần LD-27/LD-28: không tin dữ liệu tự lành, phải kiểm rồi
+sửa.
+
+**Xử lý:** cắt lại toàn bộ 510 file về đúng ≤ T2 (2026-01-29T00:00:00Z) bằng thao tác đọc-lọc-ghi
+trên chính các file thật — không phải "backfill" (không có nến mới nào được thêm), nên không đi qua
+`--snapshot-before`/`--verify-after` (hai cờ đó gác chiều NGƯỢC LẠI: chống mất nến cũ, không phải
+chống thừa nến mới). 506/510 file có nến bị cắt (tối đa 1.000 nến/file). 5 file rỗng sau khi cắt là
+`TRIA_USDT_USDT-*` cả 5 loại — ĐÚNG theo kỳ vọng: TRIAUSDT niêm yết 06/02/2026, sau T2, nên 0 nến
+trong [T0,T2] là chính xác, không phải lỗi cắt.
+
+Sau khi cắt: chạy lại `--snapshot-before` (chụp baseline ĐÚNG phạm vi cho lần backfill tiếp theo),
+verify độc lập `touch_lockbox.py --verify-seal` → **PASS** (lockbox không hề bị đụng trong suốt quá
+trình — bug nằm ở thư mục làm việc, không phải lockbox), rồi `--verify-after` ngay trên snapshot vừa
+chụp làm phép thử không đổi gì → PASS (xác nhận cơ chế H19 hoạt động đúng trên baseline đã sửa).
+
+**Bảng độ phủ thật (khung 1h, `--coverage`), không suy nguyên nhân khoảng trống nào:**
+- CALIB [09/04/2024 → 12/06/2025]: **101 file đo được** (loại 1 `TRIA*` rỗng đúng lý do niêm yết
+  sau), **56 đủ 100%, 45 thiếu** — phần lớn là mã niêm yết muộn hơn T0 (0% ở một số mã), khớp đúng
+  vấn đề survivorship bias mà TD-0095/96 (H1-D) sẽ xử lý, KHÔNG kết luận nguyên nhân ở đây.
+- WFO [12/06/2025 → 29/01/2026]: **101 file đo được, 76 đủ 100%, 25 thiếu** — ít hơn CALIB vì đoạn
+  ngắn hơn và gần hiện tại hơn, ít mã bị hụt đầu kỳ.
+- 102 file `funding_rate` bị loại khỏi cả hai bảng (nhịp 8h thật, không đo theo khung file — xem
+  TD-0092), in rõ lý do thay vì một con số sai.
+
+Suite Docker: 422 passed.
