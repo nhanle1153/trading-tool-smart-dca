@@ -1,0 +1,10 @@
+{
+  "d0_pre_complete": true,
+  "closed_at": "2026-09-06T17:14:47.149018Z",
+  "git_sha": "76db2239e466c5ec78d077edd4586872dcb5242b",
+  "evidence": {
+    "lock_tests": "docker compose run --rm tests -q tests/lock -> 215 passed, 0 failed (06/09/2026)",
+    "trial_ledger_audit": "đã audit 4/6 (4 đạt, 0 chưa đạt, 2 chưa đo được)",
+    "periodic_report": "docker compose run --rm freqtrade entrypoints/periodic_report.py -> exit 0, 22/22 chưa đo được, 0 sentinel lọt (06/09/2026)"
+  }
+}
