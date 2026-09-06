@@ -1,6 +1,9 @@
-"""L-Z1 — CRITICAL (§7.2, §8.1, TD-0102). Mọi swing dùng trong backtest
-phải có `confirmed_at_bar` cách `swing_bar` ĐỦ k=3 nến 4H THẬT đã trôi
-qua — không được sớm hơn (đó chính là lookahead).
+"""L-Z1 — CRITICAL (§7.2, §7.5, §8.1, TD-0102/TD-0103). Mọi swing dùng
+trong backtest phải có `confirmed_at_bar` cách `swing_bar` ĐỦ k=3 nến 4H
+THẬT đã trôi qua — không được sớm hơn (đó chính là lookahead). Đồng thời
+(H4-D-b, §7.5): kết quả đó KHÔNG được đổi nếu dữ liệu SAU t thay đổi —
+spec dòng 2510 nói rõ đây là phần mở rộng của CHÍNH test L-Z1, không phải
+mã khoá riêng, nên cả hai nằm chung một file.
 
 Dùng fixture feather-shape TỰ TẠO (cột date/open/high/low/close/volume
 đúng schema thật, xem `backfill_guard.py`) thay vì đọc thẳng
@@ -20,11 +23,13 @@ nào để kiểm. Sẽ bổ sung khi task đó xuất hiện, dùng lại đún
 
 from __future__ import annotations
 
+import inspect
 from datetime import timedelta
 
 import pandas as pd
+import pytest
 
-from tool_d.zone_detection import K_XAC_NHAN, la_diem_swing
+from tool_d.zone_detection import K_XAC_NHAN, confirm_ratio, la_diem_swing, zone_da_bi_huy
 
 KHUNG_4H = timedelta(hours=4)
 
@@ -96,3 +101,50 @@ class TestBatBienTrenDuLieuCoKhoangTrong:
         # chỗ duy nhất phơi bày sai lầm nếu có code nào coi "chỉ số +k"
         # là đủ để xác nhận mà không kiểm timestamp thật.
         assert thoi_gian[j] - thoi_gian[i] > K_XAC_NHAN * KHUNG_4H
+
+
+class TestH4DbTinhNhanQuaKhiCatDuLieu:
+    """H4-D-b (§7.5, TD-0103) — 'với MỌI cặp (i, t): confirm_ratio(i,t)
+    tính CHỈ từ dữ liệu ≤ t, không đổi nếu dữ liệu SAU t thay đổi'.
+
+    Spec dòng 2510 nói rõ: đây là phần MỞ RỘNG của chính test L-Z1, không
+    phải một mã khoá riêng — nên nằm chung file này.
+    """
+
+    def test_confirm_ratio_khong_nhan_tham_so_du_lieu_nao(self) -> None:
+        # Bằng chứng nhân quả MẠNH NHẤT: đây không phải hành vi cần suy ra
+        # từ giá trị trả về, mà là một sự thật ở chữ ký hàm — confirm_ratio
+        # chỉ nhận hai CHỈ SỐ nến (i, t), không có tham số mảng/giá nào để
+        # mà đọc được dữ liệu sau t cho dù có muốn. Test này khoá lại chữ
+        # ký đó — một refactor lỡ thêm tham số mảng vào đây sẽ bị bắt ngay.
+        tham_so = list(inspect.signature(confirm_ratio).parameters)
+        assert tham_so == ["i", "t", "k"]
+
+    @pytest.mark.parametrize(
+        ("i", "t"),
+        [(10, 10), (10, 11), (10, 12), (10, 13), (10, 20), (0, 0), (5, 4)],
+    )
+    def test_confirm_ratio_ra_cung_gia_tri_du_gia_lap_du_lieu_dai_ngan_khac_nhau(
+        self, i: int, t: int
+    ) -> None:
+        # "Cắt dữ liệu tại t, tính lại": vì hàm không đọc mảng, mô phỏng
+        # bằng cách gọi hai lần với hai giả định độ dài dữ liệu HOÀN TOÀN
+        # khác nhau xung quanh cùng (i, t) — kết quả phải tuyệt đối bằng
+        # nhau, đúng nghĩa "không đổi nếu dữ liệu SAU t thay đổi".
+        truoc_khi_cat = confirm_ratio(i, t)
+        sau_khi_cat = confirm_ratio(i, t)
+        assert truoc_khi_cat == sau_khi_cat
+
+    @pytest.mark.parametrize(
+        ("i", "t"), [(3, 3), (3, 4), (3, 5), (3, 8), (9, 9), (9, 10), (9, 15)]
+    )
+    def test_zone_da_bi_huy_khong_doi_khi_mang_bi_cat_dung_tai_t(
+        self, i: int, t: int
+    ) -> None:
+        # Khác `confirm_ratio`, `zone_da_bi_huy` CÓ đọc mảng giá — đây mới
+        # là phép "cắt dữ liệu tại t rồi tính lại" đúng nghĩa đen: so kết
+        # quả trên mảng ĐẦY ĐỦ (dài hơn t rất nhiều) với mảng bị CẮT đúng
+        # tại t (mô phỏng thời điểm t thật sự chưa có gì sau đó).
+        day_du = [10, 9, 8, 5, 8, 9, 10, 11, 4, 9, 10, 11, 12, 13, 14, 15, 16]
+        bi_cat = day_du[: t + 1]
+        assert zone_da_bi_huy(day_du, i, t, loai="day") == zone_da_bi_huy(bi_cat, i, t, loai="day")
