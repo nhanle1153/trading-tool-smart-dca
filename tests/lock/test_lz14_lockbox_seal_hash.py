@@ -11,7 +11,14 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from tool_d.lockbox.seal import Seal, build_seal, verify_seal, write_seal
+from tool_d.lockbox.seal import (
+    Seal,
+    build_seal,
+    discover_seals,
+    verify_all_seals,
+    verify_seal,
+    write_seal,
+)
 
 
 def _make_data_files(tmp_path: Path, contents: dict[str, str]) -> dict[str, Path]:
@@ -143,6 +150,52 @@ class TestGhiSealBatBien:
         seal2 = build_seal(segment=2, sealed_at="t2", date_range={}, data_files=data2)
 
         assert seal1.data_hashes != seal2.data_hashes
+
+
+class TestDiscoverVaVerifyAllSeals:
+    """H17 (spec dòng 4348) — kiểm TOÀN BỘ đoạn niêm phong hiện có, dùng
+    chung cho E4 `--verify-seal` (TD-0071) và sẽ dùng lại ở đầu E1/E2/E3
+    (TD-0072)."""
+
+    def test_thu_muc_lockbox_chua_ton_tai_khong_loi(self, tmp_path: Path) -> None:
+        # D0-PRE: chưa niêm phong đoạn nào — "không có gì để xác nhận"
+        # không phải lỗi, để pipeline chạy được TRƯỚC TD-0084.
+        assert discover_seals(tmp_path / "khong_ton_tai") == []
+        assert verify_all_seals(tmp_path / "khong_ton_tai", tmp_path / "data") == []
+
+    def test_thu_muc_lockbox_rong_khong_loi(self, tmp_path: Path) -> None:
+        lockbox_dir = tmp_path / "lockbox"
+        lockbox_dir.mkdir()
+        assert discover_seals(lockbox_dir) == []
+        assert verify_all_seals(lockbox_dir, tmp_path / "data") == []
+
+    def test_mot_seal_hop_le_pass(self, tmp_path: Path) -> None:
+        lockbox_dir = tmp_path / "lockbox"
+        data_files = _make_data_files(tmp_path, {"a.csv": "aaa"})
+        seal = build_seal(segment=1, sealed_at="t1", date_range={}, data_files=data_files)
+        write_seal(seal, lockbox_dir / "lockbox_seal_1.json")
+
+        assert discover_seals(lockbox_dir) == [lockbox_dir / "lockbox_seal_1.json"]
+        assert verify_all_seals(lockbox_dir, tmp_path / "data") == []
+
+    def test_hai_seal_mot_dung_mot_sai_bat_dung_doan_sai(self, tmp_path: Path) -> None:
+        lockbox_dir = tmp_path / "lockbox"
+        data_files = _make_data_files(tmp_path, {"a.csv": "aaa", "b.csv": "bbb"})
+        seal1 = build_seal(
+            segment=1, sealed_at="t1", date_range={}, data_files={"a.csv": data_files["a.csv"]}
+        )
+        write_seal(seal1, lockbox_dir / "lockbox_seal_1.json")
+        seal2 = build_seal(
+            segment=2, sealed_at="t2", date_range={}, data_files={"b.csv": data_files["b.csv"]}
+        )
+        write_seal(seal2, lockbox_dir / "lockbox_seal_2.json")
+
+        # Làm hỏng dữ liệu của ĐÚNG đoạn 2, sau khi cả hai đã niêm phong.
+        (tmp_path / "data" / "b.csv").write_text("da_bi_sua", encoding="utf-8")
+
+        errors = verify_all_seals(lockbox_dir, tmp_path / "data")
+        assert len(errors) == 1
+        assert errors[0].startswith("lockbox_seal_2.json:")
 
 
 class TestSealToDict:

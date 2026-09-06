@@ -119,3 +119,31 @@ def verify_seal(seal_path: Path, data_dir: Path) -> list[str]:
         if got != expected_hash:
             errors.append(f"{name}: seal ghi {expected_hash!r}, đo được {got!r}")
     return errors
+
+
+def discover_seals(lockbox_dir: Path) -> list[Path]:
+    """Liệt kê mọi `lockbox_seal_<n>.json` trong `lockbox_dir`, sắp theo
+    tên (tức theo số đoạn). Thư mục chưa tồn tại -> danh sách rỗng."""
+    if not lockbox_dir.is_dir():
+        return []
+    return sorted(lockbox_dir.glob("lockbox_seal_*.json"))
+
+
+def verify_all_seals(lockbox_dir: Path, data_dir: Path) -> list[str]:
+    """H17 (spec dòng 4348) — "Kiểm SHA-256 lockbox mỗi lần khởi động
+    pipeline". Kiểm TOÀN BỘ đoạn niêm phong đang có trong `lockbox_dir`.
+
+    **0 seal là hợp lệ theo mặc định** — ở D0-PRE (trước TD-0084), chưa có
+    đoạn nào được niêm phong; "không có gì để xác nhận" không phải lỗi.
+    Dùng chung cho E4 (`--verify-seal`, TD-0071) và sẽ dùng lại ở đầu
+    E1/E2/E3 (TD-0072) — một hàm duy nhất, không viết lại logic quét seal
+    ở nhiều nơi.
+
+    Lỗi trả về có tiền tố tên file seal để phân biệt được đoạn nào lệch
+    khi có nhiều đoạn cùng lúc.
+    """
+    errors: list[str] = []
+    for seal_path in discover_seals(lockbox_dir):
+        for e in verify_seal(seal_path, data_dir):
+            errors.append(f"{seal_path.name}: {e}")
+    return errors
