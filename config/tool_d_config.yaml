@@ -53,9 +53,11 @@ tier_b: # MỖI LẦN ĐỔI = 1 TRIAL từ B3. 12 mục
   mult_corr_thresholds: [0.60, 0.85] # 10  §6.2 hệ số 3
   max_hold_bars_4h: 24 # 11  §4b.3
   dg7_funding_frac: 0.3 # 12  §4c   🆕 v6 — v5 chưa đếm
-  # zone_width_min_atr:   0.5        # 13? — CHỜ VERIFY D0-PRE (§3.3, TD-0030)
-  #                                  #   code chết → xoá, N=114
-  #                                  #   không chết → bật lại, N=120
+  # 🔴 zone_width_min_atr KHÔNG có ở đây — DR-D0PRE-01 (TD-0030) kết luận
+  # CHẾT (zone_width_pct == 0.6×ATR/price theo cấu trúc §1.1, LUÔN ≥ ngưỡng
+  # lọc 0.5×ATR/price — một hằng đẳng thức, không phải điều kiện phụ thuộc
+  # dữ liệu). Xoá hẳn, không để lại dạng comment (spec dòng 1070: "comment
+  # còn đó là lời mời bật lại mà không qua DR"). N_ĐĂNG_KÝ = 114.
 
 tier_frozen: # 🔒 MỞ KHOÁ = +6 vào N (§12c.3)
   _unfreeze_count: 0
@@ -85,7 +87,7 @@ tier_frozen: # 🔒 MỞ KHOÁ = +6 vào N (§12c.3)
   # Σ dof = -6.  Kiểm kê gốc 26 + DG7(1) + w_tranche(1) = 28
   #   28 - 6 (đóng băng) - 4 (pool → B0) - 2 (xoá §2.4, §3.3c)
   #   - 1 (mult_dd → Cấp C) - 1 (L_BASE → mult_regime đóng băng)
-  #   - 1 (zone_width, có điều kiện)  =  12  ✅ khớp tier_b
+  #   - 1 (zone_width, CHẾT — DR-D0PRE-01, TD-0030)  =  12  ✅ khớp tier_b
   #   → xem DR-010 để đọc bảng đối chiếu đầy đủ, xác nhận lại ở TD-0031
 
 tier_c: # 🔒 KHOÁ — KHÔNG có ô nhập, ghi ở đây
