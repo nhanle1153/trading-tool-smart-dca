@@ -183,12 +183,36 @@
 
 ---
 
+### Khối 13 — D2: Verify giả định D1–D7 (§9b.2) + H15
+
+> Spec dòng 4469-4470: *"D2 Verify D1-D7 (v7: +D6, +D7; D2 tách a/b/c) + H15 · 🔴 L-Z49 (D7) PASS là
+> điều kiện vào D4"*. TD-0028 (D0-PRE) đã đọc source cho **D2a, D2b, D6, D7** (kết luận: D2a ĐÚNG,
+> D2b KHÔNG hỗ trợ `closePosition`, D6 ĐÚNG dùng giá mở nến, D7 cơ chế an toàn + cảnh báo `trade.id`)
+> — xem `docs/freqtrade-source-read.md`. **D1, D3, D4, D5 CHƯA đọc** (file đó tự ghi rõ "sẽ đọc khi
+> tới D2"). D2c/D4 (Testnet/Live-only, spec bảng §9b.2) **KHÔNG thuộc phạm vi D2** — hoãn tới D3.5/
+> D9.5+, không chặn cổng D2.
+>
+> 🔴 TD-0114/TD-0115 là lần ĐẦU TIÊN dự án cần một `IStrategy` thật chạy qua Freqtrade backtesting
+> (không còn là hàm thuần `src/tool_d/`) — dùng `zone_detection.py`/`zone_strength.py` đã có ở D1.
+
+| Mã | Tên việc | TT | Phụ thuộc | Verify |
+|---|---|---|---|---|
+| TD-0111 | **D1** — đọc source `adjust_trade_position()` mô phỏng fill limit-maker trong backtest futures (kể cả ca KHÔNG khớp) → nối vào `docs/freqtrade-source-read.md` | 🔓 | TD-0110 | Trích đường dẫn + số dòng thật trong image (LD-38/40); kết luận nhị phân ĐÚNG/SAI mô tả spec |
+| TD-0112 | **D3** — đọc source cách Freqtrade tính giá vào trung bình khi nhiều lần entry + xác nhận `custom_stoploss` đọc được đúng giá đó | 🔓 | TD-0110 | `docs/freqtrade-source-read.md` có mục D3; test đơn vị dựng backtest nhỏ đa-entry xác nhận giá trung bình đúng công thức |
+| TD-0113 | **D5** — đọc source hành vi `timeframe-detail 5m`: thứ tự khớp khi nhiều mức giá (p1,p2,p3,SL,TP) cùng nằm trong một nến 1H | 🔓 | TD-0110 | `docs/freqtrade-source-read.md` có mục D5; test/backtest nhỏ dựng nến 1H chứa ≥2 mức giá, xác nhận thứ tự khớp theo đúng dòng 5m, không theo thứ tự tuỳ ý |
+| TD-0114 | 🔴 **L-Z49 CRITICAL, D7** — dựng `IStrategy` tối thiểu THẬT (1 pair, 1 zone, 3 tranche) dùng `zone_detection`/`zone_strength` đã có; chạy backtest thật; xác nhận `custom_data` ghi ở tranche 1 đọc lại NGUYÊN VẸN ở callback tranche 2/3 + DG6/7/8 + `custom_exit`. FAIL → chặn D4 | 🔓 | TD-0111, TD-0112, TD-0113 | Chạy backtest thật trong Docker (service `freqtrade`, dữ liệu CALIB); test khoá `L-Z49` PASS; FAIL thì ghi rõ, KHÔNG chạy D0.9 |
+| TD-0115 | 🔴 **L-Z50, D6** — đo lệch khớp tranche: mọi tranche fill trong backtest thật (TD-0114) có `fill_price` so với giá `timeframe_detail` 5m cho thấy đã CHẠM `p_i`; ghi phân bố lệch, tách tranche 1/2/3, tách Long/Short | 🔓 | TD-0114 | Chạy backtest thật; bảng phân bố lệch ghi `docs/research-log.md` kèm provenance (§0d.5); lệch > 0 ở fill nào → ghi nhận D6 CHƯA giảm nhẹ bởi H5, không tự ý "coi như đạt" |
+| TD-0116 | **H15** — network/auth latency probe `POST /fapi/v1/order/test` với API key THẬT (§6.7 điều kiện bảo mật) — 🟡 P1, không chặn cổng D2 | 🔓 | — | Đo latency network+auth thật, ghi `docs/research-log.md`. 🔴 **Cần chủ dự án xác nhận trước khi cấu hình API key thật vào máy** (secret, phạm vi quyền, sub-account) — không tự ý tạo/nạp key |
+| TD-0117 | 🚪 **GATE D2** — D1/D3/D5/D6/D7 (phần verify được ở backtest) PASS, L-Z49/L-Z50/L-Z51 xanh → điều kiện vào D3 | 🔓 | TD-0111…TD-0116 | Toàn bộ test khoá D2 xanh trong Docker; ghi `runtime_state.json.d2_complete` từ một lần chạy thật (bằng chứng `do-duoc`, MT-10); `git tag d2-complete`. Ghi rõ D2b/D2c/D4 (Testnet/Live-only) hoãn tới D3.5/D9.5+, không phải "đã qua" |
+
+---
+
 ## Việc đã biết là sẽ có, chưa mở
 
 | Giai đoạn | Nội dung | Chặn bởi |
 |---|---|---|
 | ~~D1~~ ✅ **ĐÃ MỞ 07/09/2026** | H20 ✅ (xong ở D0-PRE) · H1-D · H4-D · H13 · H19 → **Khối 9–12** bên trên (TD-0090…TD-0110) | — |
-| D2 | Verify giả định D1–D7, H15. L-Z49 (D7) là điều kiện vào D4 | D1 |
+| ~~D2~~ ✅ **ĐÃ MỞ 07/09/2026** | Verify giả định D1–D7 (§9b.2), H15 → **Khối 13** bên trên (TD-0111…TD-0117). L-Z49 (D7) là điều kiện vào D4 | — |
 | D3 | H3-D walk-forward orchestrator | D2 |
 | D3.5 | 🚪 Cổng sai lệch thước đo (DR-015) — **chặn D4**, cần testnet | D3 |
 | D4 | 🔴 Ablation D0.9, 9 cấu hình × 2 hướng — **blocker B4** | D3.5 + TD-0041 (B6) |
