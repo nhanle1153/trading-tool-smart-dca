@@ -52,13 +52,13 @@ def effective_n(*, n_dang_ky: int = N_DANG_KY, n_consumed_since_live: int = 0) -
 def dsr_adjusted_expectancy(
     mean_r: float, std_r: float, n_trades: int, *, n_trials: int = N_DANG_KY
 ) -> float:
-    """DR-D0PRE-03 mục 2 — đại lượng của ô Nhánh 1 §10.2, đơn vị R mỗi lệnh:
+    """DR-D0PRE-03 mục 2 — đại lượng của ô Nhánh 1 §10.2, đơn vị R_realized
+    mỗi lệnh (DR-013: pnl_abs / planned_risk_usdt):
 
-        mean(R) − √(2·ln N) × std(R) / √n_trades
+        mean(R_realized) − √(2·ln N) × std(R_realized) / √n_trades
 
     Cận dưới của expectancy sau khi trừ phần "tình cờ chọn được cái tốt
     nhất trong N phép thử". N đi vào phép tính qua `dsr_hurdle()` (L-Z34).
-    Chuỗi R là R_realized theo DR-013 (pnl_abs / planned_risk_usdt).
 
     Fail-closed: `n_trades < 2` hoặc `std_r < 0` → raise, không trả NaN.
     """

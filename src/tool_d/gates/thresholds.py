@@ -1,7 +1,7 @@
 """Ngưỡng GATE D0.9, Nhánh 1 — §10.2 (spec dòng 4251-4276). Canh bởi L-Z35.
 
 Ô trống duy nhất của Nhánh 1 ("DSR-adjusted expectancy ≥ ......") đã được
-điền bằng DR-D0PRE-03 (TD-0041, 06/09/2026): **0,10 R**, suy từ chi phí
+điền bằng DR-D0PRE-03 (TD-0041, 06/09/2026): **0,10 R_realized**, suy từ chi phí
 backtest không nhìn thấy (trượt giá SL) × hệ số an toàn. Công thức của đại
 lượng này ở `dsr.dsr_adjusted_expectancy()`.
 
