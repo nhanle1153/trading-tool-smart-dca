@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "trial_event.schema.json",
+  "title": "Sự kiện sổ trial (trial_registry.jsonl)",
+  "description": "MT-01 (back-end-note.md mục 7): trial_registry.jsonl là SỔ NHẬT KÝ SỰ KIỆN, mỗi dòng một sự kiện, cùng trial_id gộp lại thành một trial. Append-only tuyệt đối — không sửa/xoá dòng đã ghi. Trạng thái hiện tại là BẢN CHIẾU tính lại khi đọc, không phải trường trên đĩa.",
+  "$defs": {
+    "provenance": {
+      "type": "object",
+      "description": "Khối xuất xứ 7+1 khoá (0d.5, L-Z40).",
+      "required": [
+        "params_source",
+        "params_effective",
+        "git_sha",
+        "reproducible_from_sha",
+        "data_hashes",
+        "cache_mode",
+        "guard_passed"
+      ],
+      "properties": {
+        "params_source": { "enum": ["yaml", "params_file", "env"] },
+        "params_effective": { "type": "object" },
+        "git_sha": { "type": "string", "minLength": 1 },
+        "reproducible_from_sha": { "type": "boolean" },
+        "data_hashes": { "type": "object" },
+        "cache_mode": { "type": "string" },
+        "guard_passed": { "type": "boolean" },
+        "runtime_image_digest": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "trial_id": { "type": "string", "pattern": "^D-[0-9]{4,}$" },
+    "iso_timestamp": {
+      "type": "string",
+      "description": "UTC, ISO-8601, kết thúc bằng Z (G.12: cấm giờ local).",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+
+    "reserve": {
+      "type": "object",
+      "required": [
+        "event", "trial_id", "tool_id", "registered_at", "budget_line",
+        "hypothesis_slot", "direction", "dataset", "param_under_test",
+        "param_value", "params_frozen_hash", "config_hash", "code_commit",
+        "provenance", "contribution"
+      ],
+      "properties": {
+        "event": { "const": "RESERVE" },
+        "trial_id": { "$ref": "#/$defs/trial_id" },
+        "tool_id": { "const": "D" },
+        "registered_at": { "$ref": "#/$defs/iso_timestamp" },
+        "budget_line": { "enum": ["B0", "B1", "B2", "B3", "CTRL"] },
+        "hypothesis_slot": { "type": "string" },
+        "direction": { "enum": ["LONG", "SHORT"] },
+        "dataset": { "enum": ["CALIB", "WFO", "LOCKBOX"] },
+        "param_under_test": { "type": "string" },
+        "param_value": {},
+        "params_frozen_hash": { "type": "string" },
+        "config_hash": { "type": "string" },
+        "code_commit": { "type": "string" },
+        "provenance": { "$ref": "#/$defs/provenance" },
+        "contribution": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+
+    "seal": {
+      "type": "object",
+      "description": "Bộ chạy TỰ ghi ngay khi chỉ số đầu tiên tồn tại trong bộ nhớ, TRƯỚC cả khi in (DR-014 §3).",
+      "required": ["event", "trial_id", "sealed_at", "seal_path"],
+      "properties": {
+        "event": { "const": "SEAL" },
+        "trial_id": { "$ref": "#/$defs/trial_id" },
+        "sealed_at": { "$ref": "#/$defs/iso_timestamp" },
+        "seal_path": { "type": "string", "pattern": "^runs/.+/metrics\\.seal$" }
+      },
+      "additionalProperties": false
+    },
+
+    "consume": {
+      "type": "object",
+      "description": "outcome chỉ được ghi ĐÚNG MỘT LẦN (spec dòng 3762).",
+      "required": ["event", "trial_id", "executed_at", "outcome", "verdict", "retest_forbidden"],
+      "properties": {
+        "event": { "const": "CONSUME" },
+        "trial_id": { "$ref": "#/$defs/trial_id" },
+        "executed_at": { "$ref": "#/$defs/iso_timestamp" },
+        "outcome": {
+          "type": "object",
+          "required": ["expectancy", "sharpe", "n_trades", "max_single_loss_ratio"],
+          "properties": {
+            "expectancy": { "type": ["number", "null"] },
+            "sharpe": { "type": ["number", "null"] },
+            "n_trades": { "type": ["integer", "null"] },
+            "max_single_loss_ratio": { "type": ["number", "null"] }
+          },
+          "additionalProperties": false
+        },
+        "verdict": { "enum": ["KEPT", "REJECTED", "INCONCLUSIVE"] },
+        "rejection_reason": { "type": ["string", "null"] },
+        "retest_forbidden": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+
+    "refund": {
+      "type": "object",
+      "description": "CHỈ khi KHÔNG có seal, nguyên nhân MÁY xác định (DR-014 §3, L-Z54).",
+      "required": ["event", "trial_id", "refunded_at", "refund_cause_machine"],
+      "properties": {
+        "event": { "const": "REFUND" },
+        "trial_id": { "$ref": "#/$defs/trial_id" },
+        "refunded_at": { "$ref": "#/$defs/iso_timestamp" },
+        "refund_cause_machine": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+
+    "contaminate": {
+      "type": "object",
+      "description": "DR-014 §6 (nhiễm tham số tiêu gấp đôi) hoặc vi phạm quy tắc 1 của §9c.2 (registered_at muộn hơn executed_at). Trial VẪN tính vào N — không được xoá hay hoàn trả.",
+      "required": ["event", "trial_id", "contaminated_at", "reason"],
+      "properties": {
+        "event": { "const": "CONTAMINATE" },
+        "trial_id": { "$ref": "#/$defs/trial_id" },
+        "contaminated_at": { "$ref": "#/$defs/iso_timestamp" },
+        "reason": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/$defs/reserve" },
+    { "$ref": "#/$defs/seal" },
+    { "$ref": "#/$defs/consume" },
+    { "$ref": "#/$defs/refund" },
+    { "$ref": "#/$defs/contaminate" }
+  ]
+}

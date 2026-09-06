@@ -81,8 +81,8 @@
 
 | Mã | Tên việc | TT | Phụ thuộc | Verify |
 |---|---|---|---|---|
-| TD-0050 | Schema JSON cho `trial_registry.jsonl` (**dạng sổ sự kiện**, theo MT-01) và `idea_queue.jsonl`; tạo hai file rỗng | 🔒 | TD-0012 | `jsonschema` validate fixture mẫu cho cả 5 loại sự kiện |
-| TD-0051 | `ledger/registry.py` + `budget.py` — reserve / seal / consume / refund, công thức Khả dụng, bản chiếu trạng thái. Áp MT-03 | 🔒 | TD-0050 | Chuỗi reserve→seal→consume: `available()` đúng ở từng bước |
+| TD-0050 | Schema JSON cho `trial_registry.jsonl` (**dạng sổ sự kiện**, theo MT-01) và `idea_queue.jsonl`; tạo hai file rỗng | ✅ | TD-0012 | `jsonschema` validate fixture mẫu cho cả 5 loại sự kiện |
+| TD-0051 | `ledger/registry.py` + `budget.py` — reserve / seal / consume / refund, công thức Khả dụng, bản chiếu trạng thái. Áp MT-03 | ✅ | TD-0050 | Chuỗi reserve→seal→consume: `available()` đúng ở từng bước |
 | TD-0052 | Test **L-Z52** — hết ngân sách thì từ chối, chưa chạm dữ liệu | 🔓 | TD-0051 | `pytest -k lz52` xanh; spy khẳng định **0 lần** đọc `user_data/data` |
 | TD-0053 | Test **L-Z53** — giết tiến trình sau khi có kết quả fold đầu → CONSUMED, hoàn trả phải RAISE | 🔓 | TD-0051 | `docker compose run --rm tests -k lz53` xanh |
 | TD-0054 | Test **L-Z54** — 4 dòng bảng DR-014 + trần trả lại 3 lần | 🔓 | TD-0051 | `pytest -k lz54` — 5 ca xanh |

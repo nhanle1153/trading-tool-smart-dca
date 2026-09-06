@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "idea_queue_entry.schema.json",
+  "title": "Một dòng idea_queue.jsonl (§9c.7.3)",
+  "description": "Append-only, cùng thư mục với trial_registry.jsonl. Vào queue KHÔNG tiêu trial nào — chỉ khi SELECTED mới tiêu 1 slot NGÂN SÁCH A.",
+  "type": "object",
+  "required": [
+    "idea_id", "created_at", "source", "session_type", "data_source",
+    "title", "mechanism", "who_pays", "durability", "filter_verdict",
+    "overlaps_with", "status", "selected_at", "budget_a_slot", "selection_reason"
+  ],
+  "properties": {
+    "idea_id": { "type": "string", "pattern": "^IQ-[0-9]{4,}$" },
+    "created_at": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "source": { "enum": ["LLM", "HUMAN", "EXTERNAL"] },
+    "session_type": { "const": "IDEA" },
+    "data_source": {
+      "enum": ["MECHANISM", "EXPLORE", "TOOL_D_RESULTS"],
+      "description": "L-Z16: TOOL_D_RESULTS PHẢI có status=REJECTED — xem quy tắc riêng bên dưới, không diễn tả được bằng JSON Schema thuần (cần kiểm ở ledger.py)."
+    },
+    "explore_evidence": {
+      "type": ["string", "null"],
+      "description": "BẮT BUỘC có nội dung (không null) nếu data_source == EXPLORE."
+    },
+    "title": { "type": "string", "minLength": 1 },
+    "mechanism": { "type": "string", "minLength": 1 },
+    "who_pays": { "type": "string", "minLength": 1 },
+    "durability": { "type": "string", "minLength": 1 },
+    "filter_verdict": {
+      "enum": ["PASS", "FAIL_NO_PAYER", "FAIL_MECHANISM", "FAIL_DURABILITY", "DUPLICATE"]
+    },
+    "overlaps_with": { "type": "array", "items": { "type": "string" } },
+    "status": { "enum": ["QUEUED", "SELECTED", "ARCHIVED", "REJECTED"] },
+    "selected_at": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "budget_a_slot": { "type": ["string", "null"] },
+    "selection_reason": {
+      "type": ["string", "null"],
+      "description": "BẮT BUỘC có nội dung (không null) khi status == SELECTED (§9c.7.4)."
+    }
+  },
+  "additionalProperties": false
+}
