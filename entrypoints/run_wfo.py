@@ -1,9 +1,10 @@
 """E2 — H3-D walk-forward orchestrator (spec dòng 656).
 
 Khung TD-0016: chỉ dựng `main()` gọi `measurement_guard()` ở dòng đầu tiên
-sau parse tham số (canh bởi L-Z36, TD-0017). Logic WFO thật là "VIẾT LẠI TỪ
-ĐẦU" theo bảng H3-D (spec dòng 4340) — chưa có mã việc TD riêng tại thời
-điểm tạo file này, sẽ thêm khi tới Khối tương ứng.
+sau parse tham số (canh bởi L-Z36, TD-0017). TD-0057 nối `run_audit()`
+(E6, H16) ngay sau đó — "tự kiểm cả chính nó" TRƯỚC MỖI lần chạy (spec
+dòng 660). Logic WFO thật là "VIẾT LẠI TỪ ĐẦU" theo bảng H3-D (spec dòng
+4340) — chưa có mã việc TD riêng tại thời điểm sửa file này.
 """
 
 from __future__ import annotations
@@ -12,6 +13,7 @@ import argparse
 import sys
 
 from tool_d.measurement.guard import EXIT_GUARD_BLOCKED, GuardOutcome, measurement_guard
+from trial_ledger_audit import run_audit
 
 ENTRYPOINT = "E2"
 
@@ -33,6 +35,11 @@ def main(argv: list[str] | None = None) -> int:
     report = measurement_guard(ENTRYPOINT, argv=argv, with_params_file=args.with_params_file)
     if report.outcome is GuardOutcome.BLOCKED:
         return EXIT_GUARD_BLOCKED
+
+    audit_exit, audit_text = run_audit()
+    if audit_exit != 0:
+        print(audit_text)
+        return audit_exit
 
     raise NotImplementedError(
         "Logic H3-D walk-forward orchestrator chưa viết — TD-0016 chỉ dựng khung guard."
