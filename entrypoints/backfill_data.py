@@ -6,24 +6,51 @@ liệu), KHÔNG PHẢI "chạm dữ liệu" theo nghĩa DR-014 (đánh giá cấ
 trên CALIB/WFO/LOCKBOX — những tập đó CHƯA được chia, xem TD-0084) — nên
 không cần reserve() qua ledger, đi dòng CTRL tự nhiên.
 
-Chế độ backfill THẬT (sao lưu + gộp + verify byte-for-byte, H19, spec
-dòng 5376-5377) chưa có mã việc TD riêng tại thời điểm sửa file này —
-vẫn TỪ CHỐI như khung TD-0016.
+TD-0091 (H19, spec dòng 4350 + LD-27/28) — hai chế độ GÁC quanh lần tải:
+
+    --snapshot-before   (a) sao lưu thư mục dữ liệu ra NGOÀI repo
+                        (c) chụp dấu vân tay từng file -> `runs/backfill_snapshot.json`
+    --verify-after      (b)(c) so lại: mọi nến trong khoảng CŨ phải còn
+                        nguyên từng trường. Vi phạm -> exit 97, kèm chỉ dẫn
+                        khôi phục từ bản sao lưu.
+
+Việc TẢI vẫn do `freqtrade download-data` làm (đã kiểm chứng ở TD-0084);
+E8 không tự tải — lớp gác không được phụ thuộc vào chính thứ nó giám sát.
+Quy trình đúng: `--snapshot-before` → chạy download-data → `--verify-after`.
+
+🔴 Phép so là ở mức NẾN, không phải bytes của file: gộp thêm nến mới làm
+bytes đổi một cách HỢP LỆ. Xem `src/tool_d/data/backfill_guard.py`.
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import sys
+from dataclasses import asdict
 from datetime import datetime, timezone
 
+from pathlib import Path
+
 from tool_d.api_client.binance_public import BinancePublicApiError, get_open_interest_hist
+from tool_d.data.backfill_guard import (
+    RangeDigest,
+    backup_data_dir,
+    snapshot_dir,
+    verify_old_candles_preserved,
+)
 from tool_d.gates.d0_pre import require_d0_pre_complete
 from tool_d.measurement.guard import EXIT_GUARD_BLOCKED, GuardOutcome, measurement_guard
 
 ENTRYPOINT = "E8"
 
 EXIT_PROBE_FAILED = 93
+EXIT_BACKFILL_UNSAFE = 97  # H19: dữ liệu cũ bị đụng -> DỪNG, không đi tiếp
+
+# H19 — thư mục dữ liệu làm việc (CALIB/WFO). Lockbox có đường riêng, ĐÃ
+# niêm phong (TD-0084), không bao giờ backfill thêm vào đó.
+DEFAULT_DATA_DIR = Path("user_data/data/binance/futures")
+DEFAULT_BACKUP_ROOT = Path("../tool-d-data-backup")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -39,7 +66,68 @@ def build_parser() -> argparse.ArgumentParser:
         help="Chỉ đo độ dài lịch sử Open Interest Binance thật sự trả về (TD-0080), không backfill.",
     )
     parser.add_argument("--symbol", default="BTCUSDT", help="Mã dùng để thăm dò (mặc định BTCUSDT).")
+    parser.add_argument(
+        "--snapshot-before",
+        action="store_true",
+        help="H19 (a)(c) — sao lưu + chụp dấu vân tay dữ liệu hiện có TRƯỚC khi tải. In file snapshot để truyền cho --verify-after.",
+    )
+    parser.add_argument(
+        "--verify-after",
+        metavar="SNAPSHOT_JSON",
+        help="H19 (b)(c) — so dữ liệu hiện tại với snapshot: mọi nến CŨ phải còn nguyên. Có vi phạm -> exit 97.",
+    )
+    parser.add_argument(
+        "--data-dir",
+        default=str(DEFAULT_DATA_DIR),
+        help=f"Thư mục dữ liệu cần gác (mặc định {DEFAULT_DATA_DIR}).",
+    )
+    parser.add_argument(
+        "--backup-root",
+        default=str(DEFAULT_BACKUP_ROOT),
+        help=f"Nơi đặt bản sao lưu, NGOÀI repo (mặc định {DEFAULT_BACKUP_ROOT}).",
+    )
+    parser.add_argument(
+        "--snapshot-out",
+        default="runs/backfill_snapshot.json",
+        help="Nơi ghi file snapshot (mặc định runs/backfill_snapshot.json).",
+    )
     return parser
+
+
+def do_snapshot_before(*, data_dir: Path, backup_root: Path, out_path: Path) -> int:
+    """H19 (a) sao lưu trước + (c) chụp dấu vân tay để verify sau."""
+    if not data_dir.is_dir():
+        print(f"🛑 {data_dir} chưa tồn tại — chưa có dữ liệu nào để gác. Lần tải ĐẦU TIÊN vào thư mục rỗng không cần H19 (không có gì để mất), nhưng phải chạy --snapshot-before NGAY SAU đó.")
+        return EXIT_BACKFILL_UNSAFE
+    dest = backup_data_dir(source_dir=data_dir, dest_root=backup_root)
+    snap = snapshot_dir(data_dir)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(
+        json.dumps({name: asdict(d) for name, d in snap.items()}, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    print(f"✅ H19 (a) đã sao lưu {data_dir} -> {dest}")
+    print(f"✅ H19 (c) đã chụp {len(snap)} file -> {out_path}")
+    return 0
+
+
+def do_verify_after(*, data_dir: Path, snapshot_path: Path) -> int:
+    """H19 (b)(c) — mọi nến trong khoảng CŨ phải còn nguyên sau khi tải."""
+    if not snapshot_path.is_file():
+        print(f"🛑 không đọc được snapshot {snapshot_path} — chạy --snapshot-before TRƯỚC khi tải.")
+        return EXIT_BACKFILL_UNSAFE
+    raw = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    before = {name: RangeDigest(**d) for name, d in raw.items()}
+    errors = verify_old_candles_preserved(before, data_dir)
+    if errors:
+        print(f"🛑 H19 FAIL — dữ liệu CŨ bị đụng ({len(errors)} file). Đây là bẫy LD-27 (ghi đè theo khoảng ngày yêu cầu), KHÔI PHỤC TỪ BẢN SAO LƯU trước khi làm gì tiếp:")
+        for e in errors[:20]:
+            print(f"  - {e}")
+        if len(errors) > 20:
+            print(f"  … và {len(errors) - 20} file nữa")
+        return EXIT_BACKFILL_UNSAFE
+    print(f"✅ H19 PASS — {len(before)} file: mọi nến cũ còn nguyên, lần tải này là GỘP đúng nghĩa.")
+    return 0
 
 
 def probe_oi_coverage(symbol: str = "BTCUSDT") -> str:
@@ -75,6 +163,19 @@ def main(argv: list[str] | None = None) -> int:
             print(f"🛑 probe thất bại: {exc}")
             return EXIT_PROBE_FAILED
         return 0
+
+    if args.snapshot_before or args.verify_after:
+        gate_exit = require_d0_pre_complete(ENTRYPOINT)
+        if gate_exit is not None:
+            return gate_exit
+        data_dir = Path(args.data_dir)
+        if args.snapshot_before:
+            return do_snapshot_before(
+                data_dir=data_dir,
+                backup_root=Path(args.backup_root),
+                out_path=Path(args.snapshot_out),
+            )
+        return do_verify_after(data_dir=data_dir, snapshot_path=Path(args.verify_after))
 
     # TD-0090 — từ đây trở xuống là nhánh CHẠM DỮ LIỆU thật (ghi lịch sử
     # giá vào đĩa). `--probe-coverage` ở trên KHÔNG bị gác vì đó là đo
