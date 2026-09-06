@@ -191,7 +191,16 @@ với dòng phiên kia đang gõ dở cùng lúc — đã gây ít nhất 3 lầ
 > Mục này có thể lệch nhịp vài phút so với phiên kia — luôn `git log --oneline` +
 > đọc lại `TASKS.md` (cột 🔓/🔒/✅) trước khi chọn việc tiếp theo, đừng chỉ tin mục này.
 
-**Đang ở:** **Giai đoạn 3**, backend đã qua hết **Khối 1** (cổng L-Z36→L-Z41 sạch, tag
+**Đang ở (cập nhật 06/09/2026, đêm):** **Giai đoạn 3**, D0-PRE **54/62 việc xong**. Khối 1→7 xong;
+Khối 8 còn **TD-0084** (chia CALIB/WFO/LOCKBOX + niêm phong, OQ-05), **TD-0085** (backup lockbox),
+**TD-0086** (GATE D0-PRE). Trong phiên đêm: chủ dự án đã chốt **ba con số** — DSR-adjusted
+expectancy **0,10 R_realized** (DR-D0PRE-03, **blocker B6 gỡ**), thang drawdown **5/8/20%**
+(DR-D0PRE-04, Cấp C), `E_D` **500 / 3x / 0,375% / 8%** (DR-D0PRE-06; `tradable_balance_ratio` sửa
+0.99→0.5); TD-0082 min notional 102/102 qua, 8–21 mã bị L-Z20 từ chối theo zone (không sửa gì).
+OQ-01/02/03 đóng trong `back-end-note.md`. Suite Docker: 333 test xanh. Bước tiếp: TD-0084 (cần
+chủ dự án chốt mốc T0–T3 — sẽ đề xuất dựa trên độ dài lịch sử thật của 102 mã).
+*(Đoạn "Đang ở" cũ bên dưới giữ nguyên làm lịch sử.)*
+Cũ: **Giai đoạn 3**, backend đã qua hết **Khối 1** (cổng L-Z36→L-Z41 sạch, tag
 `d0pre-0d-live`) và đang ở **Khối 2** (DR-013 xong, config Freqtrade + TD-0028 đang làm).
 
 **Backend — đã xong:**
