@@ -51,3 +51,18 @@ class TestVerifyAllSealsDuocGoiTrongMain:
             text = (REPO_ROOT / "entrypoints" / f).read_text(encoding="utf-8")
             assert "from tool_d.lockbox.seal import verify_all_seals" in text
             assert "from touch_lockbox import" in text and "LOCKBOX_DIR" in text
+
+    def test_dung_thu_muc_futures_khong_phai_thu_muc_data_cha(self) -> None:
+        # TD-0084 — bug thật đã bắt: build_seal() (E4 --seal-initial) hash
+        # file trong lockbox/data/futures/ (Freqtrade --trading-mode futures
+        # luôn lồng thêm thư mục con "futures/"), nhưng verify_all_seals()
+        # từng được gọi với LOCKBOX_DATA_DIR (= lockbox/data, THIẾU
+        # "/futures") → mọi file báo "MISSING", L-Z14 FAIL 100% dù dữ liệu
+        # đúng. Không ai bắt được vì trước TD-0084 chưa từng có seal thật
+        # (0 seal = PASS rỗng, che mất bug). Khoá: phải dùng
+        # LOCKBOX_FUTURES_DIR, KHÔNG được quay lại LOCKBOX_DATA_DIR.
+        for f in ENTRYPOINTS_WITH_SEAL_VERIFY:
+            text = (REPO_ROOT / "entrypoints" / f).read_text(encoding="utf-8")
+            assert "LOCKBOX_FUTURES_DIR" in text
+            assert "verify_all_seals(LOCKBOX_DIR, LOCKBOX_DATA_DIR)" not in text
+            assert "verify_all_seals(LOCKBOX_DIR, LOCKBOX_FUTURES_DIR)" in text
