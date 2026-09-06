@@ -62,6 +62,35 @@ def get_ticker_price(*, timeout: float = DEFAULT_TIMEOUT_S) -> list[dict]:
         raise BinancePublicApiError(f"gọi {url} thất bại: {exc}") from exc
 
 
+def get_klines(
+    *,
+    symbol: str,
+    interval: str,
+    start_time_ms: int | None = None,
+    end_time_ms: int | None = None,
+    limit: int = 1500,
+    timeout: float = DEFAULT_TIMEOUT_S,
+) -> list[list]:
+    """`GET /fapi/v1/klines` — nến lịch sử (OHLCV). Dùng cho TD-0084 (đo
+    độ dài dữ liệu thật + nhận diện chế độ thị trường cho mốc CALIB/WFO/
+    LOCKBOX, DR-011). `limit` tối đa Binance công bố là 1500 — raise nếu
+    ngoài khoảng, không tự cắt bớt (fail-closed, giống `get_open_interest_hist`).
+    """
+    if not (1 <= limit <= 1500):
+        raise ValueError(f"limit phải trong [1, 1500], nhận: {limit}")
+    params = [f"symbol={symbol}", f"interval={interval}", f"limit={limit}"]
+    if start_time_ms is not None:
+        params.append(f"startTime={start_time_ms}")
+    if end_time_ms is not None:
+        params.append(f"endTime={end_time_ms}")
+    url = f"{BASE_URL}/fapi/v1/klines?{'&'.join(params)}"
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as resp:  # noqa: S310 — URL cố định, không do người dùng nhập
+            return json.loads(resp.read())
+    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as exc:
+        raise BinancePublicApiError(f"gọi {url} thất bại: {exc}") from exc
+
+
 def get_open_interest_hist(
     *,
     symbol: str,
