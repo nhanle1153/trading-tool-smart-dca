@@ -18,6 +18,7 @@ phải nghĩa mà báo cáo này định trả lời; kiểm sổ sách tĩnh l�
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import dataclass
 
 from tool_d.measurement.tri_state import Measured
@@ -82,3 +83,19 @@ def build_metrics() -> list[ReportMetric]:
     trạng thái dùng chung.
     """
     return [ReportMetric(code=c, label=label, measured=Measured.pending(why)) for c, label, why in _METRIC_DEFS]
+
+
+def content_fingerprint() -> str:
+    """Vân tay nội dung báo cáo — SHA-256 của (code, label) TỪNG chỉ số,
+    theo ĐÚNG thứ tự khai báo (TD-0062, spec dòng 4808).
+
+    🔴 Đổi giá trị hàm này trả về = ĐỔI NỘI DUNG BÁO CÁO = TIÊU 1 TRIAL.
+    Đây là quyết định quản trị (đi qua DR-012/ngân sách), không phải một
+    refactor tự do — thêm/bớt/sửa nhãn một chỉ số ĐỀU làm hash đổi, có chủ
+    đích. Chỉ hash `code`+`label` (KHÔNG hash lý do pending trong
+    `_METRIC_DEFS`): lý do là văn bản vận hành nội bộ giải thích TẠI SAO
+    chưa đo được, không phải một phần "nội dung báo cáo" mà LLM đọc để
+    diễn giải — đổi câu chữ giải thích không phải hành vi spec muốn chặn.
+    """
+    payload = "\n".join(f"{m.code}|{m.label}" for m in build_metrics())
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
