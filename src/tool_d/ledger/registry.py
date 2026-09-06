@@ -90,8 +90,15 @@ class TrialProjection:
 def _utcnow_iso() -> str:
     """UTC, ISO-8601, kết thúc bằng Z — bắt buộc (G.12: cấm giờ local,
     L-Z10 đòi registered_at < executed_at, chỉ đúng khi cùng múi giờ).
+
+    🔴 Độ phân giải MICRO GIÂY, không phải giây: L-Z10 đòi `<` CHẶT.
+    Với độ phân giải giây, hai sự kiện cách nhau vài mili-giây (đúng
+    hình dạng reserve()->seal()->consume() chạy trong cùng một tiến
+    trình, không phải một lần backtest thật kéo dài) có thể rơi vào
+    CÙNG một giây, làm `registered_at == executed_at` và L-Z10 báo VI
+    PHẠM một cách giả — phát hiện khi viết test cho TD-0056.
     """
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
 
 class TrialLedger:

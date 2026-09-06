@@ -1,0 +1,14 @@
+# param_status.yaml — trạng thái các tham số [CẦN CALIBRATE] của tier_b
+# đang là `null` trong tool_d_config.yaml. Nuôi L-Z15 (spec dòng 3882-3884):
+# "Mọi tham số [CẦN CALIBRATE] đều có TRẠNG THÁI trong registry: TUNED
+# (có trial) hoặc FROZEN (có frozen_rationale). Không tham số nào ở
+# trạng thái 'im lặng'."
+#
+# TUNED_PENDING là trạng thái TRUNG GIAN hợp lệ trước khi có trial thật
+# (registry rỗng ở D0-PRE) — "im lặng" nghĩa là tham số null mà KHÔNG có
+# mặt ở file này, không phải nghĩa là "chưa có trial".
+params:
+  v_min:
+    status: TUNED_PENDING # OQ-06 — chờ calibrate bằng dữ liệu ở B1
+    slot: "#4" # đúng số tunable trong §6.9.5 (12 tham số)
+    note: "§3.3b — cần dữ liệu để đặt ngưỡng volume tại thời điểm chạm zone"
