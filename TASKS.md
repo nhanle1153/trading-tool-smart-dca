@@ -31,7 +31,7 @@
 | TD-0003 | Tạo repo GitHub **private**, push `main` | ✅ | TD-0002 | `git remote -v` có origin (`github.com/nhanle1153/trading-tool-smart-dca`); `git log origin/main` khớp local — đã push thành công |
 | TD-0004 | `docker/Dockerfile` (base Freqtrade **pin theo digest** + `git` + pytest + `safe.directory`) và `docker-compose.yml` (3 service; **KHÔNG mount `lockbox/data/`** vào `tests`; `TZ=UTC`) | ✅ | TD-0001 | `docker compose run --rm tests python -c "import freqtrade,pytest,yaml;print('ok')"` |
 | TD-0005 | Xác minh `git_sha` lấy được **từ trong container** | ✅ | TD-0004 | `docker compose run --rm tests git rev-parse HEAD` in đúng SHA của host, không phải rỗng |
-| TD-0006 | Quyết định số phận `dashboard-ui/` (project Node có `.git` riêng và có `.env`) — submodule / repo riêng / gộp thẳng vào. Hiện đang bị `.gitignore` chặn | ✅ | TD-0001 | Chủ dự án chọn "repo riêng" (lý do: backend D0-PRE có spec kiến trúc khoá cứng + Docker context riêng, không muốn ~1500 gói npm của front-end lẫn vào). `dashboard-ui/` giữ nguyên `.git` riêng, tiếp tục bị `.gitignore` chặn khỏi repo backend (đúng như hiện trạng) — cần đẩy lên 1 repo GitHub riêng (chờ chủ dự án tạo repo trống + cấp link, theo đúng cách đã làm ở TD-0003) |
+| TD-0006 | Quyết định số phận `dashboard-ui/` (project Node có `.git` riêng và có `.env`) — submodule / repo riêng / gộp thẳng vào. Hiện đang bị `.gitignore` chặn | ✅ | TD-0001 | Chủ dự án chọn "repo riêng" (lý do: backend D0-PRE có spec kiến trúc khoá cứng + Docker context riêng, không muốn ~1500 gói npm của front-end lẫn vào). Đã tạo `origin` mới (`github.com/nhanle1153/front-end-trading-tool-smart-dca`) và push `main` thành công — `git log origin/main` khớp local. `dashboard-ui/` tiếp tục bị `.gitignore` chặn khỏi repo backend (đúng theo quyết định) |
 | TD-0007 | Xác nhận `tool-d-dashboard-thiet-ke.html` (651KB, ảnh chụp giao diện Tool A dùng làm tham chiếu) có nên nằm trong repo này không | ✅ | TD-0001 | Đã chuyển sang `docs/tool-d-dashboard-thiet-ke.html`, lý do ghi trong `ARCHITECTURE.md` mục 3, `.dockerignore` đã hết trùng lặp |
 
 ### Khối 1 — PHẦN 0d, tầng chống nhiễm phép đo (LÀM TRƯỚC MỌI THỨ)
@@ -55,7 +55,7 @@
 | Mã | Tên việc | TT | Phụ thuộc | Verify |
 |---|---|---|---|---|
 | TD-0025 | `docs/decisions/DR-013-don-vi-do.md` — mọi chỉ số trên `pnl_abs`, bảng phân biệt ba chữ "R" | ✅ | TD-0020 | File có bảng ba chữ "R" (R_eff/r_eff_pct, planned_risk_usdt, R_realized) đúng spec dòng 2777-2787; mục "cấm chữ R trần" có ví dụ đúng/sai; bảng test L-Z46/47/48/48b/48c đối chiếu trạng thái D0-PRE |
-| TD-0026 | `config/freqtrade/config.json` theo §0c.3 + ánh xạ lệnh chờ §3.5 | 🔓 | TD-0020 | `docker compose run --rm freqtrade freqtrade show-config -c config/freqtrade/config.json` không lỗi |
+| TD-0026 | `config/freqtrade/config.json` theo §0c.3 + ánh xạ lệnh chờ §3.5 | 🔒 | TD-0020 | `docker compose run --rm freqtrade freqtrade show-config -c config/freqtrade/config.json` không lỗi |
 | TD-0027 | Test **L-Z24** (cờ cấm), **L-Z25** (không dấu vết hyperopt), **L-Z42** (config khớp hằng số spec) | 🔓 | TD-0026 | `pytest -k "lz24 or lz25 or lz42"` xanh |
 | TD-0028 | Đọc mã nguồn Freqtrade **đang cài** cho giả định D2a/D2b/D6/D7 → `docs/freqtrade-source-read.md`. **Làm TRƯỚC khi viết bất kỳ test nào về chúng** | ✅ | TD-0004 | File có 4 mục, mỗi mục trích đường dẫn + số dòng trong image, kèm image digest |
 
@@ -72,7 +72,7 @@
 
 | Mã | Tên việc | TT | Phụ thuộc | Verify |
 |---|---|---|---|---|
-| TD-0040 | `gates/thresholds.py` fail-closed + test **L-Z35** | 🔒 | TD-0020 | `pytest -k lz35` xanh; đưa kết quả cực tốt giả lập qua gate → vẫn **FAIL** |
+| TD-0040 | `gates/thresholds.py` fail-closed + test **L-Z35** | ✅ | TD-0020 | `pytest -k lz35` xanh; đưa kết quả cực tốt giả lập qua gate → vẫn **FAIL** |
 | TD-0041 | 🔴 **ĐIỀN ngưỡng DSR-adjusted expectancy §10.2 — blocker B6** (OQ-01). Viết DR **trước** khi biết kết quả lần đánh giá tiếp theo | 🔓 | TD-0040, TD-0033 | `DR-D0PRE-03` có SỐ; hằng số không còn `inf`; L-Z35 chuyển sang biến thể "best-known vẫn FAIL" và vẫn xanh |
 | TD-0042 | 🔴 **ĐIỀN thang drawdown 5/8/20%** (OQ-03). Sau bước này là **Hạng 0, không sửa được** | 🔓 | TD-0013 | `DR-D0PRE-04` commit; giá trị trong YAML khớp DR |
 | TD-0043 | 🔴 **ĐIỀN `E_D`, `L_exchange`, `rho_pct`, % lỗ tối đa ngày xấu** theo vốn thật (OQ-02) | 🔓 | TD-0013 | Commit riêng; `pytest -k lz29` vẫn xanh |
@@ -148,5 +148,5 @@
 | TD-0007 | ♻️ Sửa đổi | 🔓 | ✅ | Chủ dự án chọn phương án "chuyển vào docs/" trong 3 phương án đề xuất | 06/09/2026 |
 | TD-0003 | ♻️ Sửa đổi | 🔓 | ✅ | Chủ dự án cung cấp link repo GitHub, đã thêm remote `origin` và push thành công | 06/09/2026 |
 | TD-0018 | ♻️ Sửa đổi | 🔓 | ✅ | Nối `assert_cache_none()` (đã có sẵn ở `gates/cache_policy.py`) vào `main()` của E1 ngay sau `measurement_guard()`; thêm `tests/unit/test_run_backtest_cache.py` (3 ca, gọi E1 qua subprocess vì `entrypoints/` không nằm trên `pythonpath`) | 06/09/2026 |
-| TD-0006 | ♻️ Sửa đổi | 🔓 | ✅ | Chủ dự án chọn phương án "repo riêng" trong 3 phương án đề xuất (submodule / repo riêng / gộp thẳng) — lúc này `dashboard-ui/` đã có nội dung thật (8 trang dashboard Tool A/D dựng trên horizon-ui-chakra), không còn là thư mục rỗng. Đã gỡ remote `origin` cũ (trỏ về repo gốc `horizon-ui/horizon-ui-chakra`, nguy cơ push nhầm) và commit local trong `dashboard-ui/`; còn thiếu bước chủ dự án tạo repo GitHub trống + cấp link để đẩy lên | 06/09/2026 |
+| TD-0006 | ♻️ Sửa đổi | 🔓 | ✅ | Chủ dự án chọn phương án "repo riêng" trong 3 phương án đề xuất (submodule / repo riêng / gộp thẳng) — lúc này `dashboard-ui/` đã có nội dung thật (8 trang dashboard Tool A/D dựng trên horizon-ui-chakra), không còn là thư mục rỗng. Đã gỡ remote `origin` cũ (trỏ về repo gốc `horizon-ui/horizon-ui-chakra`, nguy cơ push nhầm), chủ dự án cấp link `github.com/nhanle1153/front-end-trading-tool-smart-dca`, đã thêm remote và push `main` thành công | 06/09/2026 |
 | TD-0020 | ♻️ Sửa đổi | Cột verify: `docker compose run --rm tests tests/lock -k "lz3[6-9] or lz4[01]"` | Cột verify: liệt kê trực tiếp đường dẫn 6 file test (xem dòng TD-0020) | Lệnh gốc có hai lỗi kỹ thuật, phát hiện lúc chạy thật: (1) `pytest -k` không hỗ trợ character-class regex `[6-9]`/`[01]` — chỉ khớp chuỗi con văn bản, nên biểu thức gốc chọn được **0/79** test kể cả các L-Z đang tồn tại; (2) giới hạn đường dẫn `tests/lock` bỏ sót L-Z38 (TD-0018) — test của nó nằm ở `tests/unit/test_run_backtest_cache.py` (hợp lý vì nó gọi E1 qua subprocess, không phải kiểm tĩnh) và tên hàm/class không chứa chuỗi "lz38" nên không `-k` nào chọn được. Sửa bằng cách liệt kê thẳng 6 đường dẫn file, không phụ thuộc keyword. Không đổi vị trí file của TD-0018 — đó là quyết định hợp lý của người viết, chỉ sửa cách gọi ở cổng | 06/09/2026 |
