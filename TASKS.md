@@ -95,7 +95,7 @@
 | Mã | Tên việc | TT | Phụ thuộc | Verify |
 |---|---|---|---|---|
 | TD-0060 | E5 `periodic_report.py` **đầy đủ** (§12d.2), mọi chỉ số ở trạng thái `pending` | ✅ | TD-0010, TD-0051 | `python entrypoints/periodic_report.py` in khối xuất xứ ở đầu + bảng toàn "chưa đo được" — xác nhận (commit `03bfeef`): khối xuất xứ Ở ĐẦU, 21 chỉ số §12d.2 BƯỚC 1 toàn "chưa đo được", dòng tổng `audit_line()`. `pytest -k "report_model or periodic_report"` → 12 passed trong Docker; toàn bộ suite → 264 passed |
-| TD-0061 | Test **L-Z41** trên đầu ra **thật** của E5 | 🔓 | TD-0060 | Grep đầu ra: không có `-1`, `UNKNOWN`, `0.0` giả |
+| TD-0061 | Test **L-Z41** trên đầu ra **thật** của E5 | 🔒 | TD-0060 | Grep đầu ra: không có `-1`, `UNKNOWN`, `0.0` giả |
 | TD-0062 | Đóng băng nội dung báo cáo (đổi = tiêu 1 trial, spec dòng 4810) | 🔓 | TD-0060 | Test hồi quy giữ hash danh sách chỉ số |
 
 ### Khối 7 — Lockbox
