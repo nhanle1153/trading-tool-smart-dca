@@ -10,18 +10,16 @@
 #    (§0d.2, L-Z37). Đọc YAML -> dict -> truyền vào hàm. Đọc qua
 #    src/tool_d/config/loader.py, không đọc trực tiếp ở nơi khác.
 #
-# ⚠️ CÁC GIÁ TRỊ TIER_A / TIER_C DƯỚI ĐÂY LÀ VÍ DỤ MINH HOẠ CỦA SPEC (dòng
-#    11: "mọi con số minh hoạ ... không phải kết quả backtest"), CHƯA PHẢI
-#    SỐ ĐÃ CHỐT. Không dùng để ra quyết định thật cho tới khi có DR:
-#      - E_D, L_exchange, daily_loss_budget_pct, rho_pct  -> OQ-02 (TD-0043)
+# ✅ Tầng A (E_D, L_exchange, rho_pct, daily_loss_budget_pct) ĐÃ CHỐT bằng
+#    DR-D0PRE-06 (TD-0043, 06/09/2026) — trùng giá trị minh hoạ của spec
+#    nhưng giờ là quyết định của chủ dự án, không còn là ví dụ.
 #      - dd_ladder_pct (thang drawdown 5/8/20%)            -> OQ-03 (TD-0042)
-#    Vô hại ở D0-PRE vì chưa có backtest nào chạy (N2 trong CLAUDE.md).
 
 tier_a: # chỉnh tự do, 0 trial
-  E_D: 500 # USDT — KHÔNG phải số dư ví. [CHỜ DR — OQ-02]
-  L_exchange: 3 # 2-5, xem §6.9.2 cảnh báo. [CHỜ DR — OQ-02]
-  rho_pct: 0.375 # chỉ đổi khi danh mục RỖNG
-  daily_loss_budget_pct: 8.0 # [CHỜ DR — OQ-02]
+  E_D: 500 # USDT — KHÔNG phải số dư ví. ✅ DR-D0PRE-06 (TD-0043)
+  L_exchange: 3 # 2-5, xem §6.9.2 cảnh báo. ✅ DR-D0PRE-06
+  rho_pct: 0.375 # chỉ đổi khi danh mục RỖNG. ✅ DR-D0PRE-06
+  daily_loss_budget_pct: 8.0 # ✅ DR-D0PRE-06 — đi cặp với dd_ladder.halt (§12c.5)
   enable_long: true
   enable_short: false # chỉ bật khi DG7 (§4c) xong
   pool_size_target: 100
