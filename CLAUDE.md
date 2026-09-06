@@ -156,6 +156,31 @@ Quy trình gốc viết cho web app trên Render. Tool D là bot chạy local. �
 
 **Giai đoạn 4 không áp cho D0-PRE.**
 
+### N12 — 🔴 Kỷ luật git khi có 2 phiên cùng sửa một thư mục đĩa
+
+Project này thường có **hai phiên Claude Code chạy song song trên cùng một thư mục** (không phải
+worktree/branch riêng — quyết định của chủ dự án, xem TRẠNG THÁI HIỆN TẠI). `git add <file>` chụp
+**toàn bộ nội dung file đang có trên đĩa tại thời điểm gọi**, không phân biệt được dòng mình vừa sửa
+với dòng phiên kia đang gõ dở cùng lúc — đã gây ít nhất 3 lần một task bị đánh dấu ✅ giả trong
+`TASKS.md` dù chưa có code thật (xem `docs/research-log.md`).
+
+**Bắt buộc, cho MỌI lần commit đụng tới `TASKS.md` (hoặc bất kỳ file trạng thái dùng chung nào —
+`CLAUDE.md`, `back-end-note.md`):**
+
+1. **Không bao giờ `git add TASKS.md` (hay `git add -A`) ngay sau khi sửa** — luôn `git diff --
+   TASKS.md` (hoặc `git diff --cached` sau khi add) và **đọc lại toàn bộ diff** trước khi commit.
+   Diff phải khớp CHÍNH XÁC những gì mình chủ định sửa — không hơn, không kém.
+2. **Thấy dòng lạ trong diff** (task khác đổi trạng thái mà mình không đụng tới) → đó là thay đổi
+   của phiên kia đang dở, **không phải của mình**. Dùng `git reset TASKS.md`, sửa lại file bằng tay
+   cho đúng ý mình (giữ nguyên dòng lạ đó ở trạng thái CŨ nếu chưa chắc phiên kia đã xong, hoặc xác
+   minh bằng cách kiểm tra code/test thật có tồn tại không), rồi `git add` lại.
+3. **Trước khi TIN bất kỳ dòng ✅ nào trong `TASKS.md`** (kể cả dòng do chính mình hay phiên kia ghi
+   trước đó) khi nó là điều kiện phụ thuộc (`Phụ thuộc vào`) cho việc sắp làm — xác minh bằng
+   **bằng chứng trên đĩa** (file/commit/test tương ứng có tồn tại thật không), không tin chữ ghi
+   suông. Đây chính là cách cả 3 lần đánh dấu sai đã được bắt trong phiên trước.
+4. Việc chỉ để KHOÁ (🔓→🔒) hay HOÀN TẤT (🔒→✅) một dòng: sửa **đúng một dòng**, commit **riêng**,
+   không gộp chung với các file code khác trong cùng một `git add`.
+
 ---
 
 ## TRẠNG THÁI HIỆN TẠI
