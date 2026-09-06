@@ -386,3 +386,36 @@ song đang giữ, ghi TD-0107 để họ xử lý, tránh giẫm code đang ch�
 Ghi nhận thêm (không mở task, mức nitpick): NaN ở `gia_cham`/`volume` bị so sánh im lặng thành
 `False` thay vì raise; không có kiểm `t >= i_swing`; test chưa phủ swing có nhiều đáy/đỉnh bằng nhau
 (plateau). Không nghiêm trọng bằng lỗi touch_count, ghi lại để không quên nếu có thời gian.
+
+## 07/09/2026 — TD-0106: chạy `lookahead-analysis` thật trên Zone Detection Engine
+
+Dựng `user_data/strategies/ZoneDetectionProbe.py` — chiến lược THĂM DÒ (không phải chiến lược thật,
+không tranche/SL/TP/DG theo spec), tái dùng nguyên vẹn `zone_detection.py`/`zone_strength.py` để merge
+khung 4H informative vào 1H chính (`merge_informative_pair`, đúng cấu hình `config/freqtrade/config.json`
+dòng 22-23), sinh cột `zone_confirmed`/`zone_hop_le`/`mult_zss_adjusted`. Entry = mọi swing đã xác nhận
+(không lọc theo ngưỡng ZSS §1.3 — mục tiêu là soi lookahead ở cơ chế XÁC NHẬN, không phải đánh giá chất
+lượng zone). `minimal_roi=2%`/`stoploss=-5%`/`custom_exit` 24h là giá trị THĂM DÒ để có lệnh đóng thật
+cho công cụ đếm — không liên quan gì tới định cỡ rủi ro thật (§6.8e, chưa xây ở D1).
+
+**Trở ngại kỹ thuật (không phải lookahead):** `lookahead-analysis` ép `order_types=market`, xung đột với
+`entry_pricing.price_side="same"` bắt buộc theo §3.5 của config thật. Không sửa config thật — dùng file
+override tạm `-c <override>.json` chỉ đổi `price_side` thành `"other"` cho riêng lần chạy phân tích, xoá
+ngay sau khi xong, không commit.
+
+**Chạy thật trên dữ liệu CALIB thật (TD-0093), 2 mã, khung 1H/4H, `--timerange 20240601-20260101`:**
+
+| Mã | total_signals | has_bias | biased_entry | biased_exit | biased_indicators |
+|---|---|---|---|---|---|
+| 1000BONK/USDT:USDT | 20 | **No** | 0 | 0 | (rỗng) |
+| 1000PEPE/USDT:USDT | 20 | **No** | 0 | 0 | (rỗng) |
+
+**Không có cờ nào được nêu ra** ở cả hai lần chạy — nên bảng "quy mỗi cờ về FP-1/FP-2/FP-3" mà TASKS.md
+yêu cầu không có dòng nào để điền: đây là kết quả sạch, không phải "bỏ qua không kiểm". Khớp với đánh giá
+độc lập cùng ngày ở mục review phía trên ("causality/lookahead: giữ nguyên, không bắt được lỗi") — hai
+phương pháp khác nhau (chạy công cụ thật vs đọc code) cùng ra một kết luận.
+
+**Giới hạn của kết quả, nói thẳng:** mới thử 2/102 mã, một khoảng thời gian, và entry rất thưa (20 tín
+hiệu/mã) nên độ bao phủ thống kê thấp — không phải bằng chứng "không thể có lookahead", chỉ là "không
+thấy trong lần thử này". `lookahead-analysis` bản thân công cụ cũng có false positive đã biết (FP-1/2/3,
+§7.2) nên kết quả "No" ở đây không cần đối chiếu thêm gì — nếu có `has_bias=Yes` mới cần bảng quy lớp FP.
+Nên chạy lại khi có nhiều mã/timerange hơn một khi D2 cần con số đáng tin hơn.
