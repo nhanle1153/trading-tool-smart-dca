@@ -31,3 +31,28 @@ def la_diem_swing(
     if loai == "day":
         return diem == min(cua_so)
     return diem == max(cua_so)
+
+
+def confirm_ratio(i: int, t: int, *, k: int = K_XAC_NHAN) -> float:
+    """§7.4 — độ tin cậy tăng dần: 0 tại t=i, 1.0 tại t=i+k (0.33/0.67 giữa).
+
+    Hoàn toàn nhân quả — chỉ nhận hai chỉ số nến, không đọc giá.
+    """
+    bars_elapsed = max(0, t - i)
+    return min(bars_elapsed, k) / k
+
+
+def zone_da_bi_huy(gia: Sequence[float], i: int, t: int, *, loai: Literal["day", "dinh"]) -> bool:
+    """§7.4 — True nếu giá trong (i, t] đã vượt qua cực trị tại `i`.
+
+    Khác `confirm_ratio` (chưa đủ tin cậy — vẫn có thể đúng sau này): đây
+    là "sai ngay từ đầu", vĩnh viễn — một khi True tại `t` thì True mãi
+    với mọi `t` sau đó, vì `gia[i]` không còn là cực trị của cửa sổ nữa.
+    Chỉ dùng `gia[i+1 : t+1]` — không đọc gì sau `t`.
+    """
+    sau = gia[i + 1 : t + 1]
+    if not sau:
+        return False
+    if loai == "day":
+        return min(sau) < gia[i]
+    return max(sau) > gia[i]
