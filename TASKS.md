@@ -135,7 +135,7 @@
 
 | Mã | Tên việc | TT | Phụ thuộc | Verify |
 |---|---|---|---|---|
-| TD-0090 | Nối `is_d0_pre_complete()` vào đầu **E1/E2/E3/E7/E8** — từ chối chạy khi cổng chưa đóng (§N2) | 🔒 | TD-0086 | Test AST: 5 entrypoint gọi `is_d0_pre_complete` trong `main()`; giả lập `runtime_state.json` thiếu khoá → exit 90 |
+| TD-0090 | Nối `is_d0_pre_complete()` vào đầu **E1/E2/E3/E7/E8** — từ chối chạy khi cổng chưa đóng (§N2) | ✅ | TD-0086 | Test AST: 5 entrypoint gọi `is_d0_pre_complete` trong `main()`; giả lập `runtime_state.json` thiếu khoá → exit 90 |
 | TD-0091 | 🔴 **H19** — E8 backfill an toàn: (a) sao lưu trước, (b) **GỘP** không ghi đè, (c) verify phần cũ **byte-for-byte**, (d) tải hỏng → `unreadable`, KHÔNG cache rỗng | 🔓 | TD-0090 | Test: backfill chồng lên dữ liệu cũ → hash phần cũ KHÔNG đổi; mô phỏng tải hỏng → không sinh file rỗng |
 | TD-0092 | 🔴 **H19** — chỉ số **ĐỘ PHỦ DỮ LIỆU** riêng; cấm suy nguyên nhân gốc từ khoảng trống mà chưa kiểm nguồn | 🔓 | TD-0091 | E8 in bảng độ phủ theo mã × khung; khoảng trống hiện "chưa kiểm nguồn", không kết luận thay người |
 | TD-0093 | Backfill THẬT **CALIB [T0,T1]** + **WFO [T1,T2]** cho 102 mã qua E8 đã an toàn (DR-D0PRE-07) | 🔓 | TD-0091, TD-0092 | `touch_lockbox.py --verify-seal` vẫn PASS (lockbox không bị đụng); bảng độ phủ CALIB/WFO ghi vào research-log |
