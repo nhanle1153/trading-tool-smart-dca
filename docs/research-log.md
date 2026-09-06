@@ -127,3 +127,34 @@ khi thấy số, dòng 3956-3958, 4425-4449):
 Ghi nhận từ phiên song song (front-end), chưa xử lý, không phải của phiên này: CLAUDE.md (chưa commit)
 nêu mâu thuẫn `CTRL` có tính vào N hay không — `registry.n_used()` hiện cộng mọi trial CONSUMED kể cả
 CTRL. Sẽ xử lý theo Quy tắc gốc #11 khi phiên kia commit xong (đợi để không giẫm file).
+
+## 06/09/2026 (khuya) — TD-0084: chốt mốc CALIB/WFO/LOCKBOX bằng giá BTC futures thật + niêm phong
+
+Đo chế độ thị trường bằng dữ liệu thật (1000 ngày nến 1d BTCUSDT futures, `get_klines()` mới thêm vào
+`binance_public.py`) thay vì suy đoán trên giấy — không phải "chạm dữ liệu" theo MT-02 (đo BTC tổng
+quát, không đánh giá cấu hình chiến lược nào).
+
+Phát hiện: đỉnh toàn kỳ $124.628 ngày 06/10/2025, sau đó BTC rơi vào một đợt sập kéo dài — drawdown
+liên tục dưới -30% từ 29/01/2026 tới nay (06/09/2026, hiện -38%, đỉnh sập -53% ngày 30/06/2026),
+KHÔNG hồi phục lại trên -30% một lần nào suốt 220 ngày. Khác hẳn giai đoạn trước (drawdown trung bình
+chỉ -11% đến -14%). Trình 3 phương án tỷ lệ LOCKBOX (20/25/30%), chủ dự án chọn 25%.
+
+Mốc chốt (DR-D0PRE-07): T0=09/04/2024, T1=12/06/2025 (CALIB 429 ngày), T2=29/01/2026 (WFO 231 ngày),
+T3=06/09/2026 (LOCKBOX 220 ngày, hôm nay). Tải thật 510 file OHLCV (1h/4h/1d + mark/funding_rate 1h,
+futures, 102 mã pool) qua `freqtrade download-data` (service `lockbox`), niêm phong `lockbox_seal_1.json`
+qua `touch_lockbox.py --seal-initial` (cờ mới, E4).
+
+**Sự cố bắt được trước khi lan rộng:** `--verify-seal` FAIL 100% (510/510 "MISSING") ngay sau khi niêm
+phong — không phải lỗi dữ liệu, mà là bug thật trong `run_backtest.py`/`run_wfo.py`/`run_ablation.py`/
+`touch_lockbox.py`: `verify_all_seals()` được gọi với `LOCKBOX_DATA_DIR` (`lockbox/data`) trong khi
+`build_seal()` hash file ở `lockbox/data/futures/` (Freqtrade `--trading-mode futures` luôn lồng thêm
+thư mục con). Bug này tồn tại từ TD-0071/TD-0072 nhưng chưa từng bị bắt vì D0-PRE chưa có seal thật
+(0 seal = verify PASS rỗng, che mất lỗi đường dẫn) — đúng mẫu hình N10: tưởng lỗi dữ liệu, hoá ra lỗi
+tầng đo (ở đây là tầng verify, không phải tầng đo lường số liệu, nhưng cùng nguyên tắc "kiểm tầng đo
+trước khi nghi ngờ dữ liệu"). Sửa cả 4 điểm gọi, thêm test khoá `test_dung_thu_muc_futures_khong_phai_thu_muc_data_cha`
+chống hồi quy. Cũng dọn 5 file test BTC còn sót từ lúc thăm dò thủ công (BTC bị loại khỏi pool giao
+dịch — EXCLUDE_FROM_TRADING) trước khi niêm phong, tránh lẫn vào seal vĩnh viễn.
+
+Toàn bộ suite Docker: 342 passed sau khi cập nhật 3 file test theo trạng thái mới (seal thật tồn tại;
+service `tests` che `lockbox/data/` nên `--verify-seal` ở đó PHẢI báo lệch — đúng thiết kế cách ly,
+không phải lỗi; xác nhận PASS thật chỉ làm được qua service `lockbox`).
