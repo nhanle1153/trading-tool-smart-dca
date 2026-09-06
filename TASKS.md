@@ -150,7 +150,7 @@
 
 | Mã | Tên việc | TT | Phụ thuộc | Verify |
 |---|---|---|---|---|
-| TD-0095 | Khảo sát **nguồn danh sách lịch sử** (symbol đã huỷ niêm yết — API Binance KHÔNG trả). Không có → DR ghi tường minh *"đang chấp nhận survivorship bias, ước lượng hướng lệch: có lợi"*, KHÔNG im lặng | 🔒 | TD-0093 | Kết luận + bằng chứng đo trong `docs/research-log.md`; nếu chấp nhận bias → có DR riêng |
+| TD-0095 | Khảo sát **nguồn danh sách lịch sử** (symbol đã huỷ niêm yết — API Binance KHÔNG trả). Không có → DR ghi tường minh *"đang chấp nhận survivorship bias, ước lượng hướng lệch: có lợi"*, KHÔNG im lặng | ✅ | TD-0093 | Kết luận + bằng chứng đo trong `docs/research-log.md`; nếu chấp nhận bias → có DR riêng |
 | TD-0096 | `pairlist_point_in_time(t)` — pool hợp lệ **tại thời điểm t** theo đúng 4 tiêu chí §0.3, tính point-in-time (tuổi ≥180 ngày, volume ≥15tr USDT — DR-D0PRE-05) | 🔓 | TD-0095 | Test: tại t lùi 1 năm, mã niêm yết sau t KHÔNG có mặt; kết quả KHÔNG đổi khi thêm dữ liệu sau t |
 | TD-0097 | Verify pool point-in-time **không lệch theo thời gian** + ranh giới tập **EXPLORE không rò** (§9c.4b) | 🔓 | TD-0096 | Test: mã EXPLORE (gồm BTC/ETH) không lọt vào pool giao dịch tại BẤT KỲ t nào |
 
