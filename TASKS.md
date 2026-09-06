@@ -1,7 +1,8 @@
 # TASKS.md — Backlog Tổng & Tracker Công việc — Tool D
 
 > Khởi tạo cuối Giai đoạn 2, ngày 06/09/2026. Mã project: **TD**.
-> Backlog này chỉ phủ **D0-PRE**. Các giai đoạn D1→D12 sẽ thêm việc khi tới lượt.
+> Backlog phủ **D0-PRE** (Khối 0–8, ✅ đóng cổng 06/09/2026) và **D1** (Khối 9–12, mở 07/09/2026).
+> Các giai đoạn D2→D12 sẽ thêm việc khi tới lượt.
 > Nguồn tạo "Mục lớn": danh sách chức năng ưu tiên ở `back-end-note.md` §0.1 (GĐ1)
 > kết hợp với các khối trong `ARCHITECTURE.md` (GĐ2).
 
@@ -124,11 +125,67 @@
 
 ---
 
+### Khối 9 — D1: cổng D0-PRE có hiệu lực + hạ tầng dữ liệu an toàn (H19)
+
+> D1 = "H20 (§0d) TRƯỚC, rồi H1-D + H4-D + H13 + H19" (spec dòng 4468). **H20 đã xong ở D0-PRE**
+> (Khối 1). Khối 9 làm hai việc còn thiếu để chạm dữ liệu thật một cách an toàn.
+> 🔴 H19 **chặn lần backfill đầu tiên** (spec dòng 4350) — Tool A suýt xoá nhiều năm dữ liệu vì bẫy
+> "ghi đè theo khoảng ngày yêu cầu". Backfill lockbox ở TD-0084 không dính bẫy này vì ghi vào thư
+> mục RỖNG, nhưng CALIB/WFO thì có dữ liệu chồng lấn — bắt buộc qua H19.
+
+| Mã | Tên việc | TT | Phụ thuộc | Verify |
+|---|---|---|---|---|
+| TD-0090 | Nối `is_d0_pre_complete()` vào đầu **E1/E2/E3/E7/E8** — từ chối chạy khi cổng chưa đóng (§N2) | 🔓 | TD-0086 | Test AST: 5 entrypoint gọi `is_d0_pre_complete` trong `main()`; giả lập `runtime_state.json` thiếu khoá → exit 90 |
+| TD-0091 | 🔴 **H19** — E8 backfill an toàn: (a) sao lưu trước, (b) **GỘP** không ghi đè, (c) verify phần cũ **byte-for-byte**, (d) tải hỏng → `unreadable`, KHÔNG cache rỗng | 🔓 | TD-0090 | Test: backfill chồng lên dữ liệu cũ → hash phần cũ KHÔNG đổi; mô phỏng tải hỏng → không sinh file rỗng |
+| TD-0092 | 🔴 **H19** — chỉ số **ĐỘ PHỦ DỮ LIỆU** riêng; cấm suy nguyên nhân gốc từ khoảng trống mà chưa kiểm nguồn | 🔓 | TD-0091 | E8 in bảng độ phủ theo mã × khung; khoảng trống hiện "chưa kiểm nguồn", không kết luận thay người |
+| TD-0093 | Backfill THẬT **CALIB [T0,T1]** + **WFO [T1,T2]** cho 102 mã qua E8 đã an toàn (DR-D0PRE-07) | 🔓 | TD-0091, TD-0092 | `touch_lockbox.py --verify-seal` vẫn PASS (lockbox không bị đụng); bảng độ phủ CALIB/WFO ghi vào research-log |
+
+---
+
+### Khối 10 — D1: H1-D pairlist point-in-time (🔴 ĐƯỜNG GĂNG)
+
+> Spec dòng 4338 + 4354: H1-D là hạng mục **tốn thời gian nhất** của v10 gốc, phải **viết lại từ đầu**,
+> không dùng `lib/pool-builder`. Mỗi lần đổi pool = backfill lại toàn bộ và **mọi số cũ không so sánh được**.
+
+| Mã | Tên việc | TT | Phụ thuộc | Verify |
+|---|---|---|---|---|
+| TD-0095 | Khảo sát **nguồn danh sách lịch sử** (symbol đã huỷ niêm yết — API Binance KHÔNG trả). Không có → DR ghi tường minh *"đang chấp nhận survivorship bias, ước lượng hướng lệch: có lợi"*, KHÔNG im lặng | 🔓 | TD-0093 | Kết luận + bằng chứng đo trong `docs/research-log.md`; nếu chấp nhận bias → có DR riêng |
+| TD-0096 | `pairlist_point_in_time(t)` — pool hợp lệ **tại thời điểm t** theo đúng 4 tiêu chí §0.3, tính point-in-time (tuổi ≥180 ngày, volume ≥15tr USDT — DR-D0PRE-05) | 🔓 | TD-0095 | Test: tại t lùi 1 năm, mã niêm yết sau t KHÔNG có mặt; kết quả KHÔNG đổi khi thêm dữ liệu sau t |
+| TD-0097 | Verify pool point-in-time **không lệch theo thời gian** + ranh giới tập **EXPLORE không rò** (§9c.4b) | 🔓 | TD-0096 | Test: mã EXPLORE (gồm BTC/ETH) không lọt vào pool giao dịch tại BẤT KỲ t nào |
+
+---
+
+### Khối 11 — D1: Zone detection + H4-D (🔴 P0 TUYỆT ĐỐI, trước mọi logic chiến lược khác)
+
+> Spec dòng 2432: *"H4-D — Zone confirmation delay test · P0 · NGÀY 1, TRƯỚC MỌI THỨ KHÁC"*.
+> Đây là **blocker B2**. Lookahead trong zone detection làm **mọi kết quả D0.9 bị bơm lên có hệ thống**.
+> 🔴 Không sửa code sản xuất để chiều artifact của `lookahead-analysis` (spec dòng 2455).
+
+| Mã | Tên việc | TT | Phụ thuộc | Verify |
+|---|---|---|---|---|
+| TD-0100 | Swing detection §1.1 (k=3, xác nhận 2 phía) — hàm THUẦN, không đọc dữ liệu sau `t` | 🔓 | TD-0090 | Test trên chuỗi giá dựng tay: swing tại `i` chỉ được xác nhận tại `i+3`, không sớm hơn |
+| TD-0101 | `confirm_ratio(i, t)` §7.4 — liên tục 0/0.33/0.67/1.0 + điều kiện **HUỶ** khi giá tạo cực trị vượt qua `i` | 🔓 | TD-0100 | Test đúng 4 mốc; vượt cực trị → zone chết **vĩnh viễn**, không phải "chưa đủ tin cậy" |
+| TD-0102 | 🔴 **H4-D** (§7.2) — `assert confirmed_at_bar − swing_bar == 3`; mọi tranche fill có timestamp ≥ `confirmed_at_bar` | 🔓 | TD-0101, TD-0093 | Chạy trên dữ liệu **CALIB thật**: 0 vi phạm. Là test khoá, chạy trong Docker |
+| TD-0103 | 🔴 **H4-D-b** (§7.5) — cắt dữ liệu tại `t`, tính lại, `confirm_ratio(i,t)` KHÔNG đổi | 🔓 | TD-0101 | Test với mọi cặp (i,t) mẫu: giá trị trước/sau khi cắt bằng nhau tuyệt đối |
+| TD-0104 | **ZSS** §1.2 — 3 thành phần (`touch_count` theo định nghĩa số LD-35, `volume_ratio`, `compression`) + ngưỡng nhận zone §1.3 | 🔓 | TD-0102, TD-0103 | Test từng thành phần theo đúng định nghĩa số; `w = 1/3` đóng băng, không tune |
+| TD-0105 | 🔴 **H13** — audit thành phần ZSS: KHÔNG dùng dữ liệu ngoài `confirmed_at_bar` | 🔓 | TD-0104 | Test: cắt dữ liệu tại `confirmed_at_bar` rồi tính lại → ZSS không đổi |
+| TD-0106 | Chạy `lookahead-analysis` của Freqtrade trên zone detection; **mỗi** cờ phải quy về FP-1/FP-2/FP-3 **có bằng chứng** hoặc điều tra tới gốc | 🔓 | TD-0104 | Bảng đối chiếu từng cờ → lớp FP hoặc lỗi thật; không cờ nào bị "vừa bỏ qua vừa ghi đạt" |
+
+---
+
+### Khối 12 — D1: cổng
+
+| Mã | Tên việc | TT | Phụ thuộc | Verify |
+|---|---|---|---|---|
+| TD-0110 | 🚪 **GATE D1** — H1-D + H4-D + H4-D-b + H13 + H19 đều PASS → **gỡ blocker B2** | 🔓 | TD-0093…TD-0106 | Toàn bộ test khoá D1 xanh trong Docker; ghi `runtime_state.json.d1_complete` từ một lần chạy thật; `git tag d1-complete` |
+
+---
+
 ## Việc đã biết là sẽ có, chưa mở
 
 | Giai đoạn | Nội dung | Chặn bởi |
 |---|---|---|
-| D1 | H20, H1-D (pool point-in-time), H4-D (lookahead — **blocker B2**), H13, H19 | TD-0086 |
+| ~~D1~~ ✅ **ĐÃ MỞ 07/09/2026** | H20 ✅ (xong ở D0-PRE) · H1-D · H4-D · H13 · H19 → **Khối 9–12** bên trên (TD-0090…TD-0110) | — |
 | D2 | Verify giả định D1–D7, H15. L-Z49 (D7) là điều kiện vào D4 | D1 |
 | D3 | H3-D walk-forward orchestrator | D2 |
 | D3.5 | 🚪 Cổng sai lệch thước đo (DR-015) — **chặn D4**, cần testnet | D3 |
