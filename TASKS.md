@@ -102,7 +102,7 @@
 
 | Mã | Tên việc | TT | Phụ thuộc | Verify |
 |---|---|---|---|---|
-| TD-0070 | `lockbox/seal.py` + `access_log.py` + test **L-Z13 / L-Z14** | 🔓 | TD-0012 | Sổ truy cập rỗng → PASS; thêm 1 bản ghi trước D9 → FAIL; sửa 1 byte dữ liệu → `verify_seal` FAIL |
+| TD-0070 | `lockbox/seal.py` + `access_log.py` + test **L-Z13 / L-Z14** | 🔒 | TD-0012 | Sổ truy cập rỗng → PASS; thêm 1 bản ghi trước D9 → FAIL; sửa 1 byte dữ liệu → `verify_seal` FAIL |
 | TD-0071 | E4 `touch_lockbox.py` chế độ `--verify-seal` (H17); chế độ chạm thật vẫn TỪ CHỐI tới sau D9 | 🔓 | TD-0070 | Chạy được, **0 bản ghi** được thêm vào sổ truy cập |
 | TD-0072 | Nối H17 vào đầu pipeline E1/E2/E3 | 🔓 | TD-0071 | Test AST: `verify_seal` được gọi trong `main()` |
 
