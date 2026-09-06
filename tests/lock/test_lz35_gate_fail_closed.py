@@ -1,6 +1,9 @@
-"""L-Z35 🔴 CRITICAL — Placeholder fail-closed: mọi ngưỡng GATE chưa điền
-= +inf (KHÔNG PHẢI None, KHÔNG PHẢI 0.0). Gate không thể vô tình PASS.
-Spec dòng 3949-3958, 4260.
+"""L-Z35 🔴 CRITICAL — spec dòng 3949-3958.
+
+Trước TD-0041: ngưỡng DSR là placeholder +inf (gate không thể PASS bằng
+cách quên điền). Sau TD-0041 (DR-D0PRE-03): ngưỡng = 0,10 R, và L-Z35
+chuyển sang biến thể dòng 3954-3955 — "kết quả tốt nhất hiện có vẫn FAIL",
+chạy lại mỗi lần thay ngưỡng, chống hồi quy về trạng thái "gần đạt".
 """
 
 from __future__ import annotations
@@ -10,6 +13,7 @@ import math
 import pytest
 
 from tool_d.gates.thresholds import (
+    BEST_KNOWN_DSR_ADJ_EXPECTANCY,
     DSR_ADJ_EXPECTANCY_MIN,
     GateResult,
     Verdict,
@@ -18,53 +22,68 @@ from tool_d.gates.thresholds import (
 )
 
 
-class TestPlaceholderLaInfKhongPhaiNoneHay0:
-    def test_dsr_threshold_hien_tai_la_inf(self) -> None:
-        assert DSR_ADJ_EXPECTANCY_MIN == math.inf
+class TestNguongDaDienBangDR:
+    def test_nguong_khop_dr_d0pre_03(self) -> None:
+        # Đổi số này = DR mới (viết TRƯỚC khi thấy kết quả gate kế tiếp).
+        assert DSR_ADJ_EXPECTANCY_MIN == 0.10
+
+    def test_nguong_khong_con_placeholder_va_khong_phai_gia_tri_linh_canh(self) -> None:
         assert DSR_ADJ_EXPECTANCY_MIN is not None
         assert DSR_ADJ_EXPECTANCY_MIN != 0.0
+        assert math.isfinite(DSR_ADJ_EXPECTANCY_MIN)
+        assert DSR_ADJ_EXPECTANCY_MIN > 0
 
 
-class TestKetQuaCucTotVanPhaiFail:
-    """Spec dòng 3952-3953: "Gate này KHÔNG THỂ pass bằng cách quên điền"."""
+class TestKetQuaTotNhatHienCoVanFail:
+    """Spec dòng 3954-3955. Kết quả tốt nhất hiện có = CHƯA CÓ lần đánh giá
+    nào → -inf (trạng thái chưa đo, N6), không phải 0.0 hay số bịa.
+    """
 
-    def test_ket_qua_cuc_tot_gia_lap_van_fail(self) -> None:
+    def test_best_known_la_chua_do_khong_phai_so_bia(self) -> None:
+        assert BEST_KNOWN_DSR_ADJ_EXPECTANCY == -math.inf
+
+    def test_best_known_van_duoi_nguong(self) -> None:
+        # Khi có số đo thật, hằng số BEST_KNOWN đổi; test này phải vẫn xanh
+        # cho tới khi gate THẬT SỰ qua — lúc đó đổi vai test, không xoá.
+        assert BEST_KNOWN_DSR_ADJ_EXPECTANCY < DSR_ADJ_EXPECTANCY_MIN
+
+    def test_best_known_qua_gate_van_fail_va_chi_fail_o_dsr(self) -> None:
+        # Mọi tiêu chí KHÁC trong bộ số đều đạt dư dả (giả lập) — chỉ DSR
+        # fail, chứng minh gate chặn đúng chỗ, không "ăn gian" bằng cách
+        # fail lung tung.
         result = evaluate_branch1(best_known_result_for_test())
         assert result.verdict is Verdict.FAIL
-        assert "dsr_adjusted_expectancy" in result.failed_criteria
-
-    def test_chi_that_bai_o_dsr_khong_phai_tieu_chi_khac(self) -> None:
-        # Mọi tiêu chí KHÁC trong bộ số giả lập đều đạt dư dả — chỉ DSR
-        # fail, chứng minh gate không "ăn gian" bằng cách fail lung tung.
-        result = evaluate_branch1(best_known_result_for_test())
         assert result.failed_criteria == ("dsr_adjusted_expectancy",)
 
 
-class TestEvaluateBranch1HoatDongDungKhiNguongDuocDien:
-    """Mô phỏng SAU KHI OQ-01 được điền (TD-0041) — gate phải hoạt động
-    như một phép kiểm thật, không phải luôn luôn FAIL vĩnh viễn.
-    """
-
-    def test_pass_khi_tat_ca_tieu_chi_dat_va_nguong_da_dien(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr(
-            "tool_d.gates.thresholds.DSR_ADJ_EXPECTANCY_MIN", 0.5
-        )
-        import tool_d.gates.thresholds as th
-
+class TestGateHoatDongNhuPhepKiemThat:
+    def test_pass_khi_dsr_vuot_nguong_that(self) -> None:
         metrics = best_known_result_for_test()
-        metrics["dsr_adjusted_expectancy"] = 0.6  # vượt ngưỡng giả lập 0.5
-        result = th.evaluate_branch1(metrics)
+        metrics["dsr_adjusted_expectancy"] = DSR_ADJ_EXPECTANCY_MIN + 0.01
+        result = evaluate_branch1(metrics)
         assert result.verdict is Verdict.PASS
         assert result.failed_criteria == ()
 
-    def test_fail_khi_duoi_nguong_da_dien(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_bang_dung_nguong_thi_pass(self) -> None:
+        # "≥" theo đúng chữ của spec dòng 4260.
+        metrics = best_known_result_for_test()
+        metrics["dsr_adjusted_expectancy"] = DSR_ADJ_EXPECTANCY_MIN
+        assert evaluate_branch1(metrics).verdict is Verdict.PASS
+
+    def test_fail_khi_duoi_nguong_mot_chut(self) -> None:
+        metrics = best_known_result_for_test()
+        metrics["dsr_adjusted_expectancy"] = DSR_ADJ_EXPECTANCY_MIN - 0.01
+        assert evaluate_branch1(metrics).verdict is Verdict.FAIL
+
+    def test_nguong_van_dung_khi_thay_doi_qua_monkeypatch(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        # Gate đọc hằng số module lúc gọi, không "đóng băng" ở import — nếu
+        # DR mới đổi số, gate đổi theo mà không cần sửa hàm.
         import tool_d.gates.thresholds as th
 
         monkeypatch.setattr(th, "DSR_ADJ_EXPECTANCY_MIN", 0.5)
         metrics = best_known_result_for_test()
-        metrics["dsr_adjusted_expectancy"] = 0.4  # dưới ngưỡng giả lập
-        result = th.evaluate_branch1(metrics)
-        assert result.verdict is Verdict.FAIL
+        metrics["dsr_adjusted_expectancy"] = 0.4
+        assert th.evaluate_branch1(metrics).verdict is Verdict.FAIL
 
 
 class TestThieuDuLieuLaFailKhongPhaiPassNgam:

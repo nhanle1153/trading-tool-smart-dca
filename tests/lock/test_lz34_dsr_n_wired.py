@@ -11,7 +11,7 @@ import math
 
 import pytest
 
-from tool_d.gates.dsr import N_DANG_KY, dsr_hurdle, effective_n
+from tool_d.gates.dsr import N_DANG_KY, dsr_adjusted_expectancy, dsr_hurdle, effective_n
 
 
 class TestDsrHurdleNNoiVaoPhepTinh:
@@ -64,3 +64,32 @@ class TestEffectiveN:
     def test_am_thi_raise(self) -> None:
         with pytest.raises(ValueError):
             effective_n(n_consumed_since_live=-1)
+
+
+class TestDsrAdjustedExpectancyNNoiVaoPhepTinh:
+    """DR-D0PRE-03 mục 2 — đại lượng của ô Nhánh 1. Cùng tinh thần L-Z34:
+    N đổi thì kết quả đổi; công thức khớp mean − √(2·ln N)·std/√n.
+    """
+
+    def test_khop_cong_thuc(self) -> None:
+        got = dsr_adjusted_expectancy(0.30, 1.1, 300, n_trials=114)
+        want = 0.30 - math.sqrt(2 * math.log(114)) * 1.1 / math.sqrt(300)
+        assert got == pytest.approx(want, abs=1e-9)
+
+    def test_n_114_va_228_ra_ket_qua_khac_nhau(self) -> None:
+        a = dsr_adjusted_expectancy(0.30, 1.1, 300, n_trials=114)
+        b = dsr_adjusted_expectancy(0.30, 1.1, 300, n_trials=228)
+        assert a != b and b < a  # N lớn hơn → khử lạm phát mạnh hơn
+
+    def test_mac_dinh_dung_n_dang_ky(self) -> None:
+        assert dsr_adjusted_expectancy(0.3, 1.0, 100) == dsr_adjusted_expectancy(
+            0.3, 1.0, 100, n_trials=N_DANG_KY
+        )
+
+    def test_nhieu_lenh_hon_thi_khu_lam_phat_it_hon(self) -> None:
+        assert dsr_adjusted_expectancy(0.3, 1.0, 1200) > dsr_adjusted_expectancy(0.3, 1.0, 300)
+
+    @pytest.mark.parametrize("n_trades,std", [(1, 1.0), (0, 1.0), (10, -0.1)])
+    def test_fail_closed_raise(self, n_trades: int, std: float) -> None:
+        with pytest.raises(ValueError):
+            dsr_adjusted_expectancy(0.3, std, n_trades)

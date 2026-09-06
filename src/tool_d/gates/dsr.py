@@ -47,3 +47,23 @@ def effective_n(*, n_dang_ky: int = N_DANG_KY, n_consumed_since_live: int = 0) -
     if n_consumed_since_live < 0:
         raise ValueError("n_consumed_since_live không thể âm")
     return n_dang_ky + n_consumed_since_live
+
+
+def dsr_adjusted_expectancy(
+    mean_r: float, std_r: float, n_trades: int, *, n_trials: int = N_DANG_KY
+) -> float:
+    """DR-D0PRE-03 mục 2 — đại lượng của ô Nhánh 1 §10.2, đơn vị R mỗi lệnh:
+
+        mean(R) − √(2·ln N) × std(R) / √n_trades
+
+    Cận dưới của expectancy sau khi trừ phần "tình cờ chọn được cái tốt
+    nhất trong N phép thử". N đi vào phép tính qua `dsr_hurdle()` (L-Z34).
+    Chuỗi R là R_realized theo DR-013 (pnl_abs / planned_risk_usdt).
+
+    Fail-closed: `n_trades < 2` hoặc `std_r < 0` → raise, không trả NaN.
+    """
+    if n_trades < 2:
+        raise ValueError(f"n_trades phải ≥ 2 để có std, nhận: {n_trades}")
+    if std_r < 0:
+        raise ValueError(f"std_r không thể âm, nhận: {std_r}")
+    return mean_r - dsr_hurdle(n_trials) * std_r / math.sqrt(n_trades)

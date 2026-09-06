@@ -1,13 +1,14 @@
 """Ngưỡng GATE D0.9, Nhánh 1 — §10.2 (spec dòng 4251-4276). Canh bởi L-Z35.
 
-Nhánh 1 có **đúng một** ô còn trống trong toàn bộ spec: "DSR-adjusted
-expectancy ≥ ......". Mọi ngưỡng khác của Nhánh 1 (đệm thanh lý, tỉ lệ lỗ
-tối đa, skewness, số lệnh/năm tối thiểu, dải TIME_STOP, TP_fallback, PBO)
-đã có số cụ thể trong spec — không phải "chưa điền", không cần fail-closed.
+Ô trống duy nhất của Nhánh 1 ("DSR-adjusted expectancy ≥ ......") đã được
+điền bằng DR-D0PRE-03 (TD-0041, 06/09/2026): **0,10 R**, suy từ chi phí
+backtest không nhìn thấy (trượt giá SL) × hệ số an toàn. Công thức của đại
+lượng này ở `dsr.dsr_adjusted_expectancy()`.
 
-🔴 Ô trống fail-closed = `+inf` (KHÔNG PHẢI `None`, KHÔNG PHẢI `0.0`) —
-để GATE không thể vô tình PASS khi ngưỡng chưa được điền bằng một DR thật
-(spec dòng 3949-3958).
+🔴 L-Z35 giờ ở biến thể spec dòng 3954-3955: "kết quả tốt nhất hiện có vẫn
+FAIL". Kết quả tốt nhất hiện có = CHƯA CÓ (chưa có lần đánh giá nào) →
+`BEST_KNOWN_DSR_ADJ_EXPECTANCY = -inf` — trạng thái *chưa đo*, không phải
+số bịa (N6). Cập nhật hằng số này CHỈ từ số đo thật, kèm commit.
 """
 
 from __future__ import annotations
@@ -17,10 +18,16 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import Enum
 
-# ═══════════ Ô CHƯA ĐIỀN — chờ OQ-01 / blocker B6 (TD-0041) ═══════════
-# Spec dòng 4260: "DSR-adjusted expectancy ≥ ...... 🔴 PHẢI ĐIỀN SỐ Ở
-# D0-PRE ... cho tới khi điền, giá trị trong code = +inf".
-DSR_ADJ_EXPECTANCY_MIN: float = math.inf
+# ═══════════ Đã điền — DR-D0PRE-03 (TD-0041), blocker B6 gỡ ═══════════
+# Đơn vị: R mỗi lệnh. Đổi số này = DR mới, viết TRƯỚC khi thấy kết quả gate
+# kế tiếp (spec dòng 3956-3958).
+DSR_ADJ_EXPECTANCY_MIN: float = 0.10
+
+# Kết quả tốt nhất hiện có của chính đại lượng trên. -inf = CHƯA CÓ lần đánh
+# giá nào (không phải 0.0, không phải None — N6). Khi có số đo thật, ghi số
+# đo vào đây kèm trial_id trong commit message; L-Z35 đòi nó vẫn < ngưỡng
+# cho tới khi gate thật sự qua.
+BEST_KNOWN_DSR_ADJ_EXPECTANCY: float = -math.inf
 
 # ═══════════ Ngưỡng ĐÃ CÓ SỐ trong spec (không phải ô trống) ═══════════
 LIQ_BUFFER_RATIO_MEAN_MIN: float = 8.0  # §6.4b
@@ -86,14 +93,14 @@ def evaluate_branch1(metrics: Mapping[str, float]) -> GateResult:
 
 
 def best_known_result_for_test() -> dict[str, float]:
-    """Bộ số CỰC TỐT giả lập — dùng riêng cho test L-Z35 (dòng 3952-3953:
-    "Gate này KHÔNG THỂ pass bằng cách quên điền"). Mọi tiêu chí ngoại trừ
-    DSR đều đạt dư dả; DSR để trần vì đó chính là ô đang bị fail-closed.
-    KHÔNG dùng hàm này ở bất kỳ đâu ngoài test — đây không phải dữ liệu
-    thật, chỉ là phép thử "gate có bị lách được không".
+    """Bộ số cho test L-Z35 biến thể "kết quả tốt nhất hiện có vẫn FAIL"
+    (spec dòng 3954-3955). Mọi tiêu chí KHÁC đạt dư dả (giả lập) để chứng
+    minh gate chỉ chặn đúng ở DSR; riêng DSR lấy ĐÚNG kết quả tốt nhất hiện
+    có (`BEST_KNOWN_DSR_ADJ_EXPECTANCY`), không giả lập. KHÔNG dùng hàm này
+    ngoài test.
     """
     return {
-        "dsr_adjusted_expectancy": 1_000_000.0,  # "cực tốt" cỡ nào cũng vô nghĩa khi ngưỡng là +inf
+        "dsr_adjusted_expectancy": BEST_KNOWN_DSR_ADJ_EXPECTANCY,
         "liq_buffer_ratio_mean": 100.0,
         "max_single_trade_loss_over_risk_budget": 0.01,
         "skewness_diff_vs_z1": 0.0,
