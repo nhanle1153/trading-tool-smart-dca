@@ -43,7 +43,7 @@
 | TD-0012 | `measurement/provenance.py` — 7+1 khoá, `validate_provenance()`. Chốt luôn định dạng `cache_key(prov)` để D3 không phải sửa ngược | ✅ | TD-0011 | `pytest -k lz40` xanh, **8 ca** (đủ khoá + thiếu từng khoá) |
 | TD-0013 | `config/tool_d_config.yaml` chép nguyên §6.9.5 + `config/loader.py`. Áp MT-03: `_budget_remaining_B3: null # derived` | ✅ | TD-0004 | `tunable_param_names()` trả về **đúng 12** |
 | TD-0014 | Test **L-Z37** (cấm `*Parameter`, cấm `<Strategy>.json`) và **L-Z39** (cấm env đọc tham số Tầng B/C) | ✅ | TD-0013 | `pytest -k "lz37 or lz39"` xanh |
-| TD-0015 | `measurement/guard.py` — `measurement_guard()` | 🔒 | TD-0013 | Tạo `user_data/strategies/Fake.json` **hỏng** → exit **86**, stdout in nội dung, và **file vẫn còn nguyên** |
+| TD-0015 | `measurement/guard.py` — `measurement_guard()` | ✅ | TD-0013 | Tạo `user_data/strategies/Fake.json` **hỏng** → exit **86**, stdout in nội dung, và **file vẫn còn nguyên** |
 | TD-0016 | 8 khung entrypoint E1–E8, mỗi file gọi guard ở dòng đầu `main()` | 🔓 | TD-0015 | `ls entrypoints/*.py` đúng 8 file, không hơn |
 | TD-0017 | Test **L-Z36** — AST + danh sách đóng | 🔓 | TD-0016 | `pytest -k lz36` xanh; thêm `entrypoints/e9_tmp.py` → test phải **FAIL** (chứng minh test có răng) |
 | TD-0018 | `assert_cache_none()` trong E1 — **từ chối**, không tự chèn | 🔓 | TD-0016 | `python entrypoints/run_backtest.py --timerange X` → exit **87** |
