@@ -139,6 +139,7 @@
 | TD-0091 | 🔴 **H19** — E8 backfill an toàn: (a) sao lưu trước, (b) **GỘP** không ghi đè, (c) verify phần cũ **byte-for-byte**, (d) tải hỏng → `unreadable`, KHÔNG cache rỗng | ✅ | TD-0090 | Test: backfill chồng lên dữ liệu cũ → hash phần cũ KHÔNG đổi; mô phỏng tải hỏng → không sinh file rỗng |
 | TD-0092 | 🔴 **H19** — chỉ số **ĐỘ PHỦ DỮ LIỆU** riêng; cấm suy nguyên nhân gốc từ khoảng trống mà chưa kiểm nguồn | ✅ | TD-0091 | E8 in bảng độ phủ theo mã × khung; khoảng trống hiện "chưa kiểm nguồn", không kết luận thay người |
 | TD-0093 | Backfill THẬT **CALIB [T0,T1]** + **WFO [T1,T2]** cho 102 mã qua E8 đã an toàn (DR-D0PRE-07) | 🔒 | TD-0091, TD-0092 | `touch_lockbox.py --verify-seal` vẫn PASS (lockbox không bị đụng); bảng độ phủ CALIB/WFO ghi vào research-log |
+| TD-0094 | 🔴 Phát hiện ở TD-0093: `freqtrade download-data --timerange` **không tôn trọng mốc kết thúc** (tải lố tới gần T3, lấn phạm vi LOCKBOX vào thư mục làm việc). E1/E2/E7 (backtest/WFO/ablation) phải **tự cưỡng chế cận trên timerange** (≤T1 cho CALIB, ≤T2 cho WFO) đọc từ `tool_d_config.yaml`, không tin file trên đĩa đã đúng phạm vi | 🔓 | TD-0093 | Test: dựng file dữ liệu có nến VƯỢT cận trên cấu hình → entrypoint từ chối chạy hoặc tự cắt trước khi đánh giá, không đọc lọt nến ngoài phạm vi |
 
 ---
 
