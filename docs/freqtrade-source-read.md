@@ -1,0 +1,168 @@
+# freqtrade-source-read.md — Đọc mã nguồn Freqtrade đang cài (TD-0028)
+
+> Bắt buộc theo §12 (spec dòng 4442-4445): "đọc `git show` mã nguồn Freqtrade cho D2a/D2b/D6/D7
+> ghi research-log", làm **TRƯỚC** khi viết bất kỳ test nào về các giả định đó (Nguyên tắc chẩn
+> đoán 0d.7). File này là kết quả đọc đó — không suy đoán, mọi khẳng định trích đường dẫn +
+> số dòng thật trong image đang chạy.
+>
+> Giả định D1, D3, D4, D5 (spec §9b.2) KHÔNG thuộc phạm vi TD-0028 — chỉ D2a, D2b, D6, D7 được
+> liệt kê tường minh ở §12. D1/D3/D4/D5 sẽ đọc khi tới D2 (roadmap).
+
+## 0. Định danh phiên bản đang đọc
+
+| Trường | Giá trị |
+|---|---|
+| Freqtrade version | `2026.8` |
+| Freqtrade source commit (`freqtrade_commit`, ghi trong chính image) | `9f10e357a93c1dcf10c2a2b367659214d89c073e` |
+| Base image | `freqtradeorg/freqtrade@sha256:7031bca43ed7668ebf421725dd5016acade6ef88b0771db3e08c96e6d19a42db` |
+| Image `docker-tests` build từ Dockerfile trên | `sha256:64965a4bed08db9e6d0e9e8a926ab9993936f4ed3dc141ad4c64a6525c7a4fd1` |
+| Python trong image | `3.14.7` (Debian 13 trixie) |
+| CCXT | `4.5.76` |
+| Đường dẫn mã nguồn trong container | `/freqtrade/freqtrade/` (bản cài **editable**, `pip show freqtrade` → `Editable project location: /freqtrade`) |
+| Cách tra lại | `docker compose run --rm --entrypoint cat tests /opt/freqtrade_source_commit.txt` |
+
+Mọi số dòng dưới đây là số dòng trong file **tại thời điểm đọc** (06/09/2026, TD-0028). Nếu image đổi (pull lại `stable`), số dòng có thể lệch — phải đọc lại, không dùng số cũ.
+
+---
+
+## 1. D2a — Freqtrade HUỶ + ĐẶT LẠI `STOP_MARKET` khi khối lượng SL đổi
+
+**Kết luận: XÁC NHẬN ĐÚNG.** Spec (dòng 3172) nói D2a "đã xác nhận ở Tool A bằng mã nguồn, không cần verify lại" — TD-0028 đọc lại trên phiên bản Freqtrade hiện tại (2026.8, khác bản Tool A dùng) để chắc cơ chế còn tồn tại nguyên vẹn.
+
+**Đường dẫn:** `/freqtrade/freqtrade/freqtradebot.py`
+
+Cơ chế gồm **hai bước tách rời** (không phải một hàm "cancel-then-recreate" nguyên tử):
+
+**Bước 1 — Huỷ ngay khi lệnh tranche khớp**, dòng 1074–1078, trong `update_trade_state()`:
+```python
+if pos_adjust:
+    if order_status == "closed":
+        logger.info(f"DCA order closed, trade should be up to date: {trade}")
+        trade = self.cancel_stoploss_on_exchange(trade)
+    else:
+        logger.info(f"DCA order {order_status}, will wait for resolution: {trade}")
+```
+`pos_adjust` là cờ đánh dấu lệnh vừa khớp là một lần **DCA/position-adjustment** (tranche 2, 3 của Tool D) — không phải entry đầu. Khi lệnh đó `closed`, Freqtrade **huỷ SL hiện tại ngay lập tức**, không chờ vòng lặp tiếp theo.
+
+Đường huỷ thứ hai (dự phòng, đối chiếu ví với sàn), dòng 601–609:
+```python
+if prev_trade_amount != trade.amount:
+    # Cancel stoploss on exchange if the amount changed
+    trade = self.cancel_stoploss_on_exchange(trade)
+```
+
+**Bước 2 — Tạo lại ở vòng lặp kế tiếp**, trong `handle_stoploss_on_exchange()` (dòng 1467–1518): nếu `len(stoploss_orders) == 0` (đúng trạng thái sau Bước 1), gọi:
+```python
+stop_price = trade.stoploss_or_liquidation
+if self.create_stoploss_order(trade=trade, stop_price=stop_price):
+    return False
+```
+`create_stoploss_order()` (dòng 1431) dùng `amount=trade.amount` — **giá trị MỚI** (đã cộng tranche vừa khớp, vì `trade.recalc_trade_from_orders()` chạy trước đó trong `update_trade_state`).
+
+**Hệ quả trực tiếp cho D2c (khoảng trống):** Bước 1 và Bước 2 nằm ở **hai lần gọi hàm xử lý khác nhau** của vòng lặp bot chính — không có gì đảm bảo Bước 2 chạy ngay sau Bước 1 trong cùng một chu kỳ. Cận trên lý thuyết của khoảng trống = chu kỳ polling của worker:
+
+```python
+# /freqtrade/freqtrade/constants.py, dòng 17
+PROCESS_THROTTLE_SECS = 5  # sec
+```
+tức mặc định **tối đa ~5 giây + độ trễ round-trip API** không có SL trên sàn sau mỗi lần tranche khớp — đây chính là con số cần đo thật (`gap_ms`, §8.3) ở D2c qua testnet, TD-0028 chỉ xác nhận **cơ chế** và **cận trên lý thuyết**, không đo `gap_ms` thật (đúng thứ tự spec: D2a đọc source, D2c chỉ verify được ở Testnet/Live).
+
+**Kết luận đối chiếu với DR-013/§9b.2:** khớp hoàn toàn với mô tả spec — "D0.2 KHÔNG bị vi phạm (giá SL không đổi, chỉ khối lượng đổi)" đúng, vì `stop_price` truyền vào `create_stoploss_order` luôn là `trade.stoploss_or_liquidation` (không đổi giữa các tranche cùng một zone) — chỉ `amount` khác.
+
+---
+
+## 2. D2b — Freqtrade có hỗ trợ `closePosition=true` cho stop order Binance Futures không
+
+**Kết luận: KHÔNG HỖ TRỢ.**
+
+```
+grep -rn "closePosition\|close_position" /freqtrade/freqtrade/exchange/*.py
+→ không có kết quả nào
+```
+
+Quét toàn bộ `freqtrade/exchange/` (bao gồm `exchange.py`, `binance.py`) — không có tham số `closePosition` ở bất kỳ đâu trong luồng tạo lệnh stop (`create_stoploss`, `stoploss_adjust`, `_get_stop_order_type`). Freqtrade tự quản lý khối lượng SL bằng tay (huỷ+đặt lại, mục 1), không dùng cờ `closePosition=true` của Binance Futures API (cờ đó để sàn tự đóng TOÀN BỘ vị thế bất kể khối lượng, không cần đặt lại khi khối lượng đổi).
+
+**Hệ quả:** nhánh D2b của spec (dòng 3175: "nếu có, khối lượng KHÔNG cần đổi khi tranche khớp và khoảng trống biến mất") **không áp dụng** — con đường duy nhất là D2c (đo `gap_ms` thật). Không cần chờ testnet để loại trừ D2b nữa — TD-0028 đã loại trừ bằng đọc mã nguồn, theo đúng thứ tự spec quy định ("D2b: mã nguồn + sàn", cột "D2b" đã xong phần "mã nguồn").
+
+---
+
+## 3. D6 — `adjust_trade_position()` trong backtest đánh giá THEO NẾN, tại giá MỞ nến
+
+**Kết luận: XÁC NHẬN ĐÚNG — đây là rủi ro số một của kết quả Tool D, đúng như spec cảnh báo.**
+
+**Đường dẫn:** `/freqtrade/freqtrade/optimize/backtesting.py`
+
+Hàm `_check_adjust_trade_for_candle()` (dòng 718), được gọi từ `_check_trade_exit()` (dòng 987, khi `self.strategy.position_adjustment_enable` bật — **bắt buộc bật với Tool D**), dòng 719–720:
+```python
+def _check_adjust_trade_for_candle(
+    self, trade: LocalTrade, row: tuple, current_time: datetime
+) -> LocalTrade:
+    current_rate: float = row[OPEN_IDX]
+    current_profit = trade.calc_profit_ratio(current_rate)
+```
+`row[OPEN_IDX]` là **giá mở của nến** đang xử lý — không phải giá thật tại thời điểm lệnh tranche khớp trong nến. `current_rate` này được truyền thẳng vào `_adjust_trade_position_internal()` (dòng 726) làm cả `current_entry_rate` lẫn `current_exit_rate` — tức **toàn bộ quyết định** (có nên vào tranche mới không, lợi nhuận hiện tại bao nhiêu) của `adjust_trade_position()` do strategy viết đều nhìn thấy **đúng một giá duy nhất: giá mở nến**, bất kể nến đó biến động thế nào.
+
+Khi quyết định là "vào thêm" (`stake_amount > 0.0`, dòng 739), lệnh tranche được đặt qua `_enter_trade()` (dòng 1121), và hàm này (dòng 1146–1148) cũng dùng `row[OPEN_IDX]` làm giá đề xuất mặc định:
+```python
+propose_rate, stake_amount, leverage, min_stake_amount = (
+    self.get_valid_entry_price_and_stake(
+        pair, row, row[OPEN_IDX], stake_amount_, ...
+    )
+)
+```
+(Strategy có thể override qua `custom_entry_price()` — Tool D dùng lệnh chờ tại `p1/p2/p3` tính trước nên có override, nhưng **quyết định có kích hoạt tranche hay không** ở bước trước đó vẫn dựa trên giá mở nến, không phải giá `p_i` thật.)
+
+**Đối chiếu với L-Z50 (spec dòng 3985-3987):** L-Z50 đòi "mọi tranche fill trong backtest có `fill_price == giá mà timeframe_detail 5m cho thấy đã CHẠM p_i` (không phải open nến 1H)" — TD-0028 xác nhận rủi ro L-Z50 được viết ra để canh là **có thật trong mã nguồn**, không phải suy đoán. `timeframe_detail` là một luồng dữ liệu tách biệt (không đọc ở TD-0028 này, để dành khi implement L-Z50 thật) dùng để mô phỏng giá trong-nến chi tiết hơn — nhưng **quyết định vào tranche** (`_check_adjust_trade_for_candle`) không tự động dùng nó, phải kiểm lại khi implement zone detection xem có cần tự gọi API `timeframe_detail` riêng cho bước quyết định hay chỉ cho bước xác định giá khớp.
+
+**Hệ quả đúng như spec (dòng 3184-3185):** lệch này **có lợi một chiều** cho mọi arm DCA so với Z0 (Z0 chỉ khớp một lần ở entry, không lặp lại phép "nhìn giá mở nến" nhiều lần như DCA). Nhánh 2 của §10.2 phải đọc kết quả này QUA hiệu chỉnh Δ_R của cổng D3.5 — đúng như spec đã thiết kế (DR-015), TD-0028 chỉ xác nhận cơ chế gây lệch là có thật.
+
+---
+
+## 4. D7 — `trade.custom_data` GIỮ ỔN ĐỊNH giữa các lần gọi callback trong backtest
+
+**Kết luận: CƠ CHẾ AN TOÀN — nhưng có một điều kiện tiên quyết PHẢI đúng khi implement (ghi ở dưới), và một phát hiện phụ đáng chú ý về phạm vi biến toàn cục.**
+
+**Đường dẫn:** `/freqtrade/freqtrade/persistence/custom_data.py` + `/freqtrade/freqtrade/optimize/backtesting.py`
+
+### 4.1. Cơ chế lưu trữ ở chế độ backtest (`use_db=False`)
+
+`CustomDataWrapper.custom_data` (dòng ~86) là một **list cấp CLASS** (không phải cấp instance):
+```python
+class CustomDataWrapper:
+    use_db = True
+    custom_data: list[_CustomData] = []
+```
+Khi backtest, `use_db=False` — mọi `set_custom_data()`/`get_custom_data()` đọc/ghi thẳng vào list này, lọc theo `ft_trade_id == trade_id` (dòng 132, 121-138). Đây KHÔNG phải một dict-per-trade — là MỘT danh sách DÙNG CHUNG cho toàn bộ trade trong backtest, lọc bằng vòng lặp mỗi lần đọc.
+
+### 4.2. `trade_id` có ổn định qua các callback không — CÓ, với điều kiện
+
+`LocalTrade.id` (dòng 401, `trade_model.py`) mặc định là `0` ở cấp class — **nhưng** mỗi trade THẬT được tạo trong backtest (`_enter_trade`, dòng 1208-1213 `backtesting.py`) được gán ngay:
+```python
+if trade is None:
+    self.trade_id_counter += 1
+    trade = LocalTrade(id=self.trade_id_counter, ...)
+```
+`id` được gán **tại thời điểm tạo trade**, trước khi bất kỳ callback nào (kể cả entry đầu) có cơ hội gọi `custom_data`. Tranche 2/3 tái sử dụng **cùng object `trade`** (nhánh `if trade is None` không chạy lại) — tức cùng `id` xuyên suốt vòng đời lệnh. Do đó `get_custom_data`/`set_custom_data` lọc đúng theo `id` đó, ổn định qua tranche 1→2→3→DG6/7/8→custom_exit, **khớp đúng khẳng định của spec** (dòng 3193: "custom_data ghi ở tranche 1 đọc lại NGUYÊN VẸN ở callback của tranche 2, 3...").
+
+🔴 **Phát hiện phụ — nhánh nguy hiểm nếu bị gọi sai chỗ:** `set_custom_data()` (dòng ~144, `custom_data.py`) có: `if trade_id is None: trade_id = 0`. Nếu bất kỳ đoạn code Tool D nào gọi `set_custom_data`/`get_custom_data` **trước khi trade có `id` thật** (id vẫn là giá trị mặc định của class `0`, hoặc gọi với `trade_id=None` tường minh), NHIỀU trade khác nhau sẽ vô tình dùng chung `trade_id=0` — **custom_data của các cặp giao dịch khác nhau sẽ trộn lẫn**. Với Tool D (giao dịch đồng thời ~100 cặp), đây là lớp lỗi ngầm nguy hiểm hơn cả điều D7 gốc đang canh — **L-Z49 cần bổ sung một khẳng định phụ** (khi implement thật, ghi vào research-log, không sửa spec ở D0-PRE): mọi lần gọi `trade.set_custom_data()`/`get_custom_data()` phải xảy ra **sau** khi trade đã có `id` thật (tức trong các callback thường như `custom_stoploss`, `adjust_trade_position`, KHÔNG bao giờ ở bước tính giá entry trước khi trade tồn tại).
+
+### 4.3. Chống rò rỉ giữa các lần backtest khác nhau (liên quan DR-010/L-Z12)
+
+`reset_backtest()` (dòng 486-493, `backtesting.py`), docstring **"called once for every call to backtest()"**:
+```python
+def reset_backtest(self, enable_protections: bool = False):
+    self.disable_database_use()
+    PairLocks.reset_locks()
+    Trade.reset_trades()
+    CustomDataWrapper.reset_custom_data()
+```
+`Trade.reset_trades()` và `CustomDataWrapper.reset_custom_data()` (dòng 106-110, `custom_data.py`: xoá sạch list class khi `not use_db`) chạy **cùng nhau**, mỗi lần `backtest()` được gọi. Xác nhận: **miễn E1 (`run_backtest.py`) gọi đúng API `backtest()` cấp cao của Freqtrade** (không gọi tắt qua API nội bộ bỏ qua `reset_backtest`), mỗi trial trong D0.9/ablation không rò rỉ `custom_data` từ trial trước — quan trọng cho tính độc lập giữa các cấu hình so sánh ở GATE §10.2.
+
+---
+
+## 5. Việc cần làm khi implement thật (không phải việc của TD-0028, ghi lại để không quên)
+
+- Khi viết `custom_stoploss`/`adjust_trade_position` thật (sau D0-PRE): thêm assert nội bộ `trade.id != 0` (hoặc `trade.id is not None`) trước MỌI lần gọi `set_custom_data`/`get_custom_data` — vá lỗ hổng ở mục 4.2.
+- L-Z49 (test đơn vị D7, spec dòng 3979-3984) nên thêm kịch bản: hai trade MỞ ĐỒNG THỜI (hai cặp khác nhau), xác nhận `custom_data` của chúng KHÔNG trộn lẫn — không chỉ kiểm một trade duy nhất qua nhiều callback như spec mô tả tối thiểu.
+- E1 (`run_backtest.py`) khi có logic thật, phải gọi qua đường `Backtesting.backtest()` cấp cao (đi qua `reset_backtest()`) — không tự ý gọi thẳng các hàm nội bộ như `_enter_trade`/`_check_adjust_trade_for_candle` để "tối ưu tốc độ", vì sẽ bỏ qua bước reset và vi phạm mục 4.3.
+- D2c (`gap_ms` thật) và tỉ lệ khớp post-only — đo ở D3.5 (Bước 2, testnet) và D10, không đo được ở D0-PRE (đọc mã nguồn không thay thế được đo thật, theo đúng phân loại "Giai đoạn DUY NHẤT verify được" của bảng §9b.2).

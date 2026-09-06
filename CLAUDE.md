@@ -162,21 +162,34 @@ Quy trình gốc viết cho web app trên Render. Tool D là bot chạy local. �
 
 **Cập nhật lần cuối: 06/09/2026**
 
-**Đang ở:** **Giai đoạn 3** của quy trình vibe-code (đã có lệnh "bắt đầu code"). Đang làm
-**Khối 1 — PHẦN 0d, tầng chống nhiễm phép đo** (phải xong trước mọi thứ khác).
+> ⚠️ **Hai phiên Claude Code cùng làm việc song song trên repo này** (chủ dự án xác nhận).
+> Mục này có thể lệch nhịp vài phút so với phiên kia — luôn `git log --oneline` +
+> đọc lại `TASKS.md` (cột 🔓/🔒/✅) trước khi chọn việc tiếp theo, đừng chỉ tin mục này.
 
-**Đã xong:**
-- Repo git local (`main`). `.gitignore` cố ý **không** ẩn `user_data/strategies/*.json`.
-- 4 file quy trình: `CLAUDE.md`, `back-end-note.md`, `ARCHITECTURE.md`, `TASKS.md`.
-- `docs/research-log.md` với 2 rủi ro tồn dư đã ghi nhận.
-- Chốt 7 quyết định nền tảng; ghi nhận 8 Open Questions và 7 Mâu thuẫn (5 đã chốt cách giải).
-- **TD-0004, TD-0005** — Docker (`docker/Dockerfile` + `docker-compose.yml`), xác minh `git_sha` lấy từ trong container.
-- **TD-0007** — file tham chiếu thiết kế `tool-d-dashboard-thiet-ke.html` đã chuyển vào `docs/`, lý do ghi ở `ARCHITECTURE.md` mục 3.
-- **TD-0010→0014** — bắt đầu tầng chống nhiễm phép đo: `tri_state`, `provenance`, config loader (đã commit).
+**Đang ở:** **Giai đoạn 3**, backend đã qua hết **Khối 1** (cổng L-Z36→L-Z41 sạch, tag
+`d0pre-0d-live`) và đang ở **Khối 2** (DR-013 xong, config Freqtrade + TD-0028 đang làm).
+
+**Backend — đã xong:**
+- Khối 0 (TD-0001→0005): repo git local, Docker + docker-compose, `git_sha` khớp trong container.
+- Khối 1 (TD-0010→0020): toàn bộ tầng chống nhiễm phép đo — `tri_state`, `provenance` (L-Z40),
+  `config/tool_d_config.yaml` + `loader.py` (12 tham số tunable), `guard.py` (`measurement_guard()`,
+  verify thủ công exit 86 + file không bị xoá), 8 khung entrypoint E1–E8, `assert_cache_none()`
+  trong E1, test L-Z36/L-Z37/L-Z39/L-Z32/L-Z33/L-Z46/L-Z48c. **Cổng Khối 1 đã đóng** (TD-0020).
+- Khối 2 (đang làm): TD-0025 DR-013 (đơn vị đo `pnl_abs`) xong. TD-0028 (đọc mã nguồn Freqtrade
+  cho D2a/D2b/D6/D7) → `docs/freqtrade-source-read.md` — D2a xác nhận đúng (cơ chế huỷ+đặt lại
+  SL, 2 bước tách rời, cận trên khoảng trống = 5s `PROCESS_THROTTLE_SECS`), D2b xác nhận
+  **KHÔNG** hỗ trợ `closePosition`, D6 xác nhận đúng (dùng giá MỞ nến — rủi ro số một), D7 xác
+  nhận cơ chế an toàn + phát hiện phụ (phải assert `trade.id != 0` trước khi gọi custom_data khi
+  implement thật, tránh trộn dữ liệu giữa các cặp giao dịch khác nhau).
+- `dashboard-ui/` (front-end, việc riêng): dựng xong khung React + Chakra UI cho 8 trang dashboard
+  Tool A/D từ mock JSON, đã tách thành **repo GitHub riêng** (không gộp vào repo backend) — xem
+  chi tiết ở mục TD-0006/TD-0007 trong `TASKS.md`. Chưa nối API thật.
 
 **Còn thiếu / bước tiếp theo:**
-1. **TD-0003** — tạo repo GitHub private và push (chờ chủ dự án đồng ý).
-2. **TD-0006** — quyết định số phận `dashboard-ui/` (project Node có `.git`/`.env` riêng): submodule / repo riêng / gộp thẳng — vẫn 🔓.
-3. Có file chưa commit đang nằm trong working tree (`src/tool_d/measurement/guard.py`, `tests/unit/test_guard.py`, `user_data/strategies/Fake.json`) — cần rà lại trước khi tiếp tục Khối 1, đặc biệt `Fake.json` (đối chiếu N3 — tránh trùng với bẫy file tham số ẩn của Freqtrade).
-4. Ba con số chặn tiến độ cần chủ dự án quyết khi tới lượt: **OQ-01** (ngưỡng DSR — blocker B6),
+1. **TD-0003** — tạo repo GitHub private cho backend và push (chờ chủ dự án đồng ý).
+2. `dashboard-ui/` cần chủ dự án tạo repo GitHub trống (private) rồi cấp link để thêm remote + push.
+3. Khối 2 còn TD-0026 (config Freqtrade thật) + TD-0027 (test L-Z24/L-Z25/L-Z42).
+4. Khối 3 (thứ tự cứng 1→2→3, không song song): verify `zone_width` chết hay không → xác nhận
+   bảng DOF → chốt `N_ĐĂNG_KÝ`.
+5. Ba con số chặn tiến độ cần chủ dự án quyết khi tới lượt: **OQ-01** (ngưỡng DSR — blocker B6),
    **OQ-02** (vốn `E_D`), **OQ-03** (thang drawdown).

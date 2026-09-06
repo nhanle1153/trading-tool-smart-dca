@@ -57,7 +57,7 @@
 | TD-0025 | `docs/decisions/DR-013-don-vi-do.md` — mọi chỉ số trên `pnl_abs`, bảng phân biệt ba chữ "R" | ✅ | TD-0020 | File có bảng ba chữ "R" (R_eff/r_eff_pct, planned_risk_usdt, R_realized) đúng spec dòng 2777-2787; mục "cấm chữ R trần" có ví dụ đúng/sai; bảng test L-Z46/47/48/48b/48c đối chiếu trạng thái D0-PRE |
 | TD-0026 | `config/freqtrade/config.json` theo §0c.3 + ánh xạ lệnh chờ §3.5 | 🔓 | TD-0020 | `docker compose run --rm freqtrade freqtrade show-config -c config/freqtrade/config.json` không lỗi |
 | TD-0027 | Test **L-Z24** (cờ cấm), **L-Z25** (không dấu vết hyperopt), **L-Z42** (config khớp hằng số spec) | 🔓 | TD-0026 | `pytest -k "lz24 or lz25 or lz42"` xanh |
-| TD-0028 | Đọc mã nguồn Freqtrade **đang cài** cho giả định D2a/D2b/D6/D7 → `docs/freqtrade-source-read.md`. **Làm TRƯỚC khi viết bất kỳ test nào về chúng** | 🔒 | TD-0004 | File có 4 mục, mỗi mục trích đường dẫn + số dòng trong image, kèm image digest |
+| TD-0028 | Đọc mã nguồn Freqtrade **đang cài** cho giả định D2a/D2b/D6/D7 → `docs/freqtrade-source-read.md`. **Làm TRƯỚC khi viết bất kỳ test nào về chúng** | ✅ | TD-0004 | File có 4 mục, mỗi mục trích đường dẫn + số dòng trong image, kèm image digest |
 
 ### Khối 3 — 🔴 THỨ TỰ CỨNG 1→2→3, KHÔNG SONG SONG
 
