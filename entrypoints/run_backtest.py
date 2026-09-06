@@ -17,7 +17,7 @@ import sys
 from tool_d.gates.cache_policy import assert_cache_none
 from tool_d.lockbox.seal import verify_all_seals
 from tool_d.measurement.guard import EXIT_GUARD_BLOCKED, GuardOutcome, measurement_guard
-from touch_lockbox import EXIT_LOCKBOX_VERIFY_FAILED, LOCKBOX_DATA_DIR, LOCKBOX_DIR
+from touch_lockbox import EXIT_LOCKBOX_VERIFY_FAILED, LOCKBOX_DIR, LOCKBOX_FUTURES_DIR
 from trial_ledger_audit import run_audit
 
 ENTRYPOINT = "E1"
@@ -50,7 +50,7 @@ def main(argv: list[str] | None = None) -> int:
         print(audit_text)
         return audit_exit
 
-    seal_errors = verify_all_seals(LOCKBOX_DIR, LOCKBOX_DATA_DIR)
+    seal_errors = verify_all_seals(LOCKBOX_DIR, LOCKBOX_FUTURES_DIR)
     if seal_errors:
         print("🛑 L-Z14 FAIL — seal KHÔNG khớp dữ liệu lockbox:")
         for e in seal_errors:
