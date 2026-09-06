@@ -108,11 +108,35 @@ class TestIdeaQueueSchemaCoRang:
             jsonschema.validate(bad, IDEA_QUEUE_SCHEMA)
 
 
-class TestFileRegistryRong:
-    def test_hai_file_jsonl_ton_tai_va_rong(self) -> None:
-        trial_registry = REPO_ROOT / "registry/trial_registry.jsonl"
-        idea_queue = REPO_ROOT / "registry/idea_queue.jsonl"
-        assert trial_registry.exists()
-        assert idea_queue.exists()
-        assert trial_registry.read_text(encoding="utf-8") == ""
-        assert idea_queue.read_text(encoding="utf-8") == ""
+class TestFileRegistryThatHopLe:
+    """Từ TD-0083 (chốt pool), `trial_registry.jsonl` KHÔNG còn rỗng — 4
+    trial B0 thật đã ghi vào đó. `idea_queue.jsonl` vẫn rỗng (chưa mở
+    Idea Queue, OQ-07 chưa chốt tiêu chí chọn). Kiểm bằng schema thay vì
+    kiểm rỗng — đúng bản chất "sổ SẼ có nội dung theo thời gian", không
+    phải "sổ mãi mãi rỗng ở D0-PRE".
+    """
+
+    def test_hai_file_jsonl_ton_tai(self) -> None:
+        assert (REPO_ROOT / "registry/trial_registry.jsonl").exists()
+        assert (REPO_ROOT / "registry/idea_queue.jsonl").exists()
+
+    def test_idea_queue_van_rong_chua_mo(self) -> None:
+        # OQ-07: tiêu chí chọn ý tưởng của quý phải commit TRƯỚC khi mở
+        # queue (spec dòng 4935) — chưa chốt, nên vẫn phải rỗng.
+        assert (REPO_ROOT / "registry/idea_queue.jsonl").read_text(encoding="utf-8") == ""
+
+    def test_trial_registry_that_moi_dong_hop_le_theo_schema(self) -> None:
+        events = _load_jsonl(REPO_ROOT / "registry/trial_registry.jsonl")
+        assert len(events) > 0, "registry trống — TD-0083 chưa commit hay đã bị xoá nhầm?"
+        for e in events:
+            jsonschema.validate(e, TRIAL_EVENT_SCHEMA)
+
+    def test_moi_su_kien_thuoc_budget_line_b0(self) -> None:
+        # Đến thời điểm sửa file này, MỌI trial thật đã tiêu đều là B0
+        # (TD-0083, chốt pool) — chưa có B1/B2/B3 nào. Nếu test này đỏ vì
+        # đã có trial khác, đó là tín hiệu TỐT (nghiên cứu đã tiến thêm)
+        # — cập nhật lại giả định, không phải dấu hiệu lỗi.
+        events = _load_jsonl(REPO_ROOT / "registry/trial_registry.jsonl")
+        reserve_events = [e for e in events if e["event"] == "RESERVE"]
+        assert all(e["budget_line"] == "B0" for e in reserve_events)
+        assert len(reserve_events) == 4

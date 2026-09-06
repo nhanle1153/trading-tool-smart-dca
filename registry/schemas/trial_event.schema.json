@@ -51,7 +51,10 @@
         "budget_line": { "enum": ["B0", "B1", "B2", "B3", "CTRL"] },
         "hypothesis_slot": { "type": "string" },
         "direction": { "enum": ["LONG", "SHORT"] },
-        "dataset": { "enum": ["CALIB", "WFO", "LOCKBOX"] },
+        "dataset": {
+          "enum": ["CALIB", "WFO", "LOCKBOX", "N/A"],
+          "description": "N/A dành cho trial budget_line=B0 (quyết định hạ tầng như tiêu chí pool, §0.3) — không phải đánh giá cấu hình trên một trong ba tập nghiên cứu."
+        },
         "param_under_test": { "type": "string" },
         "param_value": {},
         "params_frozen_hash": { "type": "string" },

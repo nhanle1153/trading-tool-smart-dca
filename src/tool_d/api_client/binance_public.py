@@ -21,6 +21,33 @@ class BinancePublicApiError(RuntimeError):
     """Lỗi khi gọi endpoint public Binance (mạng, HTTP, hoặc timeout)."""
 
 
+def get_exchange_info(*, timeout: float = DEFAULT_TIMEOUT_S) -> dict:
+    """`GET /fapi/v1/exchangeInfo` — metadata mọi hợp đồng (trạng thái,
+    ngày lên sàn `onboardDate`, precision, min notional). Dùng cho
+    TD-0082 (min notional) và TD-0083 (chốt pool).
+    """
+    url = f"{BASE_URL}/fapi/v1/exchangeInfo"
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as resp:  # noqa: S310
+            return json.loads(resp.read())
+    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as exc:
+        raise BinancePublicApiError(f"gọi {url} thất bại: {exc}") from exc
+
+
+def get_ticker_24hr(*, timeout: float = DEFAULT_TIMEOUT_S) -> list[dict]:
+    """`GET /fapi/v1/ticker/24hr` — thống kê 24h MỌI hợp đồng (bao gồm
+    `quoteVolume`, dùng làm proxy volume cho tiêu chí (i) §0.3). Không
+    truyền `symbol` để lấy TOÀN BỘ trong 1 lệnh gọi (tránh N lệnh gọi
+    riêng cho N mã — đúng tinh thần R2/bounded loop).
+    """
+    url = f"{BASE_URL}/fapi/v1/ticker/24hr"
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as resp:  # noqa: S310
+            return json.loads(resp.read())
+    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as exc:
+        raise BinancePublicApiError(f"gọi {url} thất bại: {exc}") from exc
+
+
 def get_open_interest_hist(
     *,
     symbol: str,

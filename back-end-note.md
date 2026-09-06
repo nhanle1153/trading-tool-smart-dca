@@ -70,7 +70,7 @@ Hợp đồng dữ liệu tương ứng nằm ở §8 của spec (Decision Log) 
 | OQ-01 | Ngưỡng **DSR-adjusted expectancy** của Nhánh 1 §10.2 (spec dòng 4260 để trống) | Đây chính là **hard blocker B6**. GATE D0.9 không tính được. Hiện fail-closed ở `+inf` nên không có gì lọt qua — an toàn, nhưng cũng nghĩa là D4 không chạy được | 🔴 Chặn D4 (không chặn D0-PRE) |
 | OQ-02 | `E_D` (vốn cấp cho Tool D), `L_exchange`, % lỗ tối đa một ngày xấu | Không định cỡ được vị thế; L-Z20 / L-Z22 không kiểm được | 🔴 Chặn TD-0043 |
 | OQ-03 | Thang drawdown 5/8/20% — xác nhận theo khẩu vị rủi ro thật | Sau khi commit là **Hạng 0, không sửa được nữa** | 🔴 Chặn TD-0042 |
-| OQ-04 | Ngưỡng lọc pool §0.3 (i)–(iv), hiện `[CẦN CALIBRATE]` | Chưa chốt được pool ~100 mã | 🟡 Chặn TD-0083 |
+| OQ-04 | ✅ **Đã giải** (TD-0083, 06/09/2026) — Ngưỡng lọc pool §0.3 (i)–(iv) | `docs/decisions/DR-D0PRE-05-pool-criteria.md`: volume 24h ≥15tr USDT (i), tuổi niêm yết ≥180 ngày (ii), (iii)/(iv) không cần ngưỡng riêng — thoả gián tiếp/kiểm tại thời điểm vào lệnh. Trên dữ liệu thật 06/09/2026 (528 hợp đồng): **102 mã** vào pool giao dịch, 426 vào EXPLORE (gồm BTC/ETH). `config/pool.yaml` đã ghi, tiêu 4 trial B0 (D-0001→D-0004) | — |
 | OQ-05 | Mốc chia dữ liệu T0/T1/T2/T3 cho CALIB / WFO / LOCKBOX | Chưa niêm phong được lockbox | 🟡 Chặn TD-0084 |
 | OQ-06 | `v_min` (§3.3b) — hiện `null` | Không được điền ở D0-PRE (phải calibrate bằng dữ liệu ở B1), nhưng L-Z15 đòi nó **có trạng thái**, không được "im lặng" → ghi `TUNED_PENDING` | 🟡 |
 | OQ-07 | Tiêu chí chọn ý tưởng của quý (§9c.7.4) | Phải commit **trước khi** mở Idea Queue — mở trước là điều cấm (spec dòng 4935) | 🟡 |
