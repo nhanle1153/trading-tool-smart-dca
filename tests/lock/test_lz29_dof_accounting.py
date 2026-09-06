@@ -1,6 +1,14 @@
-"""TD-0031 — dof_report() / assert_dof_or_block(). Test khoá đầy đủ dùng
-registry thật (vế (a) của L-Z29) sẽ viết ở TD-0032/Khối 5 khi registry có
-dữ liệu. File này kiểm cơ chế đối chiếu tĩnh (vế (b), (c)).
+"""L-Z29 🔴 CRITICAL — kế toán bậc tự do tự kiểm (spec dòng 3918-3925, TD-0031/0032).
+
+Ba vế:
+    (a) |tier_frozen non-underscore| == số bản ghi registry có frozen_rationale
+        — CHƯA kiểm được ở D0-PRE (chưa có bản ghi registry thật). Sẽ thêm
+        khi registry hoạt động (Khối 5).
+    (b) DOF_gốc == Σ(v5 các dòng) + Σ(v5_dung_ra các dòng bỏ sót)
+    (c) N_ĐĂNG_KÝ == 4 + 3×|tier_b|×2 + |arm B2|×2 + 20
+
+File này kiểm (b) và (c) — nguồn: config/dof_inventory.yaml (TD-0031),
+xác nhận lại bảng đối chiếu DR-010.
 """
 
 from __future__ import annotations

@@ -65,7 +65,7 @@
 |---|---|---|---|---|
 | TD-0030 | **(1)** Verify `zone_width` min có phải **code chết** không (§3.3). Phân tích spec, **không chạm dữ liệu**. Kết luận nhị phân → `DR-D0PRE-01`. Giải MT-04 | ✅ | TD-0020 | DR có kết luận CHẾT/SỐNG + lý do; nếu CHẾT thì xoá hẳn khỏi YAML, không để lại comment |
 | TD-0031 | **(2)** Xác nhận lại bảng DOF của DR-010 **từng dòng** → `config/dof_inventory.yaml` | ✅ | TD-0030 | `python -m tool_d.config.dof --check` in DOF gốc và các thành phần khớp bảng |
-| TD-0032 | **(3)** Chốt `N_ĐĂNG_KÝ` (114 nếu chết / 120 nếu không) → `DR-D0PRE-02` | 🔒 | TD-0031 | 🔴 `pytest -k lz29` **PASS trước khi `git commit`** (spec dòng 4424) |
+| TD-0032 | **(3)** Chốt `N_ĐĂNG_KÝ` (114 nếu chết / 120 nếu không) → `DR-D0PRE-02` | ✅ | TD-0031 | 🔴 `pytest -k lz29` **PASS trước khi `git commit`** (spec dòng 4424) |
 | TD-0033 | `gates/dsr.py` + test **L-Z34** — N đọc từ registry, không phải hằng số | 🔓 | TD-0032 | `pytest -k lz34` xanh; `dsr_hurdle(114)` ≠ `dsr_hurdle(228)`, khớp √(2·ln N) sai số 1e-6 |
 
 ### Khối 4 — Điền các ô trống bắt buộc
