@@ -138,6 +138,19 @@ class TestHinhDangMucCacheKhongLechDuoc:
         )
         assert set(tren_dia["van_tay"]) == set(KHOA_VAN_TAY)
 
+    def test_bat_bien_khoa_dung_raise_KHONG_dung_assert_tran(self, thu_muc: Path) -> None:
+        """`assert` trần biến mất khi chạy `python -O` — bất biến quan trọng
+        nhất của module (hàm ghi và hàm đọc nhìn CÙNG tập khoá) sẽ im lặng
+        bốc hơi đúng lúc chạy production. Test này ghim rằng vi phạm phải ra
+        `CacheError`, không phải `AssertionError`."""
+        import inspect
+
+        from tool_d.wfo import cache as mod
+
+        nguon = inspect.getsource(mod.ghi_cache)
+        assert "assert " not in nguon, "assert trần trong ghi_cache() — mất khi chạy -O"
+        assert "raise CacheError" in nguon
+
     def test_ghi_roi_doc_lai_khop_tron_ven(self, thu_muc: Path) -> None:
         _ghi(thu_muc)
         assert doc_cache(khoa="fold1", van_tay=VT, cache_dir=thu_muc).payload == PAYLOAD

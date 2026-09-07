@@ -166,7 +166,15 @@ def ghi_cache(
         "payload": payload,
         "ghi_luc": ghi_luc,
     }
-    assert set(muc) == set(KHOA_BAT_BUOC)  # nguồn sự thật dùng chung với hàm đọc
+    # 🔴 KHÔNG dùng `assert` trần: chạy Python ở chế độ tối ưu (`python -O`)
+    # là mọi `assert` biến mất, và bất biến quan trọng nhất của module này —
+    # hàm ghi với hàm đọc phải nhìn CÙNG một tập khoá — sẽ im lặng bốc hơi
+    # đúng lúc chạy production. Phát hiện khi phiên -da rà soát khối D3.
+    if set(muc) != set(KHOA_BAT_BUOC):
+        raise CacheError(
+            f"Lỗi lập trình: mục cache dựng ra có khoá {sorted(muc)} nhưng hàm đọc "
+            f"đòi {sorted(KHOA_BAT_BUOC)} — hai đầu đã lệch nguồn sự thật."
+        )
 
     duong_dan = _duong_dan(cache_dir, khoa)
     duong_dan.parent.mkdir(parents=True, exist_ok=True)
