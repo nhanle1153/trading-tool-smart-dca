@@ -191,6 +191,18 @@ với dòng phiên kia đang gõ dở cùng lúc — đã gây ít nhất 3 lầ
 > Mục này có thể lệch nhịp vài phút so với phiên kia — luôn `git log --oneline` +
 > đọc lại `TASKS.md` (cột 🔓/🔒/✅) trước khi chọn việc tiếp theo, đừng chỉ tin mục này.
 
+**Đang ở (cập nhật 07/09/2026, phiên Idea Queue):** **TD-0118 xong phần code, CHƯA đóng.**
+Chốt hai điều về hàng chờ ý tưởng: (1) trần Ngân sách A = **5 suất/quý dùng chung Tool A + D**
+(dòng “1/quý” ở §9c.7.4 là nhịp khuyến nghị, không phải trần cứng); (2) `L-Z17` nới thành
+**cảnh báo, không chặn chạy** (`WARN_ONLY_CODES`) — sửa có ý thức dòng H16, **`L-Z16` giữ chặn cứng**.
+Docker 492 → **497 passed**. Ghi `MT-11` + cập nhật `OQ-07` + dòng Lịch sử vào `back-end-note.md`
+đã **ghi trên đĩa nhưng CHƯA commit**: phiên kia đang có dòng `OQ-12` chưa commit trong cùng file
+(đúng ca N12) — commit khi phiên kia xong, rồi mới đổi TD-0118 sang ✅.
+**Còn treo, chờ chủ dự án duyệt:** thêm 4 trường cho tờ đơn ý tưởng (`tin_hieu`/`quy_tac`/
+`nguong_bac_bo`/`so_bien_the`) — là **sửa spec §9c.7.3**; và công cụ nộp đơn (làm SAU khi chốt
+cấu trúc tờ đơn). Ghi nhận: trần **nhập** queue 10 ý tưởng/quý hiện **chưa có test khoá nào** thi hành.
+*(Đoạn “Đang ở” cũ bên dưới giữ nguyên làm lịch sử.)*
+
 **Đang ở (cập nhật 07/09/2026):** 🚪 **D1 ĐÓNG — tag `d1-complete`, gỡ blocker B2.** Hai nhánh
 việc chạy song song suốt D1, không giẫm nhau (kiểm `git log`/`git status`/diff trước mỗi lần đụng
 file chung): nhánh H1-D/backfill (TD-0090→0097 + TD-0107 review) và nhánh zone detection/H4-D/H13
@@ -257,7 +269,55 @@ Cũ: **Giai đoạn 3**, backend đã qua hết **Khối 1** (cổng L-Z36→L-Z
    cứng ở **đúng 8 file** (test L-Z36); phương án (a) cần thêm entrypoint thứ 9 → phải sửa đặc tả
    kiến trúc trước. Phương án (b) tận dụng `periodic_report` sẵn có, không đụng kiến trúc.
    Chi tiết + bảng đánh đổi: mục `OQ-FE-01` trong `TASKS.md` của repo front-end.
-   **Không tự chọn bên nào** — chờ chủ dự án quyết khi tới lượt nối API.
+   ✅ **Đã chốt 06/09/2026 — phương án (b), đọc file.** Căn cứ mạnh hơn cả chi phí: §12d.2 **cấm**
+   truy vấn dữ liệu thô, và định nghĩa báo cáo là tài liệu cố định xuất theo kỳ. **Không cần thêm
+   entrypoint thứ 9, không đụng L-Z36.**
+
+7. ✅ **ĐÃ CHỐT 07/09/2026 — `CTRL` KHÔNG tính vào N; `registry.py` phải sửa cho khớp.**
+   (front-end phát hiện; chủ dự án duyệt **phương án A + cơ chế xác thực**)
+
+   **Đây không phải mâu thuẫn chính sách — chính sách đã chốt từ trước.** Spec nói CTRL không
+   tính vào N ở **5 chỗ** (§0d.4 dòng 594, DR-014 §2 dòng 3490 *"ngoài sổ này"*, dòng 3608
+   *"dòng CTRL, 0 trial"*, dòng 3715, changelog v8 dòng 71), và chính chủ dự án đã chốt
+   *"vẫn ghi sổ dòng `CTRL` (0 trial)"* trong **MT-02** (`back-end-note.md` mục 7, 06/09/2026).
+   Cái đang sai là **code chưa thi hành điều đã chốt**.
+
+   **Ba lỗi trong `src/tool_d/ledger/registry.py`:**
+   1. `TrialProjection` không lưu `budget_line` → `n_used()`/`n_reserved()` cộng cả CTRL.
+   2. `reserve()` chặn `contribution < 1` → dòng "CTRL 0 trial" mà MT-02 yêu cầu **không ghi được**.
+   3. `reserve()` kiểm ngân sách cho mọi dòng → khi N cạn thì **không ghi được điểm kiểm soát**,
+      đúng lúc sắp go-live là lúc cần kiểm tra tái lập nhất.
+
+   **Phương án đã duyệt:**
+   - `TrialProjection` mang `budget_line`; `n_used()`, `n_reserved()` và phép kiểm ngân sách trong
+     `reserve()` **loại CTRL ra**. Giữ nguyên bất biến `contribution >= 1` (không mở đường mức 0 —
+     đó là bất biến fail-closed cố ý).
+   - CTRL phải khai thuộc **một trong hai dạng hợp lệ, máy kiểm chứ không nhận lời khai**
+     (cùng triết lý DR-014 §3 *"máy tự ghi, người không có đường nhập liệu"*):
+     - *tái lập* (§0d.4): có `reproduces_trial_id`, và `config_hash` + `params_frozen_hash`
+       **bằng đúng** bản ghi của trial đó;
+     - *đo thước* (D3.5 Bước 1, MT-02): đầu ra bị giới hạn cứng vào danh sách trắng không chứa
+       bất kỳ chỉ số hiệu năng nào (spec dòng 3605-3607 *"bộ chạy cưỡng chế danh sách này"*).
+     Không thoả dạng nào → **từ chối ghi CTRL** (fail-closed), tính như trial thường.
+     Lý do cần cơ chế này: L-Z55 một mình KHÔNG đủ cho CTRL, vì một điểm kiểm soát hợp lệ *có*
+     chạm CALIB nên không vi phạm timerange — chỗ phân biệt phải là ĐẦU RA.
+   - Test khoá mới **`test_td0087_ctrl_khong_tinh_vao_n.py`** (KHÔNG dùng mã `L-Z56` — mã đó đã
+     có chủ, spec gán cho test khác của DR-015; xem MT-09): 1 trial B1 + 1 trial CTRL đều
+     CONSUMED → `n_used() == 1`; và `reserve()` dòng CTRL vẫn thành công khi ngân sách đã cạn.
+
+   **Vì sao đáng sửa** (suy từ hằng số spec, không cần dữ liệu): điểm kiểm soát chạy sau MỖI lần
+   một tham số đổi trạng thái (§0d.4); Tầng B có 12 tham số, trần B3 = 20 → cận trên ~20-25 trial
+   trên tổng 114 (**~18-22% ngân sách nghiên cứu**) bốc hơi vì kế toán sai. Nguy hơn con số:
+   càng kỷ luật (càng chạy nhiều điểm kiểm soát) càng bị phạt → sẽ dẫn tới bỏ điểm kiểm soát.
+   Méo mó DSR thì không đáng kể (N 114→134 chỉ nâng ngưỡng √(2·ln N) +1,7%).
+
+   **Sổ hiện tại:** 12 sự kiện / 4 trial, **tất cả B0, chưa có dòng CTRL nào** → chưa có thiệt hại,
+   không phải viết lại sổ. Đây là thời điểm rẻ nhất để sửa.
+
+   **Việc còn lại:** ghi quyết định vào `back-end-note.md` mục 7 (**mở rộng MT-02**, không tạo mục
+   mới — cùng một quyết định đang thiếu phần thi hành) + tạo việc TD tương ứng. Dashboard front-end
+   **chờ backend sửa xong mới đổi theo** (nó tồn tại để soi lệch số; đổi trước là tự tạo lệch giả).
+   Chi tiết phân tích: mục `OQ-FE-03` trong `TASKS.md` của repo front-end.
 
 **Ghi chú song song (phiên chạy TD-0070, tách khỏi Khối 5 mà phiên kia đang làm):**
 TD-0070 ✅ Xong 06/09/2026 — **Khối 7 (Lockbox)** mở đầu: `src/tool_d/lockbox/seal.py`
