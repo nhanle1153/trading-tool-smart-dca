@@ -14,11 +14,14 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping, Sequence
+from functools import lru_cache
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any
+
+import jsonschema
 
 from tool_d.ledger.budget import REFUND_CAP_PER_HYPOTHESIS, HypothesisKey
 from tool_d.ledger import budget as _budget
@@ -66,6 +69,16 @@ class CtrlClaimError(LedgerError):
     """
 
 
+class SchemaViolationError(LedgerError):
+    """Sự kiện sắp ghi KHÔNG hợp lệ theo `trial_event.schema.json` —
+    TỪ CHỐI ghi (TD-0150).
+
+    Sổ này append-only tuyệt đối (MT-01): một dòng sai đã ghi là sai vĩnh
+    viễn. Nên phép kiểm phải đứng TRƯỚC `_append()`; báo lỗi sau khi ghi
+    chỉ cho ta biết mình vừa làm hỏng sổ, không sửa được gì.
+    """
+
+
 class SealedTrialError(LedgerError):
     """Cố hoàn trả một trial ĐÃ có con dấu — không có quyền phủ quyết
     của người vận hành (L-Z53, spec dòng 3499-3500)."""
@@ -108,6 +121,48 @@ class TrialProjection:
         if self.sealed or self.outcome_written:
             return TrialState.CONSUMED
         return TrialState.RESERVED
+
+
+TRIAL_EVENT_SCHEMA_PATH = Path("registry/schemas/trial_event.schema.json")
+
+
+@lru_cache(maxsize=1)
+def _doc_schema() -> dict[str, Any]:
+    """Đọc schema MỘT LẦN rồi nhớ lại — `_append()` gọi mỗi lần ghi.
+
+    Không bọc try/except trả về "bỏ qua kiểm": schema đọc không được thì
+    `_kiem_schema()` phải TỪ CHỐI ghi. Bỏ qua bước kiểm đúng lúc nó hỏng
+    là mất lớp canh ở chính thời điểm cần nó nhất.
+    """
+    return json.loads(TRIAL_EVENT_SCHEMA_PATH.read_text(encoding="utf-8"))
+
+
+def _kiem_schema(event: Mapping[str, Any]) -> None:
+    """Đối chiếu MỘT sự kiện với `trial_event.schema.json` — TD-0150.
+
+    Vì sao cần: schema là nguồn sự thật đã chốt cho hình dạng sổ
+    (ARCHITECTURE mục 7), nhưng trước TD-0150 cửa ghi KHÔNG biết ràng buộc
+    của nó — `seal()` nhận mọi `seal_path`, `consume()` nhận mọi `verdict`.
+    Hai trường khác nhau, cùng một hiện tượng. Cùng họ với lỗ TD-0149 vừa
+    vá nhưng ngược chiều: lỗ kia là *schema không biết khoá mới*, lỗ này
+    là *cửa ghi không biết ràng buộc của schema*.
+    """
+    try:
+        schema = _doc_schema()
+    except (OSError, json.JSONDecodeError) as exc:
+        raise SchemaViolationError(
+            f"Không đọc được {TRIAL_EVENT_SCHEMA_PATH} để đối chiếu sự kiện sắp ghi: "
+            f"{exc}. TỪ CHỐI ghi — sổ append-only không có đường lùi, và bỏ qua "
+            "bước kiểm đúng lúc nó hỏng là mất lớp canh khi cần nhất."
+        ) from exc
+    try:
+        jsonschema.validate(dict(event), schema)
+    except jsonschema.ValidationError as exc:
+        raise SchemaViolationError(
+            f"Sự kiện {event.get('event')!r} của {event.get('trial_id')!r} KHÔNG hợp lệ "
+            f"theo {TRIAL_EVENT_SCHEMA_PATH.name}: {exc.message}. TỪ CHỐI ghi — một dòng "
+            "sai trong sổ append-only là sai vĩnh viễn."
+        ) from exc
 
 
 def _dem_vao_n(proj: TrialProjection) -> bool:
@@ -154,6 +209,18 @@ class TrialLedger:
         return [json.loads(line) for line in text.splitlines() if line.strip()]
 
     def _append(self, event: Mapping[str, Any]) -> None:
+        """ĐIỂM NGHẼN DUY NHẤT của mọi lần ghi vào sổ — và vì thế là chỗ
+        đặt phép đối chiếu schema (TD-0150).
+
+        Vá ở đây chứ không vá trong từng `seal()`/`consume()`/…: khoảng hở
+        lộ ra ở HAI trường khác nhau (`seal_path`, `verdict`) nên nó là
+        tính chất của cửa ghi, không phải hai chỗ sót lẻ. Đặt phép kiểm ở
+        điểm nghẽn thì cửa ghi nào viết SAU NÀY cũng tự động được kiểm;
+        vá từng hàm là mời lỗi thứ ba xuất hiện ở hàm thứ bảy.
+        Test `TestDiemNghenDuyNhat` canh cho điểm nghẽn này thật sự duy
+        nhất (không hàm nào tự `write` vòng qua đây).
+        """
+        _kiem_schema(event)
         with self._path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(event, ensure_ascii=False) + "\n")
 

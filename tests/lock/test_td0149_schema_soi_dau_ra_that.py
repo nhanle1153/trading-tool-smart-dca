@@ -30,7 +30,7 @@ from pathlib import Path
 import jsonschema
 import pytest
 
-from tool_d.ledger.registry import TrialLedger
+from tool_d.ledger.registry import SchemaViolationError, TrialLedger
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SCHEMA = json.loads(
@@ -174,7 +174,7 @@ class TestDauRaThatHopLeTheoSchema:
         jsonschema.validate(_doc_su_kien(tmp_path)[0], SCHEMA)
 
 
-class TestKhoangHoConLai:
+class TestKhoangHoDaVA:
     """Ghi nhận một khoảng hở LỘ RA khi viết bộ test này — không sửa ở đây.
 
     **`TrialLedger` KHÔNG validate đầu vào theo schema của chính nó.**
@@ -194,33 +194,40 @@ class TestKhoangHoConLai:
     ở chỗ lỗ kia là "schema không biết khoá mới", còn lỗ này là "cửa ghi
     không biết ràng buộc của schema".
 
-    KHÔNG sửa trong task này: `registry.py` không phải file tôi chủ quản,
-    và siết đầu vào là đổi hành vi cửa ghi — phải có người quyết. Ca test
-    dưới đây GHIM hiện trạng để lần sửa (nếu có) là một quyết định có ý
-    thức, không phải một thay đổi lặng lẽ.
+    ✅ **ĐÃ VÁ — TD-0150** (chủ dự án duyệt 08/09/2026). `_append()` nay
+    đối chiếu schema TRƯỚC khi ghi, nên cả hai ca dưới đây từ "ghi được
+    nhưng không hợp lệ" chuyển thành "BỊ TỪ CHỐI, sổ không dài thêm".
+
+    🔑 Hai ca này CỐ Ý được **sửa thành khẳng định ngược, KHÔNG bị xoá**.
+    Chúng ghim hiện trạng cũ, nên khi cửa ghi siết lại chúng PHẢI đỏ —
+    và người sửa buộc phải đọc lý do trước khi động vào. Xoá một test đỏ
+    cho sạch bảng là cách một quyết định biến mất mà không ai ghi lại.
+    Vá ở `_append()` (điểm nghẽn duy nhất) chứ không vá từng hàm: khoảng
+    hở lộ ra ở HAI trường khác nhau nên nó là tính chất của cửa ghi.
     """
 
-    def test_seal_path_sai_mau_VAN_ghi_duoc_nhung_KHONG_hop_le(self, tmp_path: Path) -> None:
+    def test_seal_path_sai_mau_NAY_BI_TU_CHOI_ghi(self, tmp_path: Path) -> None:
         so = _so(tmp_path)
         t = _reserve(so)
-        so.seal(t, seal_path="duong/dan/bat/ky.txt")  # cửa ghi KHÔNG chặn
+        truoc = len(_doc_su_kien(tmp_path))
 
-        seal = next(e for e in _doc_su_kien(tmp_path) if e["event"] == "SEAL")
-        with pytest.raises(jsonschema.ValidationError):
-            jsonschema.validate(seal, SCHEMA)
+        with pytest.raises(SchemaViolationError):
+            so.seal(t, seal_path="duong/dan/bat/ky.txt")  # cửa ghi NAY CHẶN
 
-    def test_verdict_ngoai_enum_VAN_ghi_duoc_nhung_KHONG_hop_le(self, tmp_path: Path) -> None:
+        assert len(_doc_su_kien(tmp_path)) == truoc  # sổ không dài thêm dòng nào
+
+    def test_verdict_ngoai_enum_NAY_BI_TU_CHOI_ghi(self, tmp_path: Path) -> None:
         """Cùng khoảng hở, ở một trường KHÁC — nên đây là hiện tượng chung
         của cửa ghi, không phải một chỗ sót lẻ. Schema chỉ cho
         `KEPT|REJECTED|INCONCLUSIVE`; `consume()` nhận mọi chuỗi."""
         so = _so(tmp_path)
         t = _reserve(so)
-        so.consume(t, outcome=OUTCOME, verdict="ACCEPTED", retest_forbidden=True)
+        truoc = len(_doc_su_kien(tmp_path))
 
-        consume = next(e for e in _doc_su_kien(tmp_path) if e["event"] == "CONSUME")
-        assert consume["verdict"] == "ACCEPTED"
-        with pytest.raises(jsonschema.ValidationError):
-            jsonschema.validate(consume, SCHEMA)
+        with pytest.raises(SchemaViolationError):
+            so.consume(t, outcome=OUTCOME, verdict="ACCEPTED", retest_forbidden=True)
+
+        assert len(_doc_su_kien(tmp_path)) == truoc
 
 
 class TestCoRang:

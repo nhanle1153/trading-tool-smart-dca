@@ -158,7 +158,7 @@ class TestPhepKiemTranB3:
         reg = tmp_path / "reg.jsonl"
         ledger = TrialLedger(reg)
         for _ in range(3):
-            ledger.seal(ledger.reserve(**_kw()), seal_path="s.json")
+            ledger.seal(ledger.reserve(**_kw()), seal_path="runs/td/metrics.seal")
 
         assert check_lz27_tran_b3(reg).ok
 
@@ -167,7 +167,7 @@ class TestPhepKiemTranB3:
         reg = tmp_path / "reg.jsonl"
         ledger = TrialLedger(reg)
         for _ in range(B3_TRAN + 1):
-            ledger.seal(ledger.reserve(**_kw(n_dang_ky=200)), seal_path="s.json")
+            ledger.seal(ledger.reserve(**_kw(n_dang_ky=200)), seal_path="runs/td/metrics.seal")
 
         assert check_lz27_tran_b3(reg).is_fail
 
@@ -177,7 +177,7 @@ class TestPhepKiemTranB3:
         ledger = TrialLedger(reg)
         for _ in range(B3_TRAN + 5):
             ledger.seal(
-                ledger.reserve(**_kw(budget_line="B1", n_dang_ky=200)), seal_path="s.json"
+                ledger.reserve(**_kw(budget_line="B1", n_dang_ky=200)), seal_path="runs/td/metrics.seal"
             )
 
         assert check_lz27_tran_b3(reg).ok
@@ -187,7 +187,7 @@ class TestPhepKiemTranB3:
         reg = tmp_path / "reg.jsonl"
         ledger = TrialLedger(reg)
         for _ in range(B3_TRAN + 1):
-            ledger.seal(ledger.reserve(**_kw(n_dang_ky=200)), seal_path="s.json")
+            ledger.seal(ledger.reserve(**_kw(n_dang_ky=200)), seal_path="runs/td/metrics.seal")
 
         assert check_lz27_tran_b3(reg).is_fail
         assert check_lz27_tran_b3(reg, so_lenh_da_dong=25).ok

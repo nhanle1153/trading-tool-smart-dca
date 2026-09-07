@@ -82,7 +82,7 @@ def _tieu_het(ledger: TrialLedger, n_dang_ky: int) -> None:
     huống MT-08 mô tả: N cạn đúng lúc cần chạy điểm kiểm soát nhất."""
     for _ in range(n_dang_ky):
         tid = ledger.reserve(**_kw(n_dang_ky=n_dang_ky))
-        ledger.seal(tid, seal_path="s.json")
+        ledger.seal(tid, seal_path="runs/td/metrics.seal")
 
 
 # ── 1. Kế toán: CTRL đứng ngoài N ────────────────────────────────────
@@ -94,8 +94,8 @@ class TestCtrlDungNgoaiN:
         ledger = TrialLedger(tmp_path / "reg.jsonl")
         t_that = ledger.reserve(**_kw())
         t_ctrl = ledger.reserve(**_ctrl_do_thuoc())
-        ledger.seal(t_that, seal_path="s1.json")
-        ledger.seal(t_ctrl, seal_path="s2.json")
+        ledger.seal(t_that, seal_path="runs/td/metrics.seal")
+        ledger.seal(t_ctrl, seal_path="runs/td/metrics.seal")
 
         assert ledger.n_used() == 1
 
@@ -111,7 +111,7 @@ class TestCtrlDungNgoaiN:
         ledger = TrialLedger(tmp_path / "reg.jsonl")
         for _ in range(5):
             tid = ledger.reserve(**_ctrl_do_thuoc(n_dang_ky=10))
-            ledger.seal(tid, seal_path="s.json")
+            ledger.seal(tid, seal_path="runs/td/metrics.seal")
 
         assert ledger.available(n_dang_ky=10) == 10
 
