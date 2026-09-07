@@ -184,9 +184,19 @@ với dòng phiên kia đang gõ dở cùng lúc — đã gây ít nhất 3 lầ
 5. 🔴 **Commit THẲNG theo tên file, đừng bỏ vào giỏ rồi gói** (thêm 07/09/2026 sau sự cố thứ 4):
 
    ```
-   git commit -- <đường/dẫn/file> [file2 ...]      # ĐÚNG
-   git add <file> && git commit                     # SAI, kể cả khi add đích danh
+   # File ĐÃ CÓ trong git (sửa file cũ) — không cần add:
+   git commit -F <file-message> -- <đường/dẫn/file> [file2 ...]
+
+   # File MỚI (chưa từng commit) — BẮT BUỘC add, và phải gộp CÙNG MỘT LỆNH:
+   git add <file mới> && git commit -F <file-message> -- <file mới>
+
+   git add <file> && git commit                     # ❌ SAI, kể cả khi add đích danh
    ```
+
+   ⚠️ **`git commit -- <file MỚI>` mà chưa `add` sẽ BÁO LỖI** `pathspec did not match any file(s)`
+   — pathspec chỉ nhìn được file git đã biết. Đây chính là chỗ dễ tưởng nhầm: sự cố `4ec0fd3` nuốt
+   **hai file MỚI**, nên nếu chỉ nhớ mỗi dòng "không cần add" thì quy tắc này **không ngăn được
+   chính sự cố sinh ra nó**.
 
    **Vì sao mục 1-4 ở trên KHÔNG đủ:** mọi phiên trên cùng thư mục dùng CHUNG một `.git/index`
    (kiểm bằng `git rev-parse --git-dir` — một `.git` duy nhất, không worktree riêng). `git commit`
@@ -195,8 +205,24 @@ với dòng phiên kia đang gõ dở cùng lúc — đã gây ít nhất 3 lầ
    họ**, dưới nhãn của mình. Phiên kia sẽ thấy `git commit` của họ báo *"nothing added to commit"*.
 
    Có pathspec thì `--only` là mặc định: git chỉ commit đúng những path đó lấy từ working tree,
-   **bỏ qua phần còn lại của index** và giữ nguyên thứ phiên khác đang stage. Không cần `git add`
-   trước, nên cũng bớt ghi vào index dùng chung — chiều ngược lại cũng có thật.
+   **bỏ qua phần còn lại của index** và giữ nguyên thứ phiên khác đang stage.
+
+   **Quy tắc này bảo vệ MỘT CHIỀU — phải hiểu đúng chiều nào:**
+
+   | | Có được bảo vệ không? |
+   |---|---|
+   | Mình **gây hại cho phiên khác** (nuốt file họ) | ✅ CHẶN ĐƯỢC, kể cả file mới (sau khi add) |
+   | Mình **bị phiên khác hại** (file mình vừa `add` bị họ cuốn đi) | ❌ **KHÔNG** chặn được |
+
+   Chiều thứ hai không có cú pháp nào đóng được: file mình vừa `git add` nằm trong index dùng chung,
+   phiên khác chạy `git commit` không pathspec là cuốn luôn. **Chỉ thu hẹp được cửa sổ, bằng cách
+   đổi THỨ TỰ LÀM VIỆC: soạn commit message TRƯỚC (ra file), rồi `add` và `commit` trong CÙNG một
+   lệnh.** Sự cố `4ec0fd3` xảy ra đúng vì phiên kia `git add` xong rồi mới ngồi soạn message dài —
+   cửa sổ mở hàng chục giây; nếu message đã sẵn thì nó chỉ còn vài mili giây.
+
+   🔒 **Cách đóng HẲN** là mỗi phiên một index riêng (`GIT_INDEX_FILE`) hoặc worktree riêng — chủ dự
+   án đã **cố ý chọn KHÔNG dùng worktree**, nên chấp nhận rủi ro còn lại là một quyết định có ý
+   thức, không phải sơ suất. Ghi ra đây để không ai coi mục 5 là bùa hộ mệnh.
 
    ⚠️ **Cách này KHÔNG thay thế được mục 1.** `git commit -- <paths>` vẫn chụp **nội dung working
    tree** của chính path đó, nên với file dùng chung (`TASKS.md`, `CLAUDE.md`, `back-end-note.md`)
