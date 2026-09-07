@@ -35,6 +35,7 @@ from tool_d.gates.dsr import N_DANG_KY
 from tool_d.ledger.audit_checks import (
     DEFAULT_IDEA_QUEUE_PATH,
     DEFAULT_PARAM_STATUS_PATH,
+    DEFAULT_TIEU_CHI_DIR,
     WARN_ONLY_CODES,
     check_lz10_registered_before_executed,
     check_lz11_n_used_le_n_dang_ky,
@@ -44,6 +45,7 @@ from tool_d.ledger.audit_checks import (
     check_lz17_budget_a_slots_per_quarter,
     check_td0119_selected_du_phep_thu,
     check_td0119_so_bien_the_khong_vuot_khai,
+    check_td0120_selection_reason_trich_ma_tieu_chi,
 )
 from tool_d.ledger.registry import DEFAULT_REGISTRY_PATH
 from tool_d.measurement.gitinfo import get_git_info
@@ -87,6 +89,7 @@ def run_audit(
     idea_queue_path: Path = DEFAULT_IDEA_QUEUE_PATH,
     config_path: Path = DEFAULT_CONFIG_PATH,
     status_path: Path = DEFAULT_PARAM_STATUS_PATH,
+    tieu_chi_dir: Path = DEFAULT_TIEU_CHI_DIR,
 ) -> tuple[int, str]:
     """Chạy toàn bộ phép kiểm hiện có, trả về (exit_code, báo cáo).
 
@@ -103,6 +106,7 @@ def run_audit(
         check_lz17_budget_a_slots_per_quarter(idea_queue_path),
         check_td0119_selected_du_phep_thu(idea_queue_path),
         check_td0119_so_bien_the_khong_vuot_khai(idea_queue_path, registry_path),
+        check_td0120_selection_reason_trich_ma_tieu_chi(idea_queue_path, tieu_chi_dir),
     ]
 
     ok = sum(1 for r in results if r.ok)

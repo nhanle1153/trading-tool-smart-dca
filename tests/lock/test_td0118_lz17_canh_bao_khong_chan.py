@@ -47,7 +47,7 @@ def _don(idea_id: str, *, status: str, selected_at: str | None = None,
         "status": status,
         "selected_at": selected_at,
         "budget_a_slot": None if selected_at is None else f"A-{idea_id[-2:]}",
-        "selection_reason": None if selected_at is None else "co che doc lap voi thanh khoan zone",
+        "selection_reason": None if selected_at is None else "theo TC-Q3-2026-01: co che doc lap voi thanh khoan zone",
         # Cửa CHỌN (TD-0119/MT-12) — điền đủ để test này chỉ soi ĐÚNG L-Z17,
         # không lẫn với phép kiểm "SELECTED thiếu phép thử".
         "phep_thu_du_kien": "so ket qua khi co tin hieu voi khi khong co",
@@ -56,6 +56,18 @@ def _don(idea_id: str, *, status: str, selected_at: str | None = None,
         "nguong_bac_bo": None if selected_at is None else "khong cai thien >= 8% thi loai",
         "so_bien_the": None if selected_at is None else 4,
     }
+
+
+def _tieu_chi_dir(tmp_path: Path) -> Path:
+    """Thư mục tiêu chí GIẢ — để test này chỉ soi ĐÚNG L-Z17, không dính
+    phép kiểm TD-0120 (hạn ngạch chọn thật của quý 3/2026 là 0)."""
+    d = tmp_path / "decisions"
+    d.mkdir(exist_ok=True)
+    (d / "DR-Q3-2026-tieu-chi-chon-y-tuong.md").write_text(
+        "```\nHAN_NGACH_CHON: 9\n```\n## TC-Q3-2026-01 - co che doc lap\n",
+        encoding="utf-8",
+    )
+    return d
 
 
 def _ghi(path: Path, dons: list[dict]) -> None:
@@ -76,7 +88,9 @@ class TestVuotTranChiCanhBao:
         reg = tmp_path / "reg.jsonl"
         reg.touch()
 
-        exit_code, text = run_audit(registry_path=reg, idea_queue_path=iq)
+        exit_code, text = run_audit(
+            registry_path=reg, idea_queue_path=iq, tieu_chi_dir=_tieu_chi_dir(tmp_path)
+        )
 
         assert exit_code == 0, f"vượt trần Ngân sách A KHÔNG được chặn chạy:\n{text}"
         assert "L-Z17" in text

@@ -8,6 +8,7 @@ Mỗi hàm trả về `CheckResult` — không raise, không in gì, chỉ tính
 from __future__ import annotations
 
 import json
+import re
 from collections import Counter, defaultdict
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -22,6 +23,7 @@ from tool_d.measurement.tri_state import Measured
 
 DEFAULT_IDEA_QUEUE_PATH = Path("registry/idea_queue.jsonl")
 DEFAULT_PARAM_STATUS_PATH = Path("config/param_status.yaml")
+DEFAULT_TIEU_CHI_DIR = Path("docs/decisions")
 
 BUDGET_A_SLOTS_PER_QUARTER_MAX = 5  # DR-009, §9.3 — không nới vì có LLM
 
@@ -304,6 +306,76 @@ def check_td0119_so_bien_the_khong_vuot_khai(
     )
 
 
+
+# ── TD-0120 (OQ-07) ───────────────────────────────────────────────────
+TC_CODE_RE = re.compile(r"TC-Q([1-4])-(\d{4})-(\d{2})")
+HAN_NGACH_RE = re.compile(r"^HAN_NGACH_CHON:\s*(\d+)\s*$", re.MULTILINE)
+
+
+def _tieu_chi_path(tieu_chi_dir: Path, nam: int, quy: int) -> Path:
+    return tieu_chi_dir / f"DR-Q{quy}-{nam}-tieu-chi-chon-y-tuong.md"
+
+
+def check_td0120_selection_reason_trich_ma_tieu_chi(
+    idea_queue_path: Path = DEFAULT_IDEA_QUEUE_PATH,
+    tieu_chi_dir: Path = DEFAULT_TIEU_CHI_DIR,
+) -> CheckResult:
+    """§9c.7.4 bắt viết tiêu chí chọn TRƯỚC khi mở hàng chờ và commit vào
+    git; `selection_reason` phải TRÍCH tiêu chí đã commit, không viết mới.
+
+    Spec tự thừa nhận phần "viết bằng cơ chế kinh tế" không thực thi được
+    bằng máy. Nhưng phần TRÍCH DẪN thì được — cùng thủ thuật §12d dùng cho
+    báo cáo định kỳ ("mọi câu phải trích một con số"). Bốn ca sổ bẩn:
+
+      (a) SELECTED mà `selection_reason` không trích mã `TC-Qx-yyyy-nn` nào
+      (b) trích một mã KHÔNG có thật trong file tiêu chí của quý đó
+      (c) quý đó CHƯA có file tiêu chí (fail-closed — đúng điều cấm ở
+          spec dòng 4935: mở queue trước khi commit tiêu chí)
+      (d) quý đó khai `HAN_NGACH_CHON: 0` mà vẫn có dòng SELECTED
+
+    Máy KHÔNG kiểm được câu đó có trung thực không — nhưng chặn được ca dễ
+    xảy ra nhất: chọn theo tiêu chí mới nghĩ ra SAU khi đã nhìn thấy đơn.
+    """
+    entries = _read_jsonl(idea_queue_path)
+    selected = [e for e in entries if e.get("status") == "SELECTED" and e.get("selected_at")]
+    if not selected:
+        return CheckResult("TD-0120", Measured.pending("chưa có ý tưởng nào được CHỌN"))
+
+    violations: list[str] = []
+    for e in selected:
+        idea_id = e["idea_id"]
+        d = datetime.strptime(e["selected_at"], "%Y-%m-%dT%H:%M:%SZ").date()
+        nam, quy = _quarter_of(d)
+        path = _tieu_chi_path(tieu_chi_dir, nam, quy)
+        if not path.exists():
+            violations.append(f"{idea_id}: quý {quy}/{nam} CHƯA có file tiêu chí ({path})")
+            continue
+
+        noi_dung = path.read_text(encoding="utf-8")
+        ma_hop_le = {m.group(0) for m in TC_CODE_RE.finditer(noi_dung)}
+
+        han_ngach = HAN_NGACH_RE.search(noi_dung)
+        if han_ngach and int(han_ngach.group(1)) == 0:
+            violations.append(
+                f"{idea_id}: quý {quy}/{nam} khai HAN_NGACH_CHON: 0 nhưng vẫn có dòng SELECTED"
+            )
+
+        ly_do = e.get("selection_reason") or ""
+        ma_trich = {m.group(0) for m in TC_CODE_RE.finditer(ly_do)}
+        if not ma_trich:
+            violations.append(f"{idea_id}: selection_reason không trích mã tiêu chí nào")
+        else:
+            khong_co_that = ma_trich - ma_hop_le
+            if khong_co_that:
+                violations.append(
+                    f"{idea_id}: trích mã không có trong file tiêu chí quý {quy}/{nam}: "
+                    + ", ".join(sorted(khong_co_that))
+                )
+    return CheckResult(
+        "TD-0120", Measured.ok(len(violations) == 0), evidence="; ".join(violations)
+    )
+
+
 ALL_CHECKS = (
     "check_lz10_registered_before_executed",
     "check_lz11_n_used_le_n_dang_ky",
@@ -313,4 +385,5 @@ ALL_CHECKS = (
     "check_lz17_budget_a_slots_per_quarter",
     "check_td0119_selected_du_phep_thu",
     "check_td0119_so_bien_the_khong_vuot_khai",
+    "check_td0120_selection_reason_trich_ma_tieu_chi",
 )
