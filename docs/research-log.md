@@ -570,3 +570,28 @@ hàm không hardcode, người gọi tự đọc config truyền vào, giữ đ�
 `zone_detection.py`/`zone_strength.py`. Việc nối vào `IStrategy` thật là của TD-0114.
 
 Suite Docker: 532 passed (gồm cả code TD-0119 của phiên song song đang làm dở, chưa commit).
+
+## 07/09/2026 — TD-0122 (D2): DG7 Funding Stop — phát hiện task ban đầu thiếu 2/3 mã test spec gán
+
+Trước khi khoá task, đọc lại §4c.4 (spec) thấy TASKS.md chỉ ghi `test_lz43_*` cho TD-0122, nhưng
+spec thực gán CẢ BA mã cho DG7: **L-Z30** (🔴 CRITICAL — trần `funding_paid_cumulative`), **L-Z31**
+(ghi ở mọi lệnh đã đóng), **L-Z43** (chiều dấu/cột dữ liệu). Thiếu L-Z30 nghĩa là thiếu đúng phép
+kiểm quan trọng nhất (trần chi phí funding không được vượt). Sửa verify trước khi code, ghi vào
+Lịch sử thay đổi checklist.
+
+Dựng `src/tool_d/funding_stop.py` (§4c.2): `funding_paid_cumulative()` chỉ đảo dấu quy ước Freqtrade
+(ÂM = đã trả) — một công thức DUY NHẤT đúng cho cả Long/Short, vì Freqtrade tự tính dấu funding theo
+hướng lệnh (không cần code phân biệt lại, tránh đúng loại lỗi LD-14 mô tả: sai dấu làm DG7 im lặng
+không bao giờ kích hoạt mà backtest vẫn sạch). `is_funding_stop_triggered()` CỐ Ý không nhận tham số
+lãi/TP1/trend — áp dụng không điều kiện, cùng lý do DG8 (TD-0121).
+
+15 test khoá trên 3 file, đúng 3 mã spec gán: L-Z30 (biên chính xác tại đúng ngưỡng; mô phỏng bước
+funding trong biên 0.05×R_eff_plan không vượt trần 0.35); L-Z31 (tính được bất kể `exit_tag` —
+TP1/TP2/STOP_LOSS/DG6/TIME_STOP/FUNDING_STOP); L-Z43 (LONG qua 3 mốc funding dương phải cho
+`cumulative` dương — test còn minh hoạ rõ: quên đảo dấu sẽ cho kết quả ÂM, đúng loại lỗi LD-14 cảnh
+báo, và test sẽ bắt được ngay).
+
+`threshold_frac` (0.3, `tier_b.dg7_funding_frac` có sẵn) và `r_eff_plan` không hardcode trong hàm —
+người gọi tự đọc config/kế hoạch truyền vào, đúng pattern thuần của các module DG khác.
+
+Suite Docker: 559 passed.
