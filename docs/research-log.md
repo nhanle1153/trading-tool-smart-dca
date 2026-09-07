@@ -1054,3 +1054,147 @@ Cũng ghi nhận (lặp lại bài học của mốc 629 vs 624): mốc suite d�
 sang **720** lúc đóng cổng, do phiên song song commit TD-0126 xen vào giữa. Không phải lệch số —
 nhưng là lý do `d2_git_sha` phải lấy HEAD lúc chạy chứ không lấy commit của mình.
 
+
+---
+
+## 07/09/2026 (khuya) — TD-0143 + tai nạn N12 lần thứ tư
+
+### TD-0143 — cache resume WFO phải mang vân tay (§0d.3, bug Tool A số 4)
+
+`src/tool_d/wfo/cache.py`. Đây là chỗ Tool A *"sửa code rồi chạy lại vẫn ra số y hệt"*, và chỉ
+phát hiện được vì hai lần chạy trùng nhau **đến từng chữ số**. Cache sai không báo lỗi — nó lặng
+lẽ trả lại quá khứ, và số ra trông hợp lệ, chạy được, ghi vào sổ được.
+
+🔑 **Quyết định thiết kế đáng ghi: BA trạng thái, không phải hai.**
+
+```
+HIT   — vân tay khớp        -> dùng lại
+MISS  — chưa có mục cache   -> chạy mới, IM LẶNG (bình thường)
+STALE — có mục nhưng LỆCH   -> 🔴 CẢNH BÁO TO, chạy mới, KHÔNG dùng
+```
+
+Cái bẫy ở đây tinh vi hơn nó trông: nếu gộp `STALE` vào `MISS` thì **kết quả cuối vẫn ĐÚNG** —
+đằng nào cũng chạy lại — nên **không test nào đỏ và không ai nhận ra**. Thứ mất đi không phải
+tính đúng đắn mà là *tín hiệu*: "có gì đó đã đổi mà mình không chủ ý đổi". Yêu cầu của việc này
+viết thẳng điều đó (*"không âm thầm dùng tiếp, cũng không âm thầm BỎ"*), nên `STALE` là trạng
+thái riêng, không bao giờ trả payload, và có một test chuyên đòi hai trạng thái phân biệt được.
+
+Ranh giới thứ hai, cũng cố ý: **lệch vân tay là BÌNH THƯỜNG** (đổi code/tham số/dữ liệu là việc
+hằng ngày) → `STALE`. **File hỏng hoặc thiếu khoá là LỖI** → `raise CacheError`. Gộp hai thứ này
+sẽ khiến một file cache hỏng bị che dưới dạng "chắc do đổi code".
+
+Cảnh báo được viết dài có chủ đích, in cả giá trị cũ lẫn mới và nói rõ *"đây KHÔNG phải lỗi"* —
+một cảnh báo không giải thích được vì sao nó bật lên sẽ bị coi là báo động giả và bị tắt.
+
+**Dùng lại hạ tầng, không băm lại:** `params_hash` lấy `cfg.sha256` (loader đã băm nguyên văn
+YAML), `code_sha` lấy `get_git_info().sha`, `data_hash` gộp tất định từ chính dict đã nằm trong
+khối provenance 0d.5. Nhờ vậy cache và provenance **không thể kể hai câu chuyện khác nhau** về
+cùng một lần chạy. `get_git_info()` cố ý không bọc try/except: một vân tay mang `code_sha =
+"UNKNOWN"` sẽ khớp với chính nó ở lần sau và biến cache thành đúng cái bẫy nó sinh ra để chặn.
+
+**Bài học mượn từ phiên song song, áp ngay:** phiên `-da` vừa mất một vòng ở TD-0130 vì thêm khoá
+vào sự kiện RESERVE mà quên `trial_event.schema.json` — **735 test xanh KHÔNG bắt được**, vì bộ
+test chỉ đối chiếu *fixture gõ tay*, chưa dòng nào đối chiếu **đầu ra thật**. Ở đây không có file
+schema riêng để lệch (`KHOA_BAT_BUOC` dùng chung cho cả hàm ghi lẫn hàm đọc) và có test soi thẳng
+đầu ra thật của `ghi_cache()`.
+
+Bằng chứng: 33 test khoá xanh; `--collect-only` đo ngay trước khi so cho **784 → 817 = đúng +33**.
+
+### 🔴 Tai nạn N12 lần thứ TƯ — lần này ở dạng mới
+
+Tôi `git add` hai file TD-0143, soạn commit message, gọi `git commit` → **"nothing added to
+commit"**. Chúng đã bị commit mất rồi, bởi `4ec0fd3` của phiên `-da`:
+
+```
+4ec0fd3  "TASKS.md: TD-0127 hoàn tất (🔒→✅) — L-Z27 + L-Z28 đã có máy canh"
+ TASKS.md                                       |   2 +-
+ src/tool_d/wfo/cache.py                        | 271 ++++++++    <- TD-0143, phiên khác
+ tests/lock/test_td0143_cache_fold_mang_hash.py | 253 ++++++++    <- TD-0143, phiên khác
+```
+
+`CLAUDE.md` ghi tai nạn này đã xảy ra **3 lần**, cả 3 đều ở dạng *"task bị đánh ✅ giả"*. Đây là
+lần thứ tư và là **dạng mới**: không ai bị đánh dấu sai, mà **code của một phiên bị chôn dưới
+nhãn commit của việc khác**. Hệ quả không phải mất dữ liệu (nội dung trên đĩa khớp đúng bản
+commit, `git diff HEAD` rỗng) mà là **lịch sử git nói sai về ai làm gì** — và lịch sử git thì
+không viết lại được một cách an toàn khi bốn phiên đang commit đồng thời.
+
+**Đã chọn KHÔNG rebase/reset.** Rebase lúc này nguy hiểm hơn hẳn cái sai nó sửa: ba phiên khác
+đang có commit đi sau, một cú viết lại lịch sử sẽ kéo theo xung đột trên chính thư mục họ đang
+gõ. Cách xử: **ghi thẳng sự thật** vào dòng TD-0143 của `TASKS.md` (*"code nằm trong 4ec0fd3,
+không phải commit riêng"*) và vào entry này. Một dòng lịch sử sai kèm chú thích đúng thì tra
+ngược được; một lịch sử bị viết lại giữa lúc bốn phiên đang chạy thì không cứu được.
+
+🔑 **Điều N12 chưa nói mà lần này dạy thêm:** quy tắc hiện viết cho `TASKS.md` và các file trạng
+thái dùng chung. Nhưng cơ chế gây hại — `git add` chụp *trạng thái đĩa*, không chụp *ý định của
+người gọi* — áp cho **mọi file**, kể cả file mà phiên kia vừa tạo ra và chưa ai biết là có. Vùng
+nguy hiểm nhất hiện tại là `src/tool_d/wfo/`: ba phiên cùng ghi vào đó (`folds.py`, `equity.py`,
+`cache.py`). Cách phòng duy nhất đáng tin là `git add` **liệt kê đích danh từng file**, không bao
+giờ `-A`, `-a`, hay thêm cả thư mục. Đã nhắn phiên `-da`.
+
+### Ghi nhận thêm: hai test đỏ do TẢI, không phải hồi quy
+
+Lần chạy full suite giữa chừng có `test_close_d1_gate` và `test_close_d2_gate` đỏ. Hai test đó
+gọi `pytest` THẬT lồng bên trong (chủ ý — để nhãn bằng chứng `do-duoc` đúng nghĩa, MT-10), nên
+khi bốn phiên cùng chạy container thì chúng chạm timeout. Chạy riêng: 23/23 xanh. Cùng hiện tượng
+đã ghi ở TD-0085. **Không phải hồi quy — nhưng phải chạy riêng để xác nhận trước khi kết luận,
+không được suy đoán.**
+
+### Đính chính (cùng đêm) — chẩn đoán nguyên nhân N12 ở trên SAI
+
+Mục trên viết: *"Nguyên nhân gần như chắc chắn: `git add -A` / `git commit -a`, hoặc `git add`
+một thư mục"*, và kết luận *"cách phòng duy nhất đáng tin là `git add` liệt kê đích danh từng
+file"*. **Cả hai đều sai**, và cái sai thứ hai nguy hiểm hơn vì nó cho cảm giác đã an toàn.
+
+Phiên `-da` phản biện lại kèm bằng chứng, và tôi đã tự kiểm chứng:
+
+```
+git rev-parse --git-dir   -> .git        (một, không phải worktree riêng)
+git worktree list         -> 1 worktree
+GIT_INDEX_FILE            -> không đặt
+```
+
+**Bốn phiên dùng CHUNG một file `.git/index`.** Lệnh của họ là `git add TASKS.md && git commit -m
+...` — đúng một file, đích danh, không `-A`. Bằng chứng đối chứng: 9 commit khác cùng phiên, cùng
+kiểu lệnh, đều sạch.
+
+🔑 **Cơ chế thật:** `git commit` không commit *"những gì tôi vừa add"* — nó commit **TOÀN BỘ
+INDEX**. Trình tự đã xảy ra:
+
+```
+tôi:  git add cache.py test_td0143.py     -> index có 2 file của tôi
+tôi:  (đang soạn commit message…)
+họ:   git add TASKS.md                    -> index có 3 file, của HAI phiên
+họ:   git commit -m "TD-0127 hoàn tất"    -> gói cả 3
+tôi:  git commit                          -> "nothing added to commit"
+```
+
+Điều này cũng giải thích đúng thông báo lạ mà tôi nhận được.
+
+**Vì sao khuyến nghị của tôi không cứu được:** `git add <đích danh>` chống được `-A`, nhưng không
+chống được index dùng chung — vì vấn đề không nằm ở việc *add cái gì*, mà ở việc *commit lấy từ
+đâu*. Ngay cả bước "đọc `git diff --cached` trước khi commit" mà N12 đòi cũng còn kẽ hở: giữa lúc
+đọc và lúc commit, phiên kia vẫn kịp stage.
+
+🚪 **Cách thật sự đóng được cửa sổ đó:**
+
+```
+git commit -- <đường/dẫn/file> [file2 …]
+```
+
+Có pathspec thì `--only` là **mặc định**: git commit đúng những path đó lấy từ working tree, **bỏ
+qua phần còn lại của index**, và giữ nguyên file phiên khác đang stage. Không cần `git add` trước,
+nên cũng bớt một lần ghi vào index dùng chung.
+
+⚠️ **Điều `git commit -- <paths>` KHÔNG cứu được, vẫn phải tự lo:** với file thật sự dùng chung
+(`TASKS.md`, `CLAUDE.md`, `back-end-note.md`), pathspec vẫn chụp **nội dung working tree** của file
+đó tại thời điểm commit — nên vẫn phải đọc diff trước. Đó là N12 gốc, không liên quan index.
+
+**Điều đáng ghi nhất, vượt ra ngoài git:** tôi chẩn đoán bằng cách nhìn *hình dạng hậu quả* (nhiều
+file lạ trong một commit → "chắc dùng `-A`") thay vì kiểm *cơ chế* (`git rev-parse --git-dir`).
+Giả thuyết khớp hiện tượng, nghe hợp lý, và **sai**. Cùng một hình dạng lỗi với ca `pathlib` sáng
+nay: phép đo trả về kết quả ủng hộ giả thuyết sẵn có nên tôi không kiểm lại. Ở đây thì phiên khác
+kiểm hộ — nhưng chỉ vì họ có bằng chứng đối chứng (9 commit sạch) mà tôi không thèm tìm.
+
+`CLAUDE.md` mục **N12** hiện chỉ nói về `git add -A` và về nội dung file bị chụp nhầm; nó **không
+nói gì về index dùng chung**, mà đó mới là cửa đã sập lần này. Sửa quy tắc trong `CLAUDE.md` là
+quyết định của chủ dự án — đã báo, không tự sửa.
