@@ -26,6 +26,7 @@ DEFAULT_PARAM_STATUS_PATH = Path("config/param_status.yaml")
 DEFAULT_TIEU_CHI_DIR = Path("docs/decisions")
 
 BUDGET_A_SLOTS_PER_QUARTER_MAX = 5  # DR-009, §9.3 — không nới vì có LLM
+IDEA_QUEUE_INTAKE_PER_QUARTER_MAX = 10  # spec dòng 4095 — trần NHẬP, khác trần CHỌN
 
 # Phép kiểm CHỈ CẢNH BÁO — vượt thì báo, không chặn chạy.
 # Quyết định chủ dự án 07/09/2026 (MT-11): trần 5 suất Ngân sách A là kỷ luật
@@ -307,6 +308,45 @@ def check_td0119_so_bien_the_khong_vuot_khai(
 
 
 
+# ── TD-0124 (trần NHẬP hàng chờ) ──────────────────────────────────────
+def check_td0124_tran_nhap_don_moi_quy(
+    idea_queue_path: Path = DEFAULT_IDEA_QUEUE_PATH,
+) -> CheckResult:
+    """Trần NHẬP hàng chờ 10 đơn/quý (spec dòng 4095, §9c.7.4).
+
+    `submit_idea()` đã chặn tại cửa ghi, nhưng cửa ghi không phải đường
+    DUY NHẤT tới file — sổ vẫn sửa tay được. Phép kiểm này canh trạng
+    thái sổ, không canh hành vi công cụ; hai lớp bịt hai lỗ khác nhau.
+
+    🔴 CHẶN CỨNG, không đưa vào `WARN_ONLY_CODES`. Khác trần CHỌN
+    (L-Z17) mà MT-11 đã nới: trần CHỌN là kỷ luật con người và không
+    chảy vào N/DSR. Trần NHẬP thì có — chi phí sinh ý tưởng bằng LLM
+    xấp xỉ 0, nên tỉ lệ chọn 5% biến bước CHỌN thành nơi khai thác dữ
+    liệu quy mô lớn, VÔ HÌNH vì không ai ghi sổ cho bước chọn. Cùng
+    loại với L-Z16 (chống nhiễu), không phải kỷ luật cá nhân.
+    """
+    entries = _read_jsonl(idea_queue_path)
+    if not entries:
+        return CheckResult("TD-0124", Measured.pending("idea_queue rỗng"))
+
+    counts: Counter[tuple[int, int]] = Counter()
+    for e in entries:
+        ts = e.get("created_at")
+        if not isinstance(ts, str):
+            continue
+        try:
+            counts[_quarter_of(_parse_iso(ts).date())] += 1
+        except ValueError:
+            continue
+
+    over = {q: c for q, c in counts.items() if c > IDEA_QUEUE_INTAKE_PER_QUARTER_MAX}
+    return CheckResult(
+        "TD-0124",
+        Measured.ok(len(over) == 0),
+        evidence=f"quý vượt trần NHẬP {IDEA_QUEUE_INTAKE_PER_QUARTER_MAX}/quý: {over}" if over else "",
+    )
+
+
 # ── TD-0120 (OQ-07) ───────────────────────────────────────────────────
 TC_CODE_RE = re.compile(r"TC-Q([1-4])-(\d{4})-(\d{2})")
 HAN_NGACH_RE = re.compile(r"^HAN_NGACH_CHON:\s*(\d+)\s*$", re.MULTILINE)
@@ -386,4 +426,5 @@ ALL_CHECKS = (
     "check_td0119_selected_du_phep_thu",
     "check_td0119_so_bien_the_khong_vuot_khai",
     "check_td0120_selection_reason_trich_ma_tieu_chi",
+    "check_td0124_tran_nhap_don_moi_quy",
 )

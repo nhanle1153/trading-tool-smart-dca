@@ -29,6 +29,8 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+import yaml
+
 from tool_d.config.loader import DEFAULT_CONFIG_PATH
 from tool_d.gates.d0_pre import is_d0_pre_complete
 from tool_d.gates.dsr import N_DANG_KY
@@ -46,7 +48,9 @@ from tool_d.ledger.audit_checks import (
     check_td0119_selected_du_phep_thu,
     check_td0119_so_bien_the_khong_vuot_khai,
     check_td0120_selection_reason_trich_ma_tieu_chi,
+    check_td0124_tran_nhap_don_moi_quy,
 )
+from tool_d.ledger.idea_queue import IdeaQueueError, submit_idea
 from tool_d.ledger.registry import DEFAULT_REGISTRY_PATH
 from tool_d.measurement.gitinfo import get_git_info
 from tool_d.measurement.guard import EXIT_GUARD_BLOCKED, GuardOutcome, measurement_guard
@@ -58,6 +62,8 @@ ENTRYPOINT = "E6"
 EXIT_AUDIT_FAILED = 92
 EXIT_GATE_ALREADY_CLOSED = 94
 EXIT_GATE_AUDIT_DIRTY = 95
+# TD-0124 — tờ đơn không hợp lệ: TỪ CHỐI ghi, sổ không bị đụng tới.
+EXIT_DON_TU_CHOI = 96
 
 DEFAULT_RUNTIME_STATE_PATH = Path("registry/runtime_state.json")
 
@@ -73,6 +79,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--close-gate",
         action="store_true",
         help="TD-0086 — đóng cổng D0-PRE, ghi registry/runtime_state.json. Chạy được đúng một lần.",
+    )
+    parser.add_argument(
+        "--nop-y-tuong",
+        metavar="DON.yaml",
+        help="TD-0124 — nộp một đơn ý tưởng vào registry/idea_queue.jsonl "
+        "(mẫu: docs/mau-don-y-tuong.yaml). Đơn không hợp lệ thì TỪ CHỐI ghi.",
     )
     parser.add_argument(
         "--close-d1-gate",
@@ -107,6 +119,7 @@ def run_audit(
         check_td0119_selected_du_phep_thu(idea_queue_path),
         check_td0119_so_bien_the_khong_vuot_khai(idea_queue_path, registry_path),
         check_td0120_selection_reason_trich_ma_tieu_chi(idea_queue_path, tieu_chi_dir),
+        check_td0124_tran_nhap_don_moi_quy(idea_queue_path),
     ]
 
     ok = sum(1 for r in results if r.ok)
@@ -137,6 +150,35 @@ def run_audit(
     fail_chan = sum(1 for r in results if r.is_fail and r.code not in WARN_ONLY_CODES)
     exit_code = EXIT_AUDIT_FAILED if fail_chan > 0 else 0
     return exit_code, "\n".join(lines)
+
+
+def nop_don_y_tuong(don_path: Path) -> tuple[int, str]:
+    """TD-0124 — đọc tờ đơn YAML, ghi một dòng vào hàng chờ, rồi tự audit.
+
+    Tự chạy `run_audit()` NGAY SAU khi ghi: người nộp thấy luôn sổ còn sạch
+    hay không, thay vì phải nhớ chạy thêm một lệnh nữa. Mọi phép kiểm CHẶN
+    đã chạy TRƯỚC lúc ghi (trong `submit_idea()`, vì sổ append-only không có
+    đường lùi) — lần audit này là xác nhận, không phải cửa chặn.
+    """
+    if not don_path.exists():
+        return EXIT_DON_TU_CHOI, f"🛑 Không thấy tờ đơn: {don_path}"
+    try:
+        don = yaml.safe_load(don_path.read_text(encoding="utf-8")) or {}
+    except yaml.YAMLError as exc:
+        return EXIT_DON_TU_CHOI, f"🛑 Tờ đơn sai cú pháp YAML:\n{exc}"
+    if not isinstance(don, dict):
+        return (
+            EXIT_DON_TU_CHOI,
+            f"🛑 Tờ đơn phải là một khối 'khoá: giá trị', đang là {type(don).__name__}",
+        )
+
+    try:
+        idea_id = submit_idea(don=don)
+    except IdeaQueueError as exc:
+        return EXIT_DON_TU_CHOI, f"🛑 TỪ CHỐI ghi — sổ KHÔNG bị đụng tới.\n{exc}"
+
+    audit_exit, audit_text = run_audit()
+    return audit_exit, f"✅ Đã ghi {idea_id} vào {DEFAULT_IDEA_QUEUE_PATH}.\n{audit_text}"
 
 
 def close_d0_pre_gate(
@@ -275,6 +317,11 @@ def main(argv: list[str] | None = None) -> int:
     report = measurement_guard(ENTRYPOINT, argv=argv, with_params_file=args.with_params_file)
     if report.outcome is GuardOutcome.BLOCKED:
         return EXIT_GUARD_BLOCKED
+
+    if args.nop_y_tuong:
+        exit_code, text = nop_don_y_tuong(Path(args.nop_y_tuong))
+        print(text)
+        return exit_code
 
     if args.close_gate:
         exit_code, text = close_d0_pre_gate()

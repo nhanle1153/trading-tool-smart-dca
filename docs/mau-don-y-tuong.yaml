@@ -1,0 +1,54 @@
+# MẪU TỜ ĐƠN Ý TƯỞNG — cửa NỘP (§9c.7.3 + MT-12)
+#
+# Cách dùng: copy file này ra chỗ khác, điền, rồi chạy:
+#
+#   docker compose -f docker/docker-compose.yml run --rm freqtrade \
+#     entrypoints/trial_ledger_audit.py --nop-y-tuong <đường-dẫn-đơn-đã-điền.yaml>
+#
+# Công cụ TỪ CHỐI ghi nếu đơn không hợp lệ — sổ append-only không có đường lùi,
+# nên thà không ghi còn hơn ghi một dòng bẩn.
+#
+# 🚪 Trần NHẬP: 10 đơn/quý. Đơn thứ 11 trong cùng quý bị từ chối.
+# 🚪 Cửa này KHÔNG chọn ý tưởng ra để chạy — đó là hành động khác (1 lần/quý,
+#    quý 3/2026 hạn ngạch = 0). Vì vậy `status` chỉ nhận QUEUED hoặc REJECTED.
+#
+# `idea_id` và `created_at` để trống thì công cụ tự điền.
+
+idea_id: # để trống → tự sinh IQ-xxxx
+created_at: # để trống → tự lấy giờ UTC hiện tại
+
+source: LLM # LLM | HUMAN | EXTERNAL — ai nghĩ ra ý tưởng này
+session_type: IDEA # BẮT BUỘC "IDEA" (DR-009) — để nguyên
+
+# ── Ý tưởng đến từ đâu ────────────────────────────────────────────────────
+# MECHANISM      = suy từ cơ chế thị trường, không nhìn dữ liệu nào
+# EXPLORE        = có phân tích dữ liệu, nhưng KHÔNG phải kết quả Tool D
+# TOOL_D_RESULTS = nghĩ ra SAU khi xem kết quả Tool D → BẮT BUỘC status: REJECTED
+#                  (Loại B trá hình — ghi lại để khỏi nghĩ lại lần nữa, không được chạy)
+data_source: MECHANISM
+explore_evidence: # BẮT BUỘC điền nếu data_source = EXPLORE: đã phân tích gì, trên coin/khoảng nào
+
+title: # một dòng, gọi tên ý tưởng
+
+# ── Bộ lọc §0.1 — cả BA câu phải có nội dung thật ─────────────────────────
+# Đây là bộ lọc rẻ nhất và là chỗ phần lớn ý tưởng LLM chết.
+mechanism: # ai làm gì tạo ra dịch chuyển giá?
+who_pays: # 🔴 CÂU GIẾT Ý TƯỞNG — ai là người thua ở phía bên kia?
+  # Không trả lời được câu này thì ý tưởng không vào hàng chờ.
+durability: # vì sao chưa bị arbitrage hết?
+
+# ── Cửa NỘP (MT-12) — chỉ cần phác thảo, CHƯA cần số ──────────────────────
+phep_thu_du_kien: # đo cái gì, so với cái gì, thì biết ý tưởng này SAI?
+  # Mục đích duy nhất: loại ý tưởng KHÔNG THỂ bác bỏ được, ngay ở cửa rẻ nhất.
+
+filter_verdict: PASS # PASS | FAIL_NO_PAYER | FAIL_MECHANISM | FAIL_DURABILITY | DUPLICATE
+overlaps_with: [] # vd ["DR-005 mean-reversion"] — đối chiếu ứng viên đã loại
+
+status: QUEUED # QUEUED | REJECTED (cửa NỘP chỉ ghi được hai giá trị này)
+
+# ── Cửa CHỌN — KHÔNG điền ở đây ───────────────────────────────────────────
+# selected_at / budget_a_slot / selection_reason / tin_hieu / quy_tac /
+# nguong_bac_bo / so_bien_the chỉ được điền khi ý tưởng được CHỌN ra để chạy.
+# Lý do hoãn tới lúc đó: một ý tưởng có thể nằm chờ vài quý, con số viết lúc
+# nộp sẽ lạc hậu; và điều kiện tiền-đăng-ký chỉ đòi "viết TRƯỚC khi thấy kết
+# quả của CHÍNH phép thử này", không phải "trước khi vào hàng chờ".
