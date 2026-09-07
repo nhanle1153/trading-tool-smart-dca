@@ -17,8 +17,10 @@ bằng cách khai CTRL" phải là ĐẦU RA, không phải dữ liệu chạm.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
+import jsonschema
 import pytest
 
 from tool_d.ledger.registry import (
@@ -240,6 +242,50 @@ class TestCuaXacThucCtrl:
 
 
 # ── 4. Bất biến cũ không bị nới ──────────────────────────────────────
+
+
+class TestCuaGhiKhongDuocLechSchema:
+    """🔴 Cửa ghi và schema phải là MỘT nguồn sự thật.
+
+    Các test schema có sẵn (`tests/unit/test_registry_schemas.py`) chỉ đối
+    chiếu **fixture gõ tay** — không dòng nào đối chiếu đầu ra THẬT của
+    `reserve()`. Khe hở đó để lọt đúng một lớp lỗi: cửa ghi thêm khoá mới,
+    schema `additionalProperties: false` chưa biết khoá đó, và không ai
+    phát hiện cho tới khi dòng CTRL đầu tiên được ghi vào sổ thật.
+
+    Lớp test này khoá đường đó lại: mọi sự kiện do `reserve()` sinh ra phải
+    hợp lệ theo chính schema mà audit dùng.
+    """
+
+    @staticmethod
+    def _schema() -> dict:
+        goc = Path(__file__).resolve().parents[2]
+        return json.loads(
+            (goc / "registry/schemas/trial_event.schema.json").read_text(encoding="utf-8")
+        )
+
+    def _su_kien_dau(self, reg: Path) -> dict:
+        return json.loads(reg.read_text(encoding="utf-8").splitlines()[-1])
+
+    def test_ctrl_do_thuoc_ghi_ra_hop_le_theo_schema(self, tmp_path: Path) -> None:
+        reg = tmp_path / "reg.jsonl"
+        TrialLedger(reg).reserve(**_ctrl_do_thuoc())
+
+        jsonschema.validate(self._su_kien_dau(reg), self._schema())
+
+    def test_ctrl_tai_lap_ghi_ra_hop_le_theo_schema(self, tmp_path: Path) -> None:
+        reg = tmp_path / "reg.jsonl"
+        ledger = TrialLedger(reg)
+        goc = ledger.reserve(**_kw())
+        ledger.reserve(**_kw(budget_line="CTRL", reproduces_trial_id=goc))
+
+        jsonschema.validate(self._su_kien_dau(reg), self._schema())
+
+    def test_dong_thuong_ghi_ra_hop_le_theo_schema(self, tmp_path: Path) -> None:
+        reg = tmp_path / "reg.jsonl"
+        TrialLedger(reg).reserve(**_kw())
+
+        jsonschema.validate(self._su_kien_dau(reg), self._schema())
 
 
 class TestBatBienCuGiuNguyen:

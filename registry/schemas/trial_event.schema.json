@@ -61,7 +61,18 @@
         "config_hash": { "type": "string" },
         "code_commit": { "type": "string" },
         "provenance": { "$ref": "#/$defs/provenance" },
-        "contribution": { "type": "integer", "minimum": 1 }
+        "contribution": { "type": "integer", "minimum": 1 },
+        "reproduces_trial_id": {
+          "$ref": "#/$defs/trial_id",
+          "description": "CHỈ dòng budget_line=CTRL dạng *tái lập* (§0d.4, MT-08). Trial được chạy lại để kiểm tra tái lập. Cửa ghi (registry.reserve) đối chiếu params_frozen_hash + config_hash phải BẰNG ĐÚNG bản ghi của trial này — schema không diễn đạt được ràng buộc liên-dòng đó, nên nó nằm ở cửa ghi, KHÔNG nhân đôi ra đây."
+        },
+        "ctrl_output_whitelist": {
+          "type": "array",
+          "items": { "enum": ["price_delta", "tranche_index", "direction"] },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "CHỈ dòng budget_line=CTRL dạng *đo thước* (D3.5 Bước 1, MT-08). Danh sách CHO PHÉP, không phải danh sách cấm — spec dòng 3605-3607: {chênh lệch giá, chỉ số tranche, hướng}, TUYỆT ĐỐI không PnL/win-loss/metric theo arm."
+        }
       },
       "additionalProperties": false
     },
