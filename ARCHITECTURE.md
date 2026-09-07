@@ -40,6 +40,7 @@ flowchart TD
         REG["trial_registry.jsonl<br/>SỔ NHẬT KÝ SỰ KIỆN, append-only"]
         PROJ["bản chiếu trạng thái<br/>RESERVED / CONSUMED / REFUNDED"]
         IQ["idea_queue.jsonl"]
+        PCP["param_change_proposals.jsonl<br/>đề xuất đổi tham số, L-Z26"]
         LB["lockbox/<br/>seal + sổ truy cập"]
     end
 
@@ -113,11 +114,13 @@ tool-d-smart-dca/                  ← git root = E:\Trading Tool_Smart DCA
 ├─ user_data/strategies/           ← RỖNG ở D0-PRE. Guard canh đúng thư mục này
 ├─ user_data/data/                 ← CALIB · WFO (gitignored)
 ├─ lockbox/                        ← NGOÀI user_data (xem 3.1)
-├─ registry/                       ← trial_registry.jsonl · idea_queue.jsonl · runtime_state.json
+├─ registry/                       ← trial_registry.jsonl · idea_queue.jsonl ·
+│                                    param_change_proposals.jsonl · runtime_state.json
+│  └─ schemas/                     ← NGUỒN SỰ THẬT hình dạng 3 sổ (xem mục 7)
 ├─ src/tool_d/
 │  ├─ measurement/  guard · provenance · tri_state · hashing · gitinfo
 │  ├─ config/       loader · dof
-│  ├─ ledger/       registry · budget · audit_checks
+│  ├─ ledger/       registry · budget · audit_checks · idea_queue · param_proposals
 │  ├─ lockbox/      seal · access_log
 │  ├─ gates/        thresholds · dsr
 │  └─ reporting/    report_model
@@ -230,6 +233,28 @@ và giả vờ chưa từng chạy.
 không phải DB quan hệ. `tu-dien-du-lieu.md` sẽ khởi tạo khi Freqtrade bắt đầu ghi SQLite lệnh
 (sớm nhất là D3.5 testnet). Đây là quyết định có ý thức, không phải bỏ sót.
 
+**Cập nhật 07/09/2026 (TD-0125) — đã có SỔ THỨ BA, quyết định hoãn vẫn giữ.**
+`registry/param_change_proposals.jsonl` (đề xuất đổi tham số, §12c.3/§12d) nhập cùng
+`trial_registry.jsonl` và `idea_queue.jsonl`. Chủ dự án chốt **giữ hoãn** `tu-dien-du-lieu.md`,
+vì đợt này thêm một **sổ JSONL**, không thêm bảng CSDL nào — điều kiện kích hoạt ở đoạn trên
+(Freqtrade ghi SQLite lệnh) vẫn chưa xảy ra.
+
+🔑 **Nguồn sự thật hình dạng mỗi sổ là file JSON Schema trong `registry/schemas/`, không phải
+một bảng chép tay trong `.md`.** Schema là thứ **máy đọc và cưỡng chế thật** (`jsonschema.validate`
+ở cửa ghi, `additionalProperties: false`); một bảng .md song song sẽ là **nguồn sự thật thứ hai
+cho cùng một hình dạng** — đúng cơ chế đã gây toàn bộ đợt lệch số của spec v5 và là bài học
+**MT-03**. Ba schema hiện có:
+
+| Sổ | Schema | Cưỡng chế bởi |
+|---|---|---|
+| `trial_registry.jsonl` | `trial_event.schema.json` | `ledger/registry.py` · L-Z10/11/12 |
+| `idea_queue.jsonl` | `idea_queue_entry.schema.json` | `ledger/idea_queue.py` · L-Z16/17 · TD-0119a/b · TD-0120 · TD-0124 |
+| `param_change_proposals.jsonl` | `param_change_proposal.schema.json` | `ledger/param_proposals.py` · **L-Z26** |
+
+Khi `tu-dien-du-lieu.md` được khởi tạo ở D3.5, nó mô tả **bảng SQLite của Freqtrade** — và nếu có
+mô tả cả ba sổ JSONL này thì phải **sinh/kiểm tự động từ schema**, không chép tay (xem TD-0126/0127
+để biết cách đã dùng cho các ràng buộc chỉ nằm trong `description`).
+
 ---
 
 ## 8. Lịch sử thay đổi kiến trúc
@@ -237,3 +262,4 @@ không phải DB quan hệ. `tu-dien-du-lieu.md` sẽ khởi tạo khi Freqtrade
 | Ngày | Thay đổi | Sơ đồ/thiết kế cũ | Sơ đồ/thiết kế mới | Lý do |
 |---|---|---|---|---|
 | 06/09/2026 | Khởi tạo | — | Cây thư mục + 3 bất biến + luồng một lần chạy | Giai đoạn 2 của quy trình vibe-code |
+| 07/09/2026 | Sổ thứ ba + hai cửa GHI | `LEDGER` có 2 sổ JSONL; `entrypoints/` 8 file, tất cả chỉ ĐỌC sổ | Thêm `param_change_proposals.jsonl` + `registry/schemas/` vào sơ đồ và cây thư mục; `ledger/` thêm `idea_queue` · `param_proposals`; mục 7 ghi rõ schema là nguồn sự thật hình dạng sổ | TD-0124 + TD-0125 (OQ-13): hai kênh nhập liệu có luật nhưng không có máy canh. 🔑 Cửa ghi đặt làm **cờ trên E6**, KHÔNG phải entrypoint thứ 9 — `entrypoints/` vẫn **đúng 8 file** (§0d.2 dòng 664, L-Z36). Phương án “CLI nằm ngoài `entrypoints/`” bị loại có ý thức: không vi phạm *chữ* của L-Z36 nhưng mở đúng lỗ hổng danh sách đóng tồn tại để bịt |
