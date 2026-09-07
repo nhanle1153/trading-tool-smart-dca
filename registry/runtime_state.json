@@ -19,5 +19,26 @@
       "nguon": "do-duoc",
       "noi_dung": "đã audit 4/6 (4 đạt, 0 chưa đạt, 2 chưa đo được)"
     }
+  },
+  "d2_complete": true,
+  "d2_closed_at": "2026-09-07T15:03:17.002672Z",
+  "d2_git_sha": "6613ce9101b0ddede603777d55927bc0983e6ad3",
+  "d2_evidence": {
+    "full_suite": {
+      "nguon": "do-duoc",
+      "noi_dung": "720 passed in 138.56s (0:02:18)"
+    },
+    "lz49_lz50": {
+      "nguon": "do-duoc",
+      "noi_dung": "tests/lock/test_lz49_lz50_backtest_nho.py: 5 passed in 29.67s"
+    },
+    "trial_ledger_audit": {
+      "nguon": "do-duoc",
+      "noi_dung": "đã audit 4/12 (4 đạt, 0 chưa đạt, 8 chưa đo được)"
+    }
+  },
+  "d2_hoan_lai": {
+    "nguon": "nguoi-khai",
+    "noi_dung": "D2b (closePosition phía sàn), D2c (khoảng trống không-SL), D4 (khớp lệnh thật) KHÔNG kiểm được ở tầng backtest — HOÃN tới D3.5/D9.5+, KHÔNG phải 'đã qua'."
   }
 }
