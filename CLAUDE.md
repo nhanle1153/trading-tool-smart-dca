@@ -191,6 +191,25 @@ với dòng phiên kia đang gõ dở cùng lúc — đã gây ít nhất 3 lầ
 > Mục này có thể lệch nhịp vài phút so với phiên kia — luôn `git log --oneline` +
 > đọc lại `TASKS.md` (cột 🔓/🔒/✅) trước khi chọn việc tiếp theo, đừng chỉ tin mục này.
 
+**Đang ở (cập nhật 07/09/2026, phiên cổng D2):** 🚪 **D2 ĐÓNG — tag `d2-complete`, TD-0117 ✅.**
+`runtime_state.json.d2_complete` sinh từ MỘT LẦN CHẠY THẬT trong Docker (`E6 --close-d2-gate`,
+exit 0); ba mục evidence đều `do-duoc` đúng nghĩa MT-10 vì hàm TỰ gọi pytest trong chính lần
+đóng cổng: `full_suite` **720 passed** · `lz49_lz50` **5 passed** · audit sổ trial **4/12 đạt,
+0 chưa đạt**. Chạy lại → exit **94**, từ chối ghi đè.
+🔴 **Điều đáng nhớ nhất của đợt này — cổng D2 có một phép kiểm mà cổng D1 không có.** Cổng D1
+chỉ hỏi *"suite xanh chưa?"*; với D2 câu đó KHÔNG đủ, vì xoá hẳn `test_lz49_lz50_backtest_nho.py`
+đi thì suite vẫn xanh và cổng vẫn đóng được — trong khi hai phép kiểm cốt lõi của D2 đã biến mất.
+Nên `close_d2_gate()` chạy **RIÊNG** file đó và đòi **số ca PASS ≥ 1**; exit 0 mà 0 ca chạy bị
+từ chối thẳng ("PASS RỖNG, không phải bằng chứng"). Cùng hình dạng lỗi đã cắn ở TD-0084, nhưng
+lần này chốt viết TRƯỚC. Đã kiểm chốt có răng (vô hiệu hoá → đúng 1 ca đỏ, không phải cả bộ).
+🔴 **KHÔNG tự phong cho D2 nhiều hơn nó có:** `d2_hoan_lai` (nhãn `nguoi-khai`) ghi thẳng
+**D2b/D2c/D4 là HOÃN tới D3.5/D9.5+, không phải "đã qua"** — cần lệnh thật trên sàn. D2c còn
+vướng phát hiện của TD-0116: latency **LẠNH** bất ổn (14/30 mẫu >1s, max 11 giây) → cửa sổ
+không-SL có thể vượt 15 giây; phải giải quyết trước khi có lệnh thật.
+**Bước tiếp theo:** D3 (chưa mở). Còn treo từ phiên song song: 🔓 TD-0127 (`L-Z27`/`L-Z28`,
+hạn trước D11).
+*(Đoạn "Đang ở" cũ bên dưới giữ nguyên làm lịch sử.)*
+
 **Đang ở (cập nhật 07/09/2026, cuối phiên công cụ nhập liệu):** **TD-0124 + TD-0125 + TD-0126 ✅;
 OQ-13 đóng; đã ghi `back-end-note.md` + `ARCHITECTURE.md` (lệnh "chuẩn hóa và lưu" 07/09/2026).**
 
