@@ -905,3 +905,20 @@ tiêu chí). Vi phạm chính quy tắc 1 của `TASKS.md` — *"Số không bao
 nguồn: docstring của `src/tool_d/entry_confirmation.py` ghi "TD-0120" và `src/tool_d/trend_context.py`
 ghi "TD-0119", trỏ sang việc khác hẳn với hai dòng cùng số ở khối Idea Queue. **Không tự sửa** —
 đánh số lại là quyết định của chủ dự án.
+
+### Đính chính (cùng ngày, ngay sau khi commit) — mốc 629 vs 624 KHÔNG phải lệch số
+
+Mục trên viết *"không có thay đổi test nào giữa hai mốc — `git log c085e67..HEAD -- tests/` rỗng"*.
+Câu đó **đúng tại thời điểm đo** nhưng **kết luận rút ra từ nó thì sai**. Nguồn thật của +5 lộ ra
+ngay sau đó: commit `2659a5d` của **phiên Claude Code song song** (TD-0117 —
+`tests/lock/test_lz49_lz50_backtest_nho.py`, đúng **5 test**) được ghi vào **giữa** hai lần tôi
+chạy `git log`. Mốc **624** ở dòng TD-0120 **vẫn đúng** tại thời điểm nó được ghi; không ai ghi sai
+con số nào.
+
+Không xoá đoạn trên (append-only) — giữ lại vì bản thân cái sai này là bài học:
+
+🔑 **Khi hai phiên cùng chạy trên một thư mục, `git log` là ảnh chụp, không phải sự thật đứng yên.**
+N12 đã cảnh báo điều này cho `git add`; hoá ra nó áp cho **mọi phép đo dựa trên trạng thái repo**,
+kể cả số test. Cách làm đã dùng để đo `+28`/`+30` là cách đúng và cần giữ: **đo baseline lại ngay
+trước khi so, bằng `--ignore` chính file test mới**, thay vì lấy con số từ file trạng thái. Nếu chỉ
+so với "624 ghi trong TASKS.md" thì đã kết luận nhầm là mình thêm 33 test.

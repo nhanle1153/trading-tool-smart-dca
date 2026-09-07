@@ -229,9 +229,11 @@ Docker: **687 passed, 0 failed** (629 → 657 → 687, mỗi bước tăng ĐÚN
 - 🔴 **Cần chủ dự án quyết — va chạm mã việc:** `TD-0119`/`TD-0120` đang dùng **HAI LẦN** cho hai
   việc khác hẳn (`TASKS.md:203-204` khối D2 vs `:213-214` khối Idea Queue), vi phạm quy tắc 1 của
   `TASKS.md`. Đã lan vào docstring `entry_confirmation.py`/`trend_context.py`. Không tự sửa.
-- 🔴 **Ghi nhận lệch số:** dòng TD-0120 ghi mốc **624 passed**, đo lại thật là **629** (không có thay
-  đổi test nào giữa hai mốc). Không sửa dòng cũ. Đúng bài học N12: chữ ghi trong file trạng thái
-  không thay được phép đo.
+- ✅ **Mốc 629 vs 624 — đã truy ra nguồn, KHÔNG phải lệch số.** Commit `2659a5d` của **phiên song
+  song** (TD-0117, `test_lz49_lz50_backtest_nho.py`, đúng **5 test**) rơi vào giữa đợt này. Mốc
+  **624** vẫn đúng tại thời điểm được ghi. Bài học đúng ở đây không phải "chữ ghi sai" mà là: khi
+  hai phiên cùng chạy, **mốc test của phiên kia dịch dưới chân mình** — nên baseline phải đo lại
+  ngay trước khi so, không lấy từ file (đã làm: `--ignore` chính file test mới).
 - 🧹 Hai thư mục rác ở gốc repo từ lệnh shell nhầm: `C:/` và `ls -la /`. Chờ đồng ý mới xoá.
 *(Đoạn “Đang ở” cũ bên dưới giữ nguyên làm lịch sử.)*
 
