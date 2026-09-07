@@ -543,6 +543,29 @@ def close_d3_gate(
             f"🛑 {runtime_state_path} đã có d3_complete=true — cổng đã đóng, không ghi lại.",
         )
 
+    # 🔴 Cây làm việc phải SẠCH trước khi chạy bất cứ phép đo nào.
+    #
+    # Project này thường có NHIỀU phiên cùng sửa MỘT thư mục đĩa (N12). Nếu
+    # cây bẩn thì `d3_git_sha` ghi lại HEAD — một commit KHÔNG chứa thứ vừa
+    # được kiểm. Bằng chứng khi đó tự mâu thuẫn: nó nói "đã kiểm ở sha X"
+    # trong khi cái được kiểm là "X cộng vài file ai đó đang gõ dở".
+    #
+    # Đã xảy ra thật ở lần chạy đóng cổng D3 đầu tiên (08/09/2026): 8 ca đỏ
+    # thoáng qua vì suite chạy 6,5 phút, đúng lúc phiên song song sửa dở
+    # `registry.py`. Lần đó cổng từ chối vì suite đỏ — nhưng nếu các sửa đổi
+    # kia tình cờ không làm đỏ test nào thì cổng đã đóng, với bằng chứng sai.
+    #
+    # Cách gỡ khi gặp: bảo phiên kia commit, rồi chạy lại. Đây là điều kiện
+    # ĐẠT ĐƯỢC, không phải bế tắc.
+    git_info = get_git_info(repo_dir)
+    if not git_info.is_clean:
+        return (
+            EXIT_GATE_AUDIT_DIRTY,
+            "🛑 TỪ CHỐI đóng cổng D3 — cây làm việc CHƯA SẠCH. Đóng cổng lúc này "
+            f"sẽ ghi d3_git_sha = {git_info.sha[:12]} cho một lần kiểm KHÔNG chạy "
+            "trên đúng commit đó. Bảo phiên đang sửa commit xong rồi chạy lại.",
+        )
+
     suite = subprocess.run(
         pytest_cmd or [sys.executable, "-m", "pytest", "-q"],
         cwd=repo_dir,
@@ -588,10 +611,10 @@ def close_d3_gate(
     if audit_exit != 0:
         return EXIT_GATE_AUDIT_DIRTY, f"🛑 TỪ CHỐI đóng cổng D3 — audit sổ trial chưa sạch:\n{audit_text}"
 
-    git_info = get_git_info(repo_dir)
     state["d3_complete"] = True
     state["d3_closed_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
     state["d3_git_sha"] = git_info.sha
+    state["d3_cay_sach"] = True  # đã kiểm ở đầu hàm, không đóng cổng trên cây bẩn
     state["d3_evidence"] = {
         "full_suite": {"nguon": "do-duoc", "noi_dung": suite_summary},
         "test_khoa_d3": {"nguon": "do-duoc", "noi_dung": " | ".join(d3_bang_chung)},

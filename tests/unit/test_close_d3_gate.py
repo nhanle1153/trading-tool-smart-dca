@@ -18,6 +18,8 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "entrypoints"))
 
@@ -36,6 +38,24 @@ FAIL_CMD = [sys.executable, "-c", "print('1 failed, 899 passed'); import sys; sy
 D3_PASS = [sys.executable, "-c", "import sys; print('14 passed in 16.0s')", "--"]
 D3_FAIL = [sys.executable, "-c", "import sys; print('2 failed, 12 passed'); sys.exit(1)", "--"]
 D3_RONG = [sys.executable, "-c", "import sys; print('no tests ran in 0.01s')", "--"]
+
+
+@pytest.fixture(autouse=True)
+def _cay_sach(monkeypatch):
+    """Mặc định coi cây làm việc là SẠCH.
+
+    Bắt buộc phải có: repo này thường có nhiều phiên cùng sửa một thư mục
+    đĩa, nên cây thật gần như luôn bẩn. Không cố định giá trị này thì mọi
+    ca đường-thành-công của file sẽ đỏ/xanh theo việc phiên khác có đang gõ
+    dở hay không — tức bộ test đo môi trường chứ không đo code.
+
+    Ca `test_cay_ban_thi_TU_CHOI_truoc_khi_chay_suite` tự ghi đè lại.
+    """
+    from tool_d.measurement.gitinfo import GitInfo
+
+    monkeypatch.setattr(
+        trial_ledger_audit, "get_git_info", lambda _: GitInfo(sha="a" * 40, is_clean=True)
+    )
 
 
 def _empty_ledger_kwargs(tmp_path: Path) -> dict:
@@ -85,6 +105,52 @@ class TestThuTuCong:
         exit_code, text = _goi(sp, tmp_path)
         assert exit_code == EXIT_GATE_AUDIT_DIRTY and "d2_complete" in text
         assert sp.read_text(encoding="utf-8") == before
+
+
+class TestCayLamViecPhaiSach:
+    """🔴 Lỗ hổng phát hiện khi chạy đóng cổng D3 THẬT lần đầu (08/09/2026).
+
+    Ba cổng trước ghi `git_sha` nhưng KHÔNG ghi cây có sạch không. Với 4
+    phiên cùng sửa một thư mục đĩa (N12), cây bẩn nghĩa là `d3_git_sha` trỏ
+    tới một commit KHÔNG chứa thứ vừa được kiểm — bằng chứng tự mâu thuẫn.
+
+    Lần chạy thật đó có 8 ca đỏ thoáng qua vì suite chạy 6,5 phút đúng lúc
+    phiên song song sửa dở `registry.py`. Cổng từ chối vì suite đỏ — nhưng
+    nếu các sửa đổi kia tình cờ không làm đỏ test nào thì cổng ĐÃ ĐÓNG, với
+    bằng chứng sai. Đó là lý do phải kiểm riêng, không dựa vào may.
+    """
+
+    def test_cay_ban_thi_TU_CHOI_truoc_khi_chay_suite(
+        self, tmp_path: Path, monkeypatch
+    ) -> None:
+        from tool_d.measurement.gitinfo import GitInfo
+
+        monkeypatch.setattr(trial_ledger_audit, "is_d0_pre_complete", lambda: True)
+        monkeypatch.setattr(
+            trial_ledger_audit, "get_git_info", lambda _: GitInfo(sha="f" * 40, is_clean=False)
+        )
+        goi: list[list[str]] = []
+        that = trial_ledger_audit.subprocess.run
+        monkeypatch.setattr(
+            trial_ledger_audit.subprocess,
+            "run",
+            lambda cmd, **kw: (goi.append(list(cmd)), that(cmd, **kw))[1],
+        )
+        sp = _state(tmp_path)
+        before = sp.read_text(encoding="utf-8")
+
+        exit_code, text = _goi(sp, tmp_path)
+        assert exit_code == EXIT_GATE_AUDIT_DIRTY
+        assert "CHƯA SẠCH" in text
+        assert sp.read_text(encoding="utf-8") == before
+        # Từ chối TRƯỚC khi tốn 4 phút chạy suite — không lượt pytest nào.
+        assert [c for c in goi if "pytest" in " ".join(c)] == []
+
+    def test_cay_sach_thi_ghi_co_d3_cay_sach(self, tmp_path: Path, monkeypatch) -> None:
+        monkeypatch.setattr(trial_ledger_audit, "is_d0_pre_complete", lambda: True)
+        sp = _state(tmp_path)
+        _goi(sp, tmp_path)
+        assert json.loads(sp.read_text(encoding="utf-8"))["d3_cay_sach"] is True
 
 
 class TestDongCongThanhCong:
@@ -184,7 +250,7 @@ class TestMoiFileChayRieng:
 
         # Chỉ đếm lượt CHẠY TEST — `get_git_info()` cũng gọi `subprocess.run`
         # (git rev-parse / git status) và không liên quan gì ở đây.
-        chay_test = [c for c in goi if "git" not in c[0]]
+        chay_test = [c for c in goi if "git" not in c[0]]  # phòng khi git vẫn được gọi
         # 1 lượt suite + đúng 1 lượt cho MỖI file cốt lõi
         assert len(chay_test) == 1 + len(DUONG_DAN_TEST_D3), chay_test
         for duong_dan in DUONG_DAN_TEST_D3:
