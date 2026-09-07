@@ -1,4 +1,5 @@
-"""TD-0119 — src/tool_d/trend_context.py: Context Trend Filter (Phần 2)."""
+"""TD-0128 — src/tool_d/trend_context.py: Context Trend Filter (Phần 2).
+(Trước 07/09/2026 đánh số TD-0119 — xem TASKS.md "Lịch sử thay đổi checklist".)"""
 
 from __future__ import annotations
 

@@ -1,4 +1,5 @@
-"""§3.3b — Xác nhận entry tranche 1 bằng price-action (TD-0120, L-Z6).
+"""§3.3b — Xác nhận entry tranche 1 bằng price-action (TD-0129, trước 07/09/2026
+đánh số TD-0120; L-Z6).
 
 ZSS (§1.2) chỉ đo chất lượng LỊCH SỬ của zone; đây là lớp xác nhận hấp
 thụ đang diễn ra NGAY LÚC giá chạm zone — (a) nến rejection HOẶC (b)

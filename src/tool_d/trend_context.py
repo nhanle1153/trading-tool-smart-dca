@@ -1,4 +1,4 @@
-"""Context Trend Filter — Phần 2 (TD-0119).
+"""Context Trend Filter — Phần 2 (TD-0128, trước 07/09/2026 đánh số TD-0119).
 
 §2.1 (`trend_dir_tai`), §2.2 (`xac_nhan_da_khung`, L-Z8), §2.3
 (`tuoi_trend_nen`), §2.5 (`du_dieu_kien_vao_lenh`). EMA/ADX tính bằng

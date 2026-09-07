@@ -40,7 +40,7 @@ L-Z49 thật sự kiểm.
   - LONG ONLY. Short hoãn theo đúng khuyến nghị §3.3d ("Long trước").
   - Entry KHÔNG dùng Phần 2 (`trend_context`) hay §3.3b
     (`entry_confirmation`) — hai module đó ĐÃ kiểm đúng độc lập
-    (TD-0119/0120) nhưng nối vào tín hiệu vào lệnh thật cần thêm 2
+    (TD-0128/0129) nhưng nối vào tín hiệu vào lệnh thật cần thêm 2
     khung dữ liệu (1D cho trend, RSI cho phân kỳ) — để dành cho task
     dựng chiến lược SẢN XUẤT, ngoài phạm vi hẹp của L-Z49.
   - DG1–DG5 (gate kích hoạt tranche MỚI) CHƯA xây — tranche 2/3 kích
