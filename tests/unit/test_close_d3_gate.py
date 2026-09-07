@@ -39,6 +39,11 @@ D3_PASS = [sys.executable, "-c", "import sys; print('14 passed in 16.0s')", "--"
 D3_FAIL = [sys.executable, "-c", "import sys; print('2 failed, 12 passed'); sys.exit(1)", "--"]
 D3_RONG = [sys.executable, "-c", "import sys; print('no tests ran in 0.01s')", "--"]
 
+# Giữ tham chiếu tới BẢN THẬT trước khi fixture `_cay_sach` (autouse) thay nó
+# bằng lambda trả rỗng. Không giữ thì `TestPhanLoaiThayDoi` sẽ gọi đúng bản
+# giả và xanh mà chưa bao giờ chạy vào logic phân loại — PASS RỖNG.
+PHAN_LOAI_THAT = trial_ledger_audit._thay_doi_anh_huong_phep_do
+
 
 @pytest.fixture(autouse=True)
 def _cay_sach(monkeypatch):
@@ -56,6 +61,7 @@ def _cay_sach(monkeypatch):
     monkeypatch.setattr(
         trial_ledger_audit, "get_git_info", lambda _: GitInfo(sha="a" * 40, is_clean=True)
     )
+    monkeypatch.setattr(trial_ledger_audit, "_thay_doi_anh_huong_phep_do", lambda _: [])
 
 
 def _empty_ledger_kwargs(tmp_path: Path) -> dict:
@@ -123,11 +129,11 @@ class TestCayLamViecPhaiSach:
     def test_cay_ban_thi_TU_CHOI_truoc_khi_chay_suite(
         self, tmp_path: Path, monkeypatch
     ) -> None:
-        from tool_d.measurement.gitinfo import GitInfo
-
         monkeypatch.setattr(trial_ledger_audit, "is_d0_pre_complete", lambda: True)
         monkeypatch.setattr(
-            trial_ledger_audit, "get_git_info", lambda _: GitInfo(sha="f" * 40, is_clean=False)
+            trial_ledger_audit,
+            "_thay_doi_anh_huong_phep_do",
+            lambda _: ["[M] src/tool_d/ledger/registry.py"],
         )
         goi: list[list[str]] = []
         that = trial_ledger_audit.subprocess.run
@@ -141,7 +147,7 @@ class TestCayLamViecPhaiSach:
 
         exit_code, text = _goi(sp, tmp_path)
         assert exit_code == EXIT_GATE_AUDIT_DIRTY
-        assert "CHƯA SẠCH" in text
+        assert "ẢNH HƯỞNG PHÉP ĐO" in text and "registry.py" in text
         assert sp.read_text(encoding="utf-8") == before
         # Từ chối TRƯỚC khi tốn 4 phút chạy suite — không lượt pytest nào.
         assert [c for c in goi if "pytest" in " ".join(c)] == []
@@ -268,3 +274,46 @@ class TestMoiFileChayRieng:
         src = inspect.getsource(close_d3_gate)
         assert 'pytest_cmd or [sys.executable, "-m", "pytest", "-q"]' in src
         assert "DUONG_DAN_TEST_D3" in src
+
+
+class TestPhanLoaiThayDoi:
+    """`_thay_doi_anh_huong_phep_do()` phải phân biệt được RÁC với thứ
+    thật sự làm lệch phép đo.
+
+    Không phân biệt thì cổng KHÔNG BAO GIỜ đóng được trên repo này (luôn
+    có ảnh chụp màn hình, thư mục nháp ở gốc) — và một chốt không bao giờ
+    thoả được sẽ bị gỡ bỏ, tệ hơn là không có chốt.
+    """
+
+    def _gia_lap(self, monkeypatch, dong: list[str]):
+        class KetQua:
+            stdout = "\n".join(dong)
+
+        monkeypatch.setattr(
+            trial_ledger_audit.subprocess, "run", lambda *a, **k: KetQua()
+        )
+        return PHAN_LOAI_THAT(Path("."))
+
+    def test_rac_ngoai_vung_do_thi_BO_QUA(self, monkeypatch) -> None:
+        rac = ["?? anh-chup.png", "?? scratch_dl/", "?? .playwright-mcp/",
+               "?? user_data/backtest_results/"]
+        assert self._gia_lap(monkeypatch, rac) == []
+
+    def test_file_CHUA_THEO_DOI_trong_tests_thi_TINH(self, monkeypatch) -> None:
+        """pytest VẪN thu file .py chưa commit trong tests/, mà nó KHÔNG có
+        trong commit sẽ được ghi — đúng loại làm bằng chứng sai."""
+        kq = self._gia_lap(monkeypatch, ["?? tests/lock/test_moi_chua_commit.py"])
+        assert len(kq) == 1 and "test_moi_chua_commit.py" in kq[0]
+
+    def test_file_DA_THEO_DOI_bi_sua_thi_LUON_tinh(self, monkeypatch) -> None:
+        kq = self._gia_lap(monkeypatch, [" M src/tool_d/ledger/registry.py"])
+        assert len(kq) == 1 and "registry.py" in kq[0]
+
+    def test_file_da_theo_doi_bi_sua_NGOAI_vung_do_van_tinh(self, monkeypatch) -> None:
+        # Sửa một file đã theo dõi là đổi hành vi so với commit, bất kể nó
+        # nằm đâu — khác hẳn rác chưa theo dõi.
+        kq = self._gia_lap(monkeypatch, [" M docs/research-log.md"])
+        assert len(kq) == 1
+
+    def test_cay_hoan_toan_sach_thi_rong(self, monkeypatch) -> None:
+        assert self._gia_lap(monkeypatch, []) == []

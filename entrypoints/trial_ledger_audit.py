@@ -495,6 +495,47 @@ def close_d2_gate(
     )
 
 
+# Thư mục mà một file chưa theo dõi nằm trong đó VẪN làm hỏng bằng chứng:
+# pytest thu cả file `.py` chưa commit trong `tests/`, và `src/`/`entrypoints/`/
+# `config/`/`registry/schemas/` đều chảy thẳng vào kết quả chạy.
+THU_MUC_ANH_HUONG_PHEP_DO = ("src/", "tests/", "entrypoints/", "config/", "registry/schemas/")
+
+
+def _thay_doi_anh_huong_phep_do(repo_dir: Path) -> list[str]:
+    """Các thay đổi chưa commit CÓ THỂ làm lệch kết quả đo. Rỗng = an toàn.
+
+    KHÔNG dùng thẳng `GitInfo.is_clean`: nó coi mọi thứ chưa commit là bẩn,
+    kể cả ảnh chụp màn hình và thư mục nháp ở gốc repo. Với repo này (luôn
+    có rác như vậy) thì cổng sẽ KHÔNG BAO GIỜ đóng được — và một chốt không
+    bao giờ thoả được sẽ bị người ta gỡ bỏ, tức tệ hơn là không có.
+
+    Phân biệt:
+      • file ĐÃ THEO DÕI bị sửa/xoá/staged → LUÔN tính, vì nó đổi hành vi
+        mà không nằm trong sha sẽ được ghi;
+      • file CHƯA THEO DÕI → chỉ tính khi nằm trong `THU_MUC_ANH_HUONG_PHEP_DO`.
+        Một file `.py` chưa commit trong `tests/` VẪN được pytest thu và
+        VẪN không có trong commit — đúng loại làm bằng chứng sai.
+    """
+    dong = subprocess.run(
+        ["git", "--no-optional-locks", "status", "--porcelain"],
+        cwd=repo_dir,
+        capture_output=True,
+        text=True,
+    ).stdout.splitlines()
+
+    ket_qua: list[str] = []
+    for d in dong:
+        if not d.strip():
+            continue
+        trang_thai, duong_dan = d[:2], d[3:].strip().strip('"')
+        if trang_thai == "??":
+            if duong_dan.startswith(THU_MUC_ANH_HUONG_PHEP_DO):
+                ket_qua.append(f"[chưa theo dõi, trong vùng đo] {duong_dan}")
+        else:
+            ket_qua.append(f"[{trang_thai.strip()}] {duong_dan}")
+    return ket_qua
+
+
 def close_d3_gate(
     *,
     runtime_state_path: Path = DEFAULT_RUNTIME_STATE_PATH,
@@ -558,12 +599,15 @@ def close_d3_gate(
     # Cách gỡ khi gặp: bảo phiên kia commit, rồi chạy lại. Đây là điều kiện
     # ĐẠT ĐƯỢC, không phải bế tắc.
     git_info = get_git_info(repo_dir)
-    if not git_info.is_clean:
+    ban = _thay_doi_anh_huong_phep_do(repo_dir)
+    if ban:
         return (
             EXIT_GATE_AUDIT_DIRTY,
-            "🛑 TỪ CHỐI đóng cổng D3 — cây làm việc CHƯA SẠCH. Đóng cổng lúc này "
-            f"sẽ ghi d3_git_sha = {git_info.sha[:12]} cho một lần kiểm KHÔNG chạy "
-            "trên đúng commit đó. Bảo phiên đang sửa commit xong rồi chạy lại.",
+            "🛑 TỪ CHỐI đóng cổng D3 — cây làm việc có thay đổi ẢNH HƯỞNG PHÉP ĐO "
+            "nhưng chưa commit. Đóng cổng lúc này sẽ ghi d3_git_sha = "
+            f"{git_info.sha[:12]} cho một lần kiểm KHÔNG chạy trên đúng commit đó.\n"
+            + "\n".join(f"  {d}" for d in ban)
+            + "\nBảo phiên đang sửa commit xong rồi chạy lại.",
         )
 
     suite = subprocess.run(
