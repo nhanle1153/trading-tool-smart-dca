@@ -6,7 +6,8 @@
 > số dòng thật trong image đang chạy.
 >
 > Giả định D1, D3, D4, D5 (spec §9b.2) KHÔNG thuộc phạm vi TD-0028 — chỉ D2a, D2b, D6, D7 được
-> liệt kê tường minh ở §12. D1/D3/D4/D5 sẽ đọc khi tới D2 (roadmap).
+> liệt kê tường minh ở §12. D1/D3/D5 đọc ở D2 (TD-0111/0112/0113 — xem mục 5 trở đi). D4 chỉ
+> verify được ở Testnet/Live (bảng §9b.2), không đọc source được — hoãn tới D3.5/D9.5+.
 
 ## 0. Định danh phiên bản đang đọc
 
@@ -160,7 +161,73 @@ def reset_backtest(self, enable_protections: bool = False):
 
 ---
 
-## 5. Việc cần làm khi implement thật (không phải việc của TD-0028, ghi lại để không quên)
+## 5. D1 (TD-0111) — `adjust_trade_position()` mô phỏng đúng fill limit-maker trong backtest, kể cả ca KHÔNG khớp
+
+**Kết luận: XÁC NHẬN ĐÚNG.** Backtest futures của Freqtrade có mô hình fill/no-fill thật cho lệnh
+limit, không phải "cứ đặt là khớp".
+
+**Đường dẫn:** `/freqtrade/freqtrade/optimize/backtesting.py`
+
+**Bước 1 — đặt lệnh, kiểm khớp ngay trong CHÍNH nến đặt lệnh.** `_enter_trade()` (dòng 1121) tạo
+`Order` với `status="open"`, rồi gọi ngay (dòng 1273):
+```python
+order._trade_bt = trade
+trade.orders.append(order)
+self._try_close_open_order(order, trade, current_time, row)
+```
+`_try_close_open_order()` (dòng 802) chỉ đóng lệnh nếu `_get_order_filled()` (dòng 787) trả `True`:
+```python
+def _get_order_filled(self, rate: float, row: tuple) -> bool:
+    """Rate is within candle, therefore filled"""
+    return row[LOW_IDX] <= rate <= row[HIGH_IDX]
+```
+Giá đề xuất (`propose_rate`) cho lệnh limit được tính ở `get_valid_entry_price_and_stake()` (dòng
+1024-1054) qua `custom_entry_price()` — với chiều long chỉ bị kẹp trần `min(propose_rate, row[HIGH_IDX])`
+(chặn đề xuất giá cao hơn cả nến, tránh biến limit thành stop-limit mà Freqtrade live không hỗ trợ),
+**không kẹp sàn** — nghĩa là một limit đặt dưới `row[LOW_IDX]` (đúng tình huống lệnh chờ zone
+absorption của Tool D) **không bị ép khớp giả** ở bước này; nó chỉ khớp thật nếu giá sau đó thật sự
+chạm tới, đúng cơ chế `_get_order_filled`.
+
+**Bước 2 — nếu KHÔNG khớp ngay, lệnh vẫn "open" và được kiểm LẠI mỗi nến sau đó.**
+`backtest_loop()` (dòng 1520), mục "3. Process entry orders" (dòng 1563-1566):
+```python
+for trade in list(LocalTrade.bt_trades_open_pp[pair]):
+    order = trade.select_order(trade.entry_side, is_open=True)
+    if self._try_close_open_order(order, trade, current_time, row):
+        self.wallets.update()
+```
+Chạy lại đúng phép kiểm `_get_order_filled` ở Bước 1, cho mọi nến tiếp theo — đây chính là "ca
+KHÔNG khớp" spec đòi phải mô phỏng đúng: giá không chạm thì lệnh cứ chờ, không tự khớp.
+
+**Bước 3 — hết hạn/hủy nếu không bao giờ khớp.** `manage_open_orders()` (dòng 1330, gọi ở mục "1.
+Manage currently open orders" của `backtest_loop`, dòng 1538-1542) gọi `check_order_cancel()` (dòng
+1378), dùng `strategy.ft_check_timed_out()` (tôn trọng `order_time_in_force`/`unfilledtimeout` cấu
+hình) để quyết định huỷ:
+```python
+if timedout:
+    if order.side == trade.entry_side:
+        self.timedout_entry_orders += 1
+        if trade.nr_of_successful_entries == 0:
+            return True  # xoá cả trade — entry ĐẦU chưa từng khớp
+        else:
+            del trade.orders[trade.orders.index(order)]  # chỉ xoá lệnh DCA/tranche này
+```
+🔑 **Trực tiếp liên quan tranche Tool D:** nếu lệnh tranche 2/3 (một "additional entry order", vì
+`trade.nr_of_successful_entries > 0` lúc đó) hết hạn theo `entry_order_ttl_bars_1h` (đã có trong
+`config/tool_d_config.yaml.tier_c`) mà chưa khớp, CHỈ lệnh đó bị xoá — trade với tranche 1 đã khớp
+vẫn sống tiếp, không bị huỷ theo. Ngược lại nếu là entry ĐẦU TIÊN chưa từng khớp, cả trade bị xoá
+(`handle_left_open()`, dòng 1278, cũng dọn nốt các trade còn "has_open_orders và
+nr_of_successful_entries == 0" ở cuối backtest — "Ignore trade if entry-order did not fill yet").
+
+**Kết luận đối chiếu spec:** giả định D1 (bảng §9b.2: *"`adjust_trade_position()` mô phỏng đúng fill
+limit maker trong BACKTEST futures, kể cả ca không khớp"*) — ĐÚNG. Rủi ro nếu SAI ("Toàn bộ kết quả
+D0.9 (Ablation) vô nghĩa") KHÔNG xảy ra ở tầng cơ chế fill/no-fill này. Rủi ro thật của Tool D nằm ở
+chỗ khác đã xác nhận riêng: D6 (mục 3 trên) — quyết định CÓ vào tranche hay không vẫn nhìn giá mở
+nến, tách biệt với việc lệnh đó có khớp hay không.
+
+---
+
+## 6. Việc cần làm khi implement thật (không phải việc của TD-0028, ghi lại để không quên)
 
 - Khi viết `custom_stoploss`/`adjust_trade_position` thật (sau D0-PRE): thêm assert nội bộ `trade.id != 0` (hoặc `trade.id is not None`) trước MỌI lần gọi `set_custom_data`/`get_custom_data` — vá lỗ hổng ở mục 4.2.
 - L-Z49 (test đơn vị D7, spec dòng 3979-3984) nên thêm kịch bản: hai trade MỞ ĐỒNG THỜI (hai cặp khác nhau), xác nhận `custom_data` của chúng KHÔNG trộn lẫn — không chỉ kiểm một trade duy nhất qua nhiều callback như spec mô tả tối thiểu.
