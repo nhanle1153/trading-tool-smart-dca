@@ -191,6 +191,50 @@ với dòng phiên kia đang gõ dở cùng lúc — đã gây ít nhất 3 lầ
 > Mục này có thể lệch nhịp vài phút so với phiên kia — luôn `git log --oneline` +
 > đọc lại `TASKS.md` (cột 🔓/🔒/✅) trước khi chọn việc tiếp theo, đừng chỉ tin mục này.
 
+**Đang ở (cập nhật 07/09/2026, phiên công cụ nhập liệu):** **TD-0124 + TD-0125 ✅ đóng; OQ-13 đóng.**
+Hai kênh nhập liệu trước đây ở cùng một tình trạng — **luật viết rất chặt, không dòng code nào thi
+hành** — nay đều có máy TỪ CHỐI GHI:
+
+1. **TD-0124 — công cụ nộp đơn ý tưởng.** Cửa GHI đầu tiên cho `idea_queue.jsonl` (trước đó chỉ có
+   phần ĐỌC; mọi đơn phải gõ tay 20 khoá JSON, `additionalProperties: false`). Sáu ca fail-closed,
+   kiểm **TRƯỚC** khi mở file — sổ append-only không có đường lùi. Kèm **trần NHẬP 10 đơn/quý**
+   (spec dòng 4095), lấp đúng lỗ hổng MT-11 tự ghi là *"mới là văn bản; chưa code"*. Trần này
+   **chặn CỨNG**, khác trần CHỌN L-Z17 mà MT-11 đã nới: trần CHỌN là kỷ luật con người và không
+   chảy vào N/DSR, trần NHẬP thì có.
+2. **TD-0125 (OQ-13) — sổ THỨ BA `param_change_proposals.jsonl` + `L-Z26`** (🔴 CRITICAL, trước đó
+   **0 dòng code**). Tám ca từ chối ghi. Điểm thiết kế then chốt: `luan_diem` là **mảng có cấu
+   trúc** `{chi_so, gia_tri (SỐ), dai_ky_vong, tham_so_tro_toi}` — câu không trích được số thì
+   **không biểu diễn được**, thay vì một ô văn xuôi kèm lời hứa cần người nhớ luật mới thi hành.
+   Chốt riêng chống *"đề xuất một BỘ tham số"*: mọi luận điểm phải trỏ **cùng một** tham số.
+3. **Không thêm entrypoint thứ 9** — cả hai công cụ là cờ trên E6 (`--nop-y-tuong`, `--nop-de-xuat`).
+   `entrypoints/` vẫn **đúng 8 file**. Phương án "CLI nằm ngoài `entrypoints/`" bị loại có ý thức:
+   không vi phạm *chữ* của L-Z36 nhưng mở đúng lỗ hổng danh sách đóng tồn tại để bịt.
+4. **Không sửa `periodic_report.py`** — `bao_cao_hash` do máy tự băm từ file báo cáo E5 đã lưu,
+   tránh hẳn *"đổi nội dung báo cáo = tiêu 1 trial"* (dòng 4808) và `FROZEN_CONTENT_HASH` (TD-0062).
+
+Docker: **687 passed, 0 failed** (629 → 657 → 687, mỗi bước tăng ĐÚNG số test mới). E6 trên sổ thật:
+`đã audit 4/11`, exit 0. Sổ thật vẫn 0 dòng ở cả hai sổ mới — mọi thử nghiệm chạy trong hộp cát.
+🔴 **`L-Z25` bắt được chuỗi cấm trong thông báo lúc chạy** — diễn đạt lại, **không nới phép kiểm nào**.
+
+**Còn treo / bước tiếp theo:**
+- ⏳ **Chưa ghi `back-end-note.md` + `ARCHITECTURE.md`** — N9 đòi lệnh **"chuẩn hóa và lưu"**. Nội
+  dung đã soạn: OQ-13 → ✅ Đã giải; **MT-13** mới (sổ thứ ba); MT-11 thêm một câu (trần nhập đã có
+  test khoá); sơ đồ LEDGER + cây thư mục + §7 ERD của ARCHITECTURE.
+- ✅ **Từ điển dữ liệu:** chủ dự án chốt **giữ hoãn** tới D3.5 (`ARCHITECTURE.md:229`) — đợt này chỉ
+  thêm sổ JSONL, không thêm bảng CSDL; nguồn sự thật là JSON Schema trên đĩa, không nhân đôi ra .md.
+- 🔓 **TD-0126** (`explore_evidence` bắt buộc khi EXPLORE + query trùng `mechanism`), 🔓 **TD-0127**
+  (`L-Z27` + `L-Z28`, cùng khối §12d.4, cũng 0 dòng code). Cả hai hạn chót **trước D11**.
+- 🔴 **Phạm vi L-Z26 KHÔNG phủ:** §12c.3 đòi Cấp B có HAI điểm quyết định LIÊN TIẾP — chưa kiểm được
+  vì chưa có đánh số điểm quyết định (chưa có lệnh live). Đã ghi vào TD-0127.
+- 🔴 **Cần chủ dự án quyết — va chạm mã việc:** `TD-0119`/`TD-0120` đang dùng **HAI LẦN** cho hai
+  việc khác hẳn (`TASKS.md:203-204` khối D2 vs `:213-214` khối Idea Queue), vi phạm quy tắc 1 của
+  `TASKS.md`. Đã lan vào docstring `entry_confirmation.py`/`trend_context.py`. Không tự sửa.
+- 🔴 **Ghi nhận lệch số:** dòng TD-0120 ghi mốc **624 passed**, đo lại thật là **629** (không có thay
+  đổi test nào giữa hai mốc). Không sửa dòng cũ. Đúng bài học N12: chữ ghi trong file trạng thái
+  không thay được phép đo.
+- 🧹 Hai thư mục rác ở gốc repo từ lệnh shell nhầm: `C:/` và `ls -la /`. Chờ đồng ý mới xoá.
+*(Đoạn “Đang ở” cũ bên dưới giữ nguyên làm lịch sử.)*
+
 **Đang ở (cập nhật 07/09/2026, phiên Idea Queue):** **TD-0118 + TD-0119 + TD-0120 ✅ đóng; OQ-07 đóng.**
 Ba quyết định về hàng chờ ý tưởng, đều đã ghi sổ và có máy canh:
 1. **MT-11** — trần Ngân sách A = **5 suất/quý dùng chung Tool A + D** (dòng “1/quý” ở §9c.7.4 là

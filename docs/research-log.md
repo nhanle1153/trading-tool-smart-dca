@@ -806,3 +806,102 @@ ghi để tới lúc đó không phải phát hiện lại từ đầu.
 Suite Docker: 616 passed (2 test `periodic_report`/`close_d0_pre_gate` đỏ thoáng qua do `git status`
 timeout khi chạy nhiều container liên tiếp; chạy lại sạch 13/13 — đúng hiện tượng đã ghi ở TD-0085,
 không phải hồi quy).
+
+---
+
+## 07/09/2026 — TD-0124 + TD-0125 (OQ-13): hai kênh nhập liệu có luật nhưng không có máy canh
+
+Hai chỗ trong project ở cùng một tình trạng: **luật viết rất chặt, không dòng code nào thi hành**.
+Cả hai đều là *kênh nhập liệu* — nơi con người/LLM đưa đề nghị vào hệ thống, và cũng là chỗ nguy
+hiểm nhất của một project định lượng: luật nằm trên giấy thì đến lúc mệt hoặc đang thua sẽ tự nới.
+
+- **Kênh 1 (hàng chờ ý tưởng).** TD-0118/0119/0120 đã dựng xong *toàn bộ phần ĐỌC* (5 phép kiểm,
+  schema 20 trường, tiêu chí chọn Q3/2026 niêm phong) nhưng **không có writer** — mọi đơn phải gõ
+  tay JSON đủ 20 khoá với `additionalProperties: false`. Gõ sai một khoá là một dòng sổ bẩn, mà sổ
+  append-only thì không xoá lại được.
+- **Kênh 2 (OQ-13).** `L-Z26` 🔴 CRITICAL có **0 dòng code**; `grep` toàn repo ra đúng 4 kết quả,
+  tất cả là văn bản.
+
+### Nguyên tắc thiết kế chung: biến ràng buộc thành cấu trúc dữ liệu
+
+§12d.2 BƯỚC 3 đòi *"MỌI câu trong đề xuất phải TRÍCH một con số cụ thể"*. Cách rẻ là một ô "lý do"
+văn xuôi kèm lời hứa sẽ trích số — nhưng thứ đó cần **có người nhớ luật** mới thi hành được, và
+người thì quên. Cách đã chọn: `luan_diem` là **mảng có cấu trúc**, mỗi phần tử bắt buộc
+`{chi_so, gia_tri (kiểu SỐ), dai_ky_vong, tham_so_tro_toi}` — câu không có số **không biểu diễn
+được**. Cùng thủ thuật TD-0120 đã dùng cho `selection_reason`.
+
+Hệ quả cùng hướng: cả hai công cụ **TỪ CHỐI GHI** thay vì ghi rồi để audit báo sau. Sổ append-only
+không có đường lùi, nên mọi phép kiểm chạy TRƯỚC khi mở file.
+
+### Hai lớp canh, một bộ luật
+
+`kiem_de_xuat()` dùng CHUNG cho cửa ghi và cho `check_lz26_*`. Cửa ghi bịt lỗ "nộp đơn sai";
+phép kiểm audit bịt lỗ "sửa sổ bằng tay". Nếu hai lớp có hai bản luật riêng thì lớp nào cũng có
+thể là lớp sai, và không ai biết lớp nào đúng.
+
+### Ba điều quyết có ý thức, ghi lại để khỏi phải nghĩ lại
+
+1. **Công cụ nộp đơn = cờ trên E6, KHÔNG phải entrypoint thứ 9.** `entrypoints/` là danh sách ĐÓNG
+   đúng 8 file (spec dòng 664 cấm E9, canh bởi L-Z36 + `entrypoint_registry.py`). E6 đã có tiền lệ
+   ghi file (`--close-gate`). Phương án "CLI nằm ngoài `entrypoints/`" bị loại vì nó không vi phạm
+   *chữ* của L-Z36 nhưng mở đúng lỗ hổng mà danh sách đóng tồn tại để bịt.
+2. **`bao_cao_hash` do máy tự băm từ file báo cáo đã lưu, KHÔNG sửa `periodic_report.py`.** Sửa E5
+   để nó tự in hash sẽ chạm vào *"ĐỔI NỘI DUNG BÁO CÁO = TIÊU 1 TRIAL"* (spec dòng 4808) và
+   `FROZEN_CONTENT_HASH` mà TD-0062 niêm phong. Người nộp lưu đầu ra E5 thành file, trỏ đề xuất vào
+   đó; máy băm và về sau kiểm lại — vừa gắn được vào đúng một kỳ, vừa phát hiện được nếu file bị sửa.
+3. **Trần NHẬP 10 đơn/quý chặn CỨNG**, khác trần CHỌN (L-Z17) mà MT-11 đã nới thành cảnh báo. Trần
+   CHỌN là kỷ luật con người, không chảy vào N/DSR. Trần NHẬP thì có: chi phí sinh ý tưởng bằng LLM
+   xấp xỉ 0, nên tỉ lệ chọn thấp biến bước CHỌN thành nơi khai thác dữ liệu quy mô lớn — và bước
+   chọn thì **không ai ghi sổ cho**. Đây là chống nhiễu, cùng loại L-Z16.
+
+### Cạm bẫy né được, và cạm bẫy bị test bắt
+
+**Né tường minh — định dạng thời gian.** `registry.py::_utcnow_iso()` ghi **micro giây** (L-Z10 đòi
+`registered_at < executed_at` CHẶT). Nhưng `check_lz17` và `check_td0120` đọc bằng
+`strptime(..., "%Y-%m-%dT%H:%M:%SZ")` — **không dung sai micro giây**. Dùng lại hàm kia sẽ làm hai
+phép kiểm **CRASH ValueError**, tức audit chết giữa chừng chứ không fail sạch — hỏng đúng thứ tầng
+đo tồn tại để bảo vệ. Viết `_utcnow_iso_seconds()` riêng, có test canh.
+
+**Bị bắt — L-Z25.** Suite đỏ ở `test_lz25_no_hyperopt_trace.py`: chuỗi bị cấm xuất hiện trong
+**thông báo lúc chạy** của `param_proposals.py` (docstring được `_strip_py_noise()` bỏ qua, chuỗi
+f-string thì không). Đây là lock test làm đúng việc của nó. **Diễn đạt lại thông báo, không nới
+phép kiểm** — đúng cách TD-0119 đã xử lý khi hai test cũ đỏ.
+
+### Bằng chứng (Docker — N7)
+
+| Đo | Kết quả |
+|---|---|
+| Suite trước khi thêm test mới | **629** passed (đo bằng `--ignore` chính file mới) |
+| Sau TD-0124 | **657** = +28, đúng số test mới |
+| Sau TD-0125 | **687** passed, **0 failed** = +30, đúng số test mới |
+| E6 chạy thật trên sổ thật | exit 0, `đã audit 4/11 (4 đạt, 0 chưa đạt, 7 chưa đo được)` |
+| Nộp mẫu trống / mẫu trỏ báo cáo chưa có | exit **96**, sổ **0 dòng** ở cả hai |
+| Hộp cát: chạy E5 THẬT → nộp `PC-0001` gắn vào chính bản đó | L-Z26 ✅ đạt |
+| Hộp cát: **sửa báo cáo sau khi nộp** | L-Z26 🔴 CHƯA ĐẠT, chỉ đúng `sha256 không khớp` |
+
+Thử nghiệm chạy trong **hộp cát bên trong container**, không ghi rác vào sổ thật — sổ thật vẫn 0
+dòng ở cả `idea_queue.jsonl` lẫn `param_change_proposals.jsonl`.
+
+### Phạm vi KHÔNG phủ — ghi rõ để không nhầm là "đã xong"
+
+- **§12c.3 đòi tham số Cấp B phải có HAI điểm quyết định LIÊN TIẾP cùng tín hiệu.** `L-Z26` chưa
+  kiểm được điều này vì chưa có đánh số điểm quyết định (chưa có lệnh live nào). → **TD-0127**.
+- `L-Z27` (B3 ≤ 20, chỉ tăng theo `floor(lệnh/25)`) và `L-Z28` (không đổi tham số giữa hai điểm
+  quyết định) cùng khối §12d.4, cũng **0 dòng code**. → **TD-0127**, hạn chót D11.
+- `explore_evidence` bắt buộc khi `data_source = EXPLORE`, và query trùng `mechanism` trước khi nộp
+  — hai ràng buộc §9c.7.3/§9c.7.4 hiện mới nằm trong `description` của schema. → **TD-0126**.
+
+### Ghi nhận lệch số, không tự sửa
+
+Dòng TD-0120 trong `TASKS.md` ghi mốc **624 passed**; đo lại thật hôm nay là **629** (không có thay
+đổi test nào giữa hai mốc — `git log c085e67..HEAD -- tests/` rỗng). Không sửa dòng cũ, chỉ ghi lại
+đây. Bài học nhỏ nhưng đúng hướng N12: **con số viết trong file trạng thái không thay được phép đo**.
+
+### Va chạm mã việc — cần chủ dự án quyết
+
+`TD-0119` và `TD-0120` đang được dùng **HAI LẦN** cho hai việc khác hẳn nhau: `TASKS.md:203-204`
+(Context Trend Filter / xác nhận entry, khối D2) và `TASKS.md:213-214` (tờ đơn hai cửa / niêm phong
+tiêu chí). Vi phạm chính quy tắc 1 của `TASKS.md` — *"Số không bao giờ tái sử dụng"*. Đã lan vào mã
+nguồn: docstring của `src/tool_d/entry_confirmation.py` ghi "TD-0120" và `src/tool_d/trend_context.py`
+ghi "TD-0119", trỏ sang việc khác hẳn với hai dòng cùng số ở khối Idea Queue. **Không tự sửa** —
+đánh số lại là quyết định của chủ dự án.
