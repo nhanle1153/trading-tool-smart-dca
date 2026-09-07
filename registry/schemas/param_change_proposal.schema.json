@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "param_change_proposal.schema.json",
+  "title": "Một dòng param_change_proposals.jsonl (§12c.3 + §12d, OQ-13/L-Z26)",
+  "description": "Sổ THỨ BA, append-only, cùng thư mục với trial_registry.jsonl và idea_queue.jsonl. Kênh 2 — đề xuất đổi tham số khi hệ thống ĐÃ CHẠY. Điểm thiết kế then chốt: `luan_diem` là MẢNG CÓ CẤU TRÚC, không phải ô lý do văn xuôi — §12d.2 BƯỚC 3 đòi 'MỌI câu trong đề xuất phải TRÍCH một con số cụ thể', và một câu không có số thì phải KHÔNG BIỂU DIỄN ĐƯỢC, chứ không phải dựa vào ai đó nhớ luật để gạch bỏ nó.",
+  "type": "object",
+  "required": [
+    "de_xuat_id",
+    "created_at",
+    "source",
+    "bao_cao_path",
+    "bao_cao_hash",
+    "nguon_kich_hoat",
+    "tham_so_tro_toi",
+    "cap_tham_so",
+    "tu_khai_hang",
+    "luan_diem",
+    "gia_tri_hien_tai",
+    "gia_tri_de_xuat",
+    "trial_id",
+    "status"
+  ],
+  "properties": {
+    "de_xuat_id": {
+      "type": "string",
+      "pattern": "^PC-[0-9]{4,}$"
+    },
+    "created_at": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+      "description": "UTC tới GIÂY — cùng quy ước idea_queue, KHÔNG micro giây."
+    },
+    "source": {
+      "enum": ["LLM", "HUMAN"],
+      "description": "§12d.2 BƯỚC 4: LLM không có quyền quyết. Trường này ghi ai SOẠN, không phải ai duyệt."
+    },
+    "bao_cao_path": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Đường dẫn bản báo cáo E5 đã lưu mà đề xuất này dựa vào."
+    },
+    "bao_cao_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "sha256 của ĐÚNG MỘT bản báo cáo. Buộc gắn vào một kỳ duy nhất — chặn việc gom số nhiều kỳ lại để kể một câu chuyện. Máy tự băm file, không nhận lời khai."
+    },
+    "nguon_kich_hoat": {
+      "enum": ["HEALTH", "GATE_FAIL", "CONDITIONAL_UNFREEZE"],
+      "description": "§12d.3 — ba nguồn kích hoạt hợp lệ, enum ĐÓNG. 'Thấy kết quả chưa đẹp, thử nới xem sao' KHÔNG có chỗ để khai, đó chính xác là hành vi toàn bộ ngân sách trial được dựng để chặn."
+    },
+    "tham_so_tro_toi": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Khoá dotted trong tool_d_config.yaml, vd 'tier_b.max_hold_bars_4h'. Máy kiểm bằng loader.resolve() — phải là khoá CÓ THẬT."
+    },
+    "cap_tham_so": {
+      "enum": ["A", "B", "C"],
+      "description": "§12c.3. Cấp C bị TỪ CHỐI ghi: 'không có quy trình, không có ô nhập' — không phải khoá xám, không phải cần mật khẩu, mà là KHÔNG TỒN TẠI ô nhập (BƯỚC 5)."
+    },
+    "tu_khai_hang": {
+      "enum": ["L1", "L2", "L3"],
+      "description": "§11b.1 + §12d.2 BƯỚC 4: 'Đề xuất không tự khai được hạng → LOẠI'. L1 sai giá trị (1 trial từ B3); L2 sai cấu trúc (slot NGÂN SÁCH A + lockbox MỚI); L3 sai giả thuyết (ABORT, không có quy trình sửa)."
+    },
+    "luan_diem": {
+      "type": "array",
+      "minItems": 1,
+      "description": "BƯỚC 3 — ràng buộc chống chém gió, biến thành cấu trúc dữ liệu. Đề xuất không có luận điểm nào → LOẠI TOÀN BỘ.",
+      "items": {
+        "type": "object",
+        "required": ["chi_so", "gia_tri", "dai_ky_vong", "tham_so_tro_toi"],
+        "properties": {
+          "chi_so": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Tên chỉ số trong báo cáo, vd 'H-2' hoặc 'tỉ lệ đóng bằng TIME_STOP'."
+          },
+          "gia_tri": {
+            "type": "number",
+            "description": "🔴 BẮT BUỘC là SỐ. Đây là chỗ 'mọi câu phải trích một con số' trở thành bất khả kháng thay vì một lời hứa."
+          },
+          "dai_ky_vong": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Dải bình thường của chỉ số đó, vd '5-25%' — để thấy nó ra ngoài bao nhiêu."
+          },
+          "tham_so_tro_toi": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Luận điểm này trỏ tới tham số nào. Mọi luận điểm phải trỏ CÙNG MỘT tham số — xem quy tắc ở ledger."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "gia_tri_hien_tai": {},
+    "gia_tri_de_xuat": {},
+    "trial_id": {
+      "type": ["string", "null"],
+      "description": "Trial trừ từ B3 khi thay đổi được ÁP DỤNG. null lúc mới nộp. status=APPLIED mà null → sổ bẩn; và trial_id phải trỏ tới trial CÓ THẬT, CONSUMED trong trial_registry.jsonl."
+    },
+    "status": {
+      "enum": ["PROPOSED", "APPROVED", "REJECTED", "APPLIED"]
+    }
+  },
+  "additionalProperties": false
+}

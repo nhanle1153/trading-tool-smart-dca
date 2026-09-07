@@ -1,0 +1,60 @@
+# MẪU ĐỀ XUẤT ĐỔI THAM SỐ — Kênh 2, khi hệ thống ĐÃ CHẠY (§12c.3 + §12d)
+#
+# Cách dùng:
+#   1) Chạy báo cáo định kỳ và LƯU đầu ra thành file:
+#        docker compose -f docker/docker-compose.yml run --rm freqtrade \
+#          entrypoints/periodic_report.py > runs/reports/2026-Q4.txt
+#   2) Điền file này, trỏ `bao_cao_path` vào đúng bản báo cáo đó.
+#   3) Nộp:
+#        docker compose -f docker/docker-compose.yml run --rm freqtrade \
+#          entrypoints/trial_ledger_audit.py --nop-de-xuat <đề-xuất-đã-điền.yaml>
+#
+# 🔴 BA ĐIỀU KHÔNG CÓ Ô ĐỂ KHAI, vì spec không cho phép:
+#   • Tham số Cấp C (§12c.3) — cầu dao, KHÔNG có ô nhập. Khai vào sẽ bị loại.
+#   • "Thấy kết quả chưa đẹp, thử nới xem sao" — `nguon_kich_hoat` là enum đóng
+#     ba giá trị; lý do đó không có chỗ để viết (§12d.3).
+#   • Đề xuất một BỘ tham số — mọi luận điểm phải trỏ CÙNG MỘT tham số.
+#     Đổi nhiều tham số cùng lúc là hyperopt viết bằng tiếng Việt, và là dấu
+#     hiệu L2 đội lốt L1 (§12d.2 dòng 4832).
+
+de_xuat_id: # để trống → tự sinh PC-xxxx
+created_at: # để trống → tự lấy giờ UTC hiện tại
+source: LLM # LLM | HUMAN — ai SOẠN (LLM không có quyền quyết, §12d.2 BƯỚC 4)
+
+# ── Gắn vào ĐÚNG MỘT bản báo cáo ──────────────────────────────────────────
+bao_cao_path: runs/reports/2026-Q4.txt
+bao_cao_hash: # để trống → máy tự băm sha256 file trên
+# Vì sao bắt buộc: chặn việc gom số của nhiều kỳ lại để kể một câu chuyện.
+# Máy băm lại mỗi lần audit — báo cáo bị sửa sau khi nộp thì phát hiện được.
+
+# ── Nguồn kích hoạt — enum ĐÓNG (§12d.3) ──────────────────────────────────
+# HEALTH               = chỉ số Component Health ra ngoài dải (H-1…H-4)
+# GATE_FAIL            = gate FAIL kèm chẩn đoán TRỎ ĐÚNG tham số này
+# CONDITIONAL_UNFREEZE = điều kiện đóng-băng-có-điều-kiện đã thoả
+nguon_kich_hoat: HEALTH
+
+# ── Tham số muốn đổi ──────────────────────────────────────────────────────
+tham_so_tro_toi: tier_b.max_hold_bars_4h # khoá dotted CÓ THẬT trong tool_d_config.yaml
+cap_tham_so: A # A đổi được · B khó đổi (cần HAI điểm quyết định) · C không bao giờ
+gia_tri_hien_tai: 24
+gia_tri_de_xuat: 30
+
+# ── Tự khai hạng (§11b.1) — không khai được thì LOẠI ──────────────────────
+# L1 = sai giá trị    → DR-012 Hạng 2, 1 trial từ B3
+# L2 = sai cấu trúc   → slot NGÂN SÁCH A + LOCKBOX MỚI
+# L3 = sai giả thuyết → ABORT, không có quy trình sửa
+tu_khai_hang: L1
+
+# ── 🔴 LUẬN ĐIỂM — mỗi luận điểm BẮT BUỘC trích một con số ────────────────
+# Đây là chỗ ràng buộc "mọi câu phải trích một con số" (§12d.2 BƯỚC 3) trở
+# thành cấu trúc dữ liệu: `gia_tri` phải là SỐ, nên câu không có số thì
+# không viết ra được — không cần ai nhớ luật để gạch bỏ nó.
+luan_diem:
+  - chi_so: H-3 tỉ lệ đóng bằng TIME_STOP
+    gia_tri: 0.41
+    dai_ky_vong: "0.05–0.25"
+    tham_so_tro_toi: tier_b.max_hold_bars_4h
+  # Thêm luận điểm nếu có — nhưng TẤT CẢ phải trỏ cùng một tham số.
+
+trial_id: # null lúc nộp; điền khi thay đổi được ÁP DỤNG (trừ 1 trial khỏi B3)
+status: PROPOSED # PROPOSED | APPROVED | REJECTED | APPLIED

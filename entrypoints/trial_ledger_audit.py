@@ -36,6 +36,7 @@ from tool_d.gates.d0_pre import is_d0_pre_complete
 from tool_d.gates.dsr import N_DANG_KY
 from tool_d.ledger.audit_checks import (
     DEFAULT_IDEA_QUEUE_PATH,
+    DEFAULT_PROPOSALS_PATH,
     DEFAULT_PARAM_STATUS_PATH,
     DEFAULT_TIEU_CHI_DIR,
     WARN_ONLY_CODES,
@@ -49,8 +50,10 @@ from tool_d.ledger.audit_checks import (
     check_td0119_so_bien_the_khong_vuot_khai,
     check_td0120_selection_reason_trich_ma_tieu_chi,
     check_td0124_tran_nhap_don_moi_quy,
+    check_lz26_de_xuat_doi_tham_so,
 )
 from tool_d.ledger.idea_queue import IdeaQueueError, submit_idea
+from tool_d.ledger.param_proposals import ParamProposalError, submit_proposal
 from tool_d.ledger.registry import DEFAULT_REGISTRY_PATH
 from tool_d.measurement.gitinfo import get_git_info
 from tool_d.measurement.guard import EXIT_GUARD_BLOCKED, GuardOutcome, measurement_guard
@@ -87,6 +90,13 @@ def build_parser() -> argparse.ArgumentParser:
         "(mẫu: docs/mau-don-y-tuong.yaml). Đơn không hợp lệ thì TỪ CHỐI ghi.",
     )
     parser.add_argument(
+        "--nop-de-xuat",
+        metavar="DE_XUAT.yaml",
+        help="TD-0125 (OQ-13) — nộp một đề xuất đổi tham số vào "
+        "registry/param_change_proposals.jsonl (mẫu: docs/mau-de-xuat-doi-tham-so.yaml). "
+        "Đề xuất không hợp lệ thì TỪ CHỐI ghi.",
+    )
+    parser.add_argument(
         "--close-d1-gate",
         action="store_true",
         help="TD-0110 — đóng cổng D1, ghi runtime_state.json.d1_complete. Chạy được đúng một lần.",
@@ -102,6 +112,7 @@ def run_audit(
     config_path: Path = DEFAULT_CONFIG_PATH,
     status_path: Path = DEFAULT_PARAM_STATUS_PATH,
     tieu_chi_dir: Path = DEFAULT_TIEU_CHI_DIR,
+    proposals_path: Path = DEFAULT_PROPOSALS_PATH,
 ) -> tuple[int, str]:
     """Chạy toàn bộ phép kiểm hiện có, trả về (exit_code, báo cáo).
 
@@ -120,6 +131,7 @@ def run_audit(
         check_td0119_so_bien_the_khong_vuot_khai(idea_queue_path, registry_path),
         check_td0120_selection_reason_trich_ma_tieu_chi(idea_queue_path, tieu_chi_dir),
         check_td0124_tran_nhap_don_moi_quy(idea_queue_path),
+        check_lz26_de_xuat_doi_tham_so(proposals_path, registry_path),
     ]
 
     ok = sum(1 for r in results if r.ok)
@@ -179,6 +191,29 @@ def nop_don_y_tuong(don_path: Path) -> tuple[int, str]:
 
     audit_exit, audit_text = run_audit()
     return audit_exit, f"✅ Đã ghi {idea_id} vào {DEFAULT_IDEA_QUEUE_PATH}.\n{audit_text}"
+
+
+def nop_de_xuat_doi_tham_so(de_xuat_path: Path) -> tuple[int, str]:
+    """TD-0125 (OQ-13) — đọc đề xuất YAML, ghi một dòng vào sổ, rồi tự audit."""
+    if not de_xuat_path.exists():
+        return EXIT_DON_TU_CHOI, f"🛑 Không thấy tờ đề xuất: {de_xuat_path}"
+    try:
+        de_xuat = yaml.safe_load(de_xuat_path.read_text(encoding="utf-8")) or {}
+    except yaml.YAMLError as exc:
+        return EXIT_DON_TU_CHOI, f"🛑 Tờ đề xuất sai cú pháp YAML:\n{exc}"
+    if not isinstance(de_xuat, dict):
+        return (
+            EXIT_DON_TU_CHOI,
+            f"🛑 Tờ đề xuất phải là một khối 'khoá: giá trị', đang là {type(de_xuat).__name__}",
+        )
+
+    try:
+        ma = submit_proposal(de_xuat=de_xuat)
+    except ParamProposalError as exc:
+        return EXIT_DON_TU_CHOI, f"🛑 TỪ CHỐI ghi — sổ KHÔNG bị đụng tới.\n{exc}"
+
+    audit_exit, audit_text = run_audit()
+    return audit_exit, f"✅ Đã ghi {ma} vào {DEFAULT_PROPOSALS_PATH}.\n{audit_text}"
 
 
 def close_d0_pre_gate(
@@ -320,6 +355,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.nop_y_tuong:
         exit_code, text = nop_don_y_tuong(Path(args.nop_y_tuong))
+        print(text)
+        return exit_code
+
+    if args.nop_de_xuat:
+        exit_code, text = nop_de_xuat_doi_tham_so(Path(args.nop_de_xuat))
         print(text)
         return exit_code
 

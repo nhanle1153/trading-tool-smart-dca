@@ -416,6 +416,59 @@ def check_td0120_selection_reason_trich_ma_tieu_chi(
     )
 
 
+# ── L-Z26 (OQ-13, §12d.4) ─────────────────────────────────────────────
+DEFAULT_PROPOSALS_PATH = Path("registry/param_change_proposals.jsonl")
+
+
+def check_lz26_de_xuat_doi_tham_so(
+    proposals_path: Path = DEFAULT_PROPOSALS_PATH,
+    registry_path: Path = DEFAULT_REGISTRY_PATH,
+    config_path: Path = DEFAULT_CONFIG_PATH,
+    goc: Path = Path("."),
+) -> CheckResult:
+    """L-Z26 🔴 CRITICAL — mọi thay đổi tham số sau live có: nguồn kích hoạt
+    thuộc {HEALTH, GATE_FAIL, CONDITIONAL_UNFREEZE}, chỉ số cụ thể, giá trị
+    cụ thể, và 1 trial đã trừ khỏi B3 (spec dòng 4868-4870).
+
+    Dùng lại ĐÚNG bộ luật của cửa ghi (`param_proposals.kiem_de_xuat`) — hai
+    lớp không được lệch luật nhau, nếu không lớp nào cũng có thể là lớp sai.
+    Cửa ghi bịt lỗ "nộp đơn sai"; phép kiểm này bịt lỗ "sửa sổ bằng tay".
+
+    Thêm một ca chỉ audit làm được, vì nó cần sổ trial: dòng `APPLIED` phải
+    trỏ tới một trial CÓ THẬT và đã CONSUMED. Không nhận lời khai suông —
+    cùng khuôn nối hai sổ của `check_td0119_so_bien_the_khong_vuot_khai`.
+    """
+    # Import cục bộ: `param_proposals` import `_read_jsonl` từ chính module
+    # này, đặt ở đầu file sẽ thành vòng import.
+    from tool_d.ledger.param_proposals import kiem_de_xuat
+
+    entries = _read_jsonl(proposals_path)
+    if not entries:
+        return CheckResult("L-Z26", Measured.pending("chưa có đề xuất đổi tham số nào"))
+
+    cfg = load_tool_d_config(config_path)
+    violations: list[str] = []
+    for e in entries:
+        violations.extend(kiem_de_xuat(e, cfg=cfg, goc=goc))
+
+    consumed = {
+        tid
+        for tid, proj in TrialLedger(registry_path).projections().items()
+        if proj.state is TrialState.CONSUMED
+    }
+    for e in entries:
+        if e.get("status") != "APPLIED":
+            continue
+        tid = e.get("trial_id")
+        if tid and tid not in consumed:
+            violations.append(
+                f"{e.get('de_xuat_id')}: APPLIED khai trial_id={tid} nhưng sổ trial không có "
+                "trial đó ở trạng thái CONSUMED — lời khai, không phải bằng chứng"
+            )
+
+    return CheckResult("L-Z26", Measured.ok(len(violations) == 0), evidence="; ".join(violations))
+
+
 ALL_CHECKS = (
     "check_lz10_registered_before_executed",
     "check_lz11_n_used_le_n_dang_ky",
@@ -427,4 +480,5 @@ ALL_CHECKS = (
     "check_td0119_so_bien_the_khong_vuot_khai",
     "check_td0120_selection_reason_trich_ma_tieu_chi",
     "check_td0124_tran_nhap_don_moi_quy",
+    "check_lz26_de_xuat_doi_tham_so",
 )
