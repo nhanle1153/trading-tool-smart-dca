@@ -98,6 +98,15 @@ tier_c: # 🔒 KHOÁ — KHÔNG có ô nhập, ghi ở đây
   k_swing_confirm: 3 # 🆕 v6 — CHUYỂN TỪ tier_b/frozen
   dd_ladder_pct: { soft: 5, halt: 8, abort: 20 } # 🆕 v6 — §12c.5 ✅ DR-D0PRE-04 (TD-0042), Hạng 0. halt == tier_a.daily_loss_budget_pct
   data_split: { t0: "2024-04-09", t1: "2025-06-12", t2: "2026-01-29", t3: "2026-09-06" } # 🆕 TD-0094 — ✅ DR-D0PRE-07 (TD-0084), niêm phong "commit, không sửa". t2 = ranh giới LOCKBOX tuyệt đối, E1/E2/E3 cấm mọi timerange vượt t2
+  wfo_folds: # 🆕 TD-0141 — ✅ DR-D3-01 (TD-0140), niêm phong TRƯỚC mọi dòng code fold.
+    # Neo gốc (anchored): train của MỌI fold bắt đầu tại t1 và dài dần.
+    # Không dùng rolling — cửa sổ WFO chỉ 33 tuần, cắt bỏ đầu train là
+    # vứt dữ liệu vốn đã thiếu; rolling chỉ đáng khi có bằng chứng chế độ
+    # thị trường đổi hẳn, hiện KHÔNG có (DR-D3-01 §6 điều kiện mở lại).
+    so_fold: 3
+    train_khoi_tao_tuan: 12
+    test_tuan: 7
+    san_lenh_moi_fold: 30 # dưới sàn -> chỉ số fold = `unreadable`, KHÔNG ghi số (N6)
   api_calls_per_min: 30 # 🆕 v7 — §6.6(3), LD-23. Điền theo nhịp
     # thật: 100 mã / 60 phút + lề. KHÔNG polling.
   entry_order_ttl_bars_1h: 3 # 🆕 v7 — §3.5, = §3.3b chờ
