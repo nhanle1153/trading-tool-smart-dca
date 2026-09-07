@@ -32,6 +32,7 @@ import urllib.request
 from urllib.error import HTTPError, URLError
 
 BASE_URL = "https://fapi.binance.com"
+SPOT_BASE_URL = "https://api.binance.com"  # TD-0116: chỉ dùng cho phép ĐO latency (H15), không dùng cho dữ liệu/nghiệp vụ — Tool D giao dịch futures
 DEFAULT_TIMEOUT_S = 10.0  # R11 — timeout riêng cho từng request, không dựa mặc định thư viện
 
 
@@ -120,31 +121,27 @@ def _sign(params: dict[str, str], secret: str) -> str:
     return hmac.new(secret.encode("utf-8"), query.encode("utf-8"), hashlib.sha256).hexdigest()
 
 
-def _order_test_query(api_secret: str, symbol: str, quantity: str) -> str:
-    """Chuỗi query đã ký cho `/fapi/v1/order/test`. Tách riêng để mỗi
-    mẫu đo có `timestamp` mới (Binance từ chối timestamp cũ quá
-    `recvWindow`) mà không phải dựng lại toàn bộ kết nối."""
-    params = {
-        "symbol": symbol,
-        "side": "BUY",
-        "type": "MARKET",
-        "quantity": quantity,
-        "timestamp": str(int(time.time() * 1000)),
-        "recvWindow": "5000",
-    }
-    return f"{urllib.parse.urlencode(params)}&signature={_sign(params, api_secret)}"
+def _signed_path(path: str, api_secret: str, extra_params: dict[str, str] | None) -> str:
+    """Gắn `timestamp`/`recvWindow`/`signature` vào `path`. Gọi lại cho
+    MỖI mẫu đo — Binance từ chối timestamp cũ quá `recvWindow`, nên không
+    thể ký một lần rồi dùng lại cho cả loạt."""
+    params = dict(extra_params or {})
+    params["timestamp"] = str(int(time.time() * 1000))
+    params["recvWindow"] = "5000"
+    return f"{path}?{urllib.parse.urlencode(params)}&signature={_sign(params, api_secret)}"
 
 
 def latency_samples_ms(
     *,
     n: int,
-    signed: bool,
     reuse_connection: bool,
+    base_url: str = BASE_URL,
+    path: str = "/fapi/v1/time",
+    method: str = "GET",
+    signed: bool = False,
     api_key: str = "",
     api_secret: str = "",
-    base_url: str = BASE_URL,
-    symbol: str = "BTCUSDT",
-    quantity: str = "0.001",
+    extra_params: dict[str, str] | None = None,
     timeout: float = DEFAULT_TIMEOUT_S,
 ) -> list[float]:
     """H15 (§6.7, TD-0116) — đo `n` mẫu round-trip latency tới Binance.
@@ -163,9 +160,10 @@ def latency_samples_ms(
     nên nếu chỉ đo lạnh sẽ thổi phồng đúng con số đang dùng để đánh giá
     khoảng trống không-SL của D2c (§8.3).
 
-    `signed=False` gọi `/fapi/v1/time` (public, không ký) làm ĐỐI CHỨNG:
-    hiệu giữa hai phép đo mới là chi phí auth + validate lệnh phía sàn,
-    tách khỏi RTT mạng thuần.
+    Cách dùng đúng là đo THEO CẶP trên CÙNG host: một endpoint public
+    (không ký) làm đối chứng, một endpoint ký — hiệu giữa hai số mới là
+    chi phí auth phía sàn, tách khỏi RTT mạng thuần. So hai số khác host
+    (spot vs futures) thì KHÔNG hợp lệ: khác hạ tầng.
     """
     if n < 1:
         raise ValueError(f"n phải >= 1, nhận: {n}")
@@ -178,25 +176,20 @@ def latency_samples_ms(
     conn = http.client.HTTPSConnection(host, timeout=timeout) if reuse_connection else None
     try:
         for _ in range(n):
-            path = (
-                f"/fapi/v1/order/test?{_order_test_query(api_secret, symbol, quantity)}"
-                if signed
-                else "/fapi/v1/time"
-            )
-            method = "POST" if signed else "GET"
+            req_path = _signed_path(path, api_secret, extra_params) if signed else path
             c = conn or http.client.HTTPSConnection(host, timeout=timeout)
             t0 = time.monotonic()
             try:
-                c.request(method, path, headers=headers)
+                c.request(method, req_path, headers=headers)
                 resp = c.getresponse()
                 body = resp.read()
                 if resp.status != 200:
                     raise BinancePrivateApiError(
-                        f"{method} {path.split('?')[0]} -> HTTP {resp.status}: {body[:300]!r}"
+                        f"{method} {path} -> HTTP {resp.status}: {body[:300]!r}"
                     )
                 samples.append((time.monotonic() - t0) * 1000.0)
             except OSError as exc:
-                raise BinancePrivateApiError(f"gọi {host}{path.split('?')[0]} thất bại: {exc}") from exc
+                raise BinancePrivateApiError(f"gọi {host}{path} thất bại: {exc}") from exc
             finally:
                 if conn is None:
                     c.close()

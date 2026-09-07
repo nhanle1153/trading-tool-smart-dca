@@ -160,15 +160,32 @@ class TestLatencySamplesMs:
                 n=1,
                 signed=True,
                 reuse_connection=True,
+                path="/fapi/v1/order/test",
+                method="POST",
                 api_key="fake_key",
                 api_secret="fake_secret_value",
+                extra_params={"symbol": "BTCUSDT"},
             )
         method, path = conn.request.call_args[0][0], conn.request.call_args[0][1]
         headers = conn.request.call_args[1]["headers"]
         assert method == "POST" and path.startswith("/fapi/v1/order/test?")
+        assert "signature=" in path and "timestamp=" in path
         assert headers["X-MBX-APIKEY"] == "fake_key"
         # Secret KHÔNG BAO GIỜ đi ra khỏi máy — chỉ chữ ký (hash một chiều).
         assert "fake_secret_value" not in path
+
+    def test_moi_mau_ky_lai_timestamp_moi(self) -> None:
+        # Ký một lần rồi dùng lại cho cả loạt sẽ bị Binance từ chối khi
+        # timestamp cũ quá recvWindow -- mỗi mẫu phải có chữ ký riêng.
+        conn = _fake_conn()
+        with patch("http.client.HTTPSConnection", return_value=conn):
+            latency_samples_ms(
+                n=3, signed=True, reuse_connection=True,
+                path="/api/v3/account", api_key="k", api_secret="s",
+            )
+        paths = [call[0][1] for call in conn.request.call_args_list]
+        assert len(paths) == 3
+        assert all("signature=" in p for p in paths)
 
     def test_khong_signed_dung_endpoint_public_lam_doi_chung(self) -> None:
         conn = _fake_conn()
