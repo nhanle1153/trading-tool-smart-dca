@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "fold_record.schema.json",
+  "title": "Bản ghi kết quả một fold walk-forward (TD-0146, D3)",
+  "description": "Sơ đồ fold niêm phong ở docs/decisions/DR-D3-01-so-do-fold.md. Mọi chỉ số đi qua ba trạng thái của §0d.6 (L-Z41) — cấm giá trị lính canh, cấm bịa 0.0. Fold có so_lenh < san_lenh_moi_fold thì mọi chỉ số là `unreadable`, KHÔNG phải một con số (DR-D3-01 §5.2). LƯU Ý cho người sửa file này: additionalProperties là false ở mọi cấp, nên thêm một khoá vào code mà quên thêm ở đây sẽ làm cửa ghi thật NỔ — và bộ test đối chiếu fixture sẽ KHÔNG bắt được. Vì vậy tests/unit/test_fold_record.py đối chiếu ĐẦU RA THẬT của build_fold_record() với schema này.",
+  "$defs": {
+    "provenance": {
+      "type": "object",
+      "description": "Khối xuất xứ 7+1 khoá (§0d.5, L-Z40). Giữ đồng bộ với trial_event.schema.json.",
+      "required": [
+        "params_source",
+        "params_effective",
+        "git_sha",
+        "reproducible_from_sha",
+        "data_hashes",
+        "cache_mode",
+        "guard_passed"
+      ],
+      "properties": {
+        "params_source": { "enum": ["yaml", "params_file", "env"] },
+        "params_effective": { "type": "object" },
+        "git_sha": { "type": "string", "minLength": 1 },
+        "reproducible_from_sha": { "type": "boolean" },
+        "data_hashes": { "type": "object" },
+        "cache_mode": { "type": "string" },
+        "guard_passed": { "type": "boolean" },
+        "runtime_image_digest": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false
+    },
+    "measured": {
+      "type": "object",
+      "description": "Ba trạng thái của §0d.6. `value` chỉ được khác null khi status == ok — ràng buộc đó viết thành if/then bên dưới, không chỉ nằm trong mô tả.",
+      "required": ["status", "value", "note"],
+      "properties": {
+        "status": { "enum": ["pending", "unreadable", "ok"] },
+        "value": {},
+        "note": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false,
+      "if": {
+        "properties": { "status": { "enum": ["pending", "unreadable"] } },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": { "value": { "type": "null" } }
+      }
+    },
+    "fold_window": {
+      "type": "object",
+      "description": "Mốc thời gian của fold. train_end == test_start là ĐÚNG thiết kế (ranh giới nửa mở); train_end > test_start là rò rỉ IS sang OOS.",
+      "required": ["chi_so", "train_start", "train_end", "test_start", "test_end"],
+      "properties": {
+        "chi_so": { "type": "integer", "minimum": 1 },
+        "train_start": { "type": "string", "format": "date" },
+        "train_end": { "type": "string", "format": "date" },
+        "test_start": { "type": "string", "format": "date" },
+        "test_end": { "type": "string", "format": "date" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "required": [
+    "loai",
+    "fold",
+    "so_lenh",
+    "san_lenh_moi_fold",
+    "du_lenh",
+    "tu_cache",
+    "chi_so",
+    "provenance"
+  ],
+  "properties": {
+    "loai": { "const": "FOLD_RESULT" },
+    "fold": { "$ref": "#/$defs/fold_window" },
+    "so_lenh": { "type": "integer", "minimum": 0 },
+    "san_lenh_moi_fold": { "type": "integer", "minimum": 1 },
+    "du_lenh": { "type": "boolean" },
+    "tu_cache": {
+      "type": "boolean",
+      "description": "Kết quả fold này được TÍNH LẠI (false) hay LẤY LẠI TỪ CACHE (true). Vân tay cache đã bảo đảm nó khớp cấu hình/code/dữ liệu, nhưng người đọc bản ghi vẫn cần biết con số được tính lại hay dùng lại — đó là câu hỏi xuất xứ (§0d.5)."
+    },
+    "chi_so": {
+      "type": "object",
+      "description": "Tên chỉ số -> Measured. Ít nhất một chỉ số: bản ghi rỗng đi qua mọi phép kiểm mà không chứng minh điều gì.",
+      "minProperties": 1,
+      "additionalProperties": { "$ref": "#/$defs/measured" }
+    },
+    "provenance": { "$ref": "#/$defs/provenance" }
+  },
+  "additionalProperties": false
+}
