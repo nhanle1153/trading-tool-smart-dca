@@ -1017,3 +1017,40 @@ baseline ngay trước khi so, đúng bài học đã ghi ở đính chính phí
 quyết định** và `L-Z27` phần *"chỉ tăng theo `floor(lệnh/25)`"* cần **lệnh live** — cả hai chưa
 tồn tại. Viết test bây giờ là viết test cho cơ chế chưa có, phải giả lập bằng mock, đúng thứ
 **L-Z51** cấm. Hạn chót vẫn là **trước D11**.
+
+---
+
+## 07/09/2026 — 🚪 GATE D2 ĐÓNG (TD-0117), tag `d2-complete`
+
+`registry/runtime_state.json.d2_complete = true`, sinh từ một lần chạy THẬT trong Docker
+(`E6 --close-d2-gate`, exit 0). Cả ba mục evidence mang nhãn `do-duoc` đúng nghĩa MT-10 —
+hàm đóng cổng TỰ chạy pytest trong chính lần gọi đó, không nhận chuỗi gõ tay:
+`full_suite` 720 passed · `lz49_lz50` 5 passed · `trial_ledger_audit` 4/12 đạt, 0 chưa đạt.
+`d2_git_sha = 6613ce9` — HEAD tại thời điểm chạy (gồm cả TD-0126 của phiên song song), tức
+ghi đúng CÂY ĐÃ ĐƯỢC KIỂM, không ghi sha commit của riêng người đóng cổng.
+
+**Điều đáng ghi lại nhất — vì sao cổng D2 có một phép kiểm mà cổng D1 không có.**
+Cổng D1 chỉ hỏi *"suite xanh chưa?"*. Với D2 câu đó KHÔNG đủ: xoá hẳn
+`tests/lock/test_lz49_lz50_backtest_nho.py` đi thì suite vẫn xanh, và cổng vẫn đóng ngon
+lành — trong khi hai phép kiểm cốt lõi của D2 đã biến mất. Nên `close_d2_gate()` chạy RIÊNG
+đúng file đó và đòi **số ca PASS >= 1**: exit 0 mà không ca nào chạy bị từ chối thẳng
+("PASS RỖNG, không phải bằng chứng"). Đây là cùng một hình dạng lỗi đã cắn ở TD-0084
+(`verify_all_seals()` PASS vì không có seal nào để kiểm) — lần đó bị bắt sau khi đã có seal
+thật; lần này chốt được viết TRƯỚC.
+
+Kiểm chốt đó có răng: vô hiệu hoá đúng nhánh `so_ca_lz < 1` → đúng ca
+`test_lz_exit_0_nhung_0_ca_thi_tu_choi` đỏ, 11 ca còn lại vẫn xanh (nếu cả bộ cùng đỏ thì
+test đang canh thứ khác). Đã khôi phục nguyên trạng.
+
+**Không tự phong cho D2 nhiều hơn nó có.** `d2_hoan_lai` (nhãn `nguoi-khai`, KHÔNG giả làm
+bằng chứng máy) ghi thẳng: **D2b** (closePosition phía sàn), **D2c** (khoảng trống không-SL),
+**D4** (khớp lệnh thật) KHÔNG kiểm được ở tầng backtest — HOÃN tới D3.5/D9.5+, **không phải
+"đã qua"**. Riêng D2c còn một rủi ro đã đo được ở TD-0116: latency LẠNH bất ổn (14/30 mẫu
+>1s, max 11 giây) → cửa sổ không-SL có thể vượt 15 giây. Phải giải quyết trước khi có lệnh thật.
+
+Bất biến đã kiểm: chạy lại `--close-d2-gate` → exit **94**, từ chối ghi lại, file không đổi.
+
+Cũng ghi nhận (lặp lại bài học của mốc 629 vs 624): mốc suite dịch từ **699** lúc commit code
+sang **720** lúc đóng cổng, do phiên song song commit TD-0126 xen vào giữa. Không phải lệch số —
+nhưng là lý do `d2_git_sha` phải lấy HEAD lúc chạy chứ không lấy commit của mình.
+
