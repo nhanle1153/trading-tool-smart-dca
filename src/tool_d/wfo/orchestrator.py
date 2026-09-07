@@ -36,6 +36,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 from typing import Any
 
@@ -50,7 +51,13 @@ from tool_d.wfo.cache import (
     van_tay_hien_tai,
 )
 from tool_d.wfo.equity import FoldEquity, ghep_duong_von, he_so_tong, kiem_can_doi_fold
-from tool_d.wfo.folds import Fold, san_lenh_moi_fold, sinh_folds
+from tool_d.ledger.timerange import dataset_boundaries_from_config
+from tool_d.wfo.folds import (
+    Fold,
+    kiem_pham_vi_du_lieu,
+    san_lenh_moi_fold,
+    sinh_folds,
+)
 
 ChayMotFold = Callable[[Fold], FoldEquity]
 
@@ -103,15 +110,30 @@ def chay_wfo(
 
       1. đọc cache theo vân tay
       2. STALE → IN CẢNH BÁO TO rồi chạy lại; MISS → chạy, im lặng
-      3. `kiem_can_doi_fold()` (L-Z47) — SAI thì raise, không ghi cache
-      4. ghi cache kèm vân tay
-      5. áp sàn số lệnh → `Measured.unreadable` nếu dưới sàn
+      3. `kiem_pham_vi_du_lieu()` (L-Z55, TD-0148) — phạm vi ngày THẬT
+      4. `kiem_can_doi_fold()` (L-Z47) — SAI thì raise, không ghi cache
+      5. ghi cache kèm vân tay
+      6. áp sàn số lệnh → `Measured.unreadable` nếu dưới sàn
 
-    Bước 3 đứng TRƯỚC bước 4 là có chủ ý: ghi cache một kết quả chưa qua
+    Bước 4 đứng TRƯỚC bước 5 là có chủ ý: ghi cache một kết quả chưa qua
     L-Z47 nghĩa là lần chạy sau sẽ HIT ngay vào một con số sai, và lúc đó
     phép kiểm không còn cơ hội chạy nữa.
+
+    Bước 3 đứng TRƯỚC bước 4 cũng có chủ ý: một kết quả đọc sai phạm vi
+    ngày thì có cân đối vốn hoàn hảo cũng vô nghĩa — nó đo một khoảng thời
+    gian khác khoảng người đọc tưởng.
+
+    🔑 **Hai điều PHẢI ghi rõ về bước 3, không được ngầm hiểu** (TD-0148):
+      • Tới khi có bộ chạy backtest THẬT (D3.5), phép kiểm này chỉ được
+        nuôi bằng bộ chạy GIẢ trong test. **Cơ chế** đã tại chỗ và bị
+        khoá; **bảo đảm trên dữ liệu thật** thì D3.5 mới có.
+      • Nó **vẫn tin lời khai của bộ chạy**. Một bộ chạy trả ngày *dự
+        kiến* thay vì ngày *thật đọc được từ dataframe* sẽ vô hiệu hoá nó
+        hoàn toàn. Khi viết bộ chạy thật, bắt buộc đọc từ dataframe và
+        phải có test khoá riêng cho đúng điều đó.
     """
     ds_fold = sinh_folds(cfg)
+    bien_wfo = dataset_boundaries_from_config(cfg)["WFO"]
     san = san_lenh_moi_fold(cfg)
     van_tay = van_tay_hien_tai(cfg=cfg, data_hashes=data_hashes, repo_dir=repo_dir)
 
@@ -135,6 +157,18 @@ def chay_wfo(
         else:
             equity = chay_mot_fold(fold)
             tu_cache = False
+
+        # 🔴 TD-0148 — L-Z55 ĐÚNG NGHĨA: đối chiếu phạm vi ngày THẬT bộ chạy
+        # đã đọc với biên WFO (tầng a) và với cửa sổ của chính fold (tầng b).
+        # Đứng TRƯỚC L-Z47: một kết quả đọc sai phạm vi thì có cân đối vốn
+        # hoàn hảo cũng vô nghĩa — nó đo một khoảng thời gian khác.
+        # Chạy cho CẢ kết quả lấy từ cache, cùng lý do như L-Z47 bên dưới.
+        kiem_pham_vi_du_lieu(
+            observed_start=equity.observed_start,
+            observed_end=equity.observed_end,
+            fold=fold,
+            boundary=bien_wfo,
+        )
 
         # L-Z47 chạy cho CẢ kết quả lấy từ cache: một mục cache có thể được
         # ghi bởi phiên bản code cũ hơn phép kiểm này.
@@ -210,22 +244,39 @@ def _khoa_cache(fold: Fold) -> str:
 
 
 def _thanh_payload(equity: FoldEquity) -> dict[str, Any]:
+    # `observed_*` PHẢI vào payload: thiếu nó thì kết quả lấy lại từ cache
+    # không dựng lại được `FoldEquity`, và phép kiểm L-Z55 ở bước 3 sẽ
+    # không có gì để kiểm cho đúng nhánh HIT — tức tắt lặng lẽ đúng lúc
+    # dùng lại số cũ. Đây là DỮ LIỆU của kết quả, không phải xuất xứ (xuất
+    # xứ vẫn KHÔNG vào cache — xem TD-0146).
     return {
         "chi_so": equity.chi_so,
         "starting_balance": equity.starting_balance,
         "final_balance": equity.final_balance,
         "pnl_abs": list(equity.pnl_abs),
+        "observed_start": equity.observed_start.isoformat(),
+        "observed_end": equity.observed_end.isoformat(),
     }
 
 
 def _tu_payload(payload: dict[str, Any] | None, *, fold: Fold) -> FoldEquity:
     if payload is None:
         raise ValueError(f"fold {fold.chi_so}: cache HIT nhưng payload rỗng")
+    thieu = {"observed_start", "observed_end"} - set(payload)
+    if thieu:
+        # Mục cache do phiên bản code TRƯỚC TD-0148 ghi ra. Fail-closed:
+        # KHÔNG đoán ngày, KHÔNG bỏ qua phép kiểm — buộc chạy lại.
+        raise ValueError(
+            f"fold {fold.chi_so}: mục cache thiếu {sorted(thieu)} (ghi bởi code "
+            "trước TD-0148) — TỪ CHỐI dùng lại, xoá cache và chạy lại."
+        )
     return FoldEquity(
         chi_so=payload["chi_so"],
         starting_balance=payload["starting_balance"],
         final_balance=payload["final_balance"],
         pnl_abs=tuple(payload["pnl_abs"]),
+        observed_start=date.fromisoformat(payload["observed_start"]),
+        observed_end=date.fromisoformat(payload["observed_end"]),
     )
 
 

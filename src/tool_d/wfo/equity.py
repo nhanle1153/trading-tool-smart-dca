@@ -37,6 +37,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
+from datetime import date
 
 # L-Z47 (spec dòng 2798): sai số cho phép giữa `starting + Σ pnl_abs` và
 # `final_balance`. 0,01 USDT = một xu — đủ chỗ cho làm tròn dấu phẩy
@@ -65,6 +66,16 @@ class FoldEquity:
     starting_balance: float
     final_balance: float
     pnl_abs: tuple[float, ...]
+    # 🔴 TD-0148 — phạm vi ngày THẬT mà bộ chạy đã đọc để ra kết quả này.
+    # BẮT BUỘC, KHÔNG có mặc định: một mặc định (dù là `None`) sớm muộn sẽ
+    # có chỗ quên truyền, và chỗ quên đó chính là chỗ phép kiểm L-Z55 im
+    # lặng biến mất. Bắt buộc thì lỗi nổ ngay tại chỗ gọi.
+    #
+    # Quy ước: BAO GỒM HAI ĐẦU (`[observed_start, observed_end]`) — đây là
+    # ngày đầu và ngày cuối của dữ liệu đọc được, khác quy ước NỬA MỞ của
+    # `Fold`. Xem `kiem_pham_vi_du_lieu()`.
+    observed_start: date
+    observed_end: date
 
     @property
     def tong_pnl_abs(self) -> float:

@@ -17,7 +17,7 @@ code. Lỗi chỉ nổ đúng lần ghi thật đầu tiên. Phiên song song v�
 from __future__ import annotations
 
 import json
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 import jsonschema
@@ -213,7 +213,12 @@ class TestCauNoiTuKetQuaFold:
 
         pnl = tuple(1.0 for _ in range(so_lenh))
         eq = FoldEquity(
-            chi_so=1, starting_balance=1000.0, final_balance=1000.0 + so_lenh, pnl_abs=pnl
+            chi_so=1,
+            starting_balance=1000.0,
+            final_balance=1000.0 + so_lenh,
+            pnl_abs=pnl,
+            observed_start=FOLD.train_start,
+            observed_end=FOLD.test_end - timedelta(days=1),
         )
         he_so = Measured.ok(eq.he_so) if so_lenh >= 30 else Measured.unreadable("mỏng")
         return KetQuaFold(fold=FOLD, equity=eq, tu_cache=tu_cache, he_so=he_so)
@@ -275,7 +280,17 @@ class TestCauNoiTuKetQuaFold:
 
         payload = _thanh_payload(self._ket_qua().equity)
         assert "provenance" not in payload
-        assert set(payload) == {"chi_so", "starting_balance", "final_balance", "pnl_abs"}
+        assert set(payload) == {
+            "chi_so",
+            "starting_balance",
+            "final_balance",
+            "pnl_abs",
+            # TD-0148: DỮ LIỆU của kết quả, không phải xuất xứ. Thiếu nó thì
+            # nhánh cache HIT không dựng lại được FoldEquity và phép kiểm
+            # L-Z55 tắt lặng lẽ đúng lúc dùng lại số cũ.
+            "observed_start",
+            "observed_end",
+        }
 
 
 class TestMocFoldGhiDungVaoBanGhi:

@@ -51,6 +51,7 @@ from datetime import date, timedelta
 from tool_d.config.loader import ToolDConfig, resolve
 from tool_d.ledger.timerange import (
     DatasetBoundary,
+    TimerangeViolationError,
     assert_dataset_timerange,
     dataset_boundaries_from_config,
 )
@@ -184,6 +185,71 @@ def sinh_folds(cfg: ToolDConfig) -> tuple[Fold, ...]:
         )
     kiem_folds(tuple(folds), boundary=wfo)
     return tuple(folds)
+
+
+def kiem_pham_vi_du_lieu(
+    *,
+    observed_start: date,
+    observed_end: date,
+    fold: Fold,
+    boundary: DatasetBoundary,
+) -> None:
+    """🔴 TD-0148 — `L-Z55` ĐÚNG NGHĨA: đối chiếu phạm vi ngày THẬT mà bộ
+    chạy đã đọc với ranh giới dataset. Raise nếu vi phạm.
+
+    Khác hẳn lời gọi trong `kiem_folds()`: ở đó cả hai vế đều suy từ
+    `wfo.start` nên phép so sánh gần như luôn đúng theo cấu tạo (đúng bẫy
+    `DatasetBoundary` tự cảnh báo). Ở đây `observed_*` đến từ **bộ chạy**,
+    `boundary`/`fold` đến từ **cấu hình đã niêm phong** — hai nguồn độc
+    lập, nên phép kiểm mới có nghĩa.
+
+    Mối đe doạ là thật và đã xảy ra một lần: TD-0093 —
+    `download-data --timerange` KHÔNG cắt file, nến vùng LOCKBOX (tới
+    2026-09-05) đang nằm sẵn trong đúng thư mục mà WFO sẽ đọc.
+
+    **Hai tầng, tầng (b) chặt hơn tầng (a):**
+
+      (a) nằm trong biên WFO `[T1, T2]` — gọi thẳng
+          `assert_dataset_timerange()`, không chép lại luật;
+      (b) nằm trong đúng cửa sổ của CHÍNH fold này. Tầng (a) một mình
+          KHÔNG bắt được **rò rỉ giữa các fold**: fold 1 đọc nhầm dữ liệu
+          thuộc cửa sổ test của fold 2 thì vẫn nằm gọn trong `[T1, T2]`,
+          vẫn qua (a) — trong khi đó chính là đọc dữ liệu tương lai.
+
+    ⚠️ **Bẫy lệch quy ước, xử tường minh chứ không ngầm hiểu:**
+    cửa sổ fold là **NỬA MỞ** `[start, end)` (nến tại `test_end` KHÔNG
+    thuộc fold), còn `observed_*` **BAO GỒM HAI ĐẦU**. Trộn hai quy ước là
+    lệch đúng một ngày — và một ngày ở đây là **một ngày dữ liệu tương
+    lai**. Nên cận trên hợp lệ của `observed_end` là `test_end - 1 ngày`.
+
+    Cận dưới lấy `fold.train_start` (= `T1` với sơ đồ neo gốc) chứ không
+    phải `test_start`: neo gốc thì đọc dữ liệu cũ hơn là ĐÚNG THIẾT KẾ
+    (train dài dần). Chiều nguy hiểm chỉ có một — về phía tương lai.
+    """
+    # (a) — dùng lại đúng máy canh L-Z55, không viết phép so sánh riêng.
+    assert_dataset_timerange(
+        dataset=boundary.name,
+        observed_start=observed_start,
+        observed_end=observed_end,
+        boundary=boundary,
+    )
+
+    if observed_start > observed_end:
+        raise TimerangeViolationError(
+            f"Fold {fold.chi_so}: bộ chạy khai observed_start {observed_start} > "
+            f"observed_end {observed_end} — phạm vi rỗng/đảo ngược, không dùng được."
+        )
+
+    # (b) — cửa sổ NỬA MỞ đổi sang ngày cuối BAO GỒM, tường minh một lần.
+    ngay_cuoi_cho_phep = fold.test_end - timedelta(days=1)
+    if observed_start < fold.train_start or observed_end > ngay_cuoi_cho_phep:
+        raise TimerangeViolationError(
+            f"Fold {fold.chi_so}: dữ liệu đọc được [{observed_start}, {observed_end}] "
+            f"nằm NGOÀI cửa sổ của chính fold này [{fold.train_start}, "
+            f"{fold.test_end}) — ngày cuối cho phép là {ngay_cuoi_cho_phep}. "
+            "Đọc quá cận trên là đọc dữ liệu TƯƠNG LAI (rò rỉ giữa các fold), "
+            "kể cả khi vẫn nằm trong biên WFO."
+        )
 
 
 def kiem_folds(folds: tuple[Fold, ...], *, boundary: DatasetBoundary) -> None:

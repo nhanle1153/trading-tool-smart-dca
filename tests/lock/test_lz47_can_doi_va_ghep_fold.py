@@ -16,6 +16,8 @@ tức đúng lúc con số quan trọng nhất.
 
 from __future__ import annotations
 
+from datetime import date
+
 import pytest
 
 from tool_d.wfo.equity import (
@@ -28,11 +30,27 @@ from tool_d.wfo.equity import (
 )
 
 
+# TD-0148: `observed_start`/`observed_end` là BẮT BUỘC trong production —
+# ở đây đặt mặc định CHỈ CHO TEST, vì file này kiểm cân đối vốn và phép
+# ghép fold, không kiểm phạm vi ngày (đó là `test_td0148_*`).
+NGAY_D = date(2025, 9, 4)
+NGAY_C = date(2025, 10, 22)
+
+
+def _fe(chi_so: int, start: float, final: float, pnl: tuple[float, ...]) -> FoldEquity:
+    return FoldEquity(
+        chi_so=chi_so,
+        starting_balance=start,
+        final_balance=final,
+        pnl_abs=pnl,
+        observed_start=NGAY_D,
+        observed_end=NGAY_C,
+    )
+
+
 def _fold(chi_so: int, start: float, pnl: tuple[float, ...]) -> FoldEquity:
     """Fold cân đối theo đúng định nghĩa — dùng cho ca hợp lệ."""
-    return FoldEquity(
-        chi_so=chi_so, starting_balance=start, final_balance=start + sum(pnl), pnl_abs=pnl
-    )
+    return _fe(chi_so, start, start + sum(pnl), pnl)
 
 
 class TestLZ47CanDoiTungFold:
@@ -41,7 +59,7 @@ class TestLZ47CanDoiTungFold:
 
     def test_lech_duoi_dung_sai_thi_chap_nhan(self) -> None:
         # Làm tròn dấu phẩy động tích luỹ qua vài trăm lệnh là bình thường.
-        f = FoldEquity(1, 1000.0, 1100.0 + 0.009, (100.0,))
+        f = _fe(1, 1000.0, 1100.0 + 0.009, (100.0,))
         kiem_can_doi_fold(f)
 
     def test_lech_vuot_dung_sai_thi_RAISE(self) -> None:
@@ -51,26 +69,26 @@ class TestLZ47CanDoiTungFold:
         # hoạt. Đó là hành vi đúng của dấu phẩy động, không phải lỗi
         # module. Kiểm sát mốc một ngưỡng float là kiểm chính sai số biểu
         # diễn, không kiểm luật — nên lấy giá trị vượt rõ ràng.
-        f = FoldEquity(1, 1000.0, 1100.0 + 5 * DUNG_SAI_CAN_DOI_USDT, (100.0,))
+        f = _fe(1, 1000.0, 1100.0 + 5 * DUNG_SAI_CAN_DOI_USDT, (100.0,))
         with pytest.raises(CanDoiFoldError, match="KHÔNG cân đối"):
             kiem_can_doi_fold(f)
 
     def test_bo_sot_mot_lenh_thi_bi_bat(self) -> None:
         """Đây là điều L-Z47 sinh ra để bắt: bộ chạy báo số dư cuối không
         giải thích được bằng chính các lệnh nó liệt kê."""
-        f = FoldEquity(1, 1000.0, 1250.0, (100.0, 150.0, 90.0))  # thừa 90 trong list
+        f = _fe(1, 1000.0, 1250.0, (100.0, 150.0, 90.0))  # thừa 90 trong list
         with pytest.raises(CanDoiFoldError, match="KHÔNG cân đối"):
             kiem_can_doi_fold(f)
 
     @pytest.mark.parametrize("start", [0.0, -100.0])
     def test_starting_balance_khong_duong_thi_raise(self, start: float) -> None:
         with pytest.raises(CanDoiFoldError, match="starting_balance"):
-            kiem_can_doi_fold(FoldEquity(1, start, start, ()))
+            kiem_can_doi_fold(_fe(1, start, start, ()))
 
     def test_fold_khong_co_lenh_nao_van_can_doi(self) -> None:
         # Fold không sinh lệnh nào là kết quả HỢP LỆ (và với 19-47 lệnh/
         # fold theo DR-D3-01 thì không phải chuyện lạ) — không được raise.
-        kiem_can_doi_fold(FoldEquity(1, 1000.0, 1000.0, ()))
+        kiem_can_doi_fold(_fe(1, 1000.0, 1000.0, ()))
 
 
 class TestNhanKhongPhaiCong:
@@ -111,8 +129,8 @@ class TestNhanKhongPhaiCong:
         chỉ các điểm GIỮA là bịa. Đó là lý do `ghep_duong_von()` từ chối
         thay vì tự sắp xếp."""
         dao = (
-            FoldEquity(1, 1000.0, 1500.0, (500.0,)),
-            FoldEquity(2, 1000.0, 2000.0, (1000.0,)),
+            _fe(1, 1000.0, 1500.0, (500.0,)),
+            _fe(2, 1000.0, 2000.0, (1000.0,)),
         )
         duong = ghep_duong_von(dao, von_ban_dau=1000.0)
         assert duong[-1] == pytest.approx(3000.0)  # tổng giống hệt
@@ -139,14 +157,14 @@ class TestGhepFoldFailClosed:
     def test_fold_chua_can_doi_thi_khong_duoc_ghep(self) -> None:
         # Ghép một fold chưa cân đối = nhân một số đã biết là sai vào toàn
         # bộ phần đuôi đường vốn.
-        hong = FoldEquity(1, 1000.0, 9999.0, (100.0,))
+        hong = _fe(1, 1000.0, 9999.0, (100.0,))
         with pytest.raises(CanDoiFoldError, match="KHÔNG cân đối"):
             ghep_duong_von((hong,), von_ban_dau=1000.0)
 
     def test_tai_khoan_chay_thi_TU_CHOI_ghep_tiep(self) -> None:
         """`final_balance <= 0`: hệ số <= 0 nhân vào sẽ làm đổi dấu mọi
         điểm phía sau và cho ra đường vốn vô nghĩa."""
-        chay = FoldEquity(1, 1000.0, -50.0, (-1050.0,))
+        chay = _fe(1, 1000.0, -50.0, (-1050.0,))
         with pytest.raises(CanDoiFoldError, match="cháy"):
             ghep_duong_von((chay, _fold(2, 1000.0, (100.0,))), von_ban_dau=1000.0)
 

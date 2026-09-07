@@ -15,6 +15,7 @@ tức sau khi đã tin nó suốt nhiều tháng.
 from __future__ import annotations
 
 import sys
+from datetime import timedelta
 from pathlib import Path
 
 import pytest
@@ -33,6 +34,21 @@ CFG = load_tool_d_config(REPO_ROOT / DEFAULT_CONFIG_PATH)
 SAN = san_lenh_moi_fold(CFG)
 
 
+def _fe(fold: Fold, final: float, pnl: tuple[float, ...]) -> FoldEquity:
+    """TD-0148 — bộ chạy giả khai phạm vi ngày HỢP LỆ cho chính fold đó:
+    từ `train_start` tới `test_end - 1 ngày` (cửa sổ fold là NỬA MỞ còn
+    `observed_*` BAO GỒM hai đầu). Ca kiểm phạm vi sai nằm ở
+    `tests/lock/test_td0148_*`, không ở đây."""
+    return FoldEquity(
+        chi_so=fold.chi_so,
+        starting_balance=1000.0,
+        final_balance=final,
+        pnl_abs=pnl,
+        observed_start=fold.train_start,
+        observed_end=fold.test_end - timedelta(days=1),
+    )
+
+
 class BoChayDem:
     """Bộ chạy giả có ĐẾM — biến 'không chạy lại' thành thứ đo được."""
 
@@ -46,12 +62,7 @@ class BoChayDem:
         self.so_lan_goi += 1
         self.fold_da_chay.append(fold.chi_so)
         pnl = tuple([self.lai] * self.so_lenh)
-        return FoldEquity(
-            chi_so=fold.chi_so,
-            starting_balance=1000.0,
-            final_balance=1000.0 + sum(pnl),
-            pnl_abs=pnl,
-        )
+        return _fe(fold, 1000.0 + sum(pnl), pnl)
 
 
 def _chay(thu_muc: Path, bo_chay: BoChayDem, **doi):
@@ -187,12 +198,7 @@ class TestLZ47FailClosed:
         class BoChayLech(BoChayDem):
             def __call__(self, fold: Fold) -> FoldEquity:
                 self.so_lan_goi += 1
-                return FoldEquity(
-                    chi_so=fold.chi_so,
-                    starting_balance=1000.0,
-                    final_balance=9999.0,  # không khớp Σ pnl_abs
-                    pnl_abs=(1.0,) * 40,
-                )
+                return _fe(fold, 9999.0, (1.0,) * 40)  # không khớp Σ pnl_abs
 
         with pytest.raises(CanDoiFoldError):
             _chay(thu_muc, BoChayLech())
@@ -213,14 +219,8 @@ class TestLZ47FailClosed:
                 self.so_lan_goi += 1
                 if fold.chi_so < 3:
                     pnl = (1.0,) * 40
-                    return FoldEquity(
-                        chi_so=fold.chi_so, starting_balance=1000.0,
-                        final_balance=1000.0 + sum(pnl), pnl_abs=pnl,
-                    )
-                return FoldEquity(
-                    chi_so=fold.chi_so, starting_balance=1000.0,
-                    final_balance=9999.0, pnl_abs=(1.0,) * 40,  # lệch cân đối
-                )
+                    return _fe(fold, 1000.0 + sum(pnl), pnl)
+                return _fe(fold, 9999.0, (1.0,) * 40)  # lệch cân đối
 
         with pytest.raises(CanDoiFoldError):
             _chay(thu_muc, LechOFold3())
