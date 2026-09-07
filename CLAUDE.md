@@ -191,16 +191,23 @@ với dòng phiên kia đang gõ dở cùng lúc — đã gây ít nhất 3 lầ
 > Mục này có thể lệch nhịp vài phút so với phiên kia — luôn `git log --oneline` +
 > đọc lại `TASKS.md` (cột 🔓/🔒/✅) trước khi chọn việc tiếp theo, đừng chỉ tin mục này.
 
-**Đang ở (cập nhật 07/09/2026, phiên Idea Queue):** **TD-0118 xong phần code, CHƯA đóng.**
-Chốt hai điều về hàng chờ ý tưởng: (1) trần Ngân sách A = **5 suất/quý dùng chung Tool A + D**
-(dòng “1/quý” ở §9c.7.4 là nhịp khuyến nghị, không phải trần cứng); (2) `L-Z17` nới thành
-**cảnh báo, không chặn chạy** (`WARN_ONLY_CODES`) — sửa có ý thức dòng H16, **`L-Z16` giữ chặn cứng**.
-Docker 492 → **497 passed**. Ghi `MT-11` + cập nhật `OQ-07` + dòng Lịch sử vào `back-end-note.md`
-đã **ghi trên đĩa nhưng CHƯA commit**: phiên kia đang có dòng `OQ-12` chưa commit trong cùng file
-(đúng ca N12) — commit khi phiên kia xong, rồi mới đổi TD-0118 sang ✅.
-**Còn treo, chờ chủ dự án duyệt:** thêm 4 trường cho tờ đơn ý tưởng (`tin_hieu`/`quy_tac`/
-`nguong_bac_bo`/`so_bien_the`) — là **sửa spec §9c.7.3**; và công cụ nộp đơn (làm SAU khi chốt
-cấu trúc tờ đơn). Ghi nhận: trần **nhập** queue 10 ý tưởng/quý hiện **chưa có test khoá nào** thi hành.
+**Đang ở (cập nhật 07/09/2026, phiên Idea Queue):** **TD-0118 + TD-0119 ✅ đóng.**
+Ba quyết định về hàng chờ ý tưởng, đều đã ghi sổ và có máy canh:
+1. **MT-11** — trần Ngân sách A = **5 suất/quý dùng chung Tool A + D** (dòng “1/quý” ở §9c.7.4 là
+   nhịp khuyến nghị, không phải trần cứng); `L-Z17` nới thành **cảnh báo, không chặn chạy**
+   (`WARN_ONLY_CODES`) — sửa có ý thức dòng H16. **`L-Z16` giữ chặn cứng** (chống nhiễm dữ liệu,
+   không phải kỷ luật cá nhân), có test canh riêng để không bị nới lây.
+2. **MT-12** — sửa đặc tả §9c.7.3: tờ đơn ý tưởng **hai cửa**. Cửa NỘP rẻ (+ `phep_thu_du_kien`),
+   cửa CHỌN chặt (`tin_hieu`/`quy_tac`/`nguong_bac_bo`/`so_bien_the`, fail-closed). `so_bien_the`
+   **nối vào sổ trial** qua `hypothesis_slot = IQ-xxxx` → máy đếm CONSUMED ≤ số đã khai, không
+   nhận lời khai suông (cùng bài học MT-10).
+3. **OQ-13** — kênh đề xuất đổi tham số khi đã chạy (§12c.3/§12d): luật đủ nhưng **`L-Z26` chưa có
+   một dòng code nào** và chưa có sổ ghi đề xuất. Không chặn D2, **phải xong trước D11 (dry-run)**.
+Docker: **615 passed, 0 failed**. Nguyên tắc phải nhớ khi làm tiếp (§12d.2): ranh giới hợp lệ
+**không phải “ai bấm nút”** mà là **“không gian tìm kiếm có bị chặn TRƯỚC không”** — “LLM đề xuất,
+người duyệt” một mình KHÔNG đủ. Còn treo: **OQ-07** (tiêu chí chọn của quý, phải niêm phong trước
+khi mở queue) và **công cụ nộp đơn** (làm sau, giờ đã có cấu trúc tờ đơn để dựa vào). Ghi nhận:
+trần **nhập** queue 10 ý tưởng/quý vẫn **chưa có test khoá nào** thi hành.
 *(Đoạn “Đang ở” cũ bên dưới giữ nguyên làm lịch sử.)*
 
 **Đang ở (cập nhật 07/09/2026):** 🚪 **D1 ĐÓNG — tag `d1-complete`, gỡ blocker B2.** Hai nhánh
