@@ -549,3 +549,24 @@ Suite Docker: không đổi (492 passed) — đây là thực nghiệm CLI, khô
 xuất nào. File tạm (`td0113_make_data.py`, `td0113_config.json`, dữ liệu feather trong `.tmp/`, các
 `backtest-result-*.zip`) đã xoá sau khi trích xong số liệu ở trên — công thức dựng lại đầy đủ nằm
 trong bảng trên nếu cần tái hiện.
+
+## 07/09/2026 — TD-0121 (D2): DG8 Time Stop — đóng vị thế vô điều kiện khi hết hạn giữ lệnh
+
+Dựng `src/tool_d/time_stop.py` (§4b, spec dòng 1445-1539): `is_time_stop_triggered()` quyết định
+DG8 chỉ dựa trên `bars_since_tranche1 >= max_hold_bars` — CỐ Ý không có tham số nào về lãi/lỗ,
+`trend_dir`, hay ZSS, vì spec nói rõ mỗi ngoại lệ thêm vào là một bậc tự do mới, và chính ngoại lệ
+"đang lãi thì cho ở lại" là cách một time stop bị vô hiệu hoá trong thực tế (dòng 1461-1463).
+`hold_duration_bars()` dùng chung công thức, không nhánh theo lý do đóng — áp dụng đều cho TP/SL/
+DG6/DG7/DG8 (L-Z19, dựng phân bố hold cho §10.2).
+
+19 test khoá (`test_lz18_time_stop_ceiling.py`, `test_lz19_hold_duration_recorded.py`): chữ ký hàm
+không có "cửa" ngoại lệ (kiểm bằng `inspect.signature`); biên chính xác — kích hoạt ĐÚNG BẰNG
+`max_hold_bars`, không sớm/muộn hơn (parametrize nhiều giá trị `max_hold_bars`); vượt biên (kiểm trễ
+một nến) vẫn kích hoạt — không có khái niệm "quá hạn nên thôi"; `hold_duration_bars` tính đúng bất
+kể `exit_tag` (TP1/TP2/STOP_LOSS/DG6/FUNDING_STOP/TIME_STOP).
+
+`max_hold_bars` đọc từ `tier_b.max_hold_bars_4h` (đã có sẵn trong `tool_d_config.yaml`, mục #11) —
+hàm không hardcode, người gọi tự đọc config truyền vào, giữ đúng pattern thuần của
+`zone_detection.py`/`zone_strength.py`. Việc nối vào `IStrategy` thật là của TD-0114.
+
+Suite Docker: 532 passed (gồm cả code TD-0119 của phiên song song đang làm dở, chưa commit).
