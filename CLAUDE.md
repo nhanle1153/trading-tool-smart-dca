@@ -199,17 +199,25 @@ CTRL" là đặc quyền — phải thuộc ĐÚNG MỘT dạng *tái lập* (ha
 (`ctrl_output_whitelist`), máy đối chiếu chứ không nhận lời khai. Khai **cả hai** cũng bị từ chối.
 🔴 Làm **chặt hơn** kế hoạch: `CTRL_OUTPUT_ALLOWED` là danh sách **CHO PHÉP** chứ không phải blocklist
 chuỗi cấm — đúng chữ spec dòng 3605-3607; blocklist chỉ chặn được tên đã nghĩ ra trước.
-Docker: **720 → 735 passed, 0 failed** = đúng **+15**; baseline **đo lại ngay trước khi so** bằng
+Docker: **744 (baseline đo lại ngay lúc so) + 18 = 762 passed, 0 failed**; baseline **đo lại ngay trước khi so** bằng
 `--collect-only`, không lấy từ file (bài học "mốc 629 vs 624": hai phiên chạy song song thì mốc test
 của phiên kia dịch dưới chân mình). E6 sổ thật exit 0, `N_ĐÃ_DÙNG=4` không đổi, sổ vẫn 12 dòng.
 **Chọn việc này vì nó không giẫm hai phiên kia** — TD-0127 (việc 🔓 duy nhất lúc đó) phải sửa
 `audit_checks.py` + `trial_ledger_audit.py`, đúng hai file cả hai phiên đang gõ dở. TD-0130 chỉ đụng
 `registry.py` + 1 file test mới; `check_lz11` tự đúng theo vì nó gọi `ledger.n_used()`.
 
+🐛 **Bắt được một lỗi do CHÍNH phiên này gây ra, lúc đang soạn tài liệu:** commit đầu (`5d5ae82`)
+thêm hai khoá vào sự kiện RESERVE nhưng quên `trial_event.schema.json` — schema có
+`additionalProperties: false`, nên **dòng CTRL đầu tiên ghi vào sổ thật sẽ vi phạm chính schema mà
+audit dùng**. **735 test xanh vẫn không bắt được**, vì `test_registry_schemas.py` chỉ đối chiếu
+FIXTURE GÕ TAY, chưa dòng nào đối chiếu đầu ra THẬT của `reserve()`; sổ thật thì chưa có dòng CTRL
+nào để nổ. Vá ở `e6a67f1` + **3 test đối chiếu đầu ra thật với chính schema audit dùng** — đóng cả
+LỚP lỗi chứ không chỉ ca vừa gặp. Bài học rút ra rộng hơn TD-0130: **"suite xanh" không chứng minh
+cửa ghi và schema đồng ý với nhau**, nếu không có test nào bắt hai thứ đó nhìn nhau.
+✅ **Đã "chuẩn hóa và lưu"** (`1e8ae07`): MT-08 → ✅ đã thi hành; mục 8 back-end-note + mục 7/8
+ARCHITECTURE. Quyết định hoãn `tu-dien-du-lieu.md` tới D3.5 **giữ nguyên** (không thêm bảng CSDL nào).
+
 **Còn treo sau việc này:**
-- ⏳ **Chưa ghi `back-end-note.md`** — MT-08 cần thêm phần *"đã thi hành, commit `5d5ae82`"*. N9 đòi
-  lệnh **"chuẩn hóa và lưu"** và ba câu hỏi Phụ lục B.3 trả lời trong chat trước. **Chỉ mở rộng MT-08,
-  không tạo mục mới** — cùng một quyết định, chỉ bổ sung phần thi hành.
 - 🔓 **TD-0127** (`L-Z27` + `L-Z28`) vẫn chưa ai làm, hạn chót trước D11. Giờ hai phiên kia đã rời
   `audit_checks.py` thì nó hết va chạm.
 - 🧹 Hai thư mục rác ở gốc repo từ lệnh shell nhầm: `C:/` và `ls -la /`. Vẫn chờ đồng ý mới xoá.
