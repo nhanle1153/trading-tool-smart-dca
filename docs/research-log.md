@@ -1263,3 +1263,66 @@ dữ liệu báo *"sửa DR-D3-01 qua kênh L-Z26"*, nhưng `wfo_folds` nằm d�
 chắn đóng. Đặt fold dưới `tier_c` là ĐÚNG (cầu dao, không phải núm vặn); chỗ sai là câu hướng dẫn.
 (2) `cache.py:169` dùng `assert` trần cho một bất biến quan trọng — chạy Python chế độ tối ưu là nó
 biến mất; nên là `raise CacheError`.
+
+## 08/09/2026 — Rà TOÀN BỘ lớp canh bằng cách PHÁ THẬT: 19/19 đều có răng, và câu hỏi chẩn đoán sắc hơn
+
+**Câu hỏi chủ dự án đặt ra:** *"phép kiểm này đã bao giờ được cho ăn một đầu vào SAI để xem nó có đỏ
+không? — đó là thứ phân biệt lớp canh thật với lớp canh giả."*
+
+**Cách đếm bằng heuristic ĐÃ THẤT BẠI, ghi lại để không ai làm lại.** Đếm dấu hiệu cú pháp
+(`pytest.raises`, `assert not ...`) cho **20/46 file "không có ca sai"**. Nới heuristic theo tên test
+thì ra **0/46**. Hai con số mâu thuẫn nhau ⇒ phép đo vô giá trị. Nguyên nhân: ca sai được viết bằng
+vô số cách (`assert quet(mau_gia) == ["..."]`, `assert ma_thoat == 90`…) mà không mẫu cú pháp nào phủ
+hết. **Bài học: đừng đo một tính chất ngữ nghĩa bằng dấu hiệu cú pháp.**
+
+**Cách trả lời dứt khoát: PHÁ THẬT (mutation testing).** Clone repo ra lab riêng trong thư mục tạm
+(`git clone --local`, KHÔNG `cp -r` — bản chép đầu bị LỆCH GIỮA CHỪNG vì phiên khác đang sửa
+`equity.py` đúng lúc đó), mount vào `/workspace` (mount `/lab` vướng `safe.directory` của git),
+baseline 539 test lock xanh. Rồi phá đúng thứ mỗi lớp canh bảo vệ, chạy test canh nó, khôi phục.
+
+**Kết quả: 19 phép phá hợp lệ, 19/19 ĐỀU BỊ BẮT.** Gồm: ghép fold bằng CỘNG thay vì NHÂN; CTRL bị
+tính vào N; bỏ trần B3; cache lệch vân tay vẫn trả payload; timerange không bao giờ raise; đề xuất
+Cấp C được nhận; đơn vị đo bị cấm lọt vào `src/`; `IntParameter`; khung 15m; entrypoint thứ 9;
+`contribution=0`; chỉ số THIẾU mặc định thành số ĐẠT; trần lỗ thiếu thành 0.0; best-known thành số
+bịa; `verify_seal` bỏ qua hash lệch; `dedup_key` nhận trường rỗng; `render()` trả 0.0 cho "chưa đo"
+(cả ở tầng hàm lẫn ở báo cáo E5 thật); bỏ bất biến "chưa đo thì không mang giá trị".
+
+🔴 **HAI LẦN MÁY BÁO "XANH" ĐỀU LÀ NGƯỜI PHÁ SAI, KHÔNG PHẢI LỚP CANH GIẢ** — và đây là phần đáng ghi
+nhất: lần một sửa một dòng chú thích, lần hai đổi chuỗi `value` của một `Enum` mà `render()` không
+dùng. Cả hai **không đổi hành vi**, nên test xanh là ĐÚNG. Nếu tin ngay kết quả đầu tiên thì đã báo
+hai lớp canh tốt là "giả". **Phá xong phải tự hỏi: phép sửa của mình có thật sự đổi hành vi không?**
+Phiên song song cùng ngày mắc đúng dạng này hai lần (dữ liệu test sai bị tưởng là bug thật).
+
+**KẾT LUẬN LẬT NGƯỢC GIẢ THUYẾT BAN ĐẦU.** Nếu mọi lớp canh đều có răng thì ba sự cố trong ngày
+KHÔNG phải do lớp canh cùn. Nhìn lại cả ba:
+
+| Sự cố | Có ca sai không? | Cái thật sự thiếu |
+|---|---|---|
+| `trial_event.schema.json` không biết khoá mới (735 test xanh không bắt) | CÓ (fixture hỏng → bị từ chối) | chưa bao giờ cho ăn **đầu ra thật** của `reserve()` |
+| `L-Z55` ở `folds.kiem_folds()` | CÓ (fold dựng tay) | trên **đường thật** hai vế cùng nguồn → tự đúng |
+| `N12` mục 5 hở ở ca file MỚI | KHÔNG có phép kiểm máy nào | — |
+
+Điểm chung không phải "thiếu ca sai" mà là: **ca sai chỉ đi qua MẪU DỰNG TAY, chưa bao giờ đi qua
+ĐƯỜNG SẢN XUẤT THẬT.** Lớp canh sắc, nhưng chĩa nhầm hướng.
+
+🔑 **Câu hỏi chẩn đoán nâng cấp — dùng câu này từ nay:**
+*"Ca sai đó có đi qua ĐƯỜNG SẢN XUẤT THẬT không, hay chỉ qua một mẫu dựng tay?"*
+TD-0149 (đọc lại từ ĐĨA thay vì soi dict trong bộ nhớ) chính là câu trả lời đúng cho câu hỏi này.
+
+**Rà tiếp theo câu hỏi mới** — 29 file bị nghi "chỉ dùng mẫu tay" tách thành ba nhóm, KHÔNG phải 29
+lỗi:
+1. **~9 file quét thẳng cây nguồn thật** (L-Z32/33/37/39/46/48c, TD-0057, L-Z24, L-Z42) — hiện vật
+   được soi CHÍNH LÀ `src/` thật. Không phải khoảng hở; phép đo của tôi chỉ không nhận ra.
+2. **~10 file mà BỘ SINH THẬT CHƯA TỒN TẠI** (L-Z1/6/18/19/30/31/34/35/43, TD-0105) — bộ sinh là
+   chiến lược chạy trên dữ liệu, chưa viết. Mẫu tay là lựa chọn DUY NHẤT hôm nay. **Đây là nợ phải
+   trả khi bộ sinh ra đời (D3.5+), không phải lỗi hôm nay** — nhưng phải nhớ, vì đó đúng là lúc
+   khoảng hở loại này sinh ra.
+3. **Phần còn lại CÓ phủ đường thật, đôi khi ở FILE KHÁC.** Ví dụ `check_td0120` trông như chỉ chạy
+   trên đơn dựng tay, nhưng `test_td0124_cong_cu_nop_don.py` chạy nó trên đơn do `submit_idea()` THẬT
+   sinh ra. `L-Z13` gọi `append_access_record()` thật; `L-Z45` gọi `ghi_neu_chua_co()`/`ghi_nhieu()`
+   thật. **Bài học phụ: đo phủ sóng theo TỪNG FILE là sai đơn vị** — phủ sóng có thể nằm ở file khác.
+
+**Không tìm thấy khoảng hở loại "bộ sinh đã có mà chưa ai nối" nào còn sót**, ngoài ba cái đã tìm và
+đã đóng trong ngày (TD-0148, TD-0149, TD-0150). **Giới hạn của kết luận này, nói rõ:** phần đối chiếu
+chéo giữa các file làm TAY trên 4 file tiêu biểu, không phải cả 29 — nên đây là "không thấy", không
+phải "chứng minh không có".
