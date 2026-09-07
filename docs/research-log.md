@@ -1326,3 +1326,79 @@ lỗi:
 đã đóng trong ngày (TD-0148, TD-0149, TD-0150). **Giới hạn của kết luận này, nói rõ:** phần đối chiếu
 chéo giữa các file làm TAY trên 4 file tiêu biểu, không phải cả 29 — nên đây là "không thấy", không
 phải "chứng minh không có".
+
+---
+
+## 08/09/2026 — 🚪 GATE D3 ĐÓNG (TD-0147), tag `d3-complete`
+
+`registry/runtime_state.json.d3_complete = true`, sinh từ một lần chạy THẬT trong Docker
+(`E6 --close-d3-gate` qua service **`freqtrade`**, exit 0). Ba mục evidence đều `do-duoc` đúng
+nghĩa MT-10: `full_suite` **973 passed** · `test_khoa_d3` (L-Z47 22 · L-Z45 23 · TD-0148 14,
+**mỗi file chạy RIÊNG một lượt**) · audit sổ trial **5/14 đạt, 0 chưa đạt**. Chạy lại → exit
+**94**, từ chối ghi đè.
+
+### Ba điều lần chạy thật này dạy ra, không có cái nào thấy được từ code
+
+**1. 🔴 Ba cổng D1/D2/D3 đều ghi `git_sha` nhưng KHÔNG cổng nào kiểm cây làm việc có sạch không.**
+Lần chạy đóng cổng D3 ĐẦU TIÊN có 8 ca đỏ ở `test_lz27_lz28` + `test_td0130`; chạy lại riêng
+ngay sau đó: **40/40 xanh**. Nguyên nhân: suite của cổng chạy **6,5 phút**, đúng lúc phiên song
+song sửa dở `registry.py` (67 dòng chưa commit).
+
+Lần đó cổng từ chối vì suite đỏ. **Nhưng nếu các sửa đổi kia tình cờ không làm đỏ test nào thì
+cổng ĐÃ ĐÓNG, với `d3_git_sha` trỏ tới một commit KHÔNG chứa thứ vừa được kiểm** — bằng chứng
+tự mâu thuẫn: nó nói *"đã kiểm ở sha X"* trong khi cái được kiểm là *"X cộng vài file ai đó
+đang gõ dở"*. Cổng là hành động một chiều, nên không được để nó dựa vào may.
+
+Đã vá cho D3: từ chối khi cây có thay đổi chưa commit, kiểm **TRƯỚC** cả suite (từ chối sớm,
+không tốn 4 phút), và ghi `d3_cay_sach: true`.
+
+🔴 **Hạn chế KHÔNG sửa được của D1 và D2:** hai cổng đó đóng khi cây có sạch hay không thì
+**giờ không truy lại được**, vì chúng không ghi. Không sửa hai cổng đã đóng — chúng bất biến,
+sửa là viết lại bằng chứng đã niêm phong. Ghi nhận ở đây để người sau biết mức tin cậy của
+`d1_git_sha`/`d2_git_sha` thấp hơn `d3_git_sha`.
+
+**2. Chốt đầu tiên viết ra QUÁ CHẶT, và một chốt không bao giờ thoả được thì tệ hơn không có
+chốt.** Bản đầu dùng thẳng `GitInfo.is_clean`, mà `git status --porcelain` tính cả file CHƯA
+THEO DÕI — repo này luôn có ảnh chụp màn hình, `scratch_dl/`, `.playwright-mcp/` ở gốc. Chạy
+thật lần hai: cổng từ chối dù **không file theo dõi nào bị sửa**. Nếu để vậy, sớm muộn ai đó
+gỡ bỏ chốt.
+
+Sửa bằng cách phân loại đúng cái đang cần bảo vệ:
+- file **đã theo dõi** bị sửa/xoá/staged → LUÔN tính (đổi hành vi mà không nằm trong sha);
+- file **chưa theo dõi** → chỉ tính khi nằm trong `src/` `tests/` `entrypoints/` `config/`
+  `registry/schemas/`. Một file `.py` chưa commit trong `tests/` **vẫn được pytest thu** và
+  **vẫn không có trong commit** — đúng loại làm bằng chứng sai. Ảnh chụp màn hình thì không.
+
+Thông báo từ chối nay **liệt kê đúng file nào gây chặn**, để người đọc biết phải bảo ai commit.
+
+**3. Suite của repo KHÔNG độc lập với service Docker — "N passed" là phát biểu về MỘT service.**
+Lần chạy đầu tôi dùng service `lockbox` theo lời khuyên "E1/E2/E3 phải chạy qua `lockbox`". Lời
+khuyên đó đúng cho E1/E2/E3 (chúng gọi `verify_all_seals()`) nhưng **sai với E6**. Service
+`lockbox` là service DUY NHẤT *không che* `lockbox/data/` (dành cho E4 sau D9), nên 3 test vốn
+khẳng định *"dữ liệu lockbox phải bị che"* đỏ hoàn toàn đúng:
+`test_touch_lockbox.py::test_trong_container_tests_du_lieu_bi_che_nen_verify_fail` và 2 ca
+`test_run_backtest_cache.py`. Ai chạy nhầm service sẽ tưởng hồi quy.
+
+### Bẫy PASS RỖNG bắt được trong chính đợt này (cái thứ ba của khối D3)
+
+Fixture `_cay_sach` (autouse) thay `_thay_doi_anh_huong_phep_do` bằng lambda trả rỗng — nên lớp
+test kiểm CHÍNH hàm đó sẽ gọi bản GIẢ và xanh mà chưa bao giờ chạy vào logic phân loại. Giữ
+tham chiếu `PHAN_LOAI_THAT` từ lúc import. Cùng họ với hai ca trước: `flock` bị gỡ mà test đồng
+thời vẫn xanh (TD-0144), và schema chỉ soi fixture chứ không soi đầu ra thật (TD-0146).
+
+### Kiểm có răng, đủ ba lớp
+
+- Gộp ba file test cốt lõi vào MỘT lượt pytest → đúng ca `test_moi_file_chay_RIENG_khong_gop`
+  đỏ, 12 ca còn lại xanh. (Gộp lại thì một file bị xoá vẫn cho tổng > 0 nhờ hai file kia.)
+- Vô hiệu hoá tầng (b) của TD-0148 → đúng 5 ca đỏ, 9 ca tầng (a) xanh.
+- Đổi phép NHÂN thành CỘNG ở `equity.py` → đúng 4 ca đỏ, 18 ca xanh.
+
+### Phạm vi thật của cổng D3 — đọc sai chỗ này là hỏng cả D3.5
+
+`d3_han_che` (nhãn `nguoi-khai`) ghi thẳng: **cổng D3 chứng nhận BỘ ĐIỀU PHỐI H3-D đúng, KHÔNG
+chứng nhận đã có kết quả walk-forward.** Chưa có bộ chạy backtest thật (E2 dừng ở
+`EXIT_CHUA_CO_BO_CHAY`); mọi phép kiểm mới chỉ được nuôi bằng **bộ chạy GIẢ**. Và TD-0148 **vẫn
+tin lời khai của bộ chạy** — bộ chạy trả ngày *dự kiến* thay vì ngày *thật đọc từ dataframe* sẽ
+vô hiệu hoá nó hoàn toàn. Khi D3.5 viết bộ chạy thật: **bắt buộc đọc ngày từ dataframe, và phải
+có test khoá riêng cho đúng điều đó.**
+
