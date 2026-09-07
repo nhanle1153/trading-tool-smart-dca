@@ -191,6 +191,29 @@ với dòng phiên kia đang gõ dở cùng lúc — đã gây ít nhất 3 lầ
 > Mục này có thể lệch nhịp vài phút so với phiên kia — luôn `git log --oneline` +
 > đọc lại `TASKS.md` (cột 🔓/🔒/✅) trước khi chọn việc tiếp theo, đừng chỉ tin mục này.
 
+**Đang ở (cập nhật 07/09/2026, phiên L-Z27/L-Z28):** **TD-0127 ✅ đóng.** Chủ dự án chốt phạm vi
+**làm phần đo được ngay** thay vì hoãn tới D3.5 — vì cả hai luật đo bằng SỐ LỆNH ĐÃ ĐÓNG mà Tool D
+chưa có lệnh live nào.
+- **L-Z27 làm TRỌN VẸN**, và phần mạnh nhất **không phải phép kiểm lúc audit**: `TrialLedger`
+  bỏ hẳn tham số `n_tai_sinh`, chỉ nhận `so_lenh_da_dong` rồi tự áp `min(floor(lệnh/25), 20)`.
+  *"Tăng B3 bằng tay"* thành **không biểu diễn được**, thay vì bị chặn sau khi đã xảy ra — một phép
+  kiểm có thể bị bỏ qua, một tham số không tồn tại thì không ai truyền vào được.
+- **L-Z28 fail-closed:** đề xuất đã APPLIED mà không chứng minh được là rơi đúng điểm quyết định →
+  **BÁO ĐỎ**. Im lặng ở đây nghĩa là tham số đã đổi thật trên tiền thật mà không ai kiểm được.
+- 🔎 Ngoại lệ **DR-012 Hạng 1 cố ý KHÔNG thêm ô khai nào**: Hạng 1 là *lỗi code không khớp spec*,
+  sửa tự do 0 trial, **không phải đổi tham số** → không bao giờ vào sổ đề xuất. Thêm ô *"đây là sửa
+  lỗi"* sẽ mở đúng cái cửa L-Z28 sinh ra để đóng.
+Docker: **817 baseline + 22 = 839 collected, 838 passed**. E6 sổ thật exit 0, **4/12 → 5/14**.
+🔴 **Vì sao §12c.3 (Cấp B cần HAI điểm quyết định LIÊN TIẾP) vẫn chưa kiểm được — nay đã rõ nguyên
+nhân gốc:** sổ đề xuất **không có trường nào neo vào điểm quyết định**, mà neo được thì cần số lệnh
+live. Nối nguồn số lệnh (DB Freqtrade) là việc **D3.5+**, đã ghi vào TASKS.
+⚠️ **Bắt được 1 test đỏ KHÔNG thuộc đợt này:** L-Z46 bắt chuỗi `profit_ratio` trong
+`src/tool_d/wfo/equity.py` — file **chưa commit của phiên song song**, chuỗi nằm ở **dòng chú thích
+giải thích chính lệnh cấm** (đúng hình dạng L-Z25/`hyperopt` của TD-0125). Đã báo phiên đó kèm tiền
+lệ *diễn đạt lại, không nới phép kiểm*; **không tự sửa file đang dở của người khác** (N12).
+*(Đoạn "Đang ở" cũ bên dưới giữ nguyên làm lịch sử.)*
+
+
 **Đang ở (cập nhật 07/09/2026, phiên kế toán CTRL):** **TD-0130 ✅ đóng — MT-08 đã có máy thi hành.**
 Đây là việc *đã CHỐT từ 07/09 nhưng 0 dòng code*: chính sách "CTRL không tính vào N" nói ở 5 chỗ trong
 spec, chốt ở MT-02 rồi MT-08, mà `registry.py` vẫn cộng CTRL vào `n_used()` và chặn ghi điểm kiểm soát
