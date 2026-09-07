@@ -1198,3 +1198,68 @@ kiểm hộ — nhưng chỉ vì họ có bằng chứng đối chứng (9 commi
 `CLAUDE.md` mục **N12** hiện chỉ nói về `git add -A` và về nội dung file bị chụp nhầm; nó **không
 nói gì về index dùng chung**, mà đó mới là cửa đã sập lần này. Sửa quy tắc trong `CLAUDE.md` là
 quyết định của chủ dự án — đã báo, không tự sửa.
+
+## 07/09/2026 — Rà soát độc lập khối D3: `L-Z55` trông như đang canh, nhưng gần như không canh gì
+
+**Bối cảnh.** Backlog hết việc rảnh, chủ dự án giao rà soát độc lập khối D3 (TD-0140→TD-0146) trước
+khi cổng D3 đóng. Phiên rà soát **không viết dòng nào** trong khối này — ba phiên khác viết — nên
+ngữ cảnh vốn đã sạch theo đúng nghĩa quy tắc 18 nhắm tới.
+
+**Kết luận chung: chất lượng cao.** Hai chỗ đáng ghi vì chúng chống đúng loại lỗi khó: test `L-Z47`
+dựng số sao cho CỘNG và NHÂN cách xa nhau (2500 vs 3000) — số hiền thì code cộng nhầm vẫn xanh;
+`cache.py` tách `STALE` khỏi `MISS` — gộp lại thì kết quả vẫn đúng nên không test nào đỏ, mà mất
+đúng tín hiệu "có gì đó đổi ngoài ý muốn". 102 test D3 xanh.
+
+**Phát hiện chính (→ TD-0148).** `folds.kiem_folds()` gọi `assert_dataset_timerange()` và docstring
+module quảng cáo điều đó như một tính năng đầu bảng. Nhưng cả hai vế của phép so sánh đều suy từ
+`wfo.start`: `train_start` CHÍNH LÀ `wfo.start`, `test_end` là `wfo.start` + số ngày từ config, biên
+cũng từ `wfo`. Đúng cái bẫy mà `DatasetBoundary` **tự cảnh báo trong docstring của chính nó**:
+*"KHÔNG được tính boundary từ cùng nguồn với observed — nếu cả hai đến từ cùng chỗ không đáng tin,
+hàm này không bảo vệ được gì."* Phép kiểm chỉ có thể đỏ khi phép cộng vượt `wfo.end`, mà điều đó đã
+được `can_ngay > co_ngay` bắt ở dòng trên. Nó chỉ có răng với danh sách fold **dựng tay** (đường test
+đi) — không có răng với danh sách do `sinh_folds()` sinh.
+
+Nặng hơn: phép kiểm ở tầng **dữ liệu thật** không được gọi ở đâu trong đường chạy WFO (`run_wfo.py`,
+`orchestrator.py` — grep sạch).
+
+**Gốc rễ không phải "ai đó quên gọi".** Bộ chạy backtest được tiêm vào dưới dạng
+`Callable[[Fold], FoldEquity]`, mà `FoldEquity` chỉ có `starting_balance`/`final_balance`/`pnl_abs`
+— **không mang một mẩu thông tin nào về dữ liệu đã thật sự đọc**. Orchestrator không thể kiểm kể cả
+khi muốn: kiểu dữ liệu không có chỗ để đặt câu hỏi đó.
+
+**Vì sao đáng dừng lại.** Không phải lo xa: TD-0093 (cùng ngày) đã ghi rằng
+`download-data --timerange` KHÔNG cắt file — nến vùng LOCKBOX (tới 2026-09-05) đang nằm sẵn trong
+đúng thư mục WFO sẽ đọc, và `--timerange` chỉ LỌC lúc backtest đọc lại. Một lần khai sai cận trên là
+lọt, im lặng. LOCKBOX chỉ được chạm ĐÚNG MỘT LẦN (D9.5) — chạm nhầm thì không có đường lùi.
+
+**Mức nghiêm trọng, nói cho cân:** hôm nay **không sai số nào** (chưa có bộ chạy backtest thật). Nó
+cắn ở lần chạy WFO thật đầu tiên (D3.5+). Nên không gấp hôm nay, nhưng **phải xong trước khi cổng D3
+đóng** — vì cổng đóng là lúc mọi người thôi nhìn phần này.
+
+**Chủ dự án chốt phương án A + C** (bốn phương án đã cân: A đổi kiểu dữ liệu; B để tới D3.5; C chỉ
+nói lại cho đúng; D tiêm thêm callback riêng):
+- **A** — `FoldEquity` mang `observed_start`/`observed_end` BẮT BUỘC; `chay_wfo()` kiểm hai tầng
+  (trong biên WFO **và** trong đúng cửa sổ của chính fold đó) trước `L-Z47`. Tầng thứ hai chặt hơn
+  và bắt thêm **rò rỉ giữa các fold**, thứ L-Z55 nguyên bản không phủ. → **TD-0148**, chặn cổng D3.
+- **C** — hạ lời tuyên bố trong docstring `folds.py` xuống đúng sự thật (làm ngay, commit này).
+
+**Ba điều ghi rõ để không lặp lại chính sai lầm đang sửa:**
+1. Ngay cả A cũng **chưa bảo đảm gì trên dữ liệu thật** tới D3.5 — bộ chạy thật chưa tồn tại, phép
+   kiểm mới chỉ được nuôi bằng bộ chạy giả. *Cơ chế* tại chỗ ≠ *bảo đảm* có thật.
+2. A **vẫn tin lời khai của bộ chạy**. Bộ chạy trả ngày *dự kiến* thay vì ngày *thật đọc được* sẽ vô
+   hiệu hoá nó → bộ chạy thật (D3.5) bắt buộc đọc từ dataframe, và phải có test khoá riêng.
+3. Bẫy lệch quy ước: cửa sổ fold **nửa mở** `[start, end)` vs ngày từ dataframe **bao gồm hai đầu**.
+   Trộn hai quy ước là lệch đúng một ngày — mà một ngày ở đây là một ngày dữ liệu tương lai.
+
+**Hình dạng lỗi lặp lần thứ ba trong ngày:** *thứ trông như đã được canh, nhưng chưa ai thử xem nó
+có canh thật không.* Hai lần trước: (a) `trial_event.schema.json` không biết khoá mới mà 735 test
+xanh không bắt được, vì test chỉ đối chiếu fixture gõ tay chứ chưa lần nào đối chiếu ĐẦU RA THẬT;
+(b) `N12` mục 5 viết ra đã hở đúng ở ca file MỚI. Điểm chung: **lớp bảo vệ giả nguy hơn không có lớp
+nào**, vì có nó thì người ta thôi cảnh giác.
+
+**Hai phát hiện phụ (chưa mở task, đã báo phiên chủ quản):** (1) `folds.py` khi sơ đồ fold không vừa
+dữ liệu báo *"sửa DR-D3-01 qua kênh L-Z26"*, nhưng `wfo_folds` nằm dưới `tier_c` mà
+`param_proposals` **từ chối thẳng** mọi đề xuất chạm `tier_c` — hướng dẫn chỉ vào một cánh cửa chắc
+chắn đóng. Đặt fold dưới `tier_c` là ĐÚNG (cầu dao, không phải núm vặn); chỗ sai là câu hướng dẫn.
+(2) `cache.py:169` dùng `assert` trần cho một bất biến quan trọng — chạy Python chế độ tối ưu là nó
+biến mất; nên là `raise CacheError`.

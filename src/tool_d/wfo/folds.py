@@ -13,6 +13,29 @@ thật thứ hai cho cùng một ràng buộc, đúng thứ TD-0094 đã tránh 
 lần (xem `docs/research-log.md` 07/09/2026: bản `enforce_timerange_ceiling()`
 viết ra rồi xoá, không commit).
 
+⚠️ **ĐỪNG ĐỌC ĐOẠN TRÊN THÀNH "L-Z55 ĐÃ ĐƯỢC NỐI"** (đính chính sau lần rà
+soát độc lập 07/09/2026 — TD-0148). Lời gọi `assert_dataset_timerange()`
+trong `kiem_folds()` chỉ kiểm **KẾ HOẠCH**, không kiểm **DỮ LIỆU**, và với
+danh sách fold do `sinh_folds()` sinh ra thì nó **gần như luôn đúng theo
+cấu tạo**: `train_start` CHÍNH LÀ `wfo.start` và `test_end` là `wfo.start`
+cộng số ngày từ config, rồi đem so với biên cũng lấy từ `wfo`. Tức cả hai
+vế cùng một nguồn — đúng cái bẫy `DatasetBoundary` tự cảnh báo (*"KHÔNG
+được tính boundary từ cùng nguồn với observed... hàm này không bảo vệ được
+gì"*). Phần việc thật ở đây do phép kiểm sức chứa (`can_ngay > co_ngay`)
+làm, không phải do L-Z55.
+
+Nó **không vô dụng**: với danh sách fold DỰNG TAY hoặc bị sửa hỏng (đường
+mà test khoá đi), hai vế độc lập thật và phép kiểm có răng.
+
+🔑 **Phép kiểm L-Z55 ĐÚNG NGHĨA — đọc `[observed_start, observed_end]` THẬT
+từ dataframe đã tải rồi đối chiếu biên — hiện CHƯA được gọi ở đâu trong
+đường chạy WFO.** Đó là **TD-0148**, và nó chặn cổng D3. Lý do gốc không
+phải ai quên gọi: `FoldEquity` (kiểu trả về của bộ chạy tiêm vào
+`chay_wfo()`) không mang thông tin ngày nào, nên orchestrator **không có
+chỗ** để đặt câu hỏi đó. Mối đe doạ là thật và đã xảy ra một lần — TD-0093:
+`download-data --timerange` không cắt file, nến vùng LOCKBOX đang nằm sẵn
+trong đúng thư mục mà WFO sẽ đọc.
+
 🔴 **Fail-closed toàn tuyến:** thiếu khoá cấu hình → raise; sơ đồ không
 vừa cửa sổ → raise; cửa sổ test chồng lấn → raise. KHÔNG tự cắt bớt,
 KHÔNG tự đoán mặc định, KHÔNG tự co số fold cho vừa — mọi hành vi "tự
