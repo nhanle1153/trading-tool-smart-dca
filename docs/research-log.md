@@ -595,3 +595,54 @@ báo, và test sẽ bắt được ngay).
 người gọi tự đọc config/kế hoạch truyền vào, đúng pattern thuần của các module DG khác.
 
 Suite Docker: 559 passed.
+
+## 07/09/2026 — TD-0114: bug thật bắt được bằng backtest thật (L-Z49) — custom_data khởi tạo từ dataframe đã merge không đáng tin
+
+Dựng `ZoneAbsorptionMinimal.py` — chiến lược TỐI THIỂU THẬT (LONG only), tái dùng nguyên vẹn
+`zone_detection`/`zone_strength` (Khối 11) + `dg6_early_invalidation`/`funding_stop`/`time_stop`
+(TD-0121/0122/0123) + `trade_plan` (kế hoạch tranche mới, TD-0114). Mục tiêu: chứng minh bằng
+backtest THẬT rằng kế hoạch ghi lúc tranche 1 khớp (`trade.custom_data`) sống sót nguyên vẹn qua
+callback tranche 2/3 (`adjust_trade_position`) và `custom_exit` (L-Z49).
+
+**Cơ chế kiểm từ BÊN NGOÀI:** mọi lệnh (entry 1/2/3) của cùng một trade phải mang cùng JSON kế
+hoạch làm order tag — nếu `custom_data` bị mất/lệch, tag đọc lại ở tranche 2/3 sẽ khác `enter_tag`
+của tranche 1, lộ ra ngay trong file backtest xuất ra mà không cần tin lời code.
+
+**Chạy thật lần 1 (2 mã 1000BONK/1000PEPE, 2024-06-01→2025-06-01, dữ liệu CALIB thật):** 34 trade,
+25 trade nhiều tranche. Đối chiếu tag: **2/25 trade (8%) có tag KHÔNG khớp** giữa tranche 1 và
+tranche 2/3 — đúng loại lỗi L-Z49 sinh ra để bắt.
+
+**Nguyên nhân (xác nhận bằng debug log trực tiếp trên trade lỗi):** phiên bản đầu, khi
+`trade.custom_data` còn trống, tái tạo kế hoạch bằng cách đọc "hàng cuối" của dataframe đã merge
+từ khung 4H (`merge_informative_pair(ffill=True)`). `ffill` chỉ giữ giá trị hợp lệ TRONG đúng cửa
+sổ 4H của chính zone đó. Lệnh chờ tranche 1 là post-only, tối đa 3 nến 1H chờ khớp (§3.5) — nếu
+lệnh khớp SAU khi đã lăn sang cửa sổ 4H kế tiếp (cửa sổ đó chưa có zone mới → cột trở lại NaN),
+`get_analyzed_dataframe().iloc[-1]` tại đúng lúc khớp đọc phải NaN (hoặc tệ hơn, một zone MỚI khác
+đã xác nhận ở cửa sổ đó). Debug log xác nhận trực tiếp: một trade mở lúc `2024-08-16 11:00` liên
+tục đọc `p1_4h = nan` ở MỌI lần gọi `adjust_trade_position`/`custom_stoploss` suốt 3 ngày — tức
+`custom_data` chưa từng khởi tạo thành công cho tới khi giá chạm `p2`, lúc đó "hàng cuối" đã thuộc
+một zone hoàn toàn khác.
+
+**Sửa:** đổi nguồn KHỞI TẠO kế hoạch sang `trade.enter_tag` — Freqtrade chốt cứng giá trị này vào
+lệnh lúc TẠO (đúng nến tín hiệu, dữ liệu còn hợp lệ), không đọc lại dataframe về sau. Mã hoá 6
+trường giá (`zone_low/high`, `p1/p2/p3/sl`) thành JSON gọn (`_ma_hoa_ke_hoach`), giải mã
+(`_giai_ma_ke_hoach`) khi cần khởi tạo `custom_data` lần đầu. Sau lần khởi tạo đó, MỌI lần đọc sau
+đi qua `trade.custom_data` như thiết kế ban đầu — đây mới đúng là phần L-Z49 thật sự kiểm (dữ liệu
+ĐÃ ghi có sống sót qua nhiều lần đọc không, không phải "tính lại có ra cùng số không").
+
+**Chạy lại sau khi sửa (cùng dữ liệu, cùng cấu hình):** 34 trade, 27 trade nhiều tranche, **0/27
+mismatch**. `docker compose run --rm tests` toàn bộ suite: 587 passed (loại trừ 1 file đang được
+tab song song sửa dở, xác nhận bằng `git status` không phải của phiên này).
+
+**Bài học:** đây đúng dạng lỗi LD-04/LD-12 nói chung — một cơ chế "trông đúng" (đọc dataframe đã
+tính sẵn) chỉ đúng trong trường hợp phổ biến (khớp lệnh nhanh, cùng cửa sổ), và chỉ lộ ra khi backtest
+chạy đủ dài để gặp ca lệnh khớp trễ. Không thể phát hiện bằng đọc code hay test đơn vị hàm thuần —
+chỉ bằng chạy backtest thật trên dữ liệu thật đủ dài, đúng lý do TD-0114 đòi hỏi "backtest thật",
+không chấp nhận mock.
+
+**Phạm vi CHƯA phủ** (ghi trong docstring `ZoneAbsorptionMinimal.py`, không giấu): LONG only (Short
+hoãn theo §3.3d); entry KHÔNG dùng Phần 2 (`trend_context`)/§3.3b (`entry_confirmation`) — hai
+module đó đã kiểm đúng độc lập (TD-0119/0120) nhưng nối vào tín hiệu vào lệnh thật cần thêm khung
+dữ liệu 1D/RSI, để dành cho chiến lược sản xuất; DG1-DG5 (gate kích hoạt tranche mới) chưa xây —
+tranche 2/3 kích hoạt thuần theo giá chạm p2/p3; DG6 điều kiện C/D luôn tắt (thiếu `trend_dir`/
+không áp dụng Long-only).
