@@ -229,6 +229,81 @@ def check_lz17_budget_a_slots_per_quarter(
     )
 
 
+
+# ── TD-0119 (MT-12) ───────────────────────────────────────────────────
+CUA_CHON_FIELDS = ("tin_hieu", "quy_tac", "nguong_bac_bo", "so_bien_the")
+
+
+def check_td0119_selected_du_phep_thu(
+    idea_queue_path: Path = DEFAULT_IDEA_QUEUE_PATH,
+) -> CheckResult:
+    """CỬA CHỌN (MT-12): dòng `status == SELECTED` phải khai đủ bốn
+    trường biến ý tưởng thành phép thử chạy được — `tin_hieu`,
+    `quy_tac`, `nguong_bac_bo`, `so_bien_the`.
+
+    Vì sao đặt ở cửa CHỌN chứ không phải cửa NỘP: một ý tưởng có thể
+    nằm chờ vài quý; bắt viết đủ phép toán cho cả 10 đơn/quý là làm 10
+    lần công cho 1 lần dùng, và con số viết lúc nộp sẽ lạc hậu. Điều
+    kiện của tiền-đăng-ký chỉ là "viết TRƯỚC khi thấy kết quả của CHÍNH
+    phép thử này" — lúc chọn vẫn thoả.
+
+    Fail-closed, cùng khuôn `selection_reason` đã có sẵn ở §9c.7.4.
+    """
+    entries = _read_jsonl(idea_queue_path)
+    selected = [e for e in entries if e.get("status") == "SELECTED"]
+    if not selected:
+        return CheckResult("TD-0119a", Measured.pending("chưa có ý tưởng nào được CHỌN"))
+
+    violations: list[str] = []
+    for e in selected:
+        for field in CUA_CHON_FIELDS:
+            gia_tri = e.get(field)
+            thieu = gia_tri is None or (isinstance(gia_tri, str) and not gia_tri.strip())
+            if thieu:
+                violations.append(f"{e['idea_id']}: SELECTED nhưng thiếu '{field}'")
+    return CheckResult(
+        "TD-0119a", Measured.ok(len(violations) == 0), evidence="; ".join(violations)
+    )
+
+
+def check_td0119_so_bien_the_khong_vuot_khai(
+    idea_queue_path: Path = DEFAULT_IDEA_QUEUE_PATH,
+    registry_path: Path = DEFAULT_REGISTRY_PATH,
+) -> CheckResult:
+    """`so_bien_the` khai ở cửa CHỌN phải được ĐỐI CHIẾU với sổ trial,
+    nếu không nó chỉ là lời khai (đúng loại sai lầm MT-10 vừa phải sửa).
+
+    Quy ước nối hai sổ: trial sinh ra từ một ý tưởng trong hàng chờ ghi
+    `hypothesis_slot = <idea_id>` (dạng `IQ-xxxx`). Số trial CONSUMED
+    mang slot đó phải ≤ số đã khai. Vượt = tiêu ngân sách N nhiều hơn
+    mức đăng ký trước — đúng thứ N=114 sinh ra để chặn.
+    """
+    entries = _read_jsonl(idea_queue_path)
+    khai = {
+        e["idea_id"]: e.get("so_bien_the")
+        for e in entries
+        if e.get("status") == "SELECTED" and e.get("so_bien_the") is not None
+    }
+    if not khai:
+        return CheckResult(
+            "TD-0119b", Measured.pending("chưa có ý tưởng CHỌN nào khai so_bien_the")
+        )
+
+    da_dung: Counter[str] = Counter()
+    for proj in TrialLedger(registry_path).projections().values():
+        if proj.state is TrialState.CONSUMED and proj.hypothesis_slot in khai:
+            da_dung[proj.hypothesis_slot] += 1
+
+    violations = [
+        f"{idea_id}: đã tiêu {da_dung[idea_id]} trial > {so_khai} đã khai"
+        for idea_id, so_khai in khai.items()
+        if da_dung[idea_id] > so_khai
+    ]
+    return CheckResult(
+        "TD-0119b", Measured.ok(len(violations) == 0), evidence="; ".join(violations)
+    )
+
+
 ALL_CHECKS = (
     "check_lz10_registered_before_executed",
     "check_lz11_n_used_le_n_dang_ky",
@@ -236,4 +311,6 @@ ALL_CHECKS = (
     "check_lz15_calibrate_params_have_status",
     "check_lz16_idea_queue_filter_and_tool_d_results",
     "check_lz17_budget_a_slots_per_quarter",
+    "check_td0119_selected_du_phep_thu",
+    "check_td0119_so_bien_the_khong_vuot_khai",
 )

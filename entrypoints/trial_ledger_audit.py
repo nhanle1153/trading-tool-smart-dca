@@ -42,6 +42,8 @@ from tool_d.ledger.audit_checks import (
     check_lz15_calibrate_params_have_status,
     check_lz16_idea_queue_filter_and_tool_d_results,
     check_lz17_budget_a_slots_per_quarter,
+    check_td0119_selected_du_phep_thu,
+    check_td0119_so_bien_the_khong_vuot_khai,
 )
 from tool_d.ledger.registry import DEFAULT_REGISTRY_PATH
 from tool_d.measurement.gitinfo import get_git_info
@@ -99,6 +101,8 @@ def run_audit(
         check_lz15_calibrate_params_have_status(config_path, status_path),
         check_lz16_idea_queue_filter_and_tool_d_results(idea_queue_path),
         check_lz17_budget_a_slots_per_quarter(idea_queue_path),
+        check_td0119_selected_du_phep_thu(idea_queue_path),
+        check_td0119_so_bien_the_khong_vuot_khai(idea_queue_path, registry_path),
     ]
 
     ok = sum(1 for r in results if r.ok)
