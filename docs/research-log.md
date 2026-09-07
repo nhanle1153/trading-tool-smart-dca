@@ -514,3 +514,38 @@ là lấy đúng giá trung bình mới nhất, không cần strategy tự tính
 bình, thêm code") không xảy ra.
 
 Suite Docker: 492 passed (không đổi, đọc source không sửa code chạy).
+
+## 07/09/2026 — TD-0113: thực nghiệm thật xác nhận `timeframe_detail=5m` tôn trọng thứ tự khớp thật
+
+Chi tiết đọc source + kết luận đầy đủ: `docs/freqtrade-source-read.md` mục 7 (D5). Tóm tắt phần
+thực nghiệm ở đây để dễ tái hiện mà không cần giữ lại script/dữ liệu tạm (đã xoá sau khi dùng — không
+phải bằng chứng cần giữ vĩnh viễn, khác các file thật của dự án).
+
+**Cách dựng:** 1 cặp tổng hợp (mượn `BTC/USDT` để qua được kiểm tra `pair_whitelist` của ccxt, dữ liệu
+hoàn toàn tự tạo, KHÔNG phải giá BTC thật), backtest spot cô lập (config/thư mục riêng, không đụng
+`config/freqtrade/config.json` thật). `TimeframeDetailProbe.py` (giữ lại trong `user_data/strategies/`,
+gắn nhãn THĂM DÒ) vào lệnh long ngay nến đầu, `minimal_roi={"0":0.01}`, `stoploss=-0.10`. Dữ liệu 1H:
+giờ 00:00-01:00 phẳng (giữ vị thế), giờ 02:00 dao động mạnh trong đúng MỘT nến (open=100 high=105
+low=85 close=90). Dữ liệu 5m tương ứng: 02:00-02:05 tăng lên 105 (đạt ROI SỚM), 02:25-02:30 sập xuống
+85 (chạm stoploss, XẢY RA SAU). Chạy backtest 2 lần, chỉ đổi cờ `--timeframe-detail`:
+
+| Chạy | `--timeframe-detail` | `exit_reason` | `profit_ratio` |
+|---|---|---|---|
+| A | *(không có)* | `stop_loss` | −0,1018 |
+| B | `5m` | `roi` | +0,00998 |
+
+**Cùng một nến 1H, cùng chiến lược, cùng lệnh — kết quả đảo hoàn toàn** chỉ vì bật `--timeframe-detail
+5m`. Xác nhận đúng giả định D5: KHÔNG có `timeframe_detail`, Freqtrade áp policy cố định "Stoploss
+trước ROI" trên biên độ của cả giờ gộp lại — SAI LỆCH so với thực tế đã đạt ROI sớm hơn rất nhiều so
+với lúc chạm đáy. CÓ `timeframe_detail`, nến 5m đầu tiên đủ để đóng lệnh bằng ROI trước khi vòng lặp
+đi tới nến sập giá.
+
+**Giới hạn residual đã ghi vào mục 8 của `docs/freqtrade-source-read.md`:** nếu SL và ROI cùng rơi vào
+đúng MỘT nến 5m (không phải hai nến 5m khác nhau như thực nghiệm trên), Freqtrade vẫn dùng policy cố
+định chứ không dò chronology thật — 5m thu hẹp cửa sổ mơ hồ từ 1H xuống 5m, không triệt tiêu hoàn
+toàn. Cần nhớ lại khi D3.5/D4 gặp tranche/SL/TP sát giá nhau.
+
+Suite Docker: không đổi (492 passed) — đây là thực nghiệm CLI, không phải pytest, không sửa code sản
+xuất nào. File tạm (`td0113_make_data.py`, `td0113_config.json`, dữ liệu feather trong `.tmp/`, các
+`backtest-result-*.zip`) đã xoá sau khi trích xong số liệu ở trên — công thức dựng lại đầy đủ nằm
+trong bảng trên nếu cần tái hiện.

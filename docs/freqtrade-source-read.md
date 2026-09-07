@@ -289,9 +289,81 @@ MT-03/MT-08 đã cảnh báo ở nơi khác của project này).
 
 ---
 
-## 7. Việc cần làm khi implement thật (không phải việc của TD-0028, ghi lại để không quên)
+## 7. D5 (TD-0113) — `timeframe_detail=5m`: thứ tự khớp khi nhiều mức giá cùng nằm trong nến 1H
+
+**Kết luận: XÁC NHẬN ĐÚNG, với một giới hạn quan trọng cần nói rõ.** `timeframe_detail` khiến thứ tự
+khớp giữa các nến 5m PHẢN ÁNH ĐÚNG trình tự thời gian thật — nhưng bên TRONG một nến 5m (đơn vị nhỏ
+nhất khả dụng), nếu nhiều điều kiện thoát cùng đúng, Freqtrade dùng một THỨ TỰ ƯU TIÊN CỐ ĐỊNH, không
+phải "dò xem cái nào xảy ra trước thật".
+
+**Đường dẫn:** `/freqtrade/freqtrade/optimize/backtesting.py` (vòng lặp nến chi tiết) +
+`/freqtrade/freqtrade/strategy/interface.py` (thứ tự ưu tiên thoát lệnh)
+
+**Cơ chế trải nến 1H thành các nến 5m — hoàn toàn tuần tự theo thời gian thật.**
+`_time_generator_det()` (dòng 1616) sinh `current_time` tăng dần đều bước `timeframe_detail_td` (5m)
+từ đầu tới cuối nến chính — không có cách nào đảo thứ tự:
+```python
+current_time = start_date
+i = 0
+while current_time <= end_date:
+    yield current_time, i == 0, True, i
+    i += 1
+    current_time += self.timeframe_detail_td
+```
+`get_detail_data()` (dòng 1582) cắt đúng các nến 5m thật nằm trong `[current_time, current_time+1h)`
+bằng `searchsorted` trên timestamp thật, không đoán. Vòng lặp tiêu thụ (`time_pair_generator_det`,
+dòng 1678) gọi `self.backtest_loop(row, pair, current_time_det, ...)` **một lần cho mỗi nến 5m**, theo
+đúng thứ tự sinh ra ở trên — cả kiểm khớp lệnh vào (`_try_close_open_order`, dùng lại đúng cơ chế đã
+xác nhận ở mục 5/TD-0111) lẫn kiểm thoát lệnh (`_check_trade_exit`) đều chạy lại trên MỖI nến 5m, không
+phải một lần duy nhất trên cả nến 1H gộp.
+
+**Nhưng BÊN TRONG một nến (5m hay 1H khi không có detail): thứ tự ưu tiên CỐ ĐỊNH, không phải thời
+gian thật.** `IStrategy.should_exit()` (dòng 1419) ghi rõ trong comment (dòng 1505-1508):
+```python
+# Sequence:
+# Exit-signal
+# Stoploss
+# ROI
+# Trailing stoploss
+```
+Tức nếu MỘT nến (dù là nến 5m) có cả điều kiện stoploss lẫn ROI cùng đúng, stoploss LUÔN được trả về
+trước ROI trong danh sách `exits`, và `_check_trade_exit` (dòng 980) lấy điều đầu tiên thoát được —
+đây là lựa chọn CHÍNH SÁCH bảo thủ có chủ đích của Freqtrade, không phải suy luận từ dữ liệu — vì OHLC
+của bất kỳ khung nào (kể cả 5m) cũng không tự nó nói được biến động thật đã đi theo hướng nào trước
+trong nội bộ nến đó.
+
+**Thực nghiệm thật xác nhận cả hai vế, chạy 2 lần với CÙNG một OHLC 1H, chỉ khác cờ `--timeframe-detail`:**
+Dựng 1 cặp tổng hợp, 1 lệnh long mở tại giờ 01:00 (giá 100), sang giờ 02:00 giá dao động mạnh trong
+đúng MỘT nến 1H: 5 phút đầu tăng lên 105 (đủ đạt ROI 1%, `minimal_roi={"0":0.01}`, dư biên độ để trừ
+phí), sau đó sập xuống 85 ở phút 25-30 (chạm `stoploss=-0.10`). Nến 1H gộp: `open=100 high=105 low=85
+close=90`.
+
+| Chạy | `--timeframe-detail` | `exit_reason` | `profit_ratio` | `close_date` |
+|---|---|---|---|---|
+| A | *(không có)* | **stop_loss** | **-0.1018** | 2024-01-01 02:00:00 |
+| B | `5m` | **roi** | **+0.00998** | 2024-01-01 02:00:00 |
+
+Cùng một nến 1H, cùng một chiến lược, cùng một lệnh — CHỈ đổi cờ `--timeframe-detail` mà kết quả đảo
+hoàn toàn từ LỖ 10,18% (stop_loss) sang LÃI ~1% (roi). Không có `--timeframe-detail`: Freqtrade coi cả
+giờ là MỘT đơn vị, áp policy "Stoploss trước ROI" trên `low=85`/`high=105` của cả giờ → chọn stop_loss
+dù giá thật đã đạt ROI SỚM HƠN rất nhiều so với lúc chạm đáy. Có `--timeframe-detail 5m`: nến 5m đầu
+tiên (02:00-02:05, high=105) đã tự đủ để đóng lệnh bằng ROI — vòng lặp không bao giờ đi tới nến 5m sau
+đó (02:25-02:30) nơi giá sập, vì lệnh đã đóng từ trước.
+
+**Kết luận đối chiếu spec (D5):** *"thứ tự khớp khi nhiều mức giá cùng nằm trong một nến 1H tôn trọng
+dòng 5m"* — ĐÚNG **giữa các nến 5m khác nhau** trong cùng giờ (đây chính là cơ chế `timeframe_detail`
+tồn tại để giải quyết). **Chưa đúng theo nghĩa tuyệt đối bên trong một nến 5m đơn lẻ** — nếu SL và
+ROI/TP cùng rơi vào đúng MỘT nến 5m (5 phút), Freqtrade vẫn áp policy cố định (Stoploss trước). Với
+Tool D, đây là rủi ro dư (residual risk) đã thu hẹp đáng kể (từ cửa sổ mơ hồ 1H xuống 5m) chứ không
+triệt tiêu hoàn toàn — cần ghi vào phần "giới hạn đã biết" khi D3.5/D4 dùng kết quả backtest có
+tranche/SL/TP sát nhau về giá.
+
+---
+
+## 8. Việc cần làm khi implement thật (không phải việc của TD-0028, ghi lại để không quên)
 
 - Khi viết `custom_stoploss`/`adjust_trade_position` thật (sau D0-PRE): thêm assert nội bộ `trade.id != 0` (hoặc `trade.id is not None`) trước MỌI lần gọi `set_custom_data`/`get_custom_data` — vá lỗ hổng ở mục 4.2.
 - L-Z49 (test đơn vị D7, spec dòng 3979-3984) nên thêm kịch bản: hai trade MỞ ĐỒNG THỜI (hai cặp khác nhau), xác nhận `custom_data` của chúng KHÔNG trộn lẫn — không chỉ kiểm một trade duy nhất qua nhiều callback như spec mô tả tối thiểu.
 - E1 (`run_backtest.py`) khi có logic thật, phải gọi qua đường `Backtesting.backtest()` cấp cao (đi qua `reset_backtest()`) — không tự ý gọi thẳng các hàm nội bộ như `_enter_trade`/`_check_adjust_trade_for_candle` để "tối ưu tốc độ", vì sẽ bỏ qua bước reset và vi phạm mục 4.3.
 - D2c (`gap_ms` thật) và tỉ lệ khớp post-only — đo ở D3.5 (Bước 2, testnet) và D10, không đo được ở D0-PRE (đọc mã nguồn không thay thế được đo thật, theo đúng phân loại "Giai đoạn DUY NHẤT verify được" của bảng §9b.2).
+- (TD-0113) Rủi ro dư: SL và ROI/TP cùng rơi vào ĐÚNG một nến 5m vẫn bị `timeframe_detail` xử lý theo policy cố định (Stoploss trước ROI), không phải chronology thật — nếu D4/D3.5 sau này cần độ chính xác cao hơn 5m cho việc so khớp tranche sát giá nhau, cân nhắc `timeframe_detail=1m` (đắt hơn về thời gian chạy) thay vì coi 5m là đủ tuyệt đối.
