@@ -646,3 +646,82 @@ module đó đã kiểm đúng độc lập (TD-0119/0120) nhưng nối vào tí
 dữ liệu 1D/RSI, để dành cho chiến lược sản xuất; DG1-DG5 (gate kích hoạt tranche mới) chưa xây —
 tranche 2/3 kích hoạt thuần theo giá chạm p2/p3; DG6 điều kiện C/D luôn tắt (thiếu `trend_dir`/
 không áp dụng Long-only).
+
+---
+
+## 07/09/2026 — TD-0115: đo lệch khớp tranche so với giá `timeframe_detail` 5m thật (L-Z50, D6)
+
+**Câu hỏi:** mỗi tranche fill trong backtest thật (TD-0114) có `fill_price` nằm trong phạm vi giá
+thật đã CHẠM `p_i` (kế hoạch) không, đo bằng dữ liệu 5m thật (không phải suy diễn từ 1H/4H)?
+
+**Chuẩn bị dữ liệu:** pool backfill TD-0093 chỉ có 1h/4h/1d/mark/funding_rate — chưa từng tải 5m.
+Tải mới bằng `freqtrade download-data -t 5m --timerange 20240601-20250601` cho đúng 2 mã đang dùng
+để test chiến lược (`1000BONK/USDT:USDT`, `1000PEPE/USDT:USDT`). Xác nhận phạm vi tải khớp CHÍNH XÁC
+`2024-06-01 00:00:00` → `2025-05-31 23:55:00` (105 120 dòng/mã, không dư — khác lỗi đã ghi ở TD-0093).
+
+**Chạy backtest thật:** `ZoneAbsorptionMinimal`, `--timeframe-detail 5m --cache none`, cùng
+timerange/dữ liệu CALIB thật — 35 trade, 91 lượt khớp tranche (35 tranche 1, 32 tranche 2,
+24 tranche 3). `--cache none` dùng CÓ CHỦ ĐÍCH ở vòng đo chính thức này (không phải mặc định của
+Freqtrade) — lý do xem mục "Phát hiện giữa chừng" bên dưới.
+
+**Phương pháp đối chiếu:** với mỗi lệnh entry đã khớp, giải mã `ft_order_tag` (JSON kế hoạch —
+đúng cơ chế TD-0114) lấy giá kế hoạch `p_i` theo đúng số tranche của trade đó; tra `fill_price`
+so với `[low, high]` của nến 5m thật tại `order_filled_timestamp` (dò 3 mức: đúng nến, nến liền
+trước, và cửa sổ 30 phút trước đó).
+
+**Kết quả phân bố lệch (Δ% = (fill − planned) / planned):**
+
+| Tranche | n | mean Δ% | std Δ% | max |Δ%| |
+|---|---|---|---|---|
+| 1 | 35 | −0,3151 | 0,9326 | 4,1239 |
+| 2 | 32 | −0,3959 | 0,5787 | 2,3653 |
+| 3 | 24 | −0,1235 | 0,2351 | 0,9185 |
+
+Short: N/A (chiến lược tối thiểu chỉ LONG, xem TD-0114).
+
+Toàn bộ 91/91 lệch đều **âm hoặc ~0** (fill rẻ hơn hoặc bằng giá kế hoạch cho lệnh LONG) —
+**không có trường hợp nào fill đắt hơn kế hoạch**. Theo đúng yêu cầu của dòng TASKS.md: có lệch
+(dù nhỏ) ở 91/91 fill → **ghi nhận D6 CHƯA giảm nhẹ bởi H5, không tự ý "coi như đạt"**; ảnh hưởng
+thực tế luôn có lợi hoặc trung tính cho phía LONG, không tạo rủi ro ẩn.
+
+**Đối chiếu "đã thật sự chạm `p_i` chưa" bằng dữ liệu 5m:**
+- 56/91 (62%) — nến 5m đúng tại `order_filled_timestamp` chứa `p_i` trong `[low, high]`.
+- 26/91 (29%) — nến ĐÚNG không chứa, nhưng nến 5m LIỀN TRƯỚC (5 phút sớm hơn) có chứa. Đây là độ
+  trễ ghi nhận 1 nến giữa lúc giá THẬT chạm mức và lúc Freqtrade backtest xử lý xong + đóng dấu
+  `order_filled_timestamp` — cơ chế đã đọc trong `docs/freqtrade-source-read.md` (TD-0028, D2a):
+  `backtest_loop()` xử lý tuần tự theo nến chi tiết, có độ trễ tối thiểu 1 bước giữa "giá chạm"
+  và "lệnh được xác nhận khớp trong vòng lặp kế tiếp". Không phải lỗi dữ liệu.
+- 9/91 (10%) — không chạm `p_i` kể cả trong cửa sổ 30 phút. Kiểm tay từng ca (`1000BONK` 1 trade
+  2 tranche cùng khớp 1 nến do giá gap xuyên nhiều mức 1 lượt; `1000PEPE` 3 trade mở cách nhau
+  5-10 phút trên cùng 1 zone, giá đã gap xuống dưới cả `p1` từ trước khi lệnh vào sổ). Ở CẢ 9 ca,
+  `fill_price` THẬT SỰ THẤP HƠN `planned` (0,12%–4,12%) — đúng hành vi lệnh giới hạn mua chuẩn: khi
+  giá thị trường đã gap qua khỏi mức giới hạn TRƯỚC khi lệnh được đặt/xử lý, lệnh khớp ngay ở giá
+  thị trường tốt hơn (rẻ hơn) thay vì chờ giá quay lại đúng mức giới hạn. Xác nhận bằng cách soát
+  trực tiếp OHLC 5m quanh mốc — không phải lỗi tính zone/kế hoạch.
+
+**Phát hiện giữa chừng (đã loại trừ, ghi lại để không tốn công tra lại sau):** vòng đo đầu tiên
+(chạy 2 mã CÙNG LÚC, KHÔNG có `--cache none`) cho ra một ca tưởng như nghiêm trọng — giá kế hoạch
+của tranche 1 một trade mở `2024-06-04` khớp với mức giá THẬT của `1000BONK` chỉ xảy ra quanh
+`2025-06-13`..`2025-11-01` (lệch hơn 1 năm, ~2,3 lần giá trị). Nghi ngờ ban đầu: `_tinh_zone_4h()`
+gán sai ngày/hàng khi merge 4H→1H. Đã cô lập bằng cách chạy lại với `--cache none` (loại bỏ khả
+năng cache backtest giữ dữ liệu cũ) trên 1 mã riêng lẻ rồi trên cả 2 mã — **ca lệch >1 năm không
+tái hiện ở bất kỳ lần chạy `--cache none` nào**, dữ liệu thật khớp chuẩn với kết quả bảng trên.
+Kết luận: đây là lỗi Ở KỊCH BẢN ĐO (script phân tích tự viết, gán `p_i` theo THỨ TỰ lệnh mua trong
+danh sách xuất ra — không đáng tin khi có nhiều trade/tranche khớp gần nhau), **không phải lỗi
+trong `ZoneAbsorptionMinimal.py`/`trade_plan.py`**. Đúng quy trình chẩn đoán N10: đã đối chiếu
+bằng dữ liệu thật (5m + 1H đều đồng thuận với nhau) trước khi kết luận, không đụng code chiến lược
+vì lệch nằm ở tầng đo (script kiểm tra), không phải ở bot.
+
+**Kết luận D6:** với chiến lược tối thiểu hiện tại (chưa có DG1-DG5 chặn nến/entry dồn dập), độ
+lệch khớp tranche so với giá kế hoạch là nhỏ (tối đa 4,12%, trung bình dưới 0,4%), LUÔN có lợi cho
+LONG, và có nguồn gốc giải thích được hoàn toàn bằng cơ chế khớp lệnh giới hạn + độ trễ 1 nến xử lý
+— không phải bằng chứng D6 (rủi ro "giả thuyết đã sai") được giảm nhẹ bởi H5, vì đây không phải cơ
+chế H5 đang đo; ghi nhận độc lập, không gộp kết luận.
+
+**Provenance (§0d.5):** dữ liệu 5m — `freqtrade download-data`, Binance USDⓈ-M futures thật, tải
+07/09/2026, `user_data/data/binance/futures/{1000BONK,1000PEPE}_USDT_USDT-5m-futures.feather`.
+Backtest — `ZoneAbsorptionMinimal`, `config/freqtrade/config.json`, `--timerange 20240601-20250601
+--timeframe-detail 5m --cache none`, kết quả xuất `user_data/backtest_results/backtest-result-
+2026-09-07_04-06-36.zip`. Toàn bộ đối chiếu chạy trong Docker (`--entrypoint python freqtrade`),
+đây là phân tích đọc dữ liệu tĩnh (không phải bằng chứng test khoá N7) — bằng chứng N7 chính thức
+của TD-0114/L-Z49 không đổi.
