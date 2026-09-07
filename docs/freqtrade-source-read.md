@@ -227,7 +227,69 @@ nến, tách biệt với việc lệnh đó có khớp hay không.
 
 ---
 
-## 6. Việc cần làm khi implement thật (không phải việc của TD-0028, ghi lại để không quên)
+## 6. D3 (TD-0112) — Freqtrade tính đúng giá vào trung bình khi nhiều lần entry, `custom_stoploss` đọc được nó
+
+**Kết luận: XÁC NHẬN ĐÚNG.**
+
+**Đường dẫn:** `/freqtrade/freqtrade/persistence/trade_model.py` (tính giá) +
+`/freqtrade/freqtrade/strategy/interface.py` (điểm đọc)
+
+**Công thức giá trung bình — `recalc_trade_from_orders()`** (dòng 1265), duyệt mọi order đã khớp
+(`o.ft_is_open or not o.filled` thì bỏ qua), cộng dồn theo trọng số khối lượng — đúng định nghĩa
+VWAP (Volume-Weighted Average Price), dòng 1286-1297:
+```python
+tmp_amount = FtPrecise(o.safe_amount_after_fee)
+tmp_price = FtPrecise(o.safe_price)
+is_exit = o.ft_order_side != self.entry_side
+side = FtPrecise(-1 if is_exit else 1)
+if tmp_amount > ZERO and tmp_price is not None:
+    current_amount += tmp_amount * side
+    price = avg_price if is_exit else tmp_price
+    current_stake += price * tmp_amount * side
+    if current_amount > ZERO and not is_exit:
+        avg_price = current_stake / current_amount
+```
+Sau vòng lặp, nếu trade còn mở (dòng 1325-1329):
+```python
+if current_amount_tr > 0.0:
+    self.open_rate = price_to_precision(
+        float(current_stake / current_amount), ...
+    )
+```
+`self.open_rate` — thuộc tính DUY NHẤT mọi nơi khác trong Freqtrade coi là "giá vào lệnh" — được
+gán lại bằng đúng `Σ(giá_i × khối_lượng_i) / Σ(khối_lượng_i)` trên MỌI entry order đã khớp (kể cả
+tranche 1, 2, 3 của Tool D), không phải giá của entry gần nhất hay entry đầu tiên.
+
+**Thời điểm cập nhật — ngay sau mỗi lần tranche khớp, cùng vị trí đã xác nhận ở D1 (mục 5):**
+`_enter_trade()` trong `backtesting.py`, dòng 1273-1274:
+```python
+self._try_close_open_order(order, trade, current_time, row)
+trade.recalc_trade_from_orders()
+```
+Gọi lại NGAY SAU khi một order (kể cả order tranche) khớp — `trade.open_rate` luôn phản ánh đúng
+giá trung bình MỚI NHẤT trước khi bất kỳ logic exit/stoploss nào của cùng chu kỳ backtest chạy tiếp,
+không có độ trễ một nến.
+
+**`custom_stoploss` đọc được giá này** — chữ ký hàm (`interface.py`, dòng 446-454) nhận thẳng đối
+tượng `trade: Trade` đầy đủ, không phải một con số giá tách rời:
+```python
+def custom_stoploss(
+    self, pair: str, trade: Trade, current_time: datetime,
+    current_rate: float, current_profit: float, after_fill: bool, **kwargs,
+) -> float | None:
+```
+Một implementation thật chỉ cần đọc `trade.open_rate` bên trong hàm này để lấy đúng giá trung bình
+đã tính ở trên — không cần tự tính lại, không cần lưu trạng thái riêng qua `custom_data`.
+
+**Kết luận đối chiếu spec (bảng §9b.2, D3):** *"Freqtrade tính đúng giá vào trung bình khi nhiều lần
+entry, `custom_stoploss` đọc được nó"* — ĐÚNG cả hai vế. Rủi ro nêu trong spec nếu SAI ("phải tự
+tính/quản lý giá trung bình, thêm code") KHÔNG xảy ra — `custom_stoploss` khi implement thật chỉ
+cần `trade.open_rate`, không cần cơ chế tính tay song song (tránh đúng loại "hai nguồn sự thật" mà
+MT-03/MT-08 đã cảnh báo ở nơi khác của project này).
+
+---
+
+## 7. Việc cần làm khi implement thật (không phải việc của TD-0028, ghi lại để không quên)
 
 - Khi viết `custom_stoploss`/`adjust_trade_position` thật (sau D0-PRE): thêm assert nội bộ `trade.id != 0` (hoặc `trade.id is not None`) trước MỌI lần gọi `set_custom_data`/`get_custom_data` — vá lỗ hổng ở mục 4.2.
 - L-Z49 (test đơn vị D7, spec dòng 3979-3984) nên thêm kịch bản: hai trade MỞ ĐỒNG THỜI (hai cặp khác nhau), xác nhận `custom_data` của chúng KHÔNG trộn lẫn — không chỉ kiểm một trade duy nhất qua nhiều callback như spec mô tả tối thiểu.
