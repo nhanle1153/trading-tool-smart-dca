@@ -248,6 +248,39 @@ với dòng phiên kia đang gõ dở cùng lúc — đã gây ít nhất 3 lầ
 > Mục này có thể lệch nhịp vài phút so với phiên kia — luôn `git log --oneline` +
 > đọc lại `TASKS.md` (cột 🔓/🔒/✅) trước khi chọn việc tiếp theo, đừng chỉ tin mục này.
 
+**Đang ở (cập nhật 08/09/2026, phiên rà lớp canh):** **TD-0150 ✅ đóng** + **rà TOÀN BỘ lớp canh xong**.
+
+1. **TD-0150 — cửa ghi sổ trial nay đối chiếu schema TRƯỚC khi append.** Phiên `…-91` phát hiện khi
+   làm TD-0149, tôi tái lập độc lập rồi nhận việc. Vá ở **`_append()` — điểm nghẽn DUY NHẤT**, không
+   vá từng hàm: khoảng hở lộ ra ở HAI trường khác nhau (`seal_path`, `verdict`) nên nó là tính chất
+   của cửa ghi; vá từng hàm là mời lỗi thứ ba xuất hiện ở hàm thứ bảy. Kèm test AST canh cho điểm
+   nghẽn thật sự duy nhất. Hai test ghim hiện trạng của TD-0149 **sửa thành khẳng định ngược, KHÔNG
+   xoá** — xoá một test đỏ cho sạch bảng là cách một quyết định biến mất mà không ai ghi.
+   Docker **958 → 966 passed**; phiên `…-91` chạy lại độc lập **968 passed, 0 failed**.
+
+2. 🔑 **Rà toàn bộ lớp canh bằng PHÁ THẬT — 19/19 phép phá đều bị bắt, không có lớp canh giả.**
+   Cách đếm bằng heuristic cú pháp đã **thất bại** (20/46 rồi 0/46, mâu thuẫn ⇒ vô giá trị) — bài
+   học: **đừng đo tính chất NGỮ NGHĨA bằng dấu hiệu CÚ PHÁP**. Lab dựng bằng `git clone --local`
+   (KHÔNG `cp -r` — bản chép đầu lệch giữa chừng vì phiên khác đang sửa file).
+   🔴 **Hai lần máy báo "xanh" đều là NGƯỜI PHÁ SAI**, không phải lớp canh giả — tin ngay kết quả
+   đầu thì đã vu oan hai lớp canh tốt.
+
+3. 🔑 **Kết luận lật ngược giả thuyết, và đây là phần đáng nhớ nhất của cả ngày:** nếu mọi lớp canh
+   đều có răng thì ba sự cố trong ngày **không phải do lớp canh cùn**. Điểm chung của cả ba (schema
+   không biết khoá mới; L-Z55 ở `folds` hai vế cùng nguồn; N12 mục 5 hở ca file MỚI) là: **ca sai
+   chỉ đi qua MẪU DỰNG TAY, chưa bao giờ đi qua ĐƯỜNG SẢN XUẤT THẬT.** Lớp canh sắc nhưng chĩa nhầm
+   hướng. **Câu hỏi chẩn đoán dùng từ nay:** *"Ca sai đó có đi qua đường sản xuất thật không?"*
+   Bài học phụ: **đo phủ sóng theo TỪNG FILE là sai đơn vị** — phủ sóng của `check_td0120` nằm ở
+   `test_td0124_*`, khác file.
+
+**Nợ đã ghi, chưa tới hạn:** ~10 lớp canh đang được nuôi bằng mẫu dựng tay vì **bộ sinh thật chưa tồn
+tại** (chiến lược chưa viết) — L-Z1/6/18/19/30/31/34/35/43, TD-0105. Hợp lý hôm nay, nhưng **D3.5 là
+đúng lúc khoảng hở loại này sinh ra**; khi bộ sinh ra đời phải nối test vào nó, không để nguyên mẫu
+tay. Chi tiết + giới hạn của kết luận ("không thấy thêm", không phải "chứng minh không còn") ở
+`docs/research-log.md` 08/09/2026.
+*(Đoạn "Đang ở" cũ bên dưới giữ nguyên làm lịch sử.)*
+
+
 **Đang ở (cập nhật 07/09/2026, phiên L-Z27/L-Z28):** **TD-0127 ✅ đóng.** Chủ dự án chốt phạm vi
 **làm phần đo được ngay** thay vì hoãn tới D3.5 — vì cả hai luật đo bằng SỐ LỆNH ĐÃ ĐÓNG mà Tool D
 chưa có lệnh live nào.
