@@ -495,3 +495,22 @@ CÓ kích hoạt tranche mới hay không vẫn nhìn giá mở nến, tách bi�
 Không cần viết test mới cho TD-0111 (đúng phạm vi TD-0028 tiền lệ — thuần đọc source + trích dẫn,
 không phải test đơn vị). Ghi vào `docs/freqtrade-source-read.md` mục 5, cập nhật ghi chú đầu file
 (D1 đã đọc, D3/D5 còn lại cho TD-0112/0113, D4 hoãn Testnet/Live).
+
+## 07/09/2026 — TD-0112 (D2): đọc source D3 — giá vào trung bình đúng công thức, custom_stoploss đọc được
+
+Đọc `/freqtrade/freqtrade/persistence/trade_model.py` (`recalc_trade_from_orders()`, dòng 1265) +
+`/freqtrade/freqtrade/strategy/interface.py` (`custom_stoploss`, dòng 446) để trả lời giả định D3
+(§9b.2): Freqtrade có tính đúng giá vào trung bình khi DCA nhiều lần entry, và `custom_stoploss` có
+đọc được giá đó không.
+
+Công thức đúng VWAP: `current_stake += price * tmp_amount * side` cộng dồn qua mọi entry order đã
+khớp, `self.open_rate = current_stake / current_amount` sau vòng lặp. Cập nhật NGAY sau mỗi lần
+tranche khớp — `_enter_trade()` gọi `trade.recalc_trade_from_orders()` ngay sau
+`_try_close_open_order()` (dòng 1273-1274, cùng vị trí đã xác nhận ở TD-0111/D1) — không có độ trễ
+một nến. `custom_stoploss(trade: Trade, ...)` nhận thẳng object `trade` đầy đủ, đọc `trade.open_rate`
+là lấy đúng giá trung bình mới nhất, không cần strategy tự tính hay lưu qua `custom_data`.
+
+**Kết luận: D3 XÁC NHẬN ĐÚNG cả hai vế.** Rủi ro spec nêu nếu sai ("phải tự tính/quản lý giá trung
+bình, thêm code") không xảy ra.
+
+Suite Docker: 492 passed (không đổi, đọc source không sửa code chạy).
