@@ -181,6 +181,37 @@ với dòng phiên kia đang gõ dở cùng lúc — đã gây ít nhất 3 lầ
 4. Việc chỉ để KHOÁ (🔓→🔒) hay HOÀN TẤT (🔒→✅) một dòng: sửa **đúng một dòng**, commit **riêng**,
    không gộp chung với các file code khác trong cùng một `git add`.
 
+5. 🔴 **Commit THẲNG theo tên file, đừng bỏ vào giỏ rồi gói** (thêm 07/09/2026 sau sự cố thứ 4):
+
+   ```
+   git commit -- <đường/dẫn/file> [file2 ...]      # ĐÚNG
+   git add <file> && git commit                     # SAI, kể cả khi add đích danh
+   ```
+
+   **Vì sao mục 1-4 ở trên KHÔNG đủ:** mọi phiên trên cùng thư mục dùng CHUNG một `.git/index`
+   (kiểm bằng `git rev-parse --git-dir` — một `.git` duy nhất, không worktree riêng). `git commit`
+   **không** gói "thứ mình vừa `add`" — nó gói **TOÀN BỘ index**. Phiên kia `git add` file của họ
+   xong, đang soạn message; mình `git add` thêm file của mình rồi `git commit` → **gói luôn cả của
+   họ**, dưới nhãn của mình. Phiên kia sẽ thấy `git commit` của họ báo *"nothing added to commit"*.
+
+   Có pathspec thì `--only` là mặc định: git chỉ commit đúng những path đó lấy từ working tree,
+   **bỏ qua phần còn lại của index** và giữ nguyên thứ phiên khác đang stage. Không cần `git add`
+   trước, nên cũng bớt ghi vào index dùng chung — chiều ngược lại cũng có thật.
+
+   ⚠️ **Cách này KHÔNG thay thế được mục 1.** `git commit -- <paths>` vẫn chụp **nội dung working
+   tree** của chính path đó, nên với file dùng chung (`TASKS.md`, `CLAUDE.md`, `back-end-note.md`)
+   thì hiểm hoạ gốc của N12 còn nguyên: **vẫn phải `git diff -- <file>` và đọc hết diff trước khi
+   commit**. Pathspec chặn việc nuốt file LẠ; nó không chặn việc chụp nhầm DÒNG lạ trong file mình
+   đang commit.
+
+   📌 Sự cố `4ec0fd3` (07/09/2026): commit mang nhãn *"TASKS.md: TD-0127 hoàn tất"* nhưng nuốt kèm
+   2 file code TD-0143 của phiên khác. Lệnh dùng lúc đó là `git add TASKS.md` — **đích danh đúng
+   một file**, tức chẩn đoán ban đầu *"chắc do `git add -A`"* là SAI. Đối chứng: 9 commit khác cùng
+   phiên, cùng kiểu `add` đích danh, đều sạch — khác nhau ở chỗ 9 cái kia có chạy `git diff --cached
+   --stat` ngay trước khi commit. Bài học kép: (a) index dùng chung là cơ chế thật; (b) chẩn đoán
+   theo **hình dạng hậu quả** thay vì kiểm **cơ chế** thì giả thuyết vẫn khớp hiện tượng mà vẫn sai
+   — chi tiết trong `docs/research-log.md`.
+
 ---
 
 ## TRẠNG THÁI HIỆN TẠI
