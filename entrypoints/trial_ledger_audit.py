@@ -76,6 +76,15 @@ DEFAULT_RUNTIME_STATE_PATH = Path("registry/runtime_state.json")
 # TD-0117 — file test khoá L-Z49/L-Z50 phải được chạy RIÊNG lúc đóng cổng D2:
 # suite tổng xanh KHÔNG chứng minh nó còn tồn tại (xoá hẳn file đi suite vẫn xanh).
 DUONG_DAN_TEST_LZ49_LZ50 = "tests/lock/test_lz49_lz50_backtest_nho.py"
+# TD-0147 — ba file test khoá CỐT LÕI của D3, chạy RIÊNG lúc đóng cổng D3
+# vì cùng lý do như D2: suite tổng xanh KHÔNG chứng minh chúng còn tồn tại.
+# L-Z47 (ghép fold bằng NHÂN), L-Z45 (dedup_key), TD-0148 (L-Z55 phạm vi
+# dữ liệu thật — chính là thứ đã CHẶN cổng này cho tới khi làm xong).
+DUONG_DAN_TEST_D3 = (
+    "tests/lock/test_lz47_can_doi_va_ghep_fold.py",
+    "tests/lock/test_lz45_dedup_key_append_only.py",
+    "tests/lock/test_td0148_pham_vi_du_lieu_that.py",
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -112,6 +121,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--close-d2-gate",
         action="store_true",
         help="TD-0117 — đóng cổng D2, ghi runtime_state.json.d2_complete. Chạy được đúng một lần.",
+    )
+    parser.add_argument(
+        "--close-d3-gate",
+        action="store_true",
+        help="TD-0147 — đóng cổng D3, ghi runtime_state.json.d3_complete. Chạy được đúng một lần.",
     )
     return parser
 
@@ -481,6 +495,136 @@ def close_d2_gate(
     )
 
 
+def close_d3_gate(
+    *,
+    runtime_state_path: Path = DEFAULT_RUNTIME_STATE_PATH,
+    repo_dir: Path = Path("."),
+    pytest_cmd: list[str] | None = None,
+    pytest_d3_cmd: list[str] | None = None,
+    **run_audit_kwargs,
+) -> tuple[int, str]:
+    """TD-0147 — ghi `d3_complete: true` (điều kiện vào D3.5).
+
+    Cùng khuôn `close_d2_gate()`: tự chạy pytest THẬT trong chính lần gọi
+    này (nhãn `do-duoc` đúng nghĩa, MT-10) và chạy RIÊNG bộ test khoá cốt
+    lõi, đòi số ca PASS >= 1 — suite tổng xanh KHÔNG chứng minh chúng còn
+    tồn tại (bẫy PASS RỖNG của TD-0084).
+
+    🔴 **Cổng này KHÔNG có nghĩa "đã có kết quả walk-forward".** D3 dựng
+    *bộ điều phối* H3-D và bịt bốn bug Tool A mà spec dòng 4340 liệt kê;
+    nó KHÔNG sinh ra một con số WFO nào, vì chưa có bộ chạy backtest thật
+    (E2 dừng ở `EXIT_CHUA_CO_BO_CHAY`). Điều đó ghi thẳng vào
+    `d3_han_che` — đọc cổng D3 thành "đã có số" là hiểu sai đúng thứ mà
+    PHẦN 0d tồn tại để chặn.
+
+    TỪ CHỐI nếu: D0-PRE/D1/D2 chưa đóng (D3 không thể đứng trước D2); đã
+    có `d3_complete: true`; suite fail; bất kỳ file test cốt lõi nào fail
+    hoặc thu được 0 ca; hoặc audit sổ trial chưa sạch.
+    """
+    if not is_d0_pre_complete():
+        return EXIT_GATE_AUDIT_DIRTY, "🛑 TỪ CHỐI đóng cổng D3 — D0-PRE chưa đóng (§N2)."
+
+    state: dict = {}
+    if runtime_state_path.exists():
+        try:
+            state = json.loads(runtime_state_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            state = {}
+    for khoa, ten in (("d1_complete", "D1"), ("d2_complete", "D2")):
+        if state.get(khoa) is not True:
+            return (
+                EXIT_GATE_AUDIT_DIRTY,
+                f"🛑 TỪ CHỐI đóng cổng D3 — chưa có {khoa}=true "
+                f"(D3 không thể đứng trước {ten}).",
+            )
+    if state.get("d3_complete") is True:
+        return (
+            EXIT_GATE_ALREADY_CLOSED,
+            f"🛑 {runtime_state_path} đã có d3_complete=true — cổng đã đóng, không ghi lại.",
+        )
+
+    suite = subprocess.run(
+        pytest_cmd or [sys.executable, "-m", "pytest", "-q"],
+        cwd=repo_dir,
+        capture_output=True,
+        text=True,
+    )
+    suite_summary = suite.stdout.strip().splitlines()[-1] if suite.stdout.strip() else "(không có output)"
+    if suite.returncode != 0:
+        return (
+            EXIT_GATE_AUDIT_DIRTY,
+            f"🛑 TỪ CHỐI đóng cổng D3 — suite pytest CHƯA sạch:\n{suite_summary}\n{suite.stdout[-2000:]}",
+        )
+
+    # Mỗi file chạy RIÊNG, không gộp một lượt: gộp lại thì một file bị xoá
+    # hoặc lọc hết vẫn cho tổng > 0 nhờ hai file kia, và cổng vẫn đóng được
+    # trong khi một phép kiểm cốt lõi đã biến mất.
+    d3_bang_chung: list[str] = []
+    for duong_dan in DUONG_DAN_TEST_D3:
+        lenh = (
+            [*pytest_d3_cmd, duong_dan]
+            if pytest_d3_cmd
+            else [sys.executable, "-m", "pytest", "-q", duong_dan]
+        )
+        kq = subprocess.run(lenh, cwd=repo_dir, capture_output=True, text=True)
+        tom_tat = kq.stdout.strip().splitlines()[-1] if kq.stdout.strip() else "(không có output)"
+        if kq.returncode != 0:
+            return (
+                EXIT_GATE_AUDIT_DIRTY,
+                f"🛑 TỪ CHỐI đóng cổng D3 — test khoá cốt lõi CHƯA xanh: "
+                f"{duong_dan}\n{tom_tat}\n{kq.stdout[-2000:]}",
+            )
+        so_ca = _dem_ca_pass(kq.stdout)
+        if so_ca < 1:
+            return (
+                EXIT_GATE_AUDIT_DIRTY,
+                f"🛑 TỪ CHỐI đóng cổng D3 — chạy riêng {duong_dan} thu được 0 ca "
+                f"PASS. Exit 0 mà không ca nào chạy là PASS RỖNG, không phải "
+                f"bằng chứng.\n{tom_tat}",
+            )
+        d3_bang_chung.append(f"{duong_dan}: {tom_tat}")
+
+    audit_exit, audit_text = run_audit(**run_audit_kwargs)
+    if audit_exit != 0:
+        return EXIT_GATE_AUDIT_DIRTY, f"🛑 TỪ CHỐI đóng cổng D3 — audit sổ trial chưa sạch:\n{audit_text}"
+
+    git_info = get_git_info(repo_dir)
+    state["d3_complete"] = True
+    state["d3_closed_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    state["d3_git_sha"] = git_info.sha
+    state["d3_evidence"] = {
+        "full_suite": {"nguon": "do-duoc", "noi_dung": suite_summary},
+        "test_khoa_d3": {"nguon": "do-duoc", "noi_dung": " | ".join(d3_bang_chung)},
+        "trial_ledger_audit": {"nguon": "do-duoc", "noi_dung": audit_text.splitlines()[0]},
+    }
+    state["d3_han_che"] = {
+        "nguon": "nguoi-khai",
+        "noi_dung": (
+            "Cổng D3 chứng nhận BỘ ĐIỀU PHỐI H3-D đúng, KHÔNG chứng nhận đã có kết "
+            "quả walk-forward. (1) Chưa có bộ chạy backtest thật — E2 dừng ở "
+            "EXIT_CHUA_CO_BO_CHAY, toàn bộ phép kiểm mới chỉ được nuôi bằng bộ chạy "
+            "GIẢ trong test; bảo đảm trên dữ liệu thật là việc của D3.5. "
+            "(2) Phép kiểm phạm vi dữ liệu (TD-0148) VẪN TIN LỜI KHAI của bộ chạy: "
+            "bộ chạy trả ngày dự kiến thay vì ngày thật đọc từ dataframe sẽ vô hiệu "
+            "hoá nó. (3) DR-D3-01 §5.3: với 19-47 lệnh/fold ước tính, nhiều fold có "
+            "thể rơi dưới sàn 30 và ghi `unreadable` — khi đó D3 kết luận đúng phạm "
+            "vi là 'orchestrator ĐÚNG, thống kê CHƯA ĐỌC ĐƯỢC', phán quyết thống kê "
+            "hoãn tới D9."
+        ),
+    }
+    runtime_state_path.parent.mkdir(parents=True, exist_ok=True)
+    runtime_state_path.write_text(
+        json.dumps(state, ensure_ascii=False, indent=2, sort_keys=False) + "\n",
+        encoding="utf-8",
+    )
+    return (
+        0,
+        f"✅ Đã đóng cổng D3 — ghi {runtime_state_path}.\n{suite_summary}\n"
+        + "\n".join(f"  {d}" for d in d3_bang_chung)
+        + f"\n{audit_text}",
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else list(argv)
     args, _ = build_parser().parse_known_args(argv)
@@ -511,6 +655,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.close_d2_gate:
         exit_code, text = close_d2_gate()
+        print(text)
+        return exit_code
+
+    if args.close_d3_gate:
+        exit_code, text = close_d3_gate()
         print(text)
         return exit_code
 
