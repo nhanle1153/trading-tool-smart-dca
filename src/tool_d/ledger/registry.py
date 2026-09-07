@@ -209,10 +209,18 @@ class TrialLedger:
             if p.state is TrialState.RESERVED and _dem_vao_n(p)
         )
 
-    def available(self, *, n_dang_ky: int, n_tai_sinh: int = 0) -> int:
+    def available(self, *, n_dang_ky: int, so_lenh_da_dong: int = 0) -> int:
+        """Khả dụng hiện tại.
+
+        🔴 L-Z27: KHÔNG có tham số nào nhận thẳng một con số ngân sách.
+        Người gọi chỉ đưa được SỐ LỆNH ĐÃ ĐÓNG — thứ đo được từ thực tế —
+        rồi công thức §12c.2 tự quyết B3 sinh thêm bao nhiêu. "Tăng B3
+        bằng tay" (spec dòng 4956) vì thế không biểu diễn được, chứ không
+        phải bị một phép kiểm chặn lại sau khi đã xảy ra.
+        """
         return _budget.available(
             n_dang_ky=n_dang_ky,
-            n_tai_sinh=n_tai_sinh,
+            n_tai_sinh=_budget.b3_tai_sinh(so_lenh_da_dong),
             n_used=self.n_used(),
             n_reserved=self.n_reserved(),
         )
@@ -329,7 +337,7 @@ class TrialLedger:
         self,
         *,
         n_dang_ky: int,
-        n_tai_sinh: int = 0,
+        so_lenh_da_dong: int = 0,
         tool_id: str = "D",
         budget_line: str,
         hypothesis_slot: str,
@@ -363,7 +371,9 @@ class TrialLedger:
                 config_hash=config_hash,
             )
         else:
-            khadung = self.available(n_dang_ky=n_dang_ky, n_tai_sinh=n_tai_sinh)
+            khadung = self.available(
+                n_dang_ky=n_dang_ky, so_lenh_da_dong=so_lenh_da_dong
+            )
             if khadung < contribution:
                 raise BudgetExhaustedError(
                     f"Khả dụng ({khadung}) < contribution ({contribution}) — TỪ CHỐI khởi động"

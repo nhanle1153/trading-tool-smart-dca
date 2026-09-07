@@ -18,6 +18,7 @@ from typing import Any
 import yaml
 
 from tool_d.config.loader import DEFAULT_CONFIG_PATH, load_tool_d_config
+from tool_d.ledger import budget as _budget
 from tool_d.ledger.registry import DEFAULT_REGISTRY_PATH, TrialLedger, TrialState
 from tool_d.measurement.tri_state import Measured
 
@@ -518,6 +519,99 @@ def check_lz26_de_xuat_doi_tham_so(
     return CheckResult("L-Z26", Measured.ok(len(violations) == 0), evidence="; ".join(violations))
 
 
+# ── L-Z27 / L-Z28 (TD-0127, §12d.4) ───────────────────────────────────
+def check_lz27_tran_b3(
+    registry_path: Path = DEFAULT_REGISTRY_PATH,
+    *,
+    so_lenh_da_dong: int = 0,
+) -> CheckResult:
+    """L-Z27 — B3 ≤ 20 tại mọi thời điểm (spec dòng 4871-4872).
+
+    Nửa còn lại của L-Z27 ("B3 chỉ tăng theo `floor(lệnh/25)`, không tăng
+    bằng tay") KHÔNG kiểm ở đây, và cố ý như vậy: nó được thi hành bằng
+    HÌNH DẠNG API — `TrialLedger.available()/reserve()` không có tham số
+    nào nhận một con số ngân sách, chỉ nhận số lệnh rồi tự áp công thức
+    `budget.b3_tai_sinh()`. Một phép kiểm lúc audit chỉ phát hiện SAU KHI
+    ngân sách đã bị nống; một tham số không tồn tại thì không ai truyền
+    vào được. Test canh phần đó nằm ở `TestKhongTheTangBangTay`.
+    """
+    projections = TrialLedger(registry_path).projections()
+    if not projections:
+        return CheckResult("L-Z27", Measured.pending("registry rỗng"))
+
+    da_tieu = sum(
+        p.contribution
+        for p in projections.values()
+        if p.budget_line == "B3" and p.state is not TrialState.REFUNDED
+    )
+    tran = _budget.B3_TRAN_TICH_LUY + _budget.b3_tai_sinh(so_lenh_da_dong)
+    return CheckResult(
+        "L-Z27",
+        Measured.ok(da_tieu <= tran),
+        evidence=(
+            f"B3 đã dùng={da_tieu}, trần={tran} "
+            f"(20 gốc + {_budget.b3_tai_sinh(so_lenh_da_dong)} tái sinh "
+            f"từ {so_lenh_da_dong} lệnh đã đóng)"
+        ),
+    )
+
+
+def check_lz28_doi_tham_so_dung_diem_quyet_dinh(
+    proposals_path: Path = DEFAULT_PROPOSALS_PATH,
+    *,
+    so_lenh_da_dong: int | None = None,
+) -> CheckResult:
+    """L-Z28 — không thay đổi tham số nào GIỮA hai điểm quyết định
+    (spec dòng 4873-4874; điểm quyết định = mỗi 100 lệnh đóng, §12c.1).
+
+    🔴 FAIL-CLOSED (chốt của chủ dự án 07/09/2026): một đề xuất đã APPLIED
+    mà không chứng minh được là rơi đúng điểm quyết định thì BÁO ĐỎ, không
+    im lặng cho qua. Im lặng ở đây nghĩa là một tham số đã đổi thật trên
+    tiền thật mà không ai kiểm được nó đổi có đúng lúc không.
+
+    🔎 Ngoại lệ "trừ DR-012 Hạng 1" KHÔNG cần ô khai nào: §12c.4 định
+    nghĩa Hạng 1 là *"code không làm đúng như spec mô tả"* — đó là LỖI,
+    sửa tự do 0 trial, KHÔNG phải đổi tham số, nên nó không bao giờ đi vào
+    sổ này (sổ dành cho Hạng 2). Thêm một ô "đây là sửa lỗi" sẽ mở đúng
+    cái cửa mà L-Z28 sinh ra để đóng.
+    """
+    da_ap_dung = [e for e in _read_jsonl(proposals_path) if e.get("status") == "APPLIED"]
+    if not da_ap_dung:
+        return CheckResult(
+            "L-Z28", Measured.pending("chưa có đề xuất nào ở trạng thái APPLIED")
+        )
+
+    ma = ", ".join(e["de_xuat_id"] for e in da_ap_dung)
+    if so_lenh_da_dong is None:
+        return CheckResult(
+            "L-Z28",
+            Measured.ok(False),
+            evidence=(
+                f"{len(da_ap_dung)} đề xuất đã APPLIED ({ma}) nhưng CHƯA CHỨNG MINH ĐƯỢC "
+                "là rơi đúng điểm quyết định — chưa có nguồn số lệnh đã đóng. "
+                "Fail-closed: không chứng minh được thì báo đỏ, không cho qua"
+            ),
+        )
+
+    dqd = _budget.diem_quyet_dinh_da_qua(so_lenh_da_dong)
+    dung_diem = dqd >= 1 and so_lenh_da_dong % _budget.LENH_MOI_DIEM_QUYET_DINH == 0
+    if dung_diem:
+        evidence = f"{len(da_ap_dung)} đề xuất APPLIED tại điểm quyết định #{dqd} ({so_lenh_da_dong} lệnh)"
+    elif dqd < 1:
+        evidence = (
+            f"{len(da_ap_dung)} đề xuất đã APPLIED ({ma}) khi mới có {so_lenh_da_dong} "
+            f"lệnh đóng — CHƯA tới điểm quyết định đầu tiên "
+            f"({_budget.LENH_MOI_DIEM_QUYET_DINH} lệnh)"
+        )
+    else:
+        evidence = (
+            f"{len(da_ap_dung)} đề xuất đã APPLIED ({ma}) tại {so_lenh_da_dong} lệnh — "
+            f"GIỮA điểm quyết định #{dqd} và #{dqd + 1}, đúng thứ L-Z28 cấm "
+            "(spec dòng 4952)"
+        )
+    return CheckResult("L-Z28", Measured.ok(dung_diem), evidence=evidence)
+
+
 ALL_CHECKS = (
     "check_lz10_registered_before_executed",
     "check_lz11_n_used_le_n_dang_ky",
@@ -531,4 +625,6 @@ ALL_CHECKS = (
     "check_td0124_tran_nhap_don_moi_quy",
     "check_lz26_de_xuat_doi_tham_so",
     "check_td0126_explore_evidence_va_trung_mechanism",
+    "check_lz27_tran_b3",
+    "check_lz28_doi_tham_so_dung_diem_quyet_dinh",
 )
