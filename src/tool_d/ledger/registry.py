@@ -13,7 +13,7 @@ chạm dữ liệu (L-Z52) — không có đặt chỗ hợp lệ, bộ chạy T
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
@@ -24,6 +24,19 @@ from tool_d.ledger.budget import REFUND_CAP_PER_HYPOTHESIS, HypothesisKey
 from tool_d.ledger import budget as _budget
 
 DEFAULT_REGISTRY_PATH = Path("registry/trial_registry.jsonl")
+
+CTRL_BUDGET_LINE = "CTRL"
+
+CTRL_OUTPUT_ALLOWED = frozenset({"price_delta", "tranche_index", "direction"})
+"""Đầu ra cho phép của CTRL dạng *đo thước* — spec dòng 3605-3607 liệt kê
+ĐÚNG ba thứ: {chênh lệch giá, chỉ số tranche, hướng}, "TUYỆT ĐỐI không PnL,
+không win/loss, không metric theo arm. Bộ chạy cưỡng chế danh sách này,
+không phải người."
+
+🔴 Đây là danh sách CHO PHÉP, không phải danh sách CẤM. Một danh sách cấm
+chỉ chặn được những tên đã nghĩ ra trước; khoá nào chưa nghĩ tới sẽ lọt.
+Fail-closed đòi chiều ngược lại: không nằm trong ba khoá này thì từ chối.
+"""
 
 
 class TrialState(Enum):
@@ -42,6 +55,15 @@ class UnknownTrialError(LedgerError):
 
 class BudgetExhaustedError(LedgerError):
     """Khả dụng < contribution — TỪ CHỐI khởi động, KHÔNG chạm dữ liệu (L-Z52)."""
+
+
+class CtrlClaimError(LedgerError):
+    """Dòng CTRL không khai được dạng hợp lệ → TỪ CHỐI ghi (MT-08).
+
+    CTRL đứng NGOÀI ngân sách N, nên nếu ai cũng khai được CTRL thì đó là
+    đường thoát khỏi kế toán phép thử. Cửa này bắt máy kiểm lời khai, cùng
+    triết lý DR-014 §3 ("máy tự ghi, người không có đường nhập liệu").
+    """
 
 
 class SealedTrialError(LedgerError):
@@ -70,6 +92,7 @@ class TrialProjection:
 
     trial_id: str
     contribution: int
+    budget_line: str
     hypothesis_slot: str
     param_under_test: str
     param_value: Any
@@ -85,6 +108,23 @@ class TrialProjection:
         if self.sealed or self.outcome_written:
             return TrialState.CONSUMED
         return TrialState.RESERVED
+
+
+def _dem_vao_n(proj: TrialProjection) -> bool:
+    """Dòng này có tiêu ngân sách phép thử không?
+
+    CTRL = điểm kiểm soát: chạy lại để KIỂM TRA tái lập, hoặc đo THƯỚC —
+    không đánh giá một cấu hình nào, nên không phải một phép thử. Spec nói
+    điều này ở 5 chỗ (§0d.4 dòng 594; DR-014 §2 dòng 3490 "ngoài sổ này";
+    dòng 3608 "dòng CTRL, 0 trial"; dòng 3715; changelog v8 dòng 71).
+
+    🔴 Vì sao đáng sửa (MT-08): điểm kiểm soát chạy sau MỖI lần một tham số
+    đổi trạng thái; Tầng B có 12 tham số, trần B3 = 20 → cận trên ~20-25
+    trial trên tổng 114 bốc hơi vì kế toán sai. Nguy hơn con số là ĐỘNG CƠ
+    CHẠY NGƯỢC: càng kỷ luật (càng chạy nhiều điểm kiểm soát) càng bị phạt
+    ngân sách, dẫn tới bỏ điểm kiểm soát.
+    """
+    return proj.budget_line != CTRL_BUDGET_LINE
 
 
 def _utcnow_iso() -> str:
@@ -127,6 +167,10 @@ class TrialLedger:
                 result[tid] = TrialProjection(
                     trial_id=tid,
                     contribution=e["contribution"],
+                    # Cố ý KHÔNG dùng .get() với mặc định: một dòng RESERVE
+                    # thiếu `budget_line` phải NỔ, không được lặng lẽ hoá
+                    # thành "không phải CTRL" rồi bị cộng vào N.
+                    budget_line=e["budget_line"],
                     hypothesis_slot=e["hypothesis_slot"],
                     param_under_test=e["param_under_test"],
                     param_value=e["param_value"],
@@ -150,14 +194,19 @@ class TrialLedger:
 
     # ── kế toán ───────────────────────────────────────────────────
     def n_used(self) -> int:
-        """N_ĐÃ_DÙNG = Σ contribution của dòng state==CONSUMED (L-Z11)."""
+        """N_ĐÃ_DÙNG = Σ contribution của dòng state==CONSUMED (L-Z11),
+        **KHÔNG kể dòng CTRL** — xem `_dem_vao_n()`."""
         return sum(
-            p.contribution for p in self.projections().values() if p.state is TrialState.CONSUMED
+            p.contribution
+            for p in self.projections().values()
+            if p.state is TrialState.CONSUMED and _dem_vao_n(p)
         )
 
     def n_reserved(self) -> int:
         return sum(
-            p.contribution for p in self.projections().values() if p.state is TrialState.RESERVED
+            p.contribution
+            for p in self.projections().values()
+            if p.state is TrialState.RESERVED and _dem_vao_n(p)
         )
 
     def available(self, *, n_dang_ky: int, n_tai_sinh: int = 0) -> int:
@@ -189,6 +238,93 @@ class TrialLedger:
         n_reserves_ever = sum(1 for e in self._read_events() if e["event"] == "RESERVE")
         return f"D-{n_reserves_ever + 1:04d}"
 
+    def _kiem_khai_ctrl(
+        self,
+        *,
+        reproduces_trial_id: str | None,
+        ctrl_output_whitelist: Sequence[str] | None,
+        params_frozen_hash: str,
+        config_hash: str,
+    ) -> None:
+        """Máy kiểm lời khai CTRL — raise `CtrlClaimError` nếu không thoả.
+
+        CTRL đứng ngoài ngân sách, nên "khai CTRL" là một đặc quyền. Nếu
+        nhận lời khai suông thì bất kỳ trial nào cũng trốn được kế toán chỉ
+        bằng cách đổi một chuỗi. Phải thuộc ĐÚNG MỘT trong hai dạng spec
+        cho phép, và máy tự đối chiếu được cả hai.
+
+        🔴 L-Z55 một mình KHÔNG đủ ở đây: một điểm kiểm soát HỢP LỆ *có*
+        chạm CALIB nên nó không vi phạm timerange. Chỗ phân biệt phải là
+        ĐẦU RA, không phải dữ liệu được chạm.
+        """
+        khai_tai_lap = reproduces_trial_id is not None
+        khai_do_thuoc = ctrl_output_whitelist is not None
+
+        if khai_tai_lap and khai_do_thuoc:
+            raise CtrlClaimError(
+                "dòng CTRL khai CẢ HAI dạng (tái lập + đo thước) — chọn đúng một. "
+                "Khai chồng là chừa đường lách sang dạng dễ kiểm hơn"
+            )
+        if not khai_tai_lap and not khai_do_thuoc:
+            raise CtrlClaimError(
+                "dòng CTRL phải khai một trong hai dạng: *tái lập* "
+                "(reproduces_trial_id, §0d.4) hoặc *đo thước* "
+                "(ctrl_output_whitelist, D3.5 Bước 1) — TỪ CHỐI ghi"
+            )
+
+        if khai_tai_lap:
+            self._kiem_ctrl_tai_lap(
+                reproduces_trial_id=str(reproduces_trial_id),
+                params_frozen_hash=params_frozen_hash,
+                config_hash=config_hash,
+            )
+        else:
+            self._kiem_ctrl_do_thuoc(list(ctrl_output_whitelist or []))
+
+    def _kiem_ctrl_tai_lap(
+        self, *, reproduces_trial_id: str, params_frozen_hash: str, config_hash: str
+    ) -> None:
+        """Dạng *tái lập* (§0d.4): chạy lại ĐÚNG một trial đã có, để xem có
+        ra cùng số không. "Đúng" ở đây máy kiểm được: cùng tham số, cùng
+        cấu hình. Đổi một trong hai thì đó là phép thử mới, không phải tái
+        lập — và phải tiêu ngân sách như mọi phép thử."""
+        goc = None
+        for e in self._read_events():
+            if e["event"] == "RESERVE" and e["trial_id"] == reproduces_trial_id:
+                goc = e
+                break
+        if goc is None:
+            raise CtrlClaimError(
+                f"CTRL khai tái lập {reproduces_trial_id} nhưng sổ không có trial đó"
+            )
+        lech = [
+            ten
+            for ten, moi, cu in (
+                ("params_frozen_hash", params_frozen_hash, goc["params_frozen_hash"]),
+                ("config_hash", config_hash, goc["config_hash"]),
+            )
+            if moi != cu
+        ]
+        if lech:
+            raise CtrlClaimError(
+                f"CTRL khai tái lập {reproduces_trial_id} nhưng {', '.join(lech)} lệch "
+                "bản ghi gốc — đổi cấu hình thì không còn là tái lập, đó là phép thử mới"
+            )
+
+    def _kiem_ctrl_do_thuoc(self, whitelist: list[str]) -> None:
+        """Dạng *đo thước* (D3.5 Bước 1): đo cơ học khớp lệnh, không đánh
+        giá cấu hình. Spec cưỡng chế bằng ĐẦU RA — xem `CTRL_OUTPUT_ALLOWED`."""
+        if not whitelist:
+            raise CtrlClaimError(
+                "CTRL khai đo thước nhưng danh sách đầu ra RỖNG — khai suông, không đo gì"
+            )
+        ngoai = sorted(set(whitelist) - CTRL_OUTPUT_ALLOWED)
+        if ngoai:
+            raise CtrlClaimError(
+                f"CTRL đo thước có đầu ra ngoài danh sách cho phép: {ngoai}. "
+                f"Chỉ cho phép {sorted(CTRL_OUTPUT_ALLOWED)} (spec dòng 3605-3607)"
+            )
+
     def reserve(
         self,
         *,
@@ -206,18 +342,42 @@ class TrialLedger:
         code_commit: str,
         provenance: Mapping[str, Any],
         contribution: int,
+        reproduces_trial_id: str | None = None,
+        ctrl_output_whitelist: Sequence[str] | None = None,
     ) -> str:
         """Đặt chỗ. Raise `BudgetExhaustedError` nếu Khả dụng < contribution
         — TRƯỚC KHI CHẠM BẤT KỲ DỮ LIỆU NÀO (L-Z52, spec dòng 3471-3472).
+
+        Dòng `budget_line="CTRL"` đi đường riêng (MT-08): không kiểm ngân
+        sách (điểm kiểm soát phải chạy được đúng lúc N đã cạn — chính lúc
+        sắp go-live là lúc cần kiểm tra tái lập nhất), nhưng ĐỔI LẠI phải
+        qua `_kiem_khai_ctrl()`. Hai tham số cuối chỉ dùng cho CTRL.
         """
         if contribution < 1:
             raise LedgerError("contribution phải >= 1 — không có mức 0 (fail-closed)")
-        khadung = self.available(n_dang_ky=n_dang_ky, n_tai_sinh=n_tai_sinh)
-        if khadung < contribution:
-            raise BudgetExhaustedError(
-                f"Khả dụng ({khadung}) < contribution ({contribution}) — TỪ CHỐI khởi động"
+        if budget_line == CTRL_BUDGET_LINE:
+            self._kiem_khai_ctrl(
+                reproduces_trial_id=reproduces_trial_id,
+                ctrl_output_whitelist=ctrl_output_whitelist,
+                params_frozen_hash=params_frozen_hash,
+                config_hash=config_hash,
             )
+        else:
+            khadung = self.available(n_dang_ky=n_dang_ky, n_tai_sinh=n_tai_sinh)
+            if khadung < contribution:
+                raise BudgetExhaustedError(
+                    f"Khả dụng ({khadung}) < contribution ({contribution}) — TỪ CHỐI khởi động"
+                )
         trial_id = self._next_trial_id()
+        # Lời khai CTRL phải nằm TRONG sổ, không chỉ sống trong lần gọi này:
+        # audit sau đó (và người đọc sổ) phải tự đối chiếu lại được vì sao
+        # một dòng được miễn kế toán, không phải tin rằng cửa ghi đã kiểm.
+        khai_ctrl: dict[str, Any] = {}
+        if budget_line == CTRL_BUDGET_LINE:
+            if reproduces_trial_id is not None:
+                khai_ctrl["reproduces_trial_id"] = reproduces_trial_id
+            if ctrl_output_whitelist is not None:
+                khai_ctrl["ctrl_output_whitelist"] = list(ctrl_output_whitelist)
         self._append(
             {
                 "event": "RESERVE",
@@ -235,6 +395,7 @@ class TrialLedger:
                 "code_commit": code_commit,
                 "provenance": dict(provenance),
                 "contribution": contribution,
+                **khai_ctrl,
             }
         )
         return trial_id
