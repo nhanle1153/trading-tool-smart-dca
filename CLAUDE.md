@@ -248,6 +248,40 @@ với dòng phiên kia đang gõ dở cùng lúc — đã gây ít nhất 3 lầ
 > Mục này có thể lệch nhịp vài phút so với phiên kia — luôn `git log --oneline` +
 > đọc lại `TASKS.md` (cột 🔓/🔒/✅) trước khi chọn việc tiếp theo, đừng chỉ tin mục này.
 
+**Đang ở (cập nhật 08/09/2026, phiên cổng D3):** 🚪 **D3 ĐÓNG — tag `d3-complete`.**
+Khối 14 xong sạch: **TD-0140…TD-0148 đều ✅**. Chạy thật trong Docker qua service **`freqtrade`**
+(`E6 --close-d3-gate`, exit 0): `full_suite` **973 passed** · `test_khoa_d3` (L-Z47 22 · L-Z45 23
+· TD-0148 14, **mỗi file chạy RIÊNG một lượt**) · audit **5/14 đạt, 0 chưa đạt**. Chạy lại → exit
+**94**. `d3_git_sha` **khớp đúng HEAD** và `d3_cay_sach: true`.
+
+🔴 **ĐỌC SAI CHỖ NÀY LÀ HỎNG CẢ D3.5:** cổng D3 chứng nhận **BỘ ĐIỀU PHỐI H3-D đúng**, **KHÔNG**
+chứng nhận đã có kết quả walk-forward. Chưa có bộ chạy backtest thật (E2 dừng ở
+`EXIT_CHUA_CO_BO_CHAY`); mọi phép kiểm mới chỉ được nuôi bằng **bộ chạy GIẢ**. Và TD-0148 **vẫn
+tin lời khai của bộ chạy** — trả ngày *dự kiến* thay vì ngày *thật đọc từ dataframe* là vô hiệu
+hoá nó hoàn toàn. **D3.5 viết bộ chạy thật: BẮT BUỘC đọc ngày từ dataframe + test khoá riêng.**
+Đã ghi trong `d3_han_che` (nhãn `nguoi-khai`), không để ngầm hiểu.
+
+**Ba bài học từ lần chạy THẬT** (chi tiết `docs/research-log.md` 08/09/2026):
+1. 🔴 **Ba cổng D1/D2/D3 đều ghi `git_sha` mà KHÔNG cổng nào kiểm cây sạch.** Lần chạy đầu 8 ca
+   đỏ (`test_lz27_lz28`+`test_td0130`), chạy lại riêng **40/40 xanh** — suite của cổng chạy 6,5
+   phút, đúng lúc phiên khác sửa dở `registry.py`. Cổng từ chối vì suite đỏ, **nhưng nếu sửa đổi
+   đó tình cờ không làm đỏ test nào thì cổng ĐÃ ĐÓNG** với sha trỏ tới commit không chứa thứ vừa
+   kiểm. Đã vá cho D3 (kiểm TRƯỚC cả suite). 🔴 **D1/D2 không truy lại được — hạn chế đã ghi sổ,
+   KHÔNG sửa vì là bằng chứng đã niêm phong.**
+2. **Chốt đầu viết QUÁ CHẶT** (dùng thẳng `is_clean`, tính cả rác chưa theo dõi) → cổng không bao
+   giờ đóng được. **Một chốt không bao giờ thoả được thì tệ hơn không có chốt** — sớm muộn bị gỡ.
+   Sửa thành phân loại: file **đã theo dõi** bị sửa luôn tính; file **chưa theo dõi** chỉ tính khi
+   nằm trong `src/ tests/ entrypoints/ config/ registry/schemas/` (một `.py` chưa commit trong
+   `tests/` VẪN được pytest thu và VẪN không có trong commit).
+3. **Suite KHÔNG độc lập với service** — chạy nhầm `lockbox` làm 3 test đỏ ĐÚNG, vì đó là service
+   duy nhất *không che* `lockbox/data/`. "N passed" là phát biểu về MỘT service.
+
+**Bẫy PASS RỖNG thứ ba của khối** (đúng họ với kết luận *"ca sai chỉ đi qua mẫu dựng tay"*):
+fixture autouse che chính hàm cần kiểm → giữ `PHAN_LOAI_THAT` từ lúc import.
+
+**Bước tiếp theo:** **D3.5** — 🚪 cổng sai lệch thước đo (DR-015), chặn D4. Cần testnet.
+*(Đoạn "Đang ở" cũ bên dưới giữ nguyên làm lịch sử.)*
+
 **Đang ở (cập nhật 08/09/2026, phiên rà lớp canh):** **TD-0150 ✅ đóng** + **rà TOÀN BỘ lớp canh xong**.
 
 1. **TD-0150 — cửa ghi sổ trial nay đối chiếu schema TRƯỚC khi append.** Phiên `…-91` phát hiện khi
