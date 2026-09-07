@@ -191,6 +191,50 @@ với dòng phiên kia đang gõ dở cùng lúc — đã gây ít nhất 3 lầ
 > Mục này có thể lệch nhịp vài phút so với phiên kia — luôn `git log --oneline` +
 > đọc lại `TASKS.md` (cột 🔓/🔒/✅) trước khi chọn việc tiếp theo, đừng chỉ tin mục này.
 
+**Đang ở (cập nhật 07/09/2026, cuối phiên công cụ nhập liệu):** **TD-0124 + TD-0125 + TD-0126 ✅;
+OQ-13 đóng; đã ghi `back-end-note.md` + `ARCHITECTURE.md` (lệnh "chuẩn hóa và lưu" 07/09/2026).**
+
+🔴 **VIỆC QUAN TRỌNG NHẤT PHIÊN NÀY — suýt xoá bản backup lockbox.** Tôi liệt kê thư mục `C:` ở gốc
+repo là "rác" và xin xoá; chủ dự án đồng ý. Mở ra xem trước khi xoá thì nó chứa **511 file dữ liệu
+lockbox khớp từng byte**. Tên thật là `C` + **U+F03A** (dấu hai chấm giả) — do truyền đường dẫn
+Windows vào `backup_lockbox(dest_dir=...)` từ Git Bash. Nghiêm trọng hơn: nó nằm NGOÀI đường dẫn mà
+`docker-compose.yml` che, nên **lockbox lọt vào container** (1023 → nay 513 file `.feather` thấy
+được), phá đúng thứ `ARCHITECTURE.md` 3.1 gọi là hàng rào ở tầng hệ điều hành. Hoá ra
+`E:\lockbox-backup-tool-d` đã có bản backup **đầy đủ 512/512**, nên bản trong repo là bản THỪA — đã
+xoá sau khi verify sha256, đã kiểm lại container. **Hai bài học ghi ở `docs/research-log.md`:**
+(1) "rác" là một *kết luận* rút từ cái tên, không phải một *quan sát*; (2) `pathlib.Path("C:/…")`
+hiểu là ổ đĩa C: nên phép đo đầu tiên trả "0 file" — một kết quả SAI mà lại khớp với giả thuyết sẵn
+có. **Số liệu ủng hộ giả thuyết của mình là lúc phải nghi ngờ phép đo nhất.**
+
+Các việc còn lại:
+1. **TD-0126 ✅** — `explore_evidence` bắt buộc khi `data_source=EXPLORE`; và so `mechanism` để chặn
+   **nộp lại ý tưởng đã bị loại dưới tên khác** (§9c.7.4 ràng buộc 3, tương đương
+   `retest_forbidden`). 🐛 Test bắt được bug thật trong chính code này: `đ` (U+0111) **không tách
+   được bằng NFD** — nó là ký tự CƠ SỞ, nên `"đóng"` → `"ong"` còn `"dong"` giữ nguyên. Ngưỡng nghi
+   trùng cố ý đặt sai thì **rẻ** (khai thêm một dòng, không mất đơn) và **không** vào
+   `tool_d_config.yaml`.
+2. **Va chạm mã việc đã giải:** cặp D2 đổi số **TD-0119 → TD-0128, TD-0120 → TD-0129**; cặp Idea
+   Queue **giữ nguyên**. Tiêu chí: *phía nào có ĐỊNH DANH MÁY ĐỌC thì phía đó không đổi* — mã Idea
+   Queue đã ăn vào tên file test, tên hàm, và chuỗi E6 **in ra trong đầu ra thật**. Lịch sử git
+   không viết lại được, nên kèm **TỪ ĐIỂN ĐỔI TÊN** ở đầu Khối 13 + alias trong docstring.
+3. **Giấy tờ đã xong:** OQ-13 → ✅; **MT-13** mới; MT-11 nối thêm câu (trần nhập đã có test khoá);
+   ARCHITECTURE có sổ thứ ba + ghi rõ **nguồn sự thật hình dạng sổ là JSON Schema trong
+   `registry/schemas/`**, không nhân đôi ra `.md` (bài học MT-03). Từ điển dữ liệu **giữ hoãn** tới
+   D3.5 theo quyết định chủ dự án.
+
+Docker: **720 passed, 0 failed** (699 → 720, đúng +21). E6 trên sổ thật: `đã audit 4/12`, exit 0.
+Cả hai sổ mới vẫn **0 dòng** — mọi thử nghiệm chạy trong hộp cát.
+
+**Bước tiếp theo / còn treo:**
+- 🔓 **TD-0127** (`L-Z27` + `L-Z28`) — hoãn **có lý do**, không phải quên: `L-Z28` cần đánh số điểm
+  quyết định, `L-Z27` phần "chỉ tăng theo `floor(lệnh/25)`" cần lệnh live — cả hai chưa tồn tại.
+  Viết bây giờ là viết test cho cơ chế chưa có, phải mock, đúng thứ **L-Z51** cấm. Hạn: **trước D11**.
+- 🔴 **Phạm vi L-Z26 KHÔNG phủ:** §12c.3 đòi Cấp B có HAI điểm quyết định LIÊN TIẾP — cùng lý do
+  trên, đã ghi vào TD-0127.
+- ⚠️ **Phiên song song đang làm TD-0117** (cổng D2, `--close-d2-gate`). Mốc test dịch dưới chân:
+  luôn đo baseline lại ngay trước khi so (`--ignore` file test mới), đừng lấy con số từ `TASKS.md`.
+*(Đoạn “Đang ở” cũ bên dưới giữ nguyên làm lịch sử.)*
+
 **Đang ở (cập nhật 07/09/2026, phiên công cụ nhập liệu):** **TD-0124 + TD-0125 ✅ đóng; OQ-13 đóng.**
 Hai kênh nhập liệu trước đây ở cùng một tình trạng — **luật viết rất chặt, không dòng code nào thi
 hành** — nay đều có máy TỪ CHỐI GHI:

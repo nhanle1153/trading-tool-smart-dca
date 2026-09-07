@@ -922,3 +922,98 @@ N12 đã cảnh báo điều này cho `git add`; hoá ra nó áp cho **mọi ph�
 kể cả số test. Cách làm đã dùng để đo `+28`/`+30` là cách đúng và cần giữ: **đo baseline lại ngay
 trước khi so, bằng `--ignore` chính file test mới**, thay vì lấy con số từ file trạng thái. Nếu chỉ
 so với "624 ghi trong TASKS.md" thì đã kết luận nhầm là mình thêm 33 test.
+
+---
+
+## 07/09/2026 (tiếp) — dọn hai lỗ hổng vận hành + TD-0126
+
+Ba việc nối tiếp đợt TD-0124/TD-0125, mỗi việc có một bài học riêng.
+
+### 1. 🔴 Suýt xoá bản backup lockbox vì gọi nhầm nó là "rác"
+
+Tôi liệt kê hai thư mục lạ ở gốc repo là "rác từ lệnh shell nhầm" và xin phép xoá. Chủ dự án
+đồng ý. Nhưng khi **mở ra xem trước khi xoá**, thư mục `C:` hoá ra chứa **511 file dữ liệu
+lockbox**, khớp từng byte (sha256) với `lockbox/data/` thật.
+
+Nguyên nhân: ai đó truyền đường dẫn Windows `C:\Program Files\Git\lockbox-backup-tool-d` vào
+`backup_lockbox(dest_dir=...)` từ Git Bash; nó bị tạo thành thư mục **tương đối** ngay trong
+repo. Tên thật của thư mục là `C` + **U+F03A** (dấu hai chấm giả, vùng private-use) — Windows
+không cho phép `:` trong tên file, nên hệ thống thay bằng ký tự nhìn giống hệt.
+
+🔑 **Bài học 1 — "rác" là một kết luận, không phải một quan sát.** Tôi rút kết luận đó từ *tên*
+thư mục chứ không từ *nội dung*. Quy tắc "nhìn vào đích trước khi xoá hay ghi đè" đã cứu ở đây;
+nếu tôi tin cái tên thì đã xoá bản sao lưu của tài nguyên khan hiếm nhất dự án.
+
+🔑 **Bài học 2 — ký tự nhìn giống nhau không phải cùng một ký tự.** `pathlib.Path("C:/…")` trên
+Windows hiểu là **ổ đĩa C:**, nên phép so sánh đầu tiên của tôi trả về "backup có 0 file" — một
+kết quả sai mà lại *trông* hợp lý (khớp với giả thuyết "thư mục rỗng/rác"). Chỉ khi in ra
+`[hex(ord(c)) for c in ten]` mới lộ ra `0xf03a`. Số liệu ủng hộ giả thuyết sẵn có là lúc phải
+nghi ngờ phép đo nhất.
+
+**Phát hiện nghiêm trọng hơn cái tên:** bản sao này nằm **ngoài** đường dẫn mà
+`docker-compose.yml` che, nên nó **lọt hoàn toàn vào container**:
+
+| | trước | sau |
+|---|---|---|
+| `/workspace/lockbox/data` (phải bị che) | 0 file ✅ | 0 file ✅ |
+| tổng `.feather` thấy từ container `tests` | **1023** 🔴 | **513** ✅ |
+| con dấu đọc được (L-Z13/L-Z14 cần) | 1 | 1 ✅ |
+
+Tức là suốt thời gian đó, dữ liệu lockbox **chạm được từ trong container** — phá đúng thứ
+`ARCHITECTURE.md` 3.1 gọi là *"chỗ duy nhất biến 'không được chạm dữ liệu lockbox' thành
+'không chạm được ở tầng hệ điều hành'"*. Không có bằng chứng nào cho thấy nó ĐÃ bị đọc (mọi
+entrypoint vẫn đi qua `verify_seal`/`touch_lockbox`, và `lockbox_access.log` không có dòng lạ),
+nhưng hàng rào đã hở.
+
+**Cách xử:** không xoá — **chép → verify sha256 → mới xoá bản cũ** (move là một nhịp; đứt giữa
+chừng thì mất cả hai). Script tự dừng khi phát hiện `E:\lockbox-backup-tool-d` **đã tồn tại** —
+và bản ngoài đó hoá ra là backup **đầy đủ, đúng từng byte, 512/512 kể cả file niêm phong**. Nên
+bản trong repo chỉ là bản THỪA; xoá không mất gì. Đã xoá, đã verify lại container.
+
+### 2. Va chạm mã việc TD-0119/TD-0120 — chọn đổi phía nào
+
+Hai mã bị dùng HAI LẦN cho hai việc khác hẳn. Không đổi số thì vi phạm quy tắc 1 của
+`TASKS.md` tồn tại mãi; đổi sai phía thì phá bằng chứng đã ghi.
+
+🔑 **Tiêu chí quyết định: phía nào có ĐỊNH DANH MÁY ĐỌC thì phía đó không đổi.** Cặp Idea Queue
+đã ăn vào tên file test, tên hàm `check_td0119*`/`check_td0120*`, và chuỗi
+`TD-0119a`/`TD-0119b`/`TD-0120` mà **E6 in ra trong đầu ra thật** — đổi chúng là đổi luôn bằng
+chứng đã chép vào `TASKS.md` và `DR-Q3-2026-tieu-chi-chon-y-tuong.md`. Cặp D2 chỉ nằm trong
+docstring và ô phụ thuộc. → đổi cặp **D2**: TD-0119 → **TD-0128**, TD-0120 → **TD-0129**.
+
+Vì **lịch sử git không viết lại được**, ambiguity trong commit cũ không thể xoá — chỉ có thể
+làm cho nó tra ngược được. Nên kèm **TỪ ĐIỂN ĐỔI TÊN** (bảng 4 chiều ở đầu Khối 13) + alias
+trong docstring. Đây là cách chống "nhớ sai" mà chủ dự án lo, không phải chống bằng cách không
+đổi gì cả.
+
+### 3. TD-0126 — bug thật trong chính code chống trùng
+
+Hai ràng buộc §9c.7 trước đây chỉ nằm trong `description` của schema (văn bản mô tả, không phải
+luật). Nay có máy: `explore_evidence` bắt buộc khi EXPLORE, và so `mechanism` để chặn nộp lại ý
+tưởng đã bị loại dưới tên khác.
+
+🐛 **Test bắt được bug của tôi:** `đ` (U+0111) **không tách được bằng NFD** — nó là ký tự CƠ SỞ,
+nét gạch là một phần của chữ chứ không phải dấu tổ hợp. Không thay tay thì `re` nuốt luôn nó:
+`"đóng"` → `"ong"` trong khi `"dong"` giữ nguyên, và hai cách viết cùng một cơ chế lại thành hai
+cơ chế khác nhau — đúng ca luật này sinh ra để bắt. Sửa code, không sửa test.
+
+🔑 **Về ngưỡng nghi trùng (`NGUONG_NGHI_TRUNG = 0.6`):** cố ý thiết kế để đặt sai thì **rẻ** —
+hậu quả là người nộp phải khai thêm một dòng `overlaps_with`, không phải mất một ý tưởng hay
+lệch một phép đo. Một ngưỡng mà đặt sai thì tốn kém sẽ trở thành một cái núm để vặn. Vì vậy nó
+KHÔNG vào `tool_d_config.yaml` (không phải tham số Tầng A/B/C, không chảy vào số nào).
+
+**5 test cũ (TD-0118/TD-0124) đỏ đúng lúc sửa** vì fixture của chúng nộp nhiều đơn cùng
+`mechanism`. Chỉ đổi **dữ liệu mẫu**; không nới phép kiểm, không sửa một dòng `assert` nào.
+
+### Bằng chứng (Docker)
+
+`699 → 720 passed, 0 failed` (+21 đúng bằng số test mới). E6 thật: exit 0, `đã audit 4/12`.
+Ghi nhận: mốc 699 đã gồm 12 test `test_close_d2_gate.py` của **phiên song song** — lần này đo
+baseline ngay trước khi so, đúng bài học đã ghi ở đính chính phía trên.
+
+### Còn treo
+
+**TD-0127** (`L-Z27` + `L-Z28`) hoãn có lý do, không phải quên: `L-Z28` cần **đánh số điểm
+quyết định** và `L-Z27` phần *"chỉ tăng theo `floor(lệnh/25)`"* cần **lệnh live** — cả hai chưa
+tồn tại. Viết test bây giờ là viết test cho cơ chế chưa có, phải giả lập bằng mock, đúng thứ
+**L-Z51** cấm. Hạn chót vẫn là **trước D11**.
