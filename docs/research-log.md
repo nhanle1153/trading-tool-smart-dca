@@ -473,3 +473,25 @@ với cấu hình thật — CHƯA wiring được vào E1/E2/E3 vì ba entrypoi
 của bất kỳ task D2+ nào viết logic backtest/WFO/ablation thật.
 
 Suite Docker cuối: 492 passed.
+
+## 07/09/2026 — TD-0111 (D2 mở): đọc source D1 — fill/no-fill limit-maker trong backtest ĐÚNG như spec
+
+Đọc `/freqtrade/freqtrade/optimize/backtesting.py` (image 2026.8, cùng bản đã dùng ở TD-0028) để trả
+lời giả định D1 (§9b.2): backtest futures có mô hình fill/no-fill THẬT cho lệnh limit, không phải
+"đặt là khớp ngay tại giá mở nến" như lo ngại ban đầu.
+
+Chuỗi bằng chứng: `_enter_trade()` (dòng 1121) tạo order rồi gọi ngay `_try_close_open_order()` (dòng
+1273) — chỉ đóng nếu `_get_order_filled()` (dòng 787, `low <= rate <= high`) đúng, TRÊN CHÍNH nến đặt
+lệnh. Không khớp thì lệnh "open" được `backtest_loop()` (dòng 1520-1566) kiểm lại MỖI nến sau đó.
+Không bao giờ khớp thì `manage_open_orders()` (dòng 1330) huỷ theo `unfilledtimeout` cấu hình — với
+lệnh tranche 2/3 (additional entry, `nr_of_successful_entries > 0`), CHỈ lệnh đó bị xoá, trade với
+tranche đã khớp vẫn sống — khớp đúng ý nghĩa `entry_order_ttl_bars_1h` đã có sẵn trong
+`tool_d_config.yaml`.
+
+**Kết luận: D1 XÁC NHẬN ĐÚNG.** Rủi ro nêu trong spec ("sai thì D0.9 vô nghĩa") không xảy ra ở tầng
+cơ chế fill/no-fill. Rủi ro thật của Tool D vẫn nằm ở D6 (đã xác nhận riêng ở TD-0028): quyết định
+CÓ kích hoạt tranche mới hay không vẫn nhìn giá mở nến, tách biệt với việc lệnh có khớp hay không.
+
+Không cần viết test mới cho TD-0111 (đúng phạm vi TD-0028 tiền lệ — thuần đọc source + trích dẫn,
+không phải test đơn vị). Ghi vào `docs/freqtrade-source-read.md` mục 5, cập nhật ghi chú đầu file
+(D1 đã đọc, D3/D5 còn lại cho TD-0112/0113, D4 hoãn Testnet/Live).
