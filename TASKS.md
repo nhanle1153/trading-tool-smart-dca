@@ -236,13 +236,40 @@
 
 ---
 
+## Khối 14 — D3: H3-D Walk-forward orchestrator (mở 07/09/2026, sau tag `d2-complete`)
+
+> 🔴 **H3-D là "VIẾT LẠI TỪ ĐẦU"** (spec dòng 4340) và spec đính kèm **danh sách 9 bug CỤ THỂ
+> của Tool A** mà H3-D phải có test chống lại TRƯỚC KHI được coi là xong. Đối chiếu với những
+> gì đã có trên đĩa: **5/9 đã có máy canh từ D0-PRE** — (1) file tham số ẩn `guard §0d.1`,
+> (2) `L-Z36`, (3) `L-Z38`, (8) `L-Z51`, (9) `L-Z41`. **4/9 còn 0 dòng code** và chính là
+> phần việc thật của khối này: (4) cache fold không mang hash cấu hình, (5) cộng dồn
+> `profit_ratio` qua fold, (6) ghép fold bằng CỘNG thay vì NHÂN, (7) bản ghi trùng khi chạy
+> lại cùng timerange. Spec nói thẳng: *"Zero-dependency là về CODE, không phải về BÀI HỌC"*.
+>
+> 🔢 **Vì sao đánh số từ TD-0140, bỏ trống 0131–0139:** phiên song song đang ở TD-0130 và sẽ
+> đi tiếp lên. Chừa một dải trống là cách rẻ nhất để không lặp lại va chạm mã việc
+> TD-0119/TD-0120 (xem TỪ ĐIỂN ĐỔI TÊN ở trên).
+
+| Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
+|---|---|---|---|---|
+| TD-0140 | 🔴 **DR-D3-01 — chốt SƠ ĐỒ FOLD. CẦN CHỦ DỰ ÁN QUYẾT.** Spec **không định nghĩa** ở bất kỳ dòng nào: anchored hay rolling, độ dài cửa sổ train/test, bước trượt, số fold. Đây là quyết định kỹ thuật bắt buộc phải chốt (CLAUDE.md quy tắc 2), không được tự chọn im lặng. 🔴 **Ràng buộc cứng phải đưa vào lúc quyết:** cửa sổ WFO `[T1..T2]` chỉ dài **7,6 tháng** (12/06/2025 → 29/01/2026) — chia càng nhiều fold thì mỗi fold càng ít lệnh, và DSR/Sharpe trên vài lệnh là số vô nghĩa chứ không phải số bi quan | 🔓 | TD-0117 ✅ | File `docs/decisions/DR-D3-01-so-do-fold.md` commit **RIÊNG và TRƯỚC** mọi dòng code fold — cùng khuôn OQ-07/TD-0120 (tiêu chí phải niêm phong trước khi nhìn thấy kết quả, nếu không thì sơ đồ fold sẽ bị vặn theo số đã thấy). Ghi rõ số lệnh kỳ vọng mỗi fold và ngưỡng dưới mà nếu không đạt thì fold đó bị đánh `unreadable`, KHÔNG phải 0 |
+| TD-0141 | `src/tool_d/wfo/folds.py` — sinh danh sách fold từ DR-D3-01 + `tool_d_config.yaml` (N4: không hardcode, không đọc env) | 🔓 | TD-0140 | Mọi fold nằm TRỌN trong `[T1,T2]` — **nối `assert_dataset_timerange()`/L-Z55 đã có sẵn**, không viết lại phép kiểm; cửa sổ test giữa các fold không chồng lấn nhau; **không fold nào chạm LOCKBOX**. Fail-closed: cấu hình thiếu khoá → raise, KHÔNG tự đoán mặc định |
+| TD-0142 | 🔴 **L-Z47 + ghép fold bằng NHÂN** — bug Tool A số (5) và (6). `wfo/equity.py`: `starting_balance + Σ pnl_abs == final_balance` cho TỪNG fold; ghép fold thành đường vốn liên tục bằng **NHÂN hệ số**, không cộng (mỗi fold backtest độc lập, tự reset vốn — DR-013) | 🔓 | TD-0141 | Sai số < **0,01 USDT** mỗi fold; `L-Z46` (cấm `profit_ratio`) phủ luôn tầng WFO mới. **Test phải có răng:** cố tình ghép bằng CỘNG → đúng ca đó đỏ, không phải cả bộ |
+| TD-0143 | 🔴 **Cache fold phải mang hash** — bug Tool A số (4), §0d.3. Đây đúng là chỗ Tool A *"sửa code rồi chạy lại vẫn ra số y hệt"* | 🔓 | TD-0141 | Cache resume WFO ghi kèm `params_hash` + `code_sha` + `data_hash`; đọc lại mà hash lệch → **CẢNH BÁO TO và KHÔNG dùng** (không âm thầm dùng tiếp, cũng không âm thầm bỏ) |
+| TD-0144 | 🔴 **L-Z45 — `dedup_key` tất định** — bug Tool A số (7). Khoá theo `exchange_order_id` của **TỪNG tranche**, KHÔNG theo `trade_id` (§8.3 — mỗi tranche là một sự kiện vào lệnh riêng) | 🔓 | TD-0141 | Chạy hai lần liên tiếp cùng timerange ghi thêm **ĐÚNG 0 dòng**, kể cả khi có tiến trình song song ghi cùng file. Ghi = **no-op** nếu key đã tồn tại; KHÔNG đọc-sửa-ghi-đè (append-only tuyệt đối, LD-20) |
+| TD-0145 | Nối toàn bộ vào **E2 `entrypoints/run_wfo.py`**, gỡ `NotImplementedError` | 🔓 | TD-0142, TD-0143, TD-0144 | Khung guard/audit/seal đã có sẵn ở đầu `main()` (TD-0016/0057/0072) — **không đụng vào**, chỉ thêm phần sau nó. `entrypoints/` vẫn đúng **8 file** (L-Z36) |
+| TD-0146 | Bản ghi fold mang đủ xuất xứ | 🔓 | TD-0145 | Mỗi bản ghi fold có đủ **7+1 khoá provenance** (L-Z40) và mọi chỉ số chưa đo ở trạng thái `pending` (L-Z41). Hai máy canh đã tồn tại — việc ở đây là **NỐI vào bản ghi fold**, không viết lại phép kiểm |
+| TD-0147 | 🚪 **GATE D3** — điều kiện vào D3.5 | 🔓 | TD-0140…TD-0146 | `runtime_state.json.d3_complete` + tag `d3-complete`, dùng lại khuôn `close_d2_gate()`: chạy **RIÊNG** test khoá cốt lõi của D3 (L-Z45 + L-Z47) và đòi số ca PASS ≥ 1 — suite tổng xanh không chứng minh được chúng còn tồn tại |
+
+---
+
 ## Việc đã biết là sẽ có, chưa mở
 
 | Giai đoạn | Nội dung | Chặn bởi |
 |---|---|---|
 | ~~D1~~ ✅ **ĐÃ MỞ 07/09/2026** | H20 ✅ (xong ở D0-PRE) · H1-D · H4-D · H13 · H19 → **Khối 9–12** bên trên (TD-0090…TD-0110) | — |
 | ~~D2~~ ✅ **ĐÃ MỞ 07/09/2026** | Verify giả định D1–D7 (§9b.2), H15 → **Khối 13** bên trên (TD-0111…TD-0117). L-Z49 (D7) là điều kiện vào D4 | — |
-| D3 | H3-D walk-forward orchestrator | D2 |
+| ~~D3~~ ✅ **ĐÃ MỞ 07/09/2026** | H3-D walk-forward orchestrator → **Khối 14** bên trên (TD-0140…TD-0147) | — |
 | D3.5 | 🚪 Cổng sai lệch thước đo (DR-015) — **chặn D4**, cần testnet | D3 |
 | D4 | 🔴 Ablation D0.9, 9 cấu hình × 2 hướng — **blocker B4** | D3.5 + TD-0041 (B6) |
 | D9.5 | Lockbox chạm **đúng một lần** | D9 |
