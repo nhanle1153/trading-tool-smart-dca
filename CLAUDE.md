@@ -191,6 +191,31 @@ với dòng phiên kia đang gõ dở cùng lúc — đã gây ít nhất 3 lầ
 > Mục này có thể lệch nhịp vài phút so với phiên kia — luôn `git log --oneline` +
 > đọc lại `TASKS.md` (cột 🔓/🔒/✅) trước khi chọn việc tiếp theo, đừng chỉ tin mục này.
 
+**Đang ở (cập nhật 07/09/2026, phiên kế toán CTRL):** **TD-0130 ✅ đóng — MT-08 đã có máy thi hành.**
+Đây là việc *đã CHỐT từ 07/09 nhưng 0 dòng code*: chính sách "CTRL không tính vào N" nói ở 5 chỗ trong
+spec, chốt ở MT-02 rồi MT-08, mà `registry.py` vẫn cộng CTRL vào `n_used()` và chặn ghi điểm kiểm soát
+khi ngân sách cạn. Ba chỗ sửa + **cửa xác thực CTRL fail-closed**: CTRL đứng ngoài ngân sách nên "khai
+CTRL" là đặc quyền — phải thuộc ĐÚNG MỘT dạng *tái lập* (hash khớp bản ghi gốc) hoặc *đo thước*
+(`ctrl_output_whitelist`), máy đối chiếu chứ không nhận lời khai. Khai **cả hai** cũng bị từ chối.
+🔴 Làm **chặt hơn** kế hoạch: `CTRL_OUTPUT_ALLOWED` là danh sách **CHO PHÉP** chứ không phải blocklist
+chuỗi cấm — đúng chữ spec dòng 3605-3607; blocklist chỉ chặn được tên đã nghĩ ra trước.
+Docker: **720 → 735 passed, 0 failed** = đúng **+15**; baseline **đo lại ngay trước khi so** bằng
+`--collect-only`, không lấy từ file (bài học "mốc 629 vs 624": hai phiên chạy song song thì mốc test
+của phiên kia dịch dưới chân mình). E6 sổ thật exit 0, `N_ĐÃ_DÙNG=4` không đổi, sổ vẫn 12 dòng.
+**Chọn việc này vì nó không giẫm hai phiên kia** — TD-0127 (việc 🔓 duy nhất lúc đó) phải sửa
+`audit_checks.py` + `trial_ledger_audit.py`, đúng hai file cả hai phiên đang gõ dở. TD-0130 chỉ đụng
+`registry.py` + 1 file test mới; `check_lz11` tự đúng theo vì nó gọi `ledger.n_used()`.
+
+**Còn treo sau việc này:**
+- ⏳ **Chưa ghi `back-end-note.md`** — MT-08 cần thêm phần *"đã thi hành, commit `5d5ae82`"*. N9 đòi
+  lệnh **"chuẩn hóa và lưu"** và ba câu hỏi Phụ lục B.3 trả lời trong chat trước. **Chỉ mở rộng MT-08,
+  không tạo mục mới** — cùng một quyết định, chỉ bổ sung phần thi hành.
+- 🔓 **TD-0127** (`L-Z27` + `L-Z28`) vẫn chưa ai làm, hạn chót trước D11. Giờ hai phiên kia đã rời
+  `audit_checks.py` thì nó hết va chạm.
+- 🧹 Hai thư mục rác ở gốc repo từ lệnh shell nhầm: `C:/` và `ls -la /`. Vẫn chờ đồng ý mới xoá.
+*(Đoạn "Đang ở" cũ bên dưới giữ nguyên làm lịch sử.)*
+
+
 **Đang ở (cập nhật 07/09/2026, phiên cổng D2):** 🚪 **D2 ĐÓNG — tag `d2-complete`, TD-0117 ✅.**
 `runtime_state.json.d2_complete` sinh từ MỘT LẦN CHẠY THẬT trong Docker (`E6 --close-d2-gate`,
 exit 0); ba mục evidence đều `do-duoc` đúng nghĩa MT-10 vì hàm TỰ gọi pytest trong chính lần
