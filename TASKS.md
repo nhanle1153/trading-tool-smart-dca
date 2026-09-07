@@ -197,7 +197,7 @@
 
 | Mã | Tên việc | TT | Phụ thuộc | Verify |
 |---|---|---|---|---|
-| TD-0111 | **D1** — đọc source `adjust_trade_position()` mô phỏng fill limit-maker trong backtest futures (kể cả ca KHÔNG khớp) → nối vào `docs/freqtrade-source-read.md` | 🔒 | TD-0110 | Trích đường dẫn + số dòng thật trong image (LD-38/40); kết luận nhị phân ĐÚNG/SAI mô tả spec |
+| TD-0111 | **D1** — đọc source `adjust_trade_position()` mô phỏng fill limit-maker trong backtest futures (kể cả ca KHÔNG khớp) → nối vào `docs/freqtrade-source-read.md` | ✅ | TD-0110 | Trích đường dẫn + số dòng thật trong image (LD-38/40); kết luận nhị phân ĐÚNG/SAI mô tả spec |
 | TD-0112 | **D3** — đọc source cách Freqtrade tính giá vào trung bình khi nhiều lần entry + xác nhận `custom_stoploss` đọc được đúng giá đó | 🔓 | TD-0110 | `docs/freqtrade-source-read.md` có mục D3; test đơn vị dựng backtest nhỏ đa-entry xác nhận giá trung bình đúng công thức |
 | TD-0113 | **D5** — đọc source hành vi `timeframe-detail 5m`: thứ tự khớp khi nhiều mức giá (p1,p2,p3,SL,TP) cùng nằm trong một nến 1H | 🔓 | TD-0110 | `docs/freqtrade-source-read.md` có mục D5; test/backtest nhỏ dựng nến 1H chứa ≥2 mức giá, xác nhận thứ tự khớp theo đúng dòng 5m, không theo thứ tự tuỳ ý |
 | TD-0114 | 🔴 **L-Z49 CRITICAL, D7** — dựng `IStrategy` tối thiểu THẬT (1 pair, 1 zone, 3 tranche) dùng `zone_detection`/`zone_strength` đã có; chạy backtest thật; xác nhận `custom_data` ghi ở tranche 1 đọc lại NGUYÊN VẸN ở callback tranche 2/3 + DG6/7/8 + `custom_exit`. FAIL → chặn D4 | 🔓 | TD-0111, TD-0112, TD-0113 | Chạy backtest thật trong Docker (service `freqtrade`, dữ liệu CALIB); test khoá `L-Z49` PASS; FAIL thì ghi rõ, KHÔNG chạy D0.9 |
