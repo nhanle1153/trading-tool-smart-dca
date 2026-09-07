@@ -725,3 +725,84 @@ Backtest — `ZoneAbsorptionMinimal`, `config/freqtrade/config.json`, `--timeran
 2026-09-07_04-06-36.zip`. Toàn bộ đối chiếu chạy trong Docker (`--entrypoint python freqtrade`),
 đây là phân tích đọc dữ liệu tĩnh (không phải bằng chứng test khoá N7) — bằng chứng N7 chính thức
 của TD-0114/L-Z49 không đổi.
+
+## 07/09/2026 — TD-0116 (H15): latency network+auth thật; testnet bị loại bằng bằng chứng mã nguồn
+
+**Testnet bị loại — đóng câu hỏi mở của §6.7 bằng source, không bằng phỏng đoán.** Spec dặn "không
+nhận nguyên premise 'Freqtrade không hỗ trợ testnet'". Đọc Freqtrade 2026.8 đang cài:
+`exchange/binance.py:52` đặt `"supports_demo_trading": False` kèm chú thích CỐ Ý — *"Intentionally
+Disabled as it's a separate market - not a simulated live market"*; `exchange.py:884-890`
+`validate_demo_trading()` raise `ConfigurationError` nếu bật. Bybit thì `True`, Binance bị tắt riêng.
+`ccxt` bên dưới CÓ `set_sandbox_mode` nhưng Freqtrade không bao giờ gọi (grep `set_sandbox` → 0 kết
+quả). **Lý do Freqtrade nêu quan trọng hơn việc "không hỗ trợ"**: testnet là *thị trường riêng*, nên
+đo latency tới đó là đo hạ tầng bot không bao giờ dùng. Chuyển hẳn sang production.
+
+**Một lỗi thiết kế của chính bản đo đầu, tự bắt được TRƯỚC khi lấy số:** `urllib.urlopen` mở TCP+TLS
+MỚI mỗi lần gọi → mọi mẫu cõng thêm bắt tay TLS. Freqtrade/ccxt giữ kết nối bền, nên con số đó thổi
+phồng đúng đại lượng dùng để đánh giá khoảng trống không-SL của D2c. Viết lại bằng `http.client` với
+tham số `reuse_connection`, đo tách **LẠNH** (kết nối mới) và **ẤM** (dùng lại). Nếu không tách, số
+báo cáo sẽ là ~3-6× số thật.
+
+**Số đo chính thức** (Docker, production `fapi.binance.com`, mạng dân dụng VN, n=30/lượt, 07/09/2026):
+
+| Phép đo | median | p95 | max | mẫu >1s |
+|---|---|---|---|---|
+| public `/fapi/v1/time` — **ẤM** | **136,4 ms** | 386,8 ms | 684 ms | 0/30 |
+| ký `/fapi/v1/order/test` — **ẤM** | **138,3 ms** | 396,0 ms | 589 ms | 0/30 |
+| public `/fapi/v1/time` — LẠNH | 818,2 ms | 3.520 ms | **10.994 ms** | 14/30 |
+| ký `/fapi/v1/order/test` — LẠNH | 672,2 ms | 2.173 ms | 3.855 ms | 12/30 |
+
+> **Chi phí auth + validate lệnh phía sàn = +1,9 ms** (đo theo cặp, cùng host, cùng phiên, kết nối ấm).
+
+**Kết luận H15: mạng chi phối hoàn toàn, auth gần như miễn phí.** Với độ trễ cấu trúc sẵn có của
+Tool D (zone confirm 12h + entry confirmation tối đa 3 nến 1H), 138 ms không đáng kể — đúng như §6.7
+dự đoán khi xếp H15 là P1. Nhắc lại giới hạn spec tự nêu: `/order/test` dừng trước matching engine
+nên đây là **cận dưới** của lệnh thật, không thay thế đo lại ở dry-run/live.
+
+**Một quan sát về phương pháp, đáng giữ:** ở kết nối LẠNH, hiệu giữa endpoint ký và endpoint public
+ra **âm** (−146 ms) — vô nghĩa về mặt vật lý. Đó là bằng chứng cho thấy nhiễu bắt tay TLS nuốt trọn
+mọi khác biệt endpoint. **Không đo được chi phí endpoint trên kết nối lạnh** — chỉ đo được trên kết
+nối ấm, theo cặp cùng host.
+
+🔴 **Phát hiện ngoài phạm vi H15, quan trọng hơn con số H15:** latency kết nối **LẠNH không ổn định**
+— qua 7 lượt đo, median dao động 264 → 943 ms, có lượt **14/30 mẫu vượt 1 giây**, max quan sát được
+**11 giây**. Hệ quả trực tiếp cho **D2c** (§8.3): khoảng trống không-SL = `PROCESS_THROTTLE_SECS`
+(5 s, TD-0028) **+ round-trip đặt lại SL**. Nếu đúng lúc đó phải dựng lại kết nối, cửa sổ không có SL
+trên sàn có thể **vượt 15 giây**. Con số này cần nhớ khi chốt `L_exchange` (spec §9b.2: *"Nếu D2c
+fail: hạ `L_exchange`"*) và khi đo `gap_ms` thật ở testnet/live.
+
+**Chẩn đoán quyền API — làm bằng thực nghiệm, không đoán.** Ban đầu mọi endpoint futures trả `-2015`.
+Tách nguyên nhân bằng bảng sau, thay vì sửa mò cấu hình tài khoản:
+
+| Endpoint | Trước | Sau khi bật Futures |
+|---|---|---|
+| `GET /api/v3/account` (spot, đọc) | 200 OK | 200 OK |
+| `POST /api/v3/order/test` (spot, lệnh) | `-2015` | — |
+| `GET /fapi/v2/balance` (futures, đọc) | `-2015` | **200 OK** |
+| `POST /fapi/v1/order/test` (futures, lệnh) | `-2015` | **200 OK** |
+
+Sàn trả `-2015` (khoá/IP/quyền) chứ **không phải `-1022`** (chữ ký sai) → loại secret khỏi danh sách
+nghi phạm ngay từ đầu. Spot đọc được nhưng futures không → khoanh đúng vào quyền Futures ở **mức tài
+khoản phụ**, không phải mức API key. Chủ dự án bật Futures cho tài khoản phụ → cả hai endpoint futures
+thông ngay. Hai giả thuyết trung gian đã bị **bác bỏ bằng bằng chứng**, ghi lại để không ai đề xuất
+lại: (a) nhầm key testnet/production — cùng key thất bại ở CẢ hai host; (b) Portfolio Margin chặn —
+ảnh chụp sau khi tắt PM cho thấy "Bật Futures" vẫn mờ.
+
+**Ngày tạo API key: 07/09/2026** (§6.7 yêu cầu ghi, phục vụ audit thời gian key tồn tại). Tài khoản
+phụ `smartdca_virtual@…`, loại HMAC.
+
+⚠️ **Rủi ro tồn dư, chấp nhận có ý thức** (§6.7 đòi hai điều kiện, hiện chưa thoả đủ):
+- **IP whitelist**: hiện để "Không giới hạn". Lý do chấp nhận: IP nhà mạng VN là IP **động**
+  (`171.239.19.179` tại thời điểm đo), whitelist xong sẽ hỏng khi ISP đổi IP; tài khoản phụ không
+  giữ tiền. **Phải siết lại trước D11 (dry-run) và D12 (live).**
+- **"Cấp quyền chuyển chuyên dụng" (Universal Transfer) đang BẬT** — quyền chuyển tiền giữa ví, không
+  cần cho bất kỳ việc gì của Tool D. Khuyến nghị tắt.
+
+**Hai điều cùng trỏ một hướng cho D11/D12:** (1) latency dân dụng VN có đuôi nặng, bất ổn ở kết nối
+lạnh; (2) Binance bắt whitelist IP cho quyền giao dịch, mà IP nhà là IP động → bot tự chết mỗi lần
+đổi IP. Cả hai được giải bằng **VPS ở Tokyo** (IP tĩnh + gần hạ tầng Binance). Chưa chốt bây giờ —
+ghi để tới lúc đó không phải phát hiện lại từ đầu.
+
+Suite Docker: 616 passed (2 test `periodic_report`/`close_d0_pre_gate` đỏ thoáng qua do `git status`
+timeout khi chạy nhiều container liên tiếp; chạy lại sạch 13/13 — đúng hiện tượng đã ghi ở TD-0085,
+không phải hồi quy).
