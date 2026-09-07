@@ -19,6 +19,8 @@ cửa CHỌN là hành động khác hẳn: 1 lần/quý, đòi thêm 4 trườn
 from __future__ import annotations
 
 import json
+import re
+import unicodedata
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -49,6 +51,19 @@ TRANG_THAI_CUA_NOP = ("QUEUED", "REJECTED")
 
 # Ba câu bộ lọc §0.1 — cùng luật `check_lz16`, áp ở cửa ghi.
 BO_LOC_FIELDS = ("mechanism", "who_pays", "durability")
+
+# TD-0126 — ngưỡng coi hai `mechanism` là NGHI trùng nhau (Jaccard trên từ
+# có nghĩa). 🔴 Đây KHÔNG phải tham số Tầng A/B/C và không được đưa vào
+# `tool_d_config.yaml`: nó không chảy vào bất kỳ con số đo nào, không tiêu
+# trial, và hậu quả khi đặt sai chỉ là người nộp phải khai thêm một dòng
+# `overlaps_with` — không phải mất một ý tưởng hay lệch một phép đo. Chọn
+# hậu quả nhẹ như vậy là có ý thức: một ngưỡng mà đặt sai thì tốn kém sẽ
+# trở thành một cái núm để vặn.
+NGUONG_NGHI_TRUNG = 0.6
+
+# Từ quá ngắn không mang thông tin phân biệt — bỏ trước khi so.
+DO_DAI_TU_TOI_THIEU = 3
+
 
 # 20 khoá `required` của schema, để điền `None` cho trường người nộp bỏ trống
 # (schema đặt `additionalProperties: false` VÀ `required` cả 20 — một tờ đơn
@@ -81,6 +96,49 @@ def _utcnow_iso_seconds() -> str:
     tồn tại để bảo vệ.
     """
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _tu_co_nghia(text: str) -> set[str]:
+    """Tách `mechanism` thành tập từ để so trùng — bỏ dấu, bỏ từ quá ngắn.
+
+    Bỏ dấu tiếng Việt vì cùng một cơ chế hay được viết cả có dấu lẫn không
+    dấu trong repo này (so sánh có dấu sẽ bỏ sót đúng ca cần bắt).
+    """
+    # 🔴 `đ` (U+0111) KHÔNG tách được bằng NFD — nó là ký tự CƠ SỞ riêng, nét
+    # gạch không phải dấu tổ hợp. Không thay tay thì `re` nuốt luôn nó:
+    # "đóng" -> "ong" trong khi "dong" giữ nguyên, và hai cách viết cùng một
+    # cơ chế lại thành hai cơ chế khác nhau — đúng ca test này sinh ra để bắt.
+    thay_d = text.lower().replace("đ", "d")
+    khong_dau = "".join(
+        c for c in unicodedata.normalize("NFD", thay_d) if unicodedata.category(c) != "Mn"
+    )
+    tu = re.findall(r"[a-z0-9]+", khong_dau)
+    return {t for t in tu if len(t) >= DO_DAI_TU_TOI_THIEU}
+
+
+def do_trung(a: str, b: str) -> float:
+    """Jaccard trên tập từ có nghĩa. 1.0 = cùng bộ từ, 0.0 = không chung từ nào."""
+    ta, tb = _tu_co_nghia(a), _tu_co_nghia(b)
+    if not ta or not tb:
+        return 0.0
+    return len(ta & tb) / len(ta | tb)
+
+
+def tim_nghi_trung(
+    entries: list[dict[str, Any]], mechanism: str, *, bo_qua_id: str | None = None
+) -> list[tuple[str, str, float]]:
+    """Các đơn đã có mà `mechanism` nghi trùng — (idea_id, status, tỉ lệ), cao trước.
+
+    §9c.7.4 ràng buộc (3): *"Trước khi thêm ý tưởng mới, query queue theo
+    `mechanism` để phát hiện trùng lặp — tương đương `retest_forbidden` của
+    trial_registry"*.
+    """
+    ra = [
+        (e["idea_id"], e.get("status", ""), do_trung(mechanism, e.get("mechanism") or ""))
+        for e in entries
+        if e.get("idea_id") != bo_qua_id
+    ]
+    return sorted([x for x in ra if x[2] >= NGUONG_NGHI_TRUNG], key=lambda x: -x[2])
 
 
 def _load_schema(schema_path: Path = SCHEMA_PATH) -> dict[str, Any]:
@@ -139,7 +197,7 @@ def submit_idea(
     `required` mà một đơn mới nộp chưa có nghĩa gì (điền `None`) — người nộp
     không phải nhớ 20 khoá, nhưng dòng ghi ra vẫn đủ 20.
 
-    Sáu ca TỪ CHỐI, tất cả kiểm TRƯỚC khi mở file (xem docstring module).
+    Tám ca TỪ CHỐI, tất cả kiểm TRƯỚC khi mở file (xem docstring module).
     """
     e: dict[str, Any] = dict(don)  # không sửa dict của người gọi
     for khoa in KHOA_TU_DIEN:
@@ -208,6 +266,35 @@ def submit_idea(
                 "'who_pays' là câu giết ý tưởng — không trả lời được AI TRẢ TIỀN thì "
                 "ý tưởng không vào hàng chờ (spec dòng 4914)."
             )
+
+    # ── Ca 7 — EXPLORE phải nêu đã phân tích gì (§9c.7.3) ─────────────────
+    if e["data_source"] == "EXPLORE" and not str(e.get("explore_evidence") or "").strip():
+        raise IdeaQueueError(
+            "data_source=EXPLORE nhưng `explore_evidence` rỗng — §9c.7.3 bắt nêu rõ đã phân "
+            "tích GÌ, trên coin/khoảng nào. Không có câu đó thì không phân biệt được EXPLORE "
+            "với TOOL_D_RESULTS, tức mất luôn ranh giới mà `data_source` sinh ra để giữ."
+        )
+
+    # ── Ca 8 — nghi trùng `mechanism` (§9c.7.4 ràng buộc 3) ───────────────
+    nghi = tim_nghi_trung(entries, e["mechanism"])
+    da_khai = set(e.get("overlaps_with") or [])
+    chua_khai = [x for x in nghi if x[0] not in da_khai]
+    if chua_khai:
+        bi_loai = [x for x in chua_khai if x[1] == "REJECTED"]
+        mo_ta = "; ".join(f"{i} ({st}, trùng {t:.0%})" for i, st, t in chua_khai)
+        if bi_loai:
+            raise IdeaQueueError(
+                f"Cơ chế này trùng một ý tưởng ĐÃ BỊ LOẠI: {mo_ta}. §9c.7.4 ràng buộc (3): ý "
+                "tưởng bị loại **KHÔNG được nộp lại dưới tên khác** — tương đương "
+                "`retest_forbidden` của sổ trial. Nếu thật sự là cơ chế khác, hãy viết "
+                "`mechanism` cho rõ chỗ khác nhau và khai id đó vào `overlaps_with`."
+            )
+        raise IdeaQueueError(
+            f"Cơ chế này nghi trùng đơn đã có: {mo_ta}. Khai chúng vào `overlaps_with` (nếu "
+            "là cơ chế khác, chỉ giống chữ), hoặc đặt `filter_verdict: DUPLICATE` + "
+            "`status: REJECTED` (nếu đúng là trùng). Máy không tự đoán hộ — nhưng cũng không "
+            "cho nộp im lặng một cơ chế đã nằm trong hàng chờ."
+        )
 
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("a", encoding="utf-8") as f:

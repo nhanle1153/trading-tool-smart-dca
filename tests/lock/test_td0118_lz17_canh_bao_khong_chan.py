@@ -39,7 +39,10 @@ def _don(idea_id: str, *, status: str, selected_at: str | None = None,
         "data_source": data_source,
         "explore_evidence": None,
         "title": f"y tuong {idea_id}",
-        "mechanism": "ai lam gi tao ra dich chuyen gia",
+        # Mỗi đơn một cơ chế KHÔNG chung từ nào — test này soi trần CHỌN
+        # (L-Z17), không soi luật chống trùng mechanism (TD-0126). Dùng chung
+        # một câu cho 6 đơn sẽ khiến nó soi nhầm thứ.
+        "mechanism": " ".join(f"co{idea_id[-2:]}che{k}" for k in range(8)),
         "who_pays": "ai la nguoi thua o phia ben kia",
         "durability": "vi sao chua bi arbitrage het",
         "filter_verdict": "PASS",

@@ -52,6 +52,7 @@ from tool_d.ledger.audit_checks import (
     check_td0120_selection_reason_trich_ma_tieu_chi,
     check_td0124_tran_nhap_don_moi_quy,
     check_lz26_de_xuat_doi_tham_so,
+    check_td0126_explore_evidence_va_trung_mechanism,
 )
 from tool_d.ledger.idea_queue import IdeaQueueError, submit_idea
 from tool_d.ledger.param_proposals import ParamProposalError, submit_proposal
@@ -141,6 +142,7 @@ def run_audit(
         check_td0120_selection_reason_trich_ma_tieu_chi(idea_queue_path, tieu_chi_dir),
         check_td0124_tran_nhap_don_moi_quy(idea_queue_path),
         check_lz26_de_xuat_doi_tham_so(proposals_path, registry_path),
+        check_td0126_explore_evidence_va_trung_mechanism(idea_queue_path),
     ]
 
     ok = sum(1 for r in results if r.ok)

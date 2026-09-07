@@ -63,6 +63,16 @@ def _so_dong(path: Path) -> int:
     return len([x for x in path.read_text(encoding="utf-8").splitlines() if x.strip()])
 
 
+def _co_che(i: int) -> str:
+    """Mỗi đơn một cơ chế KHÔNG chung từ nào với đơn khác.
+
+    Các test ở lớp này soi TRẦN NHẬP và cách sinh `idea_id` — không soi luật
+    chống trùng `mechanism` (TD-0126). Nếu 10 đơn dùng chung một câu, chúng sẽ
+    đụng luật chống trùng và test hoá ra đang soi nhầm thứ.
+    """
+    return " ".join(f"tu{i}w{k}" for k in range(8))
+
+
 def _nop(path: Path, **doi) -> str:
     return submit_idea(don=_don(**doi), path=path, schema_path=SCHEMA)
 
@@ -148,26 +158,27 @@ class TestSauCaTuChoi:
 
     def test_ca4_don_thu_11_cung_quy_bi_tu_choi(self, so: Path) -> None:
         for i in range(IDEA_QUEUE_INTAKE_PER_QUARTER_MAX):
-            _nop(so, created_at=f"2026-07-{i + 1:02d}T00:00:00Z")
+            _nop(so, created_at=f"2026-07-{i + 1:02d}T00:00:00Z", mechanism=_co_che(i))
         assert _so_dong(so) == IDEA_QUEUE_INTAKE_PER_QUARTER_MAX
 
         with pytest.raises(IdeaQueueError, match="trần NHẬP"):
-            _nop(so, created_at="2026-08-01T00:00:00Z")  # vẫn quý 3
+            _nop(so, created_at="2026-08-01T00:00:00Z", mechanism=_co_che(99))  # vẫn quý 3
         assert _so_dong(so) == IDEA_QUEUE_INTAKE_PER_QUARTER_MAX, "đơn thứ 11 vẫn lọt vào sổ"
 
     def test_ca4_quy_sau_thi_ghi_duoc(self, so: Path) -> None:
         for i in range(IDEA_QUEUE_INTAKE_PER_QUARTER_MAX):
-            _nop(so, created_at=f"2026-07-{i + 1:02d}T00:00:00Z")
-        _nop(so, created_at="2026-10-01T00:00:00Z")  # quý 4
+            _nop(so, created_at=f"2026-07-{i + 1:02d}T00:00:00Z", mechanism=_co_che(i))
+        _nop(so, created_at="2026-10-01T00:00:00Z", mechanism=_co_che(99))  # quý 4
         assert _so_dong(so) == IDEA_QUEUE_INTAKE_PER_QUARTER_MAX + 1
 
     def test_ca4_don_rejected_van_tinh_vao_tran_nhap(self, so: Path) -> None:
         """Trần chặn ở NGUỒN: một đơn bị bộ lọc loại vẫn đã tiêu công sinh
         và công đọc của quý đó."""
         for i in range(IDEA_QUEUE_INTAKE_PER_QUARTER_MAX):
-            _nop(so, created_at=f"2026-07-{i + 1:02d}T00:00:00Z", status="REJECTED")
+            _nop(so, created_at=f"2026-07-{i + 1:02d}T00:00:00Z", status="REJECTED",
+                 mechanism=_co_che(i))
         with pytest.raises(IdeaQueueError, match="trần NHẬP"):
-            _nop(so, created_at="2026-09-30T00:00:00Z")
+            _nop(so, created_at="2026-09-30T00:00:00Z", mechanism=_co_che(99))
 
     def test_ca5_trung_idea_id(self, so: Path) -> None:
         _nop(so, idea_id="IQ-0042")
@@ -194,9 +205,9 @@ class TestNextIdeaId:
 
     def test_lay_max_khong_phai_dem_dong(self, so: Path) -> None:
         """Đếm số dòng sẽ sinh id TRÙNG nếu sổ có dòng mang id tự đặt."""
-        _nop(so, idea_id="IQ-0007")
+        _nop(so, idea_id="IQ-0007", mechanism=_co_che(1))
         assert next_idea_id(so) == "IQ-0008"
-        assert _nop(so) == "IQ-0008"
+        assert _nop(so, mechanism=_co_che(2)) == "IQ-0008"
         assert next_idea_id(so) == "IQ-0009"
 
 

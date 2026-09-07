@@ -416,6 +416,55 @@ def check_td0120_selection_reason_trich_ma_tieu_chi(
     )
 
 
+
+# ── TD-0126 (§9c.7.3 + §9c.7.4 ràng buộc 3) ───────────────────────────
+def check_td0126_explore_evidence_va_trung_mechanism(
+    idea_queue_path: Path = DEFAULT_IDEA_QUEUE_PATH,
+) -> CheckResult:
+    """Hai ràng buộc trước đây chỉ nằm trong `description` của schema —
+    tức là văn bản mô tả, không phải luật máy cưỡng chế được:
+
+      (a) §9c.7.3 — `explore_evidence` BẮT BUỘC có nội dung khi
+          `data_source == EXPLORE`. Thiếu nó thì không phân biệt được
+          EXPLORE với TOOL_D_RESULTS, mất luôn ranh giới mà trường
+          `data_source` sinh ra để giữ (DR-009).
+
+      (b) §9c.7.4 ràng buộc (3) — ý tưởng đã bị loại KHÔNG được nộp lại
+          dưới tên khác. Máy so `mechanism` (Jaccard trên từ có nghĩa,
+          bỏ dấu) và đòi đơn mới phải KHAI id trùng vào `overlaps_with`.
+
+    Không kiểm được ý tưởng có thật sự trùng nhau về cơ chế hay không —
+    nhưng chặn được ca dễ xảy ra nhất: nộp lại nguyên văn dưới tên khác.
+    """
+    from tool_d.ledger.idea_queue import tim_nghi_trung
+
+    entries = _read_jsonl(idea_queue_path)
+    if not entries:
+        return CheckResult("TD-0126", Measured.pending("idea_queue rỗng"))
+
+    violations: list[str] = []
+    for e in entries:
+        if e.get("data_source") == "EXPLORE" and not str(e.get("explore_evidence") or "").strip():
+            violations.append(f"{e['idea_id']}: data_source=EXPLORE nhưng thiếu explore_evidence")
+
+    # So từng đơn với các đơn ĐỨNG TRƯỚC nó trong sổ — sổ là nhật ký theo
+    # thứ tự thời gian, nên "đơn nộp sau phải khai đơn nộp trước", không
+    # ngược lại (nếu không mỗi cặp trùng sẽ bị đếm hai lần).
+    for k, e in enumerate(entries):
+        truoc = entries[:k]
+        da_khai = set(e.get("overlaps_with") or [])
+        for idea_id, status, ty_le in tim_nghi_trung(truoc, e.get("mechanism") or ""):
+            if idea_id in da_khai:
+                continue
+            nhan = "ĐÃ BỊ LOẠI" if status == "REJECTED" else status
+            violations.append(
+                f"{e['idea_id']}: cơ chế trùng {ty_le:.0%} với {idea_id} ({nhan}) "
+                "mà không khai vào overlaps_with"
+            )
+
+    return CheckResult("TD-0126", Measured.ok(len(violations) == 0), evidence="; ".join(violations))
+
+
 # ── L-Z26 (OQ-13, §12d.4) ─────────────────────────────────────────────
 DEFAULT_PROPOSALS_PATH = Path("registry/param_change_proposals.jsonl")
 
@@ -481,4 +530,5 @@ ALL_CHECKS = (
     "check_td0120_selection_reason_trich_ma_tieu_chi",
     "check_td0124_tran_nhap_don_moi_quy",
     "check_lz26_de_xuat_doi_tham_so",
+    "check_td0126_explore_evidence_va_trung_mechanism",
 )
