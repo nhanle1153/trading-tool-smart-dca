@@ -35,6 +35,7 @@ from tool_d.gates.dsr import N_DANG_KY
 from tool_d.ledger.audit_checks import (
     DEFAULT_IDEA_QUEUE_PATH,
     DEFAULT_PARAM_STATUS_PATH,
+    WARN_ONLY_CODES,
     check_lz10_registered_before_executed,
     check_lz11_n_used_le_n_dang_ky,
     check_lz12_no_duplicate_config_hash_different_outcome,
@@ -107,13 +108,26 @@ def run_audit(
 
     lines = [audit_line(ok=ok, fail=fail, unmeasured=unmeasured, total=total)]
     for r in results:
-        trang_thai = "✅ đạt" if r.ok else ("🔴 CHƯA ĐẠT" if r.is_fail else "⏳ chưa đo được")
+        if r.ok:
+            trang_thai = "✅ đạt"
+        elif r.is_fail:
+            # Phép kiểm chỉ-cảnh-báo vẫn đếm vào `fail` cho `audit_line()`
+            # (bất biến ok+fail+unmeasured == total), chỉ KHÔNG chặn chạy.
+            trang_thai = (
+                "⚠️ VƯỢT TRẦN (cảnh báo, không chặn)"
+                if r.code in WARN_ONLY_CODES
+                else "🔴 CHƯA ĐẠT"
+            )
+        else:
+            trang_thai = "⏳ chưa đo được"
         dong = f"  {r.code}: {trang_thai}"
         if r.evidence:
             dong += f" — {r.evidence}"
         lines.append(dong)
 
-    exit_code = EXIT_AUDIT_FAILED if fail > 0 else 0
+    # Chỉ vi phạm CHẶN mới đổi exit code — xem WARN_ONLY_CODES (MT-11).
+    fail_chan = sum(1 for r in results if r.is_fail and r.code not in WARN_ONLY_CODES)
+    exit_code = EXIT_AUDIT_FAILED if fail_chan > 0 else 0
     return exit_code, "\n".join(lines)
 
 
@@ -127,7 +141,9 @@ def close_d0_pre_gate(
 
     TỪ CHỐI nếu file đã có khoá đó (bất biến — cổng chỉ đóng một lần
     trong đời repo, cùng triết lý "commit, không sửa" của `lockbox/seal.py`).
-    TỪ CHỐI nếu audit CHƯA sạch (fail > 0) — không đóng cổng trên một sổ bẩn.
+    TỪ CHỐI nếu audit CHƯA sạch (có vi phạm CHẶN) — không đóng cổng trên một sổ bẩn.
+    L-Z17 vượt trần là cảnh báo (WARN_ONLY_CODES, MT-11) nên KHÔNG chặn đóng cổng —
+    hệ quả có ý thức của quyết định đó, không phải tác dụng phụ im lặng.
     Hai điều kiện ngoài phạm vi E6 (lock tests, periodic_report) là trách
     nhiệm người gọi đã xác nhận TRƯỚC (xem docstring module).
 

@@ -25,6 +25,15 @@ DEFAULT_PARAM_STATUS_PATH = Path("config/param_status.yaml")
 
 BUDGET_A_SLOTS_PER_QUARTER_MAX = 5  # DR-009, §9.3 — không nới vì có LLM
 
+# Phép kiểm CHỈ CẢNH BÁO — vượt thì báo, không chặn chạy.
+# Quyết định chủ dự án 07/09/2026 (MT-11): trần 5 suất Ngân sách A là kỷ luật
+# CON NGƯỜI (chọn ý tưởng nào đáng thử), không phải bất biến kỹ thuật — nó
+# không chảy vào N/DSR. Đòn bẩy cũ phạt sai chỗ: vượt trần CHỌN Ý TƯỞNG lại
+# khoá luôn việc ĐO. Nới riêng L-Z17, sửa có ý thức dòng H16 (spec 4347).
+# 🔴 L-Z16 KHÔNG nằm ở đây và không bao giờ được đưa vào: đó là chống nhiễm
+#    dữ liệu (ý tưởng nghĩ ra sau khi xem kết quả Tool D), không phải kỷ luật.
+WARN_ONLY_CODES = frozenset({"L-Z17"})
+
 
 @dataclass(frozen=True)
 class CheckResult:
