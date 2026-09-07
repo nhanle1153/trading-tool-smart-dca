@@ -191,7 +191,7 @@ với dòng phiên kia đang gõ dở cùng lúc — đã gây ít nhất 3 lầ
 > Mục này có thể lệch nhịp vài phút so với phiên kia — luôn `git log --oneline` +
 > đọc lại `TASKS.md` (cột 🔓/🔒/✅) trước khi chọn việc tiếp theo, đừng chỉ tin mục này.
 
-**Đang ở (cập nhật 07/09/2026, phiên Idea Queue):** **TD-0118 + TD-0119 ✅ đóng.**
+**Đang ở (cập nhật 07/09/2026, phiên Idea Queue):** **TD-0118 + TD-0119 + TD-0120 ✅ đóng; OQ-07 đóng.**
 Ba quyết định về hàng chờ ý tưởng, đều đã ghi sổ và có máy canh:
 1. **MT-11** — trần Ngân sách A = **5 suất/quý dùng chung Tool A + D** (dòng “1/quý” ở §9c.7.4 là
    nhịp khuyến nghị, không phải trần cứng); `L-Z17` nới thành **cảnh báo, không chặn chạy**
@@ -203,10 +203,17 @@ Ba quyết định về hàng chờ ý tưởng, đều đã ghi sổ và có m�
    nhận lời khai suông (cùng bài học MT-10).
 3. **OQ-13** — kênh đề xuất đổi tham số khi đã chạy (§12c.3/§12d): luật đủ nhưng **`L-Z26` chưa có
    một dòng code nào** và chưa có sổ ghi đề xuất. Không chặn D2, **phải xong trước D11 (dry-run)**.
-Docker: **615 passed, 0 failed**. Nguyên tắc phải nhớ khi làm tiếp (§12d.2): ranh giới hợp lệ
+4. **OQ-07 ✅ đóng** — `docs/decisions/DR-Q3-2026-tieu-chi-chon-y-tuong.md`, commit **RIÊNG và
+   TRƯỚC** mọi dòng đơn (spec dòng 4935). **Hạn ngạch chọn quý 3/2026 = 0** — vì Tool D chưa có
+   lệnh live nào, `mult_edge` cần **50 lệnh live** nên tín hiệu “edge chết” chưa thể xuất hiện,
+   và lockbox có ĐÚNG MỘT mà Zone Absorption chưa chạm. Kèm **ba điều kiện mở lại** viết trước
+   (`mult_edge = 0.5` / phán quyết L2-L3 / B3 cạn) và **4 tiêu chí thứ tự từ điển** `TC-Q3-2026-01…04`
+   — không dùng điểm có trọng số vì trọng số vặn được sau khi đã nhìn thấy đơn. Máy kiểm `TD-0120`:
+   `selection_reason` phải trích mã TC có thật; 4 ca fail-closed. **Cửa NỘP đã mở** (10 đơn/quý);
+   phiên sinh ý tưởng phải **bịt mắt** (không xem kết quả Tool D — DR-009).
+Docker: **624 passed, 0 failed**. E6 trên sổ thật: `đã audit 4/9 (4 đạt, 0 chưa đạt, 5 chưa đo được)`. Nguyên tắc phải nhớ khi làm tiếp (§12d.2): ranh giới hợp lệ
 **không phải “ai bấm nút”** mà là **“không gian tìm kiếm có bị chặn TRƯỚC không”** — “LLM đề xuất,
-người duyệt” một mình KHÔNG đủ. Còn treo: **OQ-07** (tiêu chí chọn của quý, phải niêm phong trước
-khi mở queue) và **công cụ nộp đơn** (làm sau, giờ đã có cấu trúc tờ đơn để dựa vào). Ghi nhận:
+người duyệt” một mình KHÔNG đủ. Còn treo: **công cụ nộp đơn** (làm sau, giờ đã có cấu trúc tờ đơn để dựa vào). Ghi nhận:
 trần **nhập** queue 10 ý tưởng/quý vẫn **chưa có test khoá nào** thi hành.
 *(Đoạn “Đang ở” cũ bên dưới giữ nguyên làm lịch sử.)*
 
