@@ -247,7 +247,7 @@ cho cùng một hình dạng** — đúng cơ chế đã gây toàn bộ đợt 
 
 | Sổ | Schema | Cưỡng chế bởi |
 |---|---|---|
-| `trial_registry.jsonl` | `trial_event.schema.json` | `ledger/registry.py` · L-Z10/11/12 |
+| `trial_registry.jsonl` | `trial_event.schema.json` | `ledger/registry.py` · L-Z10/11/12 · **TD-0130** (kế toán CTRL + cửa xác thực) |
 | `idea_queue.jsonl` | `idea_queue_entry.schema.json` | `ledger/idea_queue.py` · L-Z16/17 · TD-0119a/b · TD-0120 · TD-0124 |
 | `param_change_proposals.jsonl` | `param_change_proposal.schema.json` | `ledger/param_proposals.py` · **L-Z26** |
 
@@ -263,3 +263,4 @@ mô tả cả ba sổ JSONL này thì phải **sinh/kiểm tự động từ sch
 |---|---|---|---|---|
 | 06/09/2026 | Khởi tạo | — | Cây thư mục + 3 bất biến + luồng một lần chạy | Giai đoạn 2 của quy trình vibe-code |
 | 07/09/2026 | Sổ thứ ba + hai cửa GHI | `LEDGER` có 2 sổ JSONL; `entrypoints/` 8 file, tất cả chỉ ĐỌC sổ | Thêm `param_change_proposals.jsonl` + `registry/schemas/` vào sơ đồ và cây thư mục; `ledger/` thêm `idea_queue` · `param_proposals`; mục 7 ghi rõ schema là nguồn sự thật hình dạng sổ | TD-0124 + TD-0125 (OQ-13): hai kênh nhập liệu có luật nhưng không có máy canh. 🔑 Cửa ghi đặt làm **cờ trên E6**, KHÔNG phải entrypoint thứ 9 — `entrypoints/` vẫn **đúng 8 file** (§0d.2 dòng 664, L-Z36). Phương án “CLI nằm ngoài `entrypoints/`” bị loại có ý thức: không vi phạm *chữ* của L-Z36 nhưng mở đúng lỗ hổng danh sách đóng tồn tại để bịt |
+| 07/09/2026 | `trial_event.schema.json` biết thêm 2 trường **chỉ dành cho dòng CTRL**: `reproduces_trial_id` (dạng *tái lập*) và `ctrl_output_whitelist` (dạng *đo thước*, khai luôn danh sách CHO PHÉP + `minItems: 1` + `uniqueItems`) | Sự kiện RESERVE có 15 khoá; dòng CTRL không khai được vì sao nó được miễn kế toán | Thêm 2 khoá tuỳ chọn; lời khai CTRL nằm TRONG sổ để audit tự đối chiếu lại được | TD-0130 (MT-08): CTRL đứng ngoài ngân sách N nên *khai CTRL* là đặc quyền — không thể nhận lời khai suông. **Không thêm bảng CSDL nào** → quyết định hoãn `tu-dien-du-lieu.md` tới D3.5 **giữ nguyên**, nguồn sự thật vẫn là schema trên đĩa. Ràng buộc liên-dòng (hash khớp bản ghi gốc) cố ý **không** nhân đôi vào schema — nó ở cửa ghi, một chỗ |
