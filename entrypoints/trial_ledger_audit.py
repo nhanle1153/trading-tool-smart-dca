@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -69,6 +70,9 @@ EXIT_GATE_AUDIT_DIRTY = 95
 EXIT_DON_TU_CHOI = 96
 
 DEFAULT_RUNTIME_STATE_PATH = Path("registry/runtime_state.json")
+# TD-0117 — file test khoá L-Z49/L-Z50 phải được chạy RIÊNG lúc đóng cổng D2:
+# suite tổng xanh KHÔNG chứng minh nó còn tồn tại (xoá hẳn file đi suite vẫn xanh).
+DUONG_DAN_TEST_LZ49_LZ50 = "tests/lock/test_lz49_lz50_backtest_nho.py"
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -100,6 +104,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--close-d1-gate",
         action="store_true",
         help="TD-0110 — đóng cổng D1, ghi runtime_state.json.d1_complete. Chạy được đúng một lần.",
+    )
+    parser.add_argument(
+        "--close-d2-gate",
+        action="store_true",
+        help="TD-0117 — đóng cổng D2, ghi runtime_state.json.d2_complete. Chạy được đúng một lần.",
     )
     return parser
 
@@ -345,6 +354,127 @@ def close_d1_gate(
     return 0, f"✅ Đã đóng cổng D1 — ghi {runtime_state_path}.\n{suite_summary}\n{audit_text}"
 
 
+def _dem_ca_pass(stdout: str) -> int:
+    """Rút số ca PASS từ dòng tổng kết pytest. Không đọc được → 0 —
+    fail-closed: coi như chưa chạy được ca nào, không đoán."""
+    khop = re.search(r"(\d+) passed", stdout)
+    return int(khop.group(1)) if khop else 0
+
+
+def close_d2_gate(
+    *,
+    runtime_state_path: Path = DEFAULT_RUNTIME_STATE_PATH,
+    repo_dir: Path = Path("."),
+    pytest_cmd: list[str] | None = None,
+    pytest_lz_cmd: list[str] | None = None,
+    **run_audit_kwargs,
+) -> tuple[int, str]:
+    """TD-0117 — ghi `d2_complete: true` (điều kiện vào D3).
+
+    Cùng khuôn `close_d1_gate()` (tự chạy pytest THẬT trong chính lần
+    gọi này → nhãn `do-duoc` đúng nghĩa theo MT-10), THÊM một phép kiểm
+    mà cổng D1 không cần:
+
+    🔴 **Chạy RIÊNG file test khoá L-Z49/L-Z50, đòi số ca PASS >= 1.**
+    Suite tổng xanh KHÔNG chứng minh hai phép kiểm cốt lõi của D2 còn
+    tồn tại — xoá hẳn file test đi thì suite vẫn xanh và cổng vẫn đóng
+    được. Đó đúng là bẫy "PASS rỗng" đã bắt được ở TD-0084
+    (`verify_all_seals()` PASS vì không có seal nào để kiểm).
+
+    D2b/D2c/D4 (Testnet/Live-only) KHÔNG kiểm được ở tầng backtest —
+    ghi thẳng vào `d2_hoan_lai` là HOÃN tới D3.5/D9.5+, không được coi
+    là "đã qua".
+
+    TỪ CHỐI nếu: D0-PRE chưa đóng; D1 chưa đóng (D2 không thể đứng
+    trước D1); đã có `d2_complete: true`; suite fail; file L-Z49/L-Z50
+    fail hoặc thu được 0 ca; hoặc audit sổ trial chưa sạch.
+    """
+    if not is_d0_pre_complete():
+        return EXIT_GATE_AUDIT_DIRTY, "🛑 TỪ CHỐI đóng cổng D2 — D0-PRE chưa đóng (§N2)."
+
+    state: dict = {}
+    if runtime_state_path.exists():
+        try:
+            state = json.loads(runtime_state_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            state = {}
+    if state.get("d1_complete") is not True:
+        return (
+            EXIT_GATE_AUDIT_DIRTY,
+            "🛑 TỪ CHỐI đóng cổng D2 — chưa có d1_complete=true (D2 không thể đứng trước D1).",
+        )
+    if state.get("d2_complete") is True:
+        return (
+            EXIT_GATE_ALREADY_CLOSED,
+            f"🛑 {runtime_state_path} đã có d2_complete=true — cổng đã đóng, không ghi lại.",
+        )
+
+    suite = subprocess.run(
+        pytest_cmd or [sys.executable, "-m", "pytest", "-q"],
+        cwd=repo_dir,
+        capture_output=True,
+        text=True,
+    )
+    suite_summary = suite.stdout.strip().splitlines()[-1] if suite.stdout.strip() else "(không có output)"
+    if suite.returncode != 0:
+        return (
+            EXIT_GATE_AUDIT_DIRTY,
+            f"🛑 TỪ CHỐI đóng cổng D2 — suite pytest CHƯA sạch:\n{suite_summary}\n{suite.stdout[-2000:]}",
+        )
+
+    lz = subprocess.run(
+        pytest_lz_cmd or [sys.executable, "-m", "pytest", "-q", DUONG_DAN_TEST_LZ49_LZ50],
+        cwd=repo_dir,
+        capture_output=True,
+        text=True,
+    )
+    lz_summary = lz.stdout.strip().splitlines()[-1] if lz.stdout.strip() else "(không có output)"
+    if lz.returncode != 0:
+        return (
+            EXIT_GATE_AUDIT_DIRTY,
+            f"🛑 TỪ CHỐI đóng cổng D2 — test khoá L-Z49/L-Z50 CHƯA xanh:\n{lz_summary}\n{lz.stdout[-2000:]}",
+        )
+    so_ca_lz = _dem_ca_pass(lz.stdout)
+    if so_ca_lz < 1:
+        return (
+            EXIT_GATE_AUDIT_DIRTY,
+            "🛑 TỪ CHỐI đóng cổng D2 — chạy riêng "
+            f"{DUONG_DAN_TEST_LZ49_LZ50} thu được 0 ca PASS. Exit 0 mà không ca nào "
+            f"chạy là PASS RỖNG, không phải bằng chứng.\n{lz_summary}",
+        )
+
+    audit_exit, audit_text = run_audit(**run_audit_kwargs)
+    if audit_exit != 0:
+        return EXIT_GATE_AUDIT_DIRTY, f"🛑 TỪ CHỐI đóng cổng D2 — audit sổ trial chưa sạch:\n{audit_text}"
+
+    git_info = get_git_info(repo_dir)
+    state["d2_complete"] = True
+    state["d2_closed_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    state["d2_git_sha"] = git_info.sha
+    state["d2_evidence"] = {
+        "full_suite": {"nguon": "do-duoc", "noi_dung": suite_summary},
+        "lz49_lz50": {"nguon": "do-duoc", "noi_dung": f"{DUONG_DAN_TEST_LZ49_LZ50}: {lz_summary}"},
+        "trial_ledger_audit": {"nguon": "do-duoc", "noi_dung": audit_text.splitlines()[0]},
+    }
+    state["d2_hoan_lai"] = {
+        "nguon": "nguoi-khai",
+        "noi_dung": (
+            "D2b (closePosition phía sàn), D2c (khoảng trống không-SL), D4 (khớp lệnh thật) "
+            "KHÔNG kiểm được ở tầng backtest — HOÃN tới D3.5/D9.5+, KHÔNG phải 'đã qua'."
+        ),
+    }
+    runtime_state_path.parent.mkdir(parents=True, exist_ok=True)
+    runtime_state_path.write_text(
+        json.dumps(state, ensure_ascii=False, indent=2, sort_keys=False) + "\n",
+        encoding="utf-8",
+    )
+    return (
+        0,
+        f"✅ Đã đóng cổng D2 — ghi {runtime_state_path}.\n{suite_summary}\n"
+        f"L-Z49/L-Z50 ({so_ca_lz} ca): {lz_summary}\n{audit_text}",
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else list(argv)
     args, _ = build_parser().parse_known_args(argv)
@@ -370,6 +500,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.close_d1_gate:
         exit_code, text = close_d1_gate()
+        print(text)
+        return exit_code
+
+    if args.close_d2_gate:
+        exit_code, text = close_d2_gate()
         print(text)
         return exit_code
 
