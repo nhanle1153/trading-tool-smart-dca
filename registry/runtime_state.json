@@ -40,5 +40,27 @@
   "d2_hoan_lai": {
     "nguon": "nguoi-khai",
     "noi_dung": "D2b (closePosition phía sàn), D2c (khoảng trống không-SL), D4 (khớp lệnh thật) KHÔNG kiểm được ở tầng backtest — HOÃN tới D3.5/D9.5+, KHÔNG phải 'đã qua'."
+  },
+  "d3_complete": true,
+  "d3_closed_at": "2026-09-07T17:58:26.795268Z",
+  "d3_git_sha": "82943556eec39ccf50f0991f4416339caec6164d",
+  "d3_cay_sach": true,
+  "d3_evidence": {
+    "full_suite": {
+      "nguon": "do-duoc",
+      "noi_dung": "973 passed in 201.87s (0:03:21)"
+    },
+    "test_khoa_d3": {
+      "nguon": "do-duoc",
+      "noi_dung": "tests/lock/test_lz47_can_doi_va_ghep_fold.py: 22 passed in 0.71s | tests/lock/test_lz45_dedup_key_append_only.py: 23 passed in 5.33s | tests/lock/test_td0148_pham_vi_du_lieu_that.py: 14 passed in 14.36s"
+    },
+    "trial_ledger_audit": {
+      "nguon": "do-duoc",
+      "noi_dung": "đã audit 5/14 (5 đạt, 0 chưa đạt, 9 chưa đo được)"
+    }
+  },
+  "d3_han_che": {
+    "nguon": "nguoi-khai",
+    "noi_dung": "Cổng D3 chứng nhận BỘ ĐIỀU PHỐI H3-D đúng, KHÔNG chứng nhận đã có kết quả walk-forward. (1) Chưa có bộ chạy backtest thật — E2 dừng ở EXIT_CHUA_CO_BO_CHAY, toàn bộ phép kiểm mới chỉ được nuôi bằng bộ chạy GIẢ trong test; bảo đảm trên dữ liệu thật là việc của D3.5. (2) Phép kiểm phạm vi dữ liệu (TD-0148) VẪN TIN LỜI KHAI của bộ chạy: bộ chạy trả ngày dự kiến thay vì ngày thật đọc từ dataframe sẽ vô hiệu hoá nó. (3) DR-D3-01 §5.3: với 19-47 lệnh/fold ước tính, nhiều fold có thể rơi dưới sàn 30 và ghi `unreadable` — khi đó D3 kết luận đúng phạm vi là 'orchestrator ĐÚNG, thống kê CHƯA ĐỌC ĐƯỢC', phán quyết thống kê hoãn tới D9."
   }
 }
