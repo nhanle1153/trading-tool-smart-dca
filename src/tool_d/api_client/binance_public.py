@@ -4,17 +4,27 @@ NHẤT trong toàn bộ codebase gọi thẳng ra mạng tới Binance. Không g
 entrypoint (`api-integration-rules.md` Mục 2, R1).
 
 Phần lớn hàm dưới đây là endpoint ĐỌC công khai (không cần API key —
-R10 không áp dụng, không có secret nào để quản lý). `order_test_latency_ms()`
-(TD-0116, H15 §6.7) là ngoại lệ DUY NHẤT — gọi endpoint KÝ (signed) trên
-Binance Futures TESTNET để đo latency network+auth, vẫn nằm trong cùng
-module này để giữ đúng nguyên tắc Single Egress (không tạo module thứ
-hai gọi mạng chỉ vì một hàm cần ký request).
+R10 không áp dụng, không có secret nào để quản lý). `latency_samples_ms()`
+(TD-0116, H15 §6.7) là ngoại lệ DUY NHẤT — gọi được endpoint KÝ (signed),
+vẫn nằm trong cùng module này để giữ đúng Single Egress (không tạo module
+thứ hai gọi mạng chỉ vì một hàm cần ký request).
+
+🔴 TD-0116 — KHÔNG có `TESTNET_BASE_URL` ở đây, và đó là một kết luận đã
+kiểm chứng bằng mã nguồn, không phải thiếu sót: Freqtrade 2026.8 CỐ Ý
+tắt testnet cho Binance (`exchange/binance.py`: `"supports_demo_trading":
+False`, kèm chú thích *"Intentionally Disabled as it's a separate market
+- not a simulated live market"*; `exchange.py:validate_demo_trading()`
+raise `ConfigurationError` nếu bật). `ccxt` bên dưới CÓ `set_sandbox_mode`
+nhưng Freqtrade không bao giờ gọi. Hệ quả cho H15: testnet là một thị
+trường RIÊNG, đo latency tới đó là đo hạ tầng mà bot sẽ không bao giờ
+dùng — nên phép đo chạy trên production.
 """
 
 from __future__ import annotations
 
 import hashlib
 import hmac
+import http.client
 import json
 import time
 import urllib.parse
@@ -22,7 +32,6 @@ import urllib.request
 from urllib.error import HTTPError, URLError
 
 BASE_URL = "https://fapi.binance.com"
-TESTNET_BASE_URL = "https://testnet.binancefuture.com"  # TD-0116, §6.7
 DEFAULT_TIMEOUT_S = 10.0  # R11 — timeout riêng cho từng request, không dựa mặc định thư viện
 
 
@@ -111,28 +120,10 @@ def _sign(params: dict[str, str], secret: str) -> str:
     return hmac.new(secret.encode("utf-8"), query.encode("utf-8"), hashlib.sha256).hexdigest()
 
 
-def order_test_latency_ms(
-    *,
-    api_key: str,
-    api_secret: str,
-    base_url: str = TESTNET_BASE_URL,
-    symbol: str = "BTCUSDT",
-    quantity: str = "0.001",
-    timeout: float = DEFAULT_TIMEOUT_S,
-) -> float:
-    """H15 (§6.7, TD-0116) — `POST /fapi/v1/order/test`, đo round-trip
-    latency network+auth THẬT tới Binance.
-
-    Endpoint KHÔNG BAO GIỜ khớp lệnh thật — dừng trước bước matching
-    engine (đã verify qua tài liệu Binance, không suy đoán) — nên
-    latency đo được là CẬN DƯỚI của một lệnh thật (bỏ qua round-trip xử
-    lý khớp lệnh), dùng làm ước lượng ban đầu, không thay thế đo lại ở
-    dry-run/live.
-
-    Mặc định `base_url=TESTNET_BASE_URL` — chủ dự án chọn hướng testnet
-    (không cần tạo key production, §6.7 mục điều kiện bảo mật chỉ áp
-    dụng khi dùng key production).
-    """
+def _order_test_query(api_secret: str, symbol: str, quantity: str) -> str:
+    """Chuỗi query đã ký cho `/fapi/v1/order/test`. Tách riêng để mỗi
+    mẫu đo có `timestamp` mới (Binance từ chối timestamp cũ quá
+    `recvWindow`) mà không phải dựng lại toàn bộ kết nối."""
     params = {
         "symbol": symbol,
         "side": "BUY",
@@ -141,17 +132,78 @@ def order_test_latency_ms(
         "timestamp": str(int(time.time() * 1000)),
         "recvWindow": "5000",
     }
-    query = urllib.parse.urlencode(params)
-    signature = _sign(params, api_secret)
-    url = f"{base_url}/fapi/v1/order/test?{query}&signature={signature}"
-    req = urllib.request.Request(url, method="POST", headers={"X-MBX-APIKEY": api_key})
-    t0 = time.monotonic()
+    return f"{urllib.parse.urlencode(params)}&signature={_sign(params, api_secret)}"
+
+
+def latency_samples_ms(
+    *,
+    n: int,
+    signed: bool,
+    reuse_connection: bool,
+    api_key: str = "",
+    api_secret: str = "",
+    base_url: str = BASE_URL,
+    symbol: str = "BTCUSDT",
+    quantity: str = "0.001",
+    timeout: float = DEFAULT_TIMEOUT_S,
+) -> list[float]:
+    """H15 (§6.7, TD-0116) — đo `n` mẫu round-trip latency tới Binance.
+
+    🔴 `reuse_connection` là tham số QUAN TRỌNG NHẤT ở đây, không phải
+    tuỳ chọn tối ưu vặt:
+
+      • `False` (LẠNH) — mỗi mẫu mở TCP+TLS mới. Đây là latency lần gọi
+        đầu sau khi bot vừa khởi động hoặc kết nối vừa đứt.
+      • `True` (ẤM) — dùng lại một kết nối cho cả `n` mẫu. Đây mới là
+        latency mà bot THẬT thấy khi đang chạy, vì Freqtrade/ccxt giữ
+        kết nối sống (persistent session).
+
+    Đo lẫn lộn hai chế độ này cho ra một con số không thuộc về tình
+    huống nào — mẫu lạnh cõng thêm bắt tay TLS (thường gấp 2-3 lần),
+    nên nếu chỉ đo lạnh sẽ thổi phồng đúng con số đang dùng để đánh giá
+    khoảng trống không-SL của D2c (§8.3).
+
+    `signed=False` gọi `/fapi/v1/time` (public, không ký) làm ĐỐI CHỨNG:
+    hiệu giữa hai phép đo mới là chi phí auth + validate lệnh phía sàn,
+    tách khỏi RTT mạng thuần.
+    """
+    if n < 1:
+        raise ValueError(f"n phải >= 1, nhận: {n}")
+    if signed and not (api_key and api_secret):
+        raise ValueError("signed=True cần cả api_key lẫn api_secret")
+
+    host = urllib.parse.urlparse(base_url).netloc
+    headers = {"X-MBX-APIKEY": api_key} if signed else {}
+    samples: list[float] = []
+    conn = http.client.HTTPSConnection(host, timeout=timeout) if reuse_connection else None
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310
-            resp.read()
-    except (HTTPError, URLError, TimeoutError) as exc:
-        raise BinancePrivateApiError(f"gọi {url.split('?')[0]} thất bại: {exc}") from exc
-    return (time.monotonic() - t0) * 1000.0
+        for _ in range(n):
+            path = (
+                f"/fapi/v1/order/test?{_order_test_query(api_secret, symbol, quantity)}"
+                if signed
+                else "/fapi/v1/time"
+            )
+            method = "POST" if signed else "GET"
+            c = conn or http.client.HTTPSConnection(host, timeout=timeout)
+            t0 = time.monotonic()
+            try:
+                c.request(method, path, headers=headers)
+                resp = c.getresponse()
+                body = resp.read()
+                if resp.status != 200:
+                    raise BinancePrivateApiError(
+                        f"{method} {path.split('?')[0]} -> HTTP {resp.status}: {body[:300]!r}"
+                    )
+                samples.append((time.monotonic() - t0) * 1000.0)
+            except OSError as exc:
+                raise BinancePrivateApiError(f"gọi {host}{path.split('?')[0]} thất bại: {exc}") from exc
+            finally:
+                if conn is None:
+                    c.close()
+    finally:
+        if conn is not None:
+            conn.close()
+    return samples
 
 
 def get_open_interest_hist(

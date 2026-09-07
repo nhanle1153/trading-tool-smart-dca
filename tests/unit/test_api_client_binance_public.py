@@ -14,12 +14,12 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from tool_d.api_client.binance_public import (
-    TESTNET_BASE_URL,
+    BASE_URL,
     BinancePrivateApiError,
     BinancePublicApiError,
     _sign,
     get_open_interest_hist,
-    order_test_latency_ms,
+    latency_samples_ms,
 )
 
 
@@ -117,38 +117,85 @@ class TestSign:
         assert _sign(params, "secret_a") != _sign(params, "secret_b")
 
 
-class TestOrderTestLatencyMs:
-    def test_mac_dinh_dung_testnet_khong_phai_production(self) -> None:
-        import inspect
+def _fake_conn(status: int = 200, body: bytes = b"{}") -> MagicMock:
+    conn = MagicMock()
+    resp = MagicMock()
+    resp.status = status
+    resp.read.return_value = body
+    conn.getresponse.return_value = resp
+    return conn
 
-        default_base_url = inspect.signature(order_test_latency_ms).parameters["base_url"].default
-        assert default_base_url == TESTNET_BASE_URL
-        assert "testnet" in TESTNET_BASE_URL
 
-    def test_goi_thanh_cong_tra_ve_latency_khong_am(self) -> None:
-        cm = MagicMock()
-        cm.__enter__.return_value.read.return_value = b"{}"
-        with patch("tool_d.api_client.binance_public.urllib.request.urlopen", return_value=cm):
-            latency = order_test_latency_ms(api_key="fake_key", api_secret="fake_secret")
-        assert latency >= 0.0
+class TestLatencySamplesMs:
+    """TD-0116 (H15) — testnet đã bị LOẠI bằng bằng chứng mã nguồn
+    (Freqtrade `supports_demo_trading: False` cho Binance, cố ý), nên
+    phép đo chạy trên production."""
 
-    def test_request_ky_dung_bang_api_key_va_khong_lo_secret_vao_url(self) -> None:
-        cm = MagicMock()
-        cm.__enter__.return_value.read.return_value = b"{}"
-        with patch("tool_d.api_client.binance_public.urllib.request.urlopen", return_value=cm) as mock_urlopen:
-            order_test_latency_ms(api_key="fake_key", api_secret="fake_secret_value")
-        sent_request = mock_urlopen.call_args[0][0]
-        # `Request.add_header()` lưu khoá dưới dạng `.capitalize()` --
-        # tra lại đúng casing đã lưu ("X-mbx-apikey"), không phải chuỗi
-        # gốc truyền vào lúc tạo request.
-        assert sent_request.get_header("X-mbx-apikey") == "fake_key"
-        assert sent_request.method == "POST"
-        # Secret KHÔNG BAO GIỜ xuất hiện trực tiếp trong URL — chỉ chữ
-        # ký (hash một chiều) mới được gửi đi.
-        assert "fake_secret_value" not in sent_request.full_url
+    def test_khong_con_testnet_trong_module(self) -> None:
+        import tool_d.api_client.binance_public as mod
+
+        assert not hasattr(mod, "TESTNET_BASE_URL")
+        assert "testnet" not in BASE_URL
+
+    def test_lay_dung_so_mau_yeu_cau(self) -> None:
+        with patch("http.client.HTTPSConnection", return_value=_fake_conn()):
+            samples = latency_samples_ms(n=5, signed=False, reuse_connection=True)
+        assert len(samples) == 5
+        assert all(s >= 0.0 for s in samples)
+
+    def test_reuse_connection_chi_mo_MOT_ket_noi(self) -> None:
+        with patch("http.client.HTTPSConnection", return_value=_fake_conn()) as mock_conn:
+            latency_samples_ms(n=10, signed=False, reuse_connection=True)
+        assert mock_conn.call_count == 1  # ẤM: dùng lại, không bắt tay TLS lại
+
+    def test_khong_reuse_thi_moi_mau_mot_ket_noi_moi(self) -> None:
+        with patch("http.client.HTTPSConnection", return_value=_fake_conn()) as mock_conn:
+            latency_samples_ms(n=10, signed=False, reuse_connection=False)
+        assert mock_conn.call_count == 10  # LẠNH: mỗi mẫu cõng một bắt tay TLS
+
+    def test_signed_gui_dung_header_va_khong_lo_secret(self) -> None:
+        conn = _fake_conn()
+        with patch("http.client.HTTPSConnection", return_value=conn):
+            latency_samples_ms(
+                n=1,
+                signed=True,
+                reuse_connection=True,
+                api_key="fake_key",
+                api_secret="fake_secret_value",
+            )
+        method, path = conn.request.call_args[0][0], conn.request.call_args[0][1]
+        headers = conn.request.call_args[1]["headers"]
+        assert method == "POST" and path.startswith("/fapi/v1/order/test?")
+        assert headers["X-MBX-APIKEY"] == "fake_key"
+        # Secret KHÔNG BAO GIỜ đi ra khỏi máy — chỉ chữ ký (hash một chiều).
+        assert "fake_secret_value" not in path
+
+    def test_khong_signed_dung_endpoint_public_lam_doi_chung(self) -> None:
+        conn = _fake_conn()
+        with patch("http.client.HTTPSConnection", return_value=conn):
+            latency_samples_ms(n=1, signed=False, reuse_connection=True)
+        method, path = conn.request.call_args[0][0], conn.request.call_args[0][1]
+        assert method == "GET" and path == "/fapi/v1/time"
+        assert conn.request.call_args[1]["headers"] == {}  # không gửi khoá cho endpoint public
+
+    def test_signed_thieu_khoa_thi_raise_som_khong_goi_mang(self) -> None:
+        with patch("http.client.HTTPSConnection") as mock_conn:
+            with pytest.raises(ValueError):
+                latency_samples_ms(n=1, signed=True, reuse_connection=True, api_key="", api_secret="")
+        mock_conn.assert_not_called()
+
+    def test_http_khong_200_thi_raise_khong_ghi_mau_rac(self) -> None:
+        with patch("http.client.HTTPSConnection", return_value=_fake_conn(status=401, body=b"bad key")):
+            with pytest.raises(BinancePrivateApiError, match="401"):
+                latency_samples_ms(n=3, signed=False, reuse_connection=True)
 
     def test_loi_mang_thi_raise_binance_private_api_error(self) -> None:
-        with patch("tool_d.api_client.binance_public.urllib.request.urlopen") as mock_urlopen:
-            mock_urlopen.side_effect = TimeoutError("mô phỏng timeout")
+        conn = _fake_conn()
+        conn.request.side_effect = OSError("mô phỏng đứt mạng")
+        with patch("http.client.HTTPSConnection", return_value=conn):
             with pytest.raises(BinancePrivateApiError):
-                order_test_latency_ms(api_key="fake_key", api_secret="fake_secret")
+                latency_samples_ms(n=1, signed=False, reuse_connection=True)
+
+    def test_n_khong_hop_le_thi_raise(self) -> None:
+        with pytest.raises(ValueError):
+            latency_samples_ms(n=0, signed=False, reuse_connection=True)
