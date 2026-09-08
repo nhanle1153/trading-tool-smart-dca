@@ -6,6 +6,11 @@ sau parse tham số (canh bởi L-Z36, TD-0017). TD-0057 nối `run_audit()`
 dòng 660). TD-0072 nối thêm `verify_all_seals()` (H17). Logic ablation
 thật chưa có mã việc TD riêng tại thời điểm sửa file này, sẽ thêm khi
 tới Khối tương ứng.
+
+🔴 TD-0165 nối `kiem_cong_d35()` (`L-Z56` CRITICAL) — entrypoint này TỪ
+CHỐI chạy khi kết quả Δ_R của cổng D3.5 chưa commit đầy đủ. Chốt đó đứng
+TRƯỚC `verify_all_seals()` có chủ đích: nó rẻ, và nó chặn đúng thứ tự sai
+mà DR-015 §1 gọi là "trạng thái tệ nhất có thể".
 """
 
 from __future__ import annotations
@@ -13,6 +18,7 @@ from __future__ import annotations
 import argparse
 import sys
 
+from tool_d.dr015.cong_d35 import EXIT_CHUA_CO_DELTA_R, CongD35ChuaDongError, kiem_cong_d35
 from tool_d.gates.d0_pre import require_d0_pre_complete
 from tool_d.lockbox.seal import verify_all_seals
 from tool_d.measurement.guard import EXIT_GUARD_BLOCKED, GuardOutcome, measurement_guard
@@ -48,6 +54,16 @@ def main(argv: list[str] | None = None) -> int:
     if audit_exit != 0:
         print(audit_text)
         return audit_exit
+
+    # 🔴 L-Z56 (TD-0165) — đứng TRƯỚC mọi việc tốn thời gian, và trước cả
+    # verify_seal: chạy ablation mà chưa có Δ_R đã commit là chính trạng
+    # thái DR-015 §1 gọi là "tệ nhất có thể" (kết luận Z0-vs-DCA hình
+    # thành TRƯỚC, thước kiểm SAU). Từ chối sớm, không đốt thời gian.
+    try:
+        kiem_cong_d35()
+    except CongD35ChuaDongError as exc:
+        print(exc)
+        return EXIT_CHUA_CO_DELTA_R
 
     seal_errors = verify_all_seals(LOCKBOX_DIR, LOCKBOX_FUTURES_DIR)
     if seal_errors:

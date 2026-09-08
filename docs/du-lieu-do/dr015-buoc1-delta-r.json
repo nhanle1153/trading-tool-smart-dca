@@ -1,0 +1,22 @@
+{
+  "_viec": "TD-0161 — DR-015 Bước 1: Δ_R theo hướng. Artifact NIÊM PHONG do TD-0165 sinh.",
+  "_vi_sao_phai_co_file_nay": "L-Z56 đòi 'kết quả Δ_R của cổng D3.5 ĐÃ COMMIT' trước khi chạy bất kỳ arm ablation nào. TD-0161 tính Δ_R trong bộ nhớ rồi ghi dòng CTRL vào sổ trial, KHÔNG lưu con số ra file — nên không có gì để 'đã commit'. Thiếu file này thì Δ_R có thể đổi lặng lẽ SAU khi đã thấy kết quả ablation, đúng thứ DR-015 §1 tồn tại để chặn.",
+  "_sinh_the_nao": "Gọi `tinh_buoc1()` của TD-0161 trên chính dữ liệu thô đã commit — KHÔNG tính lại bằng công thức riêng. `kiem_cong_d35()` tính lại và ĐỐI CHIẾU với file này mỗi lần chạy, nên số ở đây không thể trôi khỏi code mà không ai biết.",
+  "delta_r": {
+    "LONG": {
+      "so_lenh": 35,
+      "dung_p90": true,
+      "gia_tri": 0.16120552895757337,
+      "trang_thai": "ok",
+      "ghi_chu": null
+    },
+    "SHORT": {
+      "so_lenh": 0,
+      "dung_p90": false,
+      "gia_tri": null,
+      "trang_thai": "unreadable",
+      "ghi_chu": "chưa có lệnh SHORT nào trong dữ liệu — ZoneAbsorptionMinimal hiện LONG-only (TD-0114)"
+    }
+  },
+  "_pham_vi": "Short `unreadable` vì ZoneAbsorptionMinimal hiện LONG-only (TD-0114) — KHÔNG phải 0 (N6)."
+}
