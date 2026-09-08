@@ -1,0 +1,36 @@
+{
+  "_viec": "TD-0163 — DR-015 Bước 3: đối chứng âm Z0 (BẮT BUỘC)",
+  "_vi_sao": "§4 trừ/cộng Δ_R vào MỌI arm DCA và KHÔNG đụng Z0. Phép hiệu chỉnh bất đối xứng đó chỉ chính đáng nếu sai số thước thật sự đặc thù của tranche 2+. Bước 3 tồn tại để kiểm đúng điều đó, và phải chạy TRƯỚC khi ai nhìn thấy kết quả ablation.",
+  "_cach_dung_doi_chung": "Tranche 1 của ZoneAbsorptionMinimal CHÍNH LÀ điểm vào của Z0 (§D0.9). Phân hoạch 91 lượt khớp: Z0 = |lệch_R| tranche 1; DCA = Σ|lệch_R| tranche ≥ 2. CÙNG planned_risk_usdt của chính trade đó — hợp lệ vì lệch_R bất biến theo quy mô ở bậc nhất (qty và mẫu số cùng co giãn). Dùng mẫu số thứ hai sẽ đưa thêm giả định vào đúng chỗ cần đối chứng sạch.",
+  "ket_qua": {
+    "Z0": {
+      "n": 35,
+      "delta_r": 0.155184,
+      "dung_p90": true,
+      "trung_vi": 3.2e-05,
+      "P75": 8.4e-05,
+      "max": 0.324733
+    },
+    "DCA": {
+      "n": 35,
+      "delta_r": 0.161206,
+      "dung_p90": true,
+      "trung_vi": 0.022703,
+      "P75": 0.06694,
+      "max": 0.201629
+    },
+    "ty_le_DCA_tren_Z0": 1.0388,
+    "ket_luan": "tuong_duong",
+    "dien_giai": "Hai nhánh lệch tương đương (DCA/Z0 = 1.04, trong biên [0.50, 2.00]) — sai số phần lớn TRIỆT TIÊU khi so sánh hai nhánh. Δ_R vẫn dùng cho §4 nhưng phải ghi kèm: phần lớn nó KHÔNG phải bất lợi riêng của DCA."
+  },
+  "buoc_2_doi_chung": {
+    "Z0_tranche1": "0/35 không khớp",
+    "DCA_tranche_2_3": "0/56 không khớp",
+    "ket_luan": "Không có bất đối xứng nào ở tỷ lệ khớp giữa hai nhánh (TD-0162)."
+  },
+  "_luu_y_hinh_dang_phan_phoi": "Δ_R hai nhánh gần bằng nhau ở P90 nhưng HÌNH DẠNG khác hẳn: Z0 có trung vị ~0 với một ít ca lệch lớn; DCA lệch nhỏ nhưng đều. Bằng nhau ở P90 KHÔNG có nghĩa hai phân phối giống nhau — ghi ra để §4 không đọc thành 'hai nhánh chịu sai số y hệt'.",
+  "_han_che": [
+    "Chỉ LONG (TD-0114 LONG-only). Short: chưa đo được, không phải 0.",
+    "Đối chứng dựng từ phân hoạch tranche, không phải từ một lần chạy arm Z0 riêng — arm Z0 thật sẽ có position sizing khác, tuy lệch_R bất biến theo quy mô ở bậc nhất."
+  ]
+}
