@@ -153,6 +153,20 @@ def phan_xu(doi_chung: dict[str, KetQuaDoiChung]) -> PhanXuDoiChung:
             ty_le_dca_tren_z0=Measured.unreadable("thiếu Δ_R của ít nhất một nhánh"),
             dien_giai="Không đủ dữ liệu để phân xử — KHÔNG được coi là 'tương đương'.",
         )
+    if z0.value == 0 and dca.value == 0:
+        # TD-0167: KHÔNG nhánh nào lệch. Ca này phải tách khỏi ca dưới —
+        # gộp lại sẽ in ra "Z0 không lệch chút nào còn DCA có lệch" trong khi
+        # DCA cũng bằng 0, tức một câu SAI SỰ THẬT ở đúng chỗ người đọc dùng
+        # để quyết định có áp Δ_R lên DCA hay không. Tỉ lệ 0/0 không xác định
+        # được nên vẫn `unreadable`, nhưng KẾT LUẬN thì xác định: tương đương.
+        return PhanXuDoiChung(
+            ket_luan="tuong_duong",
+            ty_le_dca_tren_z0=Measured.unreadable("cả hai nhánh Δ_R = 0 — tỉ lệ 0/0 không xác định"),
+            dien_giai=(
+                "CẢ HAI nhánh đều không lệch (Δ_R = 0) — không có sai số thước nào để phân "
+                "xử. Hiệu chỉnh §4 theo chiều nào cũng không đổi kết quả."
+            ),
+        )
     if z0.value == 0:
         return PhanXuDoiChung(
             ket_luan="chi_dca_lech",

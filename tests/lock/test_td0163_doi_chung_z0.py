@@ -124,6 +124,23 @@ class TestPhanXuBaVe:
         assert px.ket_luan == "chi_dca_lech"
         assert px.ty_le_dca_tren_z0.status.value == "unreadable"
 
+    def test_CA_HAI_bang_0_la_tuong_duong_khong_phai_chi_dca_lech(self) -> None:
+        """🔴 TD-0167 — lỗ hổng do rà soát độc lập bắt được.
+
+        Bản đầu chỉ kiểm `z0.value == 0` rồi trả thẳng `chi_dca_lech` kèm
+        câu "Z0 không lệch chút nào còn DCA có lệch". Nếu DCA CŨNG bằng 0
+        thì câu đó SAI SỰ THẬT, và nó nằm đúng chỗ người đọc dùng để quyết
+        định có áp Δ_R lên DCA hay không.
+
+        Ca `z0=0, dca=0.15` ở test trên KHÔNG lộ ra lỗ này — đó là lý do
+        một phép kiểm "đã có" vẫn có thể bỏ sót đúng nhánh cần canh.
+        """
+        px = phan_xu({"Z0": _kq("Z0", 0.0), "DCA": _kq("DCA", 0.0)})
+        assert px.ket_luan == "tuong_duong"
+        assert px.ty_le_dca_tren_z0.status.value == "unreadable"  # 0/0 vẫn không xác định
+        assert "CẢ HAI" in px.dien_giai
+        assert "còn DCA có lệch" not in px.dien_giai
+
     def test_bien_tuong_duong_doi_xung_hai_chieu(self) -> None:
         """Biên phải đối xứng theo tỉ lệ: gấp 2 lần và bằng 1/2 lần đều là
         'lệch', không được nghiêng về một phía."""
