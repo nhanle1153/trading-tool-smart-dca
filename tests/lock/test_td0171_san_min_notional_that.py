@@ -211,3 +211,65 @@ class TestSauDuongChayBonSan:
         assert san_bt == pytest.approx(5.0 * 1.05 / 0.95)
         assert san_live == pytest.approx(7.5)
         assert san_bt < san_live
+
+
+class TestSanDuyNhatCuaToolD:
+    """DR-D4-05 §2.1 — Tool D KHÔNG ủy thác phép kiểm sàn cho Freqtrade.
+
+    Một sàn duy nhất = `max` sàn của MỌI đường chạy. Lấy đúng sàn từng
+    đường thì backtest và live vẫn hành xử khác nhau, tức lỗ hổng parity
+    còn nguyên — chỉ khác là ta biết về nó.
+    """
+
+    def test_san_duy_nhat_bang_MAX_cua_moi_duong_chay(self) -> None:
+        from tool_d.notional import SL_THEO_DUONG_CHAY, san_tool_d, sl_hieu_dung
+
+        f = _f()
+        moi_san = [
+            san_min_notional_freqtrade(f, stoploss=sl_hieu_dung(d, strategy_stoploss=-0.99))
+            for d in SL_THEO_DUONG_CHAY
+        ]
+        assert san_tool_d(f, strategy_stoploss=-0.99) == pytest.approx(max(moi_san))
+
+    def test_san_duy_nhat_KHONG_thap_hon_bat_ky_duong_nao(self) -> None:
+        """Bất biến thật sự cần: một cấu hình qua sàn Tool D thì qua được ở
+        MỌI đường chạy. Ca `max` ở trên có thể đúng vì trùng hợp trên một
+        mã; ca này đòi nó đúng trên cả bốn hình dạng mã khác nhau."""
+        from tool_d.notional import SL_THEO_DUONG_CHAY, san_tool_d, sl_hieu_dung
+
+        for f in (
+            _f(),
+            _f(min_notional_usdt=20.0),
+            _f(min_qty=0.001, price=100_000.0),
+            _f(min_notional_usdt=100.0, min_qty=1.0, price=3.0),
+        ):
+            s = san_tool_d(f, strategy_stoploss=-0.99)
+            for d in SL_THEO_DUONG_CHAY:
+                sl = sl_hieu_dung(d, strategy_stoploss=-0.99)
+                assert s >= san_min_notional_freqtrade(f, stoploss=sl) - 1e-9, (f.symbol, d)
+
+    def test_tu_choi_mang_LY_DO_doc_duoc_chu_khong_phai_bool(self) -> None:
+        """Từ chối im lặng là thứ DR-D4-05 sinh ra để chặn. Một `False`
+        trần trụi không ghi sổ được — nó không nói rớt vì sàn nào."""
+        from tool_d.notional import kiem_san_tool_d
+
+        kq = kiem_san_tool_d(_f(), notional_usdt=1.0, strategy_stoploss=-0.99)
+        assert not kq.dat
+        assert kq.san_usdt == pytest.approx(7.5)
+        assert kq.ve_thang == "cost"
+        assert "1" in kq.ly_do and "7.5" in kq.ly_do.replace(",", ".")
+
+    def test_dat_thi_ly_do_RONG_khong_bia_chu(self) -> None:
+        from tool_d.notional import kiem_san_tool_d
+
+        kq = kiem_san_tool_d(_f(), notional_usdt=50.0, strategy_stoploss=-0.99)
+        assert kq.dat and kq.ly_do == ""
+
+    def test_notional_am_hoac_NaN_thi_raise_khong_tra_ve_khong_dat(self) -> None:
+        """N6: *không đo được* KHÁC *đã đo và trượt*. Trả "không đạt" cho
+        một đầu vào hỏng là gộp hai trạng thái mà cả dự án tách ra."""
+        from tool_d.notional import kiem_san_tool_d
+
+        for xau in (-1.0, float("nan")):
+            with pytest.raises(ValueError):
+                kiem_san_tool_d(_f(), notional_usdt=xau, strategy_stoploss=-0.99)

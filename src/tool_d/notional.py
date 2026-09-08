@@ -149,6 +149,77 @@ def san_min_notional_freqtrade(
     )
 
 
+@dataclass(frozen=True)
+class KetQuaSan:
+    """Kết quả kiểm sàn — mang LÝ DO đọc được, không phải một `bool` trần.
+
+    Một `False` trần trụi không ghi sổ được: nó không nói rớt vì sàn nào,
+    vế nào. Mà từ chối IM LẶNG chính là thứ DR-D4-05 sinh ra để chặn."""
+
+    dat: bool
+    notional_usdt: float
+    san_usdt: float
+    ve_thang: str
+    ly_do: str
+
+
+def san_tool_d(f: SymbolFilters, *, strategy_stoploss: float) -> float:
+    """DR-D4-05 §2.1 — MỘT sàn duy nhất của Tool D: `max` sàn của mọi đường
+    chạy trong `SL_THEO_DUONG_CHAY`.
+
+    Vì sao `max` chứ không phải sàn của đường chạy hiện tại: lấy đúng sàn
+    từng đường thì backtest và live vẫn hành xử KHÁC NHAU — lỗ hổng parity
+    (quy tắc 9) còn nguyên, chỉ khác là ta biết về nó. Lấy `max` làm cho
+    một cấu hình qua được ở D4 thì cũng qua được ở D11/D12.
+
+    Cái giá, chấp nhận có ý thức: ở vài đường chạy ta chặt hơn Freqtrade,
+    tức bỏ một số lệnh mà sàn thật vẫn cho qua. Bảo thủ về phía không thể
+    tâng kết quả lên — cùng lập luận đã dùng khi giữ `v_min` trong
+    `tier_b` (DR-D4-03).
+    """
+    return max(
+        san_min_notional_freqtrade(
+            f, stoploss=sl_hieu_dung(d, strategy_stoploss=strategy_stoploss)
+        )
+        for d in SL_THEO_DUONG_CHAY
+    )
+
+
+def kiem_san_tool_d(
+    f: SymbolFilters, *, notional_usdt: float, strategy_stoploss: float
+) -> KetQuaSan:
+    """Hỏi *"cỡ lệnh này có qua sàn Tool D không"*, trả lời kèm lý do.
+
+    🔴 Đầu vào hỏng thì **RAISE**, không trả `dat=False`: N6 tách *không đo
+    được* khỏi *đã đo và trượt*, và `dat=False` là vế thứ hai. Gộp hai cái
+    là đúng thứ cả dự án tách ra.
+    """
+    if notional_usdt != notional_usdt or notional_usdt < 0:
+        raise ValueError(
+            f"notional_usdt phải ≥ 0 và không NaN, nhận {notional_usdt} — đầu vào hỏng "
+            "là 'không đo được', không phải 'không đạt' (N6)"
+        )
+    san = san_tool_d(f, strategy_stoploss=strategy_stoploss)
+    ve = _ve_thang(
+        f, stoploss=sl_hieu_dung("live_vao_lenh", strategy_stoploss=strategy_stoploss)
+    )
+    dat = notional_usdt >= san
+    return KetQuaSan(
+        dat=dat,
+        notional_usdt=notional_usdt,
+        san_usdt=san,
+        ve_thang=ve,
+        ly_do=(
+            ""
+            if dat
+            else (
+                f"{f.symbol}: notional {notional_usdt:.4g} < sàn Tool D {san:.4g} USDT "
+                f"(vế {ve}; DR-D4-05 §2.1). TỪ CHỐI — không phải bỏ qua im lặng."
+            )
+        ),
+    )
+
+
 def _ve_thang(f: SymbolFilters, *, stoploss: float) -> str:
     """Vế nào quyết định sàn — để bảng đối chiếu nói được LÝ DO rớt, không
     chỉ nói rớt."""
