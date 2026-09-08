@@ -124,7 +124,8 @@ class TestLZ12NoDuplicateConfigHash:
 
 class TestLZ15CalibrateParamsHaveStatus:
     def test_v_min_duoc_khai_trong_param_status_thi_dat(self) -> None:
-        # Dùng file thật của project — v_min đã khai TUNED_PENDING (TD-0056).
+        # Dùng file thật của project — v_min khai FROZEN + frozen_rationale
+        # kể từ DR-D4-03 (trước đó là TUNED_PENDING, TD-0056).
         r = check_lz15_calibrate_params_have_status()
         assert r.ok, r.evidence
 
@@ -149,6 +150,84 @@ class TestLZ15CalibrateParamsHaveStatus:
             encoding="utf-8",
         )
         r = check_lz15_calibrate_params_have_status(cfg_path, tmp_path / "khong_ton_tai.yaml")
+        assert r.is_fail
+
+
+class TestLZ15SietTheoDRD403:
+    """🔴 DR-D4-03 §6 — bản trước chỉ soi tham số đang `null`, nên
+    **khoảnh khắc ghi một giá trị vào là lớp canh THÔI CANH tham số đó**.
+    Một tham số có giá trị, không trial, không `frozen_rationale` đúng là
+    trạng thái "im lặng" spec dòng 3884 cấm — và máy cũ không thấy được.
+
+    Đây là bẫy PASS RỖNG thứ năm của dự án, khác bốn cái trước ở chỗ:
+    bốn cái kia có sẵn, cái này **do chính hành động sửa MT-15 tạo ra**.
+    """
+
+    def _cfg(self, tmp_path: Path, v_min_value: str) -> Path:
+        p = tmp_path / "cfg.yaml"
+        p.write_text(
+            f"tier_a: {{}}\ntier_b:\n  _budget_remaining_B3: null\n  v_min: {v_min_value}\n"
+            "tier_frozen: {}\ntier_c: {}\n",
+            encoding="utf-8",
+        )
+        return p
+
+    def test_FROZEN_ma_THIEU_frozen_rationale_thi_FAIL(self, tmp_path: Path) -> None:
+        """🔴 Phép phá cốt lõi. Con số vẫn ở đó, lý do thì không — không
+        ai truy được nó từ đâu ra. Nếu ca này XANH thì bản siết là giả."""
+        status = tmp_path / "status.yaml"
+        status.write_text(
+            "params:\n  v_min:\n    status: FROZEN\n    value: 1.0\n", encoding="utf-8"
+        )
+        r = check_lz15_calibrate_params_have_status(self._cfg(tmp_path, "1.0"), status)
+        assert r.is_fail
+        assert "frozen_rationale" in r.evidence
+
+    def test_FROZEN_co_frozen_rationale_thi_DAT(self, tmp_path: Path) -> None:
+        status = tmp_path / "status.yaml"
+        status.write_text(
+            "params:\n  v_min:\n    status: FROZEN\n    value: 1.0\n"
+            "    frozen_rationale: mốc trung tính, chọn bằng định nghĩa\n",
+            encoding="utf-8",
+        )
+        r = check_lz15_calibrate_params_have_status(self._cfg(tmp_path, "1.0"), status)
+        assert r.ok, r.evidence
+
+    def test_TUNED_PENDING_ma_DA_CO_gia_tri_thi_FAIL(self, tmp_path: Path) -> None:
+        """Nói "chưa calibrate" trong khi con số đã đang được hệ thống
+        dùng thật. Đây chính là ca bản cũ không thấy — nó chỉ nhìn `null`,
+        mà khoá này đâu còn `null`."""
+        status = tmp_path / "status.yaml"
+        status.write_text(
+            "params:\n  v_min:\n    status: TUNED_PENDING\n", encoding="utf-8"
+        )
+        r = check_lz15_calibrate_params_have_status(self._cfg(tmp_path, "1.0"), status)
+        assert r.is_fail
+        assert "TUNED_PENDING" in r.evidence
+
+    def test_TUNED_PENDING_khi_CON_null_thi_van_DAT(self, tmp_path: Path) -> None:
+        """Không nới nhầm sang chiều kia: `TUNED_PENDING` vẫn hợp lệ cho
+        tham số còn `null` ở D0-PRE (registry rỗng, chưa trial nào tồn
+        tại được). Siết quá tay thì cổng không bao giờ thoả được, và một
+        chốt không bao giờ thoả được sẽ bị gỡ (bài học cổng D3)."""
+        status = tmp_path / "status.yaml"
+        status.write_text(
+            "params:\n  v_min:\n    status: TUNED_PENDING\n", encoding="utf-8"
+        )
+        r = check_lz15_calibrate_params_have_status(self._cfg(tmp_path, "null"), status)
+        assert r.ok, r.evidence
+
+    def test_status_la_ma_khong_ro_thi_FAIL(self, tmp_path: Path) -> None:
+        status = tmp_path / "status.yaml"
+        status.write_text("params:\n  v_min:\n    status: OK\n", encoding="utf-8")
+        r = check_lz15_calibrate_params_have_status(self._cfg(tmp_path, "1.0"), status)
+        assert r.is_fail
+
+    def test_khai_ma_KHONG_co_status_thi_FAIL(self, tmp_path: Path) -> None:
+        """Có mặt trong file nhưng không nói trạng thái = vẫn im lặng."""
+        status = tmp_path / "status.yaml"
+        status.write_text("params:\n  v_min:\n    value: 1.0\n", encoding="utf-8")
+        r = check_lz15_calibrate_params_have_status(self._cfg(tmp_path, "1.0"), status)
         assert r.is_fail
 
 

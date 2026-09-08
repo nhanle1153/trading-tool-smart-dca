@@ -24,6 +24,14 @@ from tool_d.measurement.tri_state import Measured
 
 DEFAULT_IDEA_QUEUE_PATH = Path("registry/idea_queue.jsonl")
 DEFAULT_PARAM_STATUS_PATH = Path("config/param_status.yaml")
+
+#: Trạng thái hợp lệ của một tham số [CẦN CALIBRATE].
+#: `TUNED`/`FROZEN` là hai trạng thái spec cho phép (dòng 3882-3883).
+#: `TUNED_PENDING` là trạng thái TRUNG GIAN của project ở D0-PRE, khi
+#: registry còn rỗng nên chưa trial nào tồn tại được — nó CHỈ hợp lệ cho
+#: tham số còn `null`; một tham số đã có giá trị mà vẫn `TUNED_PENDING`
+#: là nói "chưa calibrate" trong khi con số đã đang được dùng.
+TRANG_THAI_THAM_SO_HOP_LE = frozenset({"TUNED", "FROZEN", "TUNED_PENDING"})
 DEFAULT_TIEU_CHI_DIR = Path("docs/decisions")
 
 BUDGET_A_SLOTS_PER_QUARTER_MAX = 5  # DR-009, §9.3 — không nới vì có LLM
@@ -153,9 +161,29 @@ def check_lz15_calibrate_params_have_status(
     config_path: Path = DEFAULT_CONFIG_PATH,
     status_path: Path = DEFAULT_PARAM_STATUS_PATH,
 ) -> CheckResult:
-    """Mọi tham số Tầng B đang `null` (nghĩa [CẦN CALIBRATE]) phải xuất
-    hiện trong `param_status.yaml` với trạng thái tường minh — thiếu mặt
-    ở đó = "im lặng", CẤM (spec dòng 3882-3884)."""
+    """Mọi tham số [CẦN CALIBRATE] phải có TRẠNG THÁI tường minh —
+    `TUNED` (có trial) hoặc `FROZEN` (có `frozen_rationale`). Thiếu mặt,
+    hoặc có mặt mà trạng thái rỗng nghĩa, đều là "im lặng": CẤM (spec
+    dòng 3882-3884).
+
+    🔴 **DR-D4-03 §6 — vì sao bản trước KHÔNG đủ, và vì sao chỗ hở chỉ
+    lộ ra đúng lúc ta sửa MT-15.** Bản trước suy danh sách [CẦN
+    CALIBRATE] từ *"khoá nào đang `null`"*. Cách đó hợp lý khi mọi tham
+    số chưa calibrate đều còn `null` — nhưng **khoảnh khắc `v_min` nhận
+    giá trị 1.0, nó thôi là `null` và phép kiểm THÔI CANH nó**, không ai
+    còn hỏi con số đó từ đâu ra. Một tham số **có giá trị, không trial,
+    không `frozen_rationale`** đúng là trạng thái "im lặng" dòng 3884
+    cấm — và máy cũ không thấy được.
+
+    Tức chính hành động vá MT-15 sẽ **tự làm câm lớp canh duy nhất** đang
+    theo dõi tham số đó. Đây là bẫy PASS RỖNG thứ năm của dự án, và khác
+    bốn cái trước ở chỗ: bốn cái kia có sẵn, cái này **do ta tạo ra khi
+    sửa**.
+
+    Nay: `param_status.yaml` là **nguồn sự thật cho DANH SÁCH**, và mọi
+    mục trong đó bị soi **bất kể đã có giá trị hay chưa**. Luật cũ giữ
+    nguyên, không nới: khoá `null` mà không khai vẫn là vi phạm.
+    """
     cfg = load_tool_d_config(config_path)
     null_params = sorted(k for k, v in cfg.tier_b.items() if not k.startswith("_") and v is None)
 
@@ -169,13 +197,44 @@ def check_lz15_calibrate_params_have_status(
         return CheckResult("L-Z15", Measured.ok(True), evidence="không có tham số nào null")
 
     status_doc = yaml.safe_load(status_path.read_text(encoding="utf-8")) or {}
-    declared = (status_doc.get("params") or {}).keys()
+    khai_bao = status_doc.get("params") or {}
+    declared = khai_bao.keys()
 
-    silent = [p for p in null_params if p not in declared]
+    vi_pham: list[str] = []
+
+    # (1) Luật cũ, giữ nguyên: null mà không khai = im lặng.
+    vi_pham += [
+        f"{p}: null nhưng không khai trạng thái" for p in null_params if p not in declared
+    ]
+
+    # (2) MỚI: mọi mục ĐÃ KHAI phải có trạng thái hợp lệ — kể cả khi khoá
+    #     đã có giá trị. Đây là phần bản cũ không phủ.
+    for ten in sorted(declared):
+        muc = khai_bao.get(ten) or {}
+        trang_thai = (muc.get("status") or "").strip()
+        if trang_thai not in TRANG_THAI_THAM_SO_HOP_LE:
+            vi_pham.append(
+                f"{ten}: status={trang_thai!r} không thuộc {sorted(TRANG_THAI_THAM_SO_HOP_LE)}"
+            )
+            continue
+        # FROZEN mà không nói VÌ SAO thì đúng bằng im lặng: con số vẫn ở
+        # đó, lý do thì không, và không ai truy được nó từ đâu ra.
+        if trang_thai == "FROZEN" and not (muc.get("frozen_rationale") or "").strip():
+            vi_pham.append(f"{ten}: FROZEN nhưng thiếu frozen_rationale")
+        # `TUNED_PENDING` nghĩa là "chưa có gì để calibrate được" — chỉ
+        # đúng khi khoá còn `null`. Một tham số ĐÃ CÓ GIÁ TRỊ mà vẫn khai
+        # `TUNED_PENDING` là nói "chưa calibrate" trong khi con số đó đang
+        # được hệ thống dùng thật; đó chính là ca bản cũ không thấy.
+        if trang_thai == "TUNED_PENDING" and cfg.tier_b.get(ten) is not None:
+            vi_pham.append(
+                f"{ten}: TUNED_PENDING nhưng đã có giá trị {cfg.tier_b.get(ten)!r} — "
+                "phải là TUNED (có trial) hoặc FROZEN (có frozen_rationale)"
+            )
+
     return CheckResult(
         "L-Z15",
-        Measured.ok(len(silent) == 0),
-        evidence=f"tham số 'im lặng' (null nhưng không khai trạng thái): {silent}" if silent else "",
+        Measured.ok(len(vi_pham) == 0),
+        evidence="; ".join(vi_pham),
     )
 
 

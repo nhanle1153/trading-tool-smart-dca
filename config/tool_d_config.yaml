@@ -42,7 +42,18 @@ tier_b: # MỖI LẦN ĐỔI = 1 TRIAL từ B3. 12 mục
   zss_threshold: 0.5 #  1  §1.3
   buf_sl_atr: 0.4 #  2  §3.1
   wick_close_upper_frac: 0.5 #  3  §3.3b
-  v_min: null #  4  §3.3b   [CẦN CALIBRATE — OQ-06, trạng thái TUNED_PENDING]
+  # 🆕 DR-D4-03 (MT-15): §3.3b điều kiện (c). ĐÓNG BĂNG TẠI CHỖ — trạng thái
+  # FROZEN trong config/param_status.yaml, 0 trial, nhưng GIỮ NGUYÊN ở tier_b.
+  # 🔴 Vì sao KHÔNG chuyển sang tier_frozen dù đang đóng băng: dof.py tính
+  # N từ số khoá THẬT trong tier_b, nên chuyển ra sẽ hạ |tier_b| 12→11,
+  # N 114→108 và rào DSR 3,0777→3,0601 — tức NỚI chuẩn đánh giá của chính
+  # mình. Giữ ở đây = vẫn bị tính phí cho một bậc tự do mà ta không dùng,
+  # bảo thủ về phía không thể tâng kết quả lên. (Khác DG5: DG5 chưa từng
+  # được đếm nên đóng băng nó không trừ đi gì — DR-D4-02.)
+  # 🔴 1.0 là CHỖ GIỮ CHƯA CALIBRATE, chọn bằng định nghĩa (mốc trung tính
+  # của tỉ lệ so với chính MA20 của nó), không bằng kết quả. Ba điều kiện
+  # mở lại: DR-D4-03 §5. Đọc kèm mọi kết quả có Z0 tham gia.
+  v_min: 1.0 #  4  §3.3b   [FROZEN 1.0 — DR-D4-03, chưa calibrate]
   funding_rate_pct: -0.05 #  5  §3.3d + DG6-D (gộp)
   dg6d_retrace_frac: 0.5 #  6  §3.3d
   dg4_bars_1h: 8 #  7  §4

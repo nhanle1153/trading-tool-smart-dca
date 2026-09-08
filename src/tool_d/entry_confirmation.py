@@ -1,14 +1,41 @@
-"""§3.3b — Xác nhận entry tranche 1 bằng price-action (TD-0129, trước 07/09/2026
-đánh số TD-0120; L-Z6).
+"""§3.3b + PHẦN 3b — Xác nhận entry tranche 1 bằng price-action (TD-0129,
+trước 07/09/2026 đánh số TD-0120; L-Z6).
 
 ZSS (§1.2) chỉ đo chất lượng LỊCH SỬ của zone; đây là lớp xác nhận hấp
-thụ đang diễn ra NGAY LÚC giá chạm zone — (a) nến rejection HOẶC (b)
-phân kỳ momentum RSI, tối đa 3 nến chờ, KHÔNG mở rộng cửa sổ (chống
-overfitting ngược — nới thời gian chờ tới khi thấy xác nhận sẽ luôn
-"thành công" trên dữ liệu lịch sử nhưng vô nghĩa).
+thụ đang diễn ra NGAY LÚC giá chạm zone, tối đa 3 nến chờ, KHÔNG mở rộng
+cửa sổ (chống overfitting ngược — nới thời gian chờ tới khi thấy xác
+nhận sẽ luôn "thành công" trên dữ liệu lịch sử nhưng vô nghĩa).
 
-RSI(14,1H) tính bằng TA-Lib ở tầng gọi (cùng kiểu với ATR trong
-`zone_strength.py`) — module này chỉ nhận mảng RSI đã tính sẵn.
+RSI(14,1H) và volume_MA(20,1H) tính ở tầng gọi (cùng kiểu với ATR trong
+`zone_strength.py`) — module này chỉ nhận mảng đã tính sẵn.
+
+════ Công thức: `(a VÀ c) HOẶC (b)` — KHÔNG phải `(a OR b OR c)` ════
+
+    (a) nến rejection          §3.3b(a)
+    (b) phân kỳ momentum RSI   §3.3b(b)
+    (c) hấp thụ có volume      PHẦN 3b — BỔ NGỮ BẮT BUỘC cho (a)
+
+Spec PHẦN 3b nói thẳng vì sao (c) không đứng riêng: *"Volume cao mà
+không có rejection = có thể đang bị xuyên qua."*
+
+🔴 **MT-15 — vì sao bản đầu SAI, và vì sao nó không chỉ là thiếu một bộ
+lọc.** Bản đầu (TD-0129) thi hành `(a) HOẶC (b)`: (c) có **0 dòng code**.
+Nhưng §10.1b định nghĩa arm `Z0-V1` **đúng bằng "tắt (c)"**, tức `(a)
+HOẶC (b)` — chính là thứ code khi đó đang có. Hệ quả: `Z0` **trùng khớp**
+`Z0-V1`, một suất trial trong `N=114` tiêu để đo một khác biệt **bằng
+không**, và bảng kết quả trông hoàn toàn bình thường — chỉ là hai cột
+giống hệt nhau. Không phép kiểm nào báo đỏ vì nó. Đây là bẫy PASS RỖNG ở
+một dạng khác các lần trước: **nó không làm hỏng phép đo, nó đốt ngân
+sách phép thử.**
+
+Vì thế `bat_dieu_kien_c` là tham số **BẮT BUỘC, không mặc định** — cùng
+khuôn `truoc_ms`/`sau_ms` của `fill_probe` (TD-0162). Một mặc định ở đây
+nghĩa là arm nào quên khai sẽ lặng lẽ chạy như arm khác, và hai arm lại
+nhập làm một.
+
+`v_min` = `tier_b.v_min`, hiện **FROZEN ở 1.0** (DR-D4-03) — mốc trung
+tính của tỉ lệ so với chính trung bình 20 kỳ của nó, **chỗ giữ CHƯA
+CALIBRATE**. Đọc kèm mọi kết quả có `Z0` tham gia.
 """
 
 from __future__ import annotations
@@ -16,6 +43,15 @@ from __future__ import annotations
 from typing import Literal, Sequence
 
 SO_NEN_CHO_MAC_DINH = 3
+
+
+class ThieuDuLieuVolumeError(ValueError):
+    """`bat_dieu_kien_c=True` nhưng thiếu `volume` / `volume_ma` / `v_min`.
+
+    Fail-closed, KHÔNG âm thầm bỏ qua (c): bỏ qua nghĩa là chạy `Z0-V1`
+    dưới nhãn `Z0`, và không gì trong kết quả lộ ra điều đó — đúng lỗ
+    hổng MT-15 sinh ra để đóng.
+    """
 
 
 def la_nen_rejection(mo: float, cao: float, thap: float, dong: float, *, loai: Literal["day", "dinh"]) -> bool:
@@ -44,6 +80,24 @@ def phan_ky_momentum(
     return rsi_hien_tai < rsi_truoc and gia_hien_tai >= gia_truoc
 
 
+def hap_thu_co_volume(volume_nen: float, volume_ma_1h: float, v_min: float) -> bool:
+    """PHẦN 3b điều kiện (c) — `volume(nến xác nhận) / volume_MA(20,1H) ≥ v_min`.
+
+    🔴 KHÔNG phải tín hiệu độc lập. Việc AND với (a) nằm ở
+    `tim_xac_nhan_entry()`; hàm này chỉ trả lời vế volume.
+
+    Mẫu số không hợp lệ (≤ 0 hoặc NaN) → `False`. Không có mẫu số nghĩa
+    là *chưa biết*, và "chưa biết" ở cổng vào lệnh phải tính về phía
+    KHÔNG vào — cùng tinh thần `volume_ratio`/`compression` của
+    `zone_strength.py` trả `None` thay vì đoán.
+    """
+    if volume_ma_1h != volume_ma_1h or volume_nen != volume_nen:  # NaN != NaN
+        return False
+    if volume_ma_1h <= 0:
+        return False
+    return volume_nen / volume_ma_1h >= v_min
+
+
 def tim_xac_nhan_entry(
     mo: Sequence[float],
     cao: Sequence[float],
@@ -53,22 +107,42 @@ def tim_xac_nhan_entry(
     i_cham: int,
     *,
     loai: Literal["day", "dinh"],
+    bat_dieu_kien_c: bool,
+    volume: Sequence[float] | None = None,
+    volume_ma: Sequence[float] | None = None,
+    v_min: float | None = None,
     lan_cham_truoc: tuple[float, float] | None = None,
     so_nen_cho_toi_da: int = SO_NEN_CHO_MAC_DINH,
 ) -> int | None:
     """Quét tối đa `so_nen_cho_toi_da` nến kể từ `i_cham` (nến giá vừa
-    chạm zone) tìm rejection HOẶC phân kỳ RSI. Trả về chỉ số nến xác
-    nhận đầu tiên, hoặc `None` nếu hết hạn mà chưa có — KHÔNG BAO GIỜ
+    chạm zone), tìm nến đầu tiên thoả **`(a VÀ c) HOẶC (b)`**. Trả về
+    chỉ số nến đó, hoặc `None` nếu hết hạn mà chưa có — KHÔNG BAO GIỜ
     tìm tiếp ngoài cửa sổ này (đúng lời spec, chống overfitting ngược).
+
+    `bat_dieu_kien_c` **bắt buộc khai** (xem docstring module — MT-15):
+      • `True`  → arm `Z0` và mọi arm khác: đòi đủ `volume`/`volume_ma`/`v_min`.
+      • `False` → arm `Z0-V1`: công thức thoái về `(a) HOẶC (b)`.
 
     `lan_cham_truoc` = (giá, RSI) của lần chạm zone gần nhất — `None`
     nếu đây là lần chạm đầu tiên (không có gì để so, chỉ còn phần (a)).
     """
+    if bat_dieu_kien_c and (volume is None or volume_ma is None or v_min is None):
+        raise ThieuDuLieuVolumeError(
+            "bat_dieu_kien_c=True đòi đủ volume, volume_ma và v_min. Thiếu một "
+            "trong ba thì KHÔNG được bỏ qua (c) — bỏ qua là chạy Z0-V1 dưới "
+            "nhãn Z0 (MT-15)."
+        )
+
     gia_bien_muc = thap if loai == "day" else cao
     cuoi = min(i_cham + so_nen_cho_toi_da, len(dong))
     for j in range(i_cham, cuoi):
+        # (a VÀ c) — (c) là BỔ NGỮ của (a), không đứng riêng.
         if la_nen_rejection(mo[j], cao[j], thap[j], dong[j], loai=loai):
-            return j
+            if not bat_dieu_kien_c or hap_thu_co_volume(volume[j], volume_ma[j], v_min):
+                return j
+        # HOẶC (b) — phân kỳ momentum KHÔNG đi kèm (c).
+        # 🔑 Nến bị (c) loại ở trên VẪN rơi xuống đây: công thức là
+        # `(a VÀ c) HOẶC (b)`, không phải `nếu (a) thì (c) ngược lại (b)`.
         if lan_cham_truoc is not None:
             gia_truoc, rsi_truoc = lan_cham_truoc
             if phan_ky_momentum(

@@ -1,14 +1,47 @@
-# param_status.yaml — trạng thái các tham số [CẦN CALIBRATE] của tier_b
-# đang là `null` trong tool_d_config.yaml. Nuôi L-Z15 (spec dòng 3882-3884):
-# "Mọi tham số [CẦN CALIBRATE] đều có TRẠNG THÁI trong registry: TUNED
-# (có trial) hoặc FROZEN (có frozen_rationale). Không tham số nào ở
-# trạng thái 'im lặng'."
+# param_status.yaml — trạng thái các tham số [CẦN CALIBRATE] của tier_b.
+# Nuôi L-Z15 (spec dòng 3882-3884): "Mọi tham số [CẦN CALIBRATE] đều có
+# TRẠNG THÁI trong registry: TUNED (có trial) hoặc FROZEN (có
+# frozen_rationale). Không tham số nào ở trạng thái 'im lặng'."
 #
-# TUNED_PENDING là trạng thái TRUNG GIAN hợp lệ trước khi có trial thật
-# (registry rỗng ở D0-PRE) — "im lặng" nghĩa là tham số null mà KHÔNG có
-# mặt ở file này, không phải nghĩa là "chưa có trial".
+# 🔴 DR-D4-03 (08/09/2026) — FILE NÀY LÀ NGUỒN SỰ THẬT CHO DANH SÁCH
+# [CẦN CALIBRATE], không phải "các khoá đang null trong tool_d_config".
+#
+# Bản trước suy danh sách từ `null`: khoá nào null thì phải khai trạng
+# thái. Cách đó có một lỗ hổng chỉ lộ ra khi ta điền số vào: KHOẢNH KHẮC
+# `v_min` nhận giá trị 1.0, nó thôi là null, và L-Z15 THÔI CANH NÓ — không
+# ai còn hỏi con số đó từ đâu ra. Một tham số CÓ giá trị, KHÔNG trial,
+# KHÔNG frozen_rationale đúng là trạng thái "im lặng" mà dòng 3884 cấm.
+# Nói cách khác, chính hành động sửa MT-15 sẽ tự làm câm lớp canh duy
+# nhất đang theo dõi tham số này. Nên danh sách nay khai TƯỜNG MINH ở
+# đây, và L-Z15 soi mọi mục trong đó bất kể đã có giá trị hay chưa.
+#
+# TUNED_PENDING vẫn hợp lệ như trạng thái TRUNG GIAN ở D0-PRE (registry
+# rỗng, chưa trial nào tồn tại được) — nhưng KHÔNG hợp lệ cho một tham số
+# đã có giá trị: có giá trị thì phải nói giá trị đó từ trial hay từ quyết
+# định đóng băng.
+
 params:
   v_min:
-    status: TUNED_PENDING # OQ-06 — chờ calibrate bằng dữ liệu ở B1
-    slot: "#4" # đúng số tunable trong §6.9.5 (12 tham số)
-    note: "§3.3b — cần dữ liệu để đặt ngưỡng volume tại thời điểm chạm zone"
+    status: FROZEN # ✅ DR-D4-03 — rời TUNED_PENDING (L-Z15 chỉ cho TUNED|FROZEN)
+    value: 1.0
+    slot: "#4" # đúng số tunable trong §6.9.5 (12 tham số, KHÔNG đổi)
+    frozen_rationale: >-
+      Mốc TRUNG TÍNH của một tỉ lệ so với chính trung bình 20 kỳ của nó —
+      chọn bằng ĐỊNH NGHĨA, không bằng kết quả. PHẦN 3b tự mô tả ca xấu là
+      "chạm + volume THẤP + giá dừng lại → không ai bảo vệ", và "thấp" so
+      với trung bình của chính nó là < 1.0; đó là đường phân đôi tự nhiên,
+      chốt được khi chưa có một kết quả ablation nào tồn tại (§9c.5).
+      ĐÓNG BĂNG TẠI CHỖ — giữ trong tier_b, KHÔNG chuyển sang tier_frozen:
+      dof.py tính N từ số khoá thật trong tier_b, nên chuyển ra sẽ hạ
+      |tier_b| 12→11, N 114→108 và rào DSR 3,0777→3,0601, tức nới chuẩn
+      đánh giá của chính mình. Giữ ở đây nghĩa là vẫn bị tính phí cho một
+      bậc tự do mà ta không dùng — bảo thủ về phía không thể tâng kết quả.
+      Thứ tự có chủ đích: ABLATION TRƯỚC, CALIBRATE SAU. Suất 3 trial của
+      v_min trong B1 có thật, nhưng tiêu bây giờ là tune một tham số trước
+      khi biết tính năng của nó có đáng giữ không — mà arm Z0-V1 sinh ra
+      đúng để trả lời câu đó. Ba điều kiện mở lại: DR-D4-03 §5 (là VÀ,
+      không phải HOẶC).
+    note: >-
+      🔴 CHỖ GIỮ CHƯA CALIBRATE. Không dữ liệu nào nói 1.0 đúng hơn 0.9 hay
+      1.2. Phải đọc kèm MỌI kết quả có Z0 tham gia — tức toàn bộ bảng
+      ablation, vì Z0 là baseline.
