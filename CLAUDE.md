@@ -248,6 +248,39 @@ với dòng phiên kia đang gõ dở cùng lúc — đã gây ít nhất 3 lầ
 > Mục này có thể lệch nhịp vài phút so với phiên kia — luôn `git log --oneline` +
 > đọc lại `TASKS.md` (cột 🔓/🔒/✅) trước khi chọn việc tiếp theo, đừng chỉ tin mục này.
 
+**Đang ở (cập nhật 08/09/2026, phiên D3.5):** 🚪 **D3.5 ĐÓNG — tag `d3-5-complete`.** Khối 15
+xong sạch: **TD-0160…TD-0167 đều ✅**. Chạy thật qua service **`freqtrade`** (`E6 --close-d3-5-gate`,
+exit 0): `full_suite` **1102 passed** · năm file test cốt lõi mỗi file chạy RIÊNG (Bước 1 **23** ·
+Bước 2 **33** · Bước 3 **14** · L-Z58 **28** · L-Z56 **14**) · audit **5/14 đạt, 0 chưa đạt**.
+`d3_5_git_sha` khớp đúng HEAD; chạy lại → exit **94**. **Năm cổng đã đóng:** `d0-pre` → `d1` →
+`d2` → `d3` → `d3-5`.
+
+🔑 **Thiết kế đáng giữ:** cổng D3.5 gọi thẳng `kiem_cong_d35()` — **chính hàm E3 dùng để TỪ CHỐI
+chạy ablation** — nên "điều kiện đóng cổng" và "điều kiện được chạy ablation" là **MỘT**, không
+phải hai danh sách song song sẽ trôi lệch. Xác nhận sau khi đóng: E3 đi qua `L-Z56` và dừng ở
+`NotImplementedError` của logic ablation (việc của D4).
+
+🔴 **BA PHÁT HIỆN LẬT NGƯỢC GIẢ ĐỊNH — đọc trước khi động vào D4:**
+1. **Δ_R KHÔNG đặc thù DCA.** Bước 3: Δ_R(Z0) = 0,1552 vs Δ_R(DCA) = 0,1612 → tỉ lệ **1,04**,
+   TƯƠNG ĐƯƠNG. DR-015 giả định sai số cộng dồn theo tranche nên DCA chịu nhiều hơn; dữ liệu nói
+   tranche 1 (thứ Z0 cũng có) lệch gần bằng hệt. Hệ quả: hiệu chỉnh bất đối xứng của §4 **rộng
+   hơn bất lợi thực của riêng DCA**. Vì thế `ket_luan_buoc3` là **tham số BẮT BUỘC** của §4.
+2. **Con số Bước 2 từng SAI 16,5%** vì neo cửa sổ một phía vào `order_filled_timestamp` — mốc đó
+   KHÔNG phải lần giá chạm thật và lệch **cả hai chiều**. Độ nhạy: 16,5% ở cửa sổ 0 → **0% ở cửa
+   sổ ≥ 15 phút**, phẳng tới 3h; trễ tối đa **+4,4 phút** (dưới một nến 5m).
+3. **`L-Z56` lộ ra TD-0161 không lưu Δ_R ra file** — không có gì để "đã commit", tức Δ_R có thể
+   đổi lặng lẽ sau khi thấy kết quả ablation. Đã sinh artifact niêm phong + chốt **tính lại và
+   đối chiếu** để artifact không trôi khỏi code.
+
+⚠️ **`d3_5_han_che` ghi BỐN điều** vì cổng này dễ bị đọc quá tay nhất (có `p_nf = 0` trông rất
+sạch): Bước 2 đo **gián tiếp** (không đặt lệnh thật; post-only bị từ chối / khớp một phần / vị trí
+hàng đợi đều KHÔNG quan sát được, đều tính về phía bất lợi); chỉ **LONG** (bật Short thì L-Z56
+CHẶN ablation); Bước 3 **tương đương**; `p_nf = 0` đo trên tập **ĐÃ CẤP** khớp.
+
+**Bước tiếp theo:** **D4** — 🔴 Ablation D0.9, 9 cấu hình × 2 hướng, **blocker B4**. Chặn thêm bởi
+**TD-0041 (ngưỡng DSR, blocker B6)** — con số đó vẫn cần chủ dự án quyết.
+*(Đoạn "Đang ở" cũ bên dưới giữ nguyên làm lịch sử.)*
+
 **Đang ở (cập nhật 08/09/2026, phiên cổng D3):** 🚪 **D3 ĐÓNG — tag `d3-complete`.**
 Khối 14 xong sạch: **TD-0140…TD-0148 đều ✅**. Chạy thật trong Docker qua service **`freqtrade`**
 (`E6 --close-d3-gate`, exit 0): `full_suite` **973 passed** · `test_khoa_d3` (L-Z47 22 · L-Z45 23
