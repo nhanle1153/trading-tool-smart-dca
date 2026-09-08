@@ -91,6 +91,28 @@ def build_parser() -> argparse.ArgumentParser:
 # TD-0082 — ba độ rộng zone spec dùng minh hoạ ở §6.8f (rộng / trung bình / hẹp).
 R_EFF_GRID = (0.03, 0.015, 0.009)
 
+# TD-0171 — dải `Π mult_*` (§6.2). Bảng cũ chỉ đo ĐÚNG MỘT điểm (1,0) mà
+# không nói ra là mình đang đo điểm nào, nên đọc thành "mọi trường hợp".
+# `mult_edge = 1.0` ở mọi điểm: backtest chưa đủ 50 lệnh live (spec dòng 1774).
+MULT_GRID: tuple[tuple[str, float], ...] = (
+    ("1,000 — mọi hệ số tối đa (ca TỐT NHẤT, tương đương bảng cũ)", 1.0),
+    ("0,700 — regime weak (ADX 20–25)", 0.7),
+    ("0,434 — weak × ZSS 0,62 (ZSS đo thật ở MT-16)", 0.7 * 0.62),
+    ("0,326 — thêm corr 0,75", 0.7 * 0.62 * 0.75),
+    ("0,175 — weak × ZSS sàn 0,5 × corr 0,5", 0.7 * 0.5 * 0.5),
+    ("0,044 — ca XẤU NHẤT khả dĩ (thêm dd soft 0,5 × deploy 0,5)", 0.7 * 0.5 * 0.5 * 0.5 * 1.0 * 0.5),
+)
+
+#: `stoploss` của Freqtrade vào sàn qua `stoploss_reserve`. Đọc từ config
+#: THẬT, không chép hằng số — chép là tạo nguồn sự thật thứ hai (MT-03).
+FREQTRADE_CONFIG_PATH = Path(__file__).resolve().parents[1] / "config" / "freqtrade" / "config.json"
+
+
+def _doc_stoploss() -> float:
+    import json
+
+    return float(json.loads(FREQTRADE_CONFIG_PATH.read_text(encoding="utf-8"))["stoploss"])
+
 
 def check_min_notional() -> int:
     """In bảng đối chiếu (markdown) cho pool đã chốt. Chỉ đọc metadata sàn —
@@ -111,20 +133,60 @@ def check_min_notional() -> int:
         print(f"🛑 Tải/ghép dữ liệu thất bại: {exc}")
         return EXIT_FETCH_FAILED
 
-    print(f"Pool: {len(filters)} mã | E_D={e_d} | rho={rho}% | n_tranches={n_tr}")
-    print("\n| R_eff | Tranche 1 (USDT) | Qua min notional | Qua L-Z20 (làm tròn lot ≤ 1%) |")
-    print("|---|---|---|---|")
-    failing_lz20: dict[str, list[str]] = {}
+    stoploss = _doc_stoploss()
+    print(f"Pool: {len(filters)} mã | E_D={e_d} | rho={rho}% | n_tranches={n_tr} | stoploss={stoploss}")
+
+    ve = {"cost": 0, "amount": 0}
+    for f in filters:
+        c0 = check_symbol(
+            f, e_d=e_d, rho_pct=rho, mult_product=1.0, r_eff=R_EFF_GRID[0],
+            n_tranches=n_tr, stoploss=stoploss,
+        )
+        ve[c0.san_ve_thang] += 1
+    print(f"Vế quyết định sàn: cost {ve['cost']} mã | amount (minQty×giá) {ve['amount']} mã")
+
+    print("\n### Qua sàn min-notional THẬT — số mã / tổng\n")
+    print("| Π mult_* | " + " | ".join(f"R_eff {r:.1%}" for r in R_EFF_GRID) + " |")
+    print("|---|" + "---|" * len(R_EFF_GRID))
+    for ten, m in MULT_GRID:
+        o = []
+        for r in R_EFF_GRID:
+            checks = [
+                check_symbol(
+                    f, e_d=e_d, rho_pct=rho, mult_product=m, r_eff=r,
+                    n_tranches=n_tr, stoploss=stoploss,
+                )
+                for f in filters
+            ]
+            ok = sum(c.passes_min_notional for c in checks)
+            o.append(f"{ok}/{len(checks)} (tr.1 = {checks[0].tranche1_notional_usdt:.2f})")
+        print(f"| {ten} | " + " | ".join(o) + " |")
+
+    print("\n### L-Z20 (làm tròn lot) — KHÔNG phụ thuộc mult_* (dung sai neo vào rho thô)\n")
+    print("| R_eff | Qua L-Z20 |")
+    print("|---|---|")
     for r in R_EFF_GRID:
-        checks = [check_symbol(f, e_d=e_d, rho_pct=rho, r_eff=r, n_tranches=n_tr) for f in filters]
-        ok_mn = sum(c.passes_min_notional for c in checks)
-        ok_lz = sum(c.passes_lz20 for c in checks)
-        failing_lz20[f"{r:.1%}"] = [c.symbol for c in checks if not c.passes_lz20]
-        bad_mn = [c.symbol for c in checks if not c.passes_min_notional]
-        print(f"| {r:.1%} | {checks[0].tranche1_notional_usdt:.1f} | {ok_mn}/{len(checks)}"
-              f"{' — RỚT: ' + ', '.join(bad_mn) if bad_mn else ''} | {ok_lz}/{len(checks)} |")
-    for r, syms in failing_lz20.items():
-        print(f"\nRớt L-Z20 ở R_eff {r} ({len(syms)}): {', '.join(syms) if syms else '—'}")
+        checks = [
+            check_symbol(
+                f, e_d=e_d, rho_pct=rho, mult_product=1.0, r_eff=r,
+                n_tranches=n_tr, stoploss=stoploss,
+            )
+            for f in filters
+        ]
+        print(f"| {r:.1%} | {sum(c.passes_lz20 for c in checks)}/{len(checks)} |")
+
+    print("\n### Mã rớt sàn min-notional ở ca TỐT NHẤT (Π mult_* = 1, zone rộng 3%)\n")
+    checks = [
+        check_symbol(
+            f, e_d=e_d, rho_pct=rho, mult_product=1.0, r_eff=R_EFF_GRID[0],
+            n_tranches=n_tr, stoploss=stoploss,
+        )
+        for f in filters
+    ]
+    bad = [c for c in checks if not c.passes_min_notional]
+    for c in sorted(bad, key=lambda c: -c.san_usdt):
+        print(f"- {c.symbol}: sàn {c.san_usdt:.2f} ({c.san_ve_thang}) > tranche 1 {c.tranche1_notional_usdt:.2f}")
+    print(f"\nTổng rớt ở ca tốt nhất: {len(bad)}/{len(checks)}")
     return 0
 
 
