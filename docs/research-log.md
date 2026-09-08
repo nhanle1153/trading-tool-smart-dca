@@ -1402,3 +1402,78 @@ tin lời khai của bộ chạy** — bộ chạy trả ngày *dự kiến* tha
 vô hiệu hoá nó hoàn toàn. Khi D3.5 viết bộ chạy thật: **bắt buộc đọc ngày từ dataframe, và phải
 có test khoá riêng cho đúng điều đó.**
 
+---
+
+## 08/09/2026 — 🚪 GATE D3.5 ĐÓNG (TD-0166), tag `d3-5-complete` — Khối 15 khép lại
+
+`runtime_state.json.d3_5_complete = true`, sinh từ một lần chạy THẬT trong Docker qua service
+**`freqtrade`** (`E6 --close-d3-5-gate`, exit 0). Bốn mục evidence đều `do-duoc`: `full_suite`
+**1102 passed** · `test_khoa_d3_5` (Bước 1 **23** · Bước 2 **33** · Bước 3 **14** · L-Z58 **28** ·
+L-Z56 **14**, mỗi file chạy RIÊNG) · `cong_d35_kiem_cong` · audit sổ trial **5/14 đạt, 0 chưa đạt**.
+`d3_5_git_sha = 9596beb` khớp đúng HEAD; chạy lại → exit **94**.
+
+**Xác nhận cổng và E3 nhất quán:** sau khi đóng, chạy `E3 run_ablation.py` đi qua được `L-Z56` và
+dừng ở `NotImplementedError` của logic ablation (việc của D4) — đúng như thiết kế.
+
+### Thiết kế đáng giữ lại: cổng dùng CHUNG máy với E3
+
+Ba cổng trước chỉ chạy test rồi ghi file. Cổng D3.5 gọi thẳng **`kiem_cong_d35()`** — chính hàm
+mà E3 dùng để TỪ CHỐI chạy ablation. Nhờ vậy *"điều kiện đóng cổng D3.5"* và *"điều kiện được
+chạy ablation"* là **MỘT**. Nếu tách đôi thành hai danh sách song song, sớm muộn sẽ có lúc "cổng
+đã đóng" mà E3 vẫn từ chối chạy, và **không ai biết bên nào đúng**.
+
+### Lỗ hổng tìm được khi làm TD-0165, đáng nhớ hơn cả bản vá
+
+`L-Z56` đòi *"kết quả Δ_R … **đã commit**"*. Nhưng TD-0161 **tính Δ_R trong bộ nhớ** rồi ghi dòng
+CTRL vào sổ trial — **không lưu con số ra file nào**. Tức **không có gì để "đã commit"**, và Δ_R
+có thể đổi lặng lẽ SAU khi thấy kết quả ablation: đúng thứ DR-015 §1 gọi là *"trạng thái tệ nhất
+có thể"*. Sinh `docs/du-lieu-do/dr015-buoc1-delta-r.json` bằng cách **gọi `tinh_buoc1()`** của
+TD-0161, không tính lại bằng công thức riêng.
+
+Và thêm một chốt spec không đòi: **tính lại Δ_R từ dữ liệu thô đã commit rồi đối chiếu artifact**.
+Một file commit từ tháng trước vẫn "đã commit" hoàn hảo trong khi công thức đã đổi — lúc đó
+ablation chạy với con số không còn là thứ code hiện tại sinh ra.
+
+### 🔴 Con số của Bước 2 từng SAI, và cách nó bị bắt
+
+Vòng đo đầu của TD-0162 cho **15/91 "không khớp" (16,5%)** — đủ lớn để đảo kết luận Z0-vs-DCA.
+Kiểm lại: **15/15 ca đó chạm được `p` SAU mốc backtest**. Nguyên nhân: `order_filled_timestamp`
+KHÔNG phải mốc giá thật chạm mức, và nó lệch **cả hai chiều** (TD-0115 đã ghi chiều ngược lại).
+Neo cửa sổ một phía vào một mốc lệch hai chiều là **tự tạo ra kết quả**.
+
+Đo độ nhạy đầy đủ thay vì chọn một cửa sổ: p_nf = 16,5% ở cửa sổ 0 → **0% ở cửa sổ ≥ 15 PHÚT**,
+phẳng tới 3h. Đường cong **dựng đứng** nên kết luận không dựa vào giả định rộng tay — trễ tối đa
+**+4,4 phút**, dưới một nến 5m, và 76/91 ca xuyên TRƯỚC mốc.
+
+### Phát hiện lật ngược giả thuyết nền của DR-015 (Bước 3)
+
+Δ_R(Z0) = **0,1552** vs Δ_R(DCA) = **0,1612** → tỉ lệ **1,04**, tức **TƯƠNG ĐƯƠNG**. DR-015 giả
+định sai số cộng dồn theo số tranche nên DCA chịu nhiều hơn; dữ liệu nói tranche 1 — thứ Z0 cũng
+có — lệch gần bằng hệt. **Hệ quả cho §4:** phép hiệu chỉnh bất đối xứng (chỉ trừ Δ_R khỏi DCA)
+**rộng hơn bất lợi thực của riêng DCA**. Vì thế `ket_luan_buoc3` được làm thành **tham số BẮT
+BUỘC** của §4 — cách duy nhất khiến không ai đọc kết quả mà thiếu câu đó.
+
+Cũng ghi: hai nhánh bằng nhau ở P90 nhưng **hình dạng phân phối khác hẳn** (Z0 trung vị ~0 + vài
+ca lệch lớn; DCA lệch nhỏ nhưng đều). Bằng nhau ở một phân vị không có nghĩa chịu sai số y hệt.
+
+### Bốn hạn chế đã ghi vào `d3_5_han_che` — cổng này dễ bị đọc quá tay nhất
+
+Nó có `p_nf = 0` trông rất sạch. (1) Bước 2 đo **gián tiếp**, không đặt lệnh thật; ba thứ không
+quan sát được (post-only bị từ chối, khớp một phần, vị trí hàng đợi) đều tính về phía bất lợi.
+(2) Chỉ **LONG**; `Δ_R(SHORT)` là `unreadable` — bật Short thì `L-Z56` sẽ **chặn** ablation.
+(3) Bước 3 kết luận **tương đương**. (4) `p_nf = 0` đo trên tập backtest **ĐÃ CẤP** khớp — đúng
+tập §3 cần, **không** trả lời câu rộng hơn.
+
+### Bài học quy trình
+
+- **Một phép kiểm "đã có" vẫn có thể bỏ sót đúng nhánh cần canh.** Rà soát độc lập bắt được lỗi
+  trong `phan_xu()` (TD-0167): nhánh `z0 == 0` khẳng định *"Z0 không lệch còn DCA có lệch"* mà
+  không kiểm `dca`. Test `test_z0_bang_0_khong_chia_cho_0` **đã tồn tại** nhưng chỉ thử một tổ
+  hợp. Nguyên tắc rút ra: **viết ca biên thì liệt kê CÁC TỔ HỢP của biên, không chỉ một đại diện.**
+- **Tai nạn N12 lặp lại:** commit `TASKS.md` của phiên này nuốt một dòng của phiên khác. Pathspec
+  KHÔNG cứu được khi cả hai cùng sửa MỘT file — đúng giới hạn N12 mục 5 đã ghi sẵn. Điều rút ra:
+  với `TASKS.md` phải đọc `git diff` **ngay trước lúc commit**, không phải lúc bắt đầu sửa.
+- **Trùng lặp còn lại, ghi nhận chứ không sửa:** vòng lặp chạy-riêng-từng-file của
+  `close_d3_gate()` nay trùng với helper `_chay_rieng_tung_file()`. KHÔNG refactor code của một
+  cổng ĐÃ ĐÓNG. Đây là trùng lặp của một **cơ chế an toàn** — đáng gộp khi có dịp an toàn.
+
