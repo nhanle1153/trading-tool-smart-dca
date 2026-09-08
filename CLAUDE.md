@@ -313,6 +313,29 @@ thật hơn là một cái ✅.** Đã gắn đính chính tại chỗ thay vì 
    đúng là định nghĩa `Z0-V1`. Thứ trông như phá một test khoá hoá ra là **đổi nhãn nó về đúng
    arm mà nó vẫn luôn mô tả**.
 
+✅ **TD-0181 · TD-0169 · TD-0183 đóng (phiên `-f6`).** **TD-0181** — DG1–DG5 (§4) nay có
+máy: năm hàm THUẦN + 45 test; DG4 đọc `dg4_bars_1h` từ cấu hình (N4) và **KHÔNG dùng chung hằng
+số với DG6** (`dg6b_bars_1h` là 🔒 `dof: -1`, gộp lại là biến tham số đóng băng thành tune được).
+**TD-0169 / DR-D4-02** — ngưỡng 30% của DG5 là **bậc tự do không ai đếm** (không có trong config,
+không có dòng nào trong kiểm kê DOF); chủ dự án chốt **đóng băng**, `dof: 0`, **N giữ 114**, rào
+DSR **3,0777**, **0 trial**. 🔑 **Phân biệt phải nhớ, hai phiên cùng rút ra:** đóng băng một thứ
+**chưa từng được đếm** thì không trừ gì (DG5); đóng băng một thứ **đã nằm trong 12** thì thật sự
+rút một bậc khỏi mẫu số và **NỚI** rào DSR (`v_min`, DR-D4-03). Cùng động tác, hậu quả trái ngược
+— câu phân biệt là *"thứ này đã nằm trong 12 chưa?"*. **TD-0183** — công tắc arm **rút gọn 2,5/4**
+(`arm_switches.py` + 27 test): Z1 (SL `p1 − 2,2×ATR`, `r_eff_plan` **tính lại**) · Z0-S1 (không
+chia `R_eff`) · nửa Z2 (bỏ đúng DG5). **KHÔNG** làm Z0-V1 (MT-15) và vế *không `mult_zss`* — tắt
+thứ chưa bật là **cờ chết**, có test ghim để chúng không lặng lẽ quay lại. Full suite **1244
+passed, 0 failed**.
+
+🔑 **Bài học đo lường của phiên, đắt và đáng giữ:** một lượt suite ra **16 ca đỏ** hoá ra là
+**nhiễu chéo** — hai container pytest chồng nhau kéo 7:47 → **21 phút**; chạy riêng thì xanh hết.
+🔴 Chẩn đoán đầu của tôi (*"phiên kia sửa file"*) **SAI VỀ CƠ CHẾ**: hai commit trong cửa sổ đó là
+`.md`, mà **pytest không thu `.md`** — đúng lại bài học kép của `4ec0fd3` (chẩn đoán theo *hình
+dạng hậu quả* thay vì kiểm *cơ chế*). Hai quy ước sinh ra từ đây, cả hai phiên đang giữ:
+**(1)** ai sắp chạy full suite thì **nhắn trước**, người kia xác nhận rồi mới chạy; **(2)** ⚠️
+**giữ TRỌN output rồi mới lọc** — cả hai phiên đều dính bẫy `docker compose … | tail -N`, lượt nào
+đỏ là **mất sạch chi tiết lỗi**, không truy được ca nào.
+
 🔴 **MT-16 — CHẶN CỔNG D4, chưa giải, chờ chủ dự án: KHÔNG CÓ TẦNG ĐỊNH CỠ LỆNH.**
 `custom_stake_amount` (§6.8e) **0 dòng code** toàn repo; 5/6 hệ số §6.2 **0 dòng**. Đo trên
 artifact D3.5 **đã niêm phong**: cỡ lệnh **39,98 USDT hằng số** (thiết kế: 62–208, biến theo
