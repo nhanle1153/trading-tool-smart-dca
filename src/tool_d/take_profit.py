@@ -18,19 +18,40 @@ Nhưng `KeHoachTranche.r_eff_plan` trong `trade_plan.py` là một **TỈ LỆ**
 nhau — đúng lớp lỗi §5.1 tự cảnh báo và `L-Z48c` sinh ra để chặn. Nên
 mọi phép đổi đi qua `khoang_r_eff()`, không nhân trực tiếp ở đâu khác.
 
-🔴 RÀNG BUỘC CHO CHẶNG 2, phát hiện của phiên `-94` khi làm TD-0171 —
+🔴 RÀNG BUỘC CHO CHẶNG 2, đo bởi phiên `-94` ở TD-0171 (`7ee9006`) —
 ghi ở đây vì nó vô hình với mọi hàm trong file này. TP1 chốt **50% vị
 thế**, nên một lệnh sinh ra HAI đại lượng phải qua sàn min-notional,
-không phải một: lệnh thoát một phần, và phần vị thế CÒN LẠI. Lệnh chỉ
-khớp tranche 1 rồi chạm TP1 để lại ~⅙ notional đầy đủ (nửa của ⅓), mà
-sàn thấp nhất mọi mã đều có là 7,5 USDT — không phải ca hiếm. Và
-`backtesting.py:1173` là một `if` KHÔNG có `else`: dưới sàn thì rơi
-thẳng qua, không log, không ngoại lệ. Hệ quả nặng hơn ca vào lệnh —
-lệnh vào biến mất thì bảng kết quả thiếu một dòng, còn **chốt lời biến
-mất thì lệnh vẫn nằm đó chạy tiếp tới SL hoặc DG8**, tức tầng TP im
-lặng không tồn tại trong khi mọi chỉ số vẫn có số để in. Chặng 2 phải
-GỌI hàm kiểm sàn của `notional.py` (TD-0171), KHÔNG viết bản thứ hai —
-hai bản sao của cùng một luật sàn là cơ chế đã gây lệch số của v5.
+không phải một: lệnh thoát một phần, và phần vị thế CÒN LẠI.
+
+Và **không có "một cái sàn"** — Freqtrade truyền một hằng `stoploss`
+khác nhau ở mỗi đường chạy, nên phần dư có sàn RIÊNG, lại khác giữa
+backtest và live:
+
+    backtesting.py:723   phần dư backtest   stoploss −0,1   sàn 5,83
+    freqtradebot.py:846  phần dư live       stoploss −0,99  sàn 2,50
+
+tức **backtest chặt hơn live 2,3 lần ở đúng nhánh này**, ngược chiều
+với đường vào lệnh (ở đó live mới là bên chặt hơn, sàn 7,50). Chặng 2
+chứng minh trên fill backtest thật thì đi qua **5,83**, KHÔNG phải 7,50.
+
+⚠️ Đòn bẩy **triệt tiêu ở đường vào lệnh nhưng KHÔNG triệt tiêu ở đường
+phần dư**: `remaining = (trade.amount − amount) × rate` là NOTIONAL ở
+cả hai, nhưng sàn live bị chia `trade.leverage` còn sàn backtest thì
+không. Câu chặn *"đại lượng này có NHÌN THẤY thứ tôi sắp đổi không?"*
+ở đây trả lời CÓ.
+
+Ca cắn KHÔNG phải ca biên mà là cấu hình trung tâm: `E_D = 500`,
+Π `mult_*` = 0,434 (ZSS 0,62 đo thật), zone 3% ⇒ tranche 1 = 9,04 ⇒
+nửa còn lại **4,52 < 5,83** ⇒ phần dư rớt sàn. Và `backtesting.py:1173`
+là một `if` KHÔNG có `else`: dưới sàn thì rơi thẳng qua, không log,
+không ngoại lệ. Hệ quả nặng hơn ca vào lệnh — lệnh vào biến mất thì
+bảng kết quả thiếu một dòng, còn **chốt lời biến mất thì lệnh vẫn nằm
+đó chạy tiếp tới SL hoặc DG8**, tức tầng TP im lặng không tồn tại
+trong khi mọi chỉ số vẫn có số để in.
+
+Chặng 2 GỌI `notional.san_min_notional_freqtrade()` cùng
+`notional.sl_hieu_dung("backtest_phan_du", ...)`, KHÔNG viết bản thứ
+hai — hai bản sao của cùng một luật sàn là cơ chế đã gây lệch số của v5.
 
 🔒 `tp_fallback_dist_r` và `tp_fallback_target_r` ĐÓNG BĂNG, 0 trial
 (spec dòng 1674-1682). `frozen_rationale` của chính spec: nạng dự phòng
