@@ -154,10 +154,20 @@ class TestNguonSuThatCuaHangSo085:
         )
 
     def test_cau_hinh_THAT_cua_project_chay_duoc(self) -> None:
+        # 🔴 Ghim QUAN HỆ, không ghim con số (TD-0171): bản cũ khẳng định
+        # `425.0  # 0,85 × 500` và `40.0  # 8% × 500`. Đúng lúc viết, và im
+        # lặng hết đúng khi DR-D4-05 nâng `E_D` 500 → 750 — Tầng A là tầng
+        # "chỉnh tự do", tức nó SẼ đổi. Con số bị ghim đúng MỘT chỗ, ở
+        # `test_sizing.py::test_E_D_dang_la_con_so_DR_D4_05_da_chot`, nơi
+        # dòng assert có nêu đích danh DR.
+        from tool_d.config.loader import resolve
+
+        e_d = float(resolve(CFG_THAT, "tier_a.E_D"))
+        daily_loss = float(resolve(CFG_THAT, "tier_a.daily_loss_budget_pct"))
         kq = kiem_ket_nap(cfg=CFG_THAT, ung_vien=_ke_hoach(CFG_THAT, 0.02), dang_mo=[])
         assert kq.duoc_mo
-        assert kq.tran_margin == pytest.approx(425.0)   # 0,85 × 500
-        assert kq.tran_rui_ro == pytest.approx(40.0)    # 8% × 500
+        assert kq.tran_margin == pytest.approx(TRAN_MARGIN_TREN_E_D * e_d)
+        assert kq.tran_rui_ro == pytest.approx(daily_loss / 100.0 * e_d)
 
 
 class TestFailClosed:

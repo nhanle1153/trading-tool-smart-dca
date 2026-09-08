@@ -252,7 +252,34 @@ class TestFailClosed:
             lap_ke_hoach_co_lenh(cfg=_cfg(), arm="Z0", r_eff=0.02, mult=MULT_1, notional_co_dinh_usdt=50.0)
 
     def test_doc_cau_hinh_THAT_cua_project_dung_duoc(self) -> None:
-        """Đường sản xuất thật: E_D/rho/L_exchange/w_tranche từ YAML thật."""
+        """Đường sản xuất thật: E_D/rho/L_exchange/w_tranche từ YAML thật.
+
+        🔴 Ghim QUAN HỆ, không ghim con số (TD-0171): bản cũ khẳng định
+        `planned_risk == 1.875`, đúng vì `E_D` khi đó là 500. Một con số
+        tuyệt đối như thế **im lặng hết đúng** khi Tầng A đổi — mà Tầng A
+        là tầng *"chỉnh tự do"*, tức nó SẼ đổi. Ca này nay đòi
+        `planned_risk == rho × E_D` đọc thẳng từ YAML; nó đúng ở mọi `E_D`
+        và vẫn bắt được lỗi thật vì `lap_ke_hoach_co_lenh` đi qua đường
+        khác hẳn (arm_switches → tranche1_notional → ×n → ×r_eff).
+        """
+        from tool_d.config.loader import resolve
+
+        e_d = float(resolve(CFG_THAT, "tier_a.E_D"))
+        rho = float(resolve(CFG_THAT, "tier_a.rho_pct"))
         kh = lap_ke_hoach_co_lenh(cfg=CFG_THAT, arm="Z0", r_eff=0.02, mult=MULT_1)
-        assert kh.l_exchange == 3.0 and kh.rho_pct == 0.375
-        assert kh.planned_risk_usdt == pytest.approx(1.875, abs=1e-9)
+        assert kh.l_exchange == 3.0 and kh.rho_pct == rho
+        assert kh.planned_risk_usdt == pytest.approx(rho / 100.0 * e_d, abs=1e-9)
+
+    def test_E_D_dang_la_con_so_DR_D4_05_da_chot(self) -> None:
+        """Ghim QUYẾT ĐỊNH, tách khỏi ca ghim quan hệ ở trên.
+
+        Ca trên cố ý đúng ở mọi `E_D`, nên một mình nó thì `E_D` đổi lặng
+        lẽ cũng không ai biết. Ca này là chỗ con số bị ghim — và nó nêu
+        đích danh DR, nên đổi `E_D` buộc phải sửa một dòng có nhắc tới
+        quyết định, thay vì sửa một hằng số vô danh."""
+        from tool_d.config.loader import resolve
+
+        assert float(resolve(CFG_THAT, "tier_a.E_D")) == 750.0, (
+            "E_D khác 750 — DR-D4-05 §2.2 chốt 750 (nâng từ 500). Đổi số này "
+            "cần một DR mới, không phải sửa test cho khớp."
+        )

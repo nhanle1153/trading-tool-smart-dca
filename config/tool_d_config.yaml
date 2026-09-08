@@ -16,7 +16,12 @@
 # ✅ Tầng C dd_ladder_pct (5/8/20%) ĐÃ CHỐT bằng DR-D0PRE-04 (TD-0042) — Hạng 0.
 
 tier_a: # chỉnh tự do, 0 trial
-  E_D: 500 # USDT — KHÔNG phải số dư ví. ✅ DR-D0PRE-06 (TD-0043)
+  # ✅ DR-D4-05 (TD-0171, 09/09/2026): 500 → 750. Quyết định 500 của DR-D0PRE-06
+  # dựa trên câu "E_D = 500 → 102/102 mã qua" — nay biết là SAI (98/102, và 4 mã
+  # đã VƯỢT sàn chứ không phải "sát sàn"). 750 chứ không phải 720 vì ở 720 thì
+  # tranche 1 zone 3% ra ĐÚNG 30,00 trong khi sàn của 4 mã đó cũng ĐÚNG 30,00 —
+  # chốt thoả bằng đẳng thức chính xác là chốt không có lề, và nó lật im lặng.
+  E_D: 750 # USDT — KHÔNG phải số dư ví. ✅ DR-D4-05 (thay DR-D0PRE-06)
   L_exchange: 3 # 2-5, xem §6.9.2 cảnh báo. ✅ DR-D0PRE-06
   rho_pct: 0.375 # chỉ đổi khi danh mục RỖNG. ✅ DR-D0PRE-06
   daily_loss_budget_pct: 8.0 # ✅ DR-D0PRE-06 — đi cặp với dd_ladder.halt (§12c.5)
