@@ -35,7 +35,8 @@ import pandas as pd
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-CAP = "LTC_USDT_USDT"  # trong POOL (BTC/ETH la EXPLORE, DR-D0PRE-05); san notional 5 USDT, buoc khoi luong nho
+CAP = "LTC_USDT_USDT"   # trong POOL (BTC/ETH là EXPLORE — DR-D0PRE-05); cost.min = 20 USDT
+CAP2 = "XRP_USDT_USDT"  # mã THỨ HAI cho phép đo danh mục (TD-0188): cost.min = 5, bước khối lượng 0,1
 SAN_XUAT, TOI_THIEU = "ZoneAbsorption", "ZoneAbsorptionMinimal"
 TIMERANGE = "20250315-20250402"
 
@@ -88,27 +89,31 @@ def _sinh_du_lieu(datadir: Path) -> None:
     df5.insert(0, "date", pd.date_range("2025-01-01", periods=len(rows5), freq="5min", tz="UTC"))
 
     d = datadir / "futures"
-    _ghi_feather(df1, d / f"{CAP}-1h-futures.feather")
-    _ghi_feather(df1, d / f"{CAP}-1h-mark.feather")
-    _ghi_feather(df5, d / f"{CAP}-5m-futures.feather")
-    _ghi_feather(df5, d / f"{CAP}-5m-mark.feather")
-    _ghi_feather(df4, d / f"{CAP}-4h-futures.feather")
-    _ghi_feather(df1d, d / f"{CAP}-1d-futures.feather")
     fund = pd.DataFrame({"date": idx1, "open": 0.0, "high": 0.0, "low": 0.0, "close": 0.0, "volume": 0.0})
-    _ghi_feather(fund, d / f"{CAP}-1h-funding_rate.feather")
+    # CÙNG chuỗi giá cho cả hai mã: hai lệnh mở đồng thời ⇒ lệnh thứ hai
+    # nhìn thấy danh mục KHÔNG rỗng. Đó là điều kiện để đo được §6.8f B2.
+    for cap in (CAP, CAP2):
+        _ghi_feather(df1, d / f"{cap}-1h-futures.feather")
+        _ghi_feather(df1, d / f"{cap}-1h-mark.feather")
+        _ghi_feather(df5, d / f"{cap}-5m-futures.feather")
+        _ghi_feather(df5, d / f"{cap}-5m-mark.feather")
+        _ghi_feather(df4, d / f"{cap}-4h-futures.feather")
+        _ghi_feather(df1d, d / f"{cap}-1d-futures.feather")
+        _ghi_feather(fund, d / f"{cap}-1h-funding_rate.feather")
 
 
-def _chay(tmp: Path, chien_luoc: str) -> dict:
-    datadir, userdir = tmp / "data", tmp / f"userdir_{chien_luoc}"
+def _chay(tmp: Path, chien_luoc: str, *, hai_ma: bool = False) -> dict:
+    nhan = f"{chien_luoc}{'_2ma' if hai_ma else ''}"
+    datadir, userdir = tmp / "data", tmp / f"userdir_{nhan}"
     if not (datadir / "futures").exists():
         _sinh_du_lieu(datadir)
     (userdir / "strategies").mkdir(parents=True, exist_ok=True)
     cfg = json.loads((REPO_ROOT / "config" / "freqtrade" / "config.json").read_text(encoding="utf-8"))
-    cfg["exchange"]["pair_whitelist"] = ["LTC/USDT:USDT"]
-    cfg["max_open_trades"] = 1
+    cfg["exchange"]["pair_whitelist"] = ["LTC/USDT:USDT", "XRP/USDT:USDT"] if hai_ma else ["LTC/USDT:USDT"]
+    cfg["max_open_trades"] = 2 if hai_ma else 1
     cfg["stake_amount"] = 100  # bị custom_stake_amount ghi đè — nếu KHÔNG, ca cỡ lệnh bên dưới đỏ
     cfg["dry_run"] = True
-    cfg_path = tmp / f"cfg_{chien_luoc}.json"
+    cfg_path = tmp / f"cfg_{nhan}.json"
     cfg_path.write_text(json.dumps(cfg), encoding="utf-8")
     proc = subprocess.run(
         [
@@ -132,7 +137,9 @@ def _chay(tmp: Path, chien_luoc: str) -> dict:
 
     files = sorted((userdir / "backtest_results").glob("backtest-result-*.zip"))
     assert files, "không có file kết quả"
-    return load_backtest_stats(files[-1])["strategy"][chien_luoc]
+    kq = load_backtest_stats(files[-1])["strategy"][chien_luoc]
+    kq["_log"] = log  # TD-0188 grep dấu vết KET_NAP trên đường chạy thật
+    return kq
 
 
 @pytest.fixture(scope="module")
@@ -148,6 +155,18 @@ def kq_san_xuat(tmp_module) -> dict:
 @pytest.fixture(scope="module")
 def kq_toi_thieu(tmp_module) -> dict:
     return _chay(tmp_module, TOI_THIEU)
+
+
+@pytest.fixture(scope="module")
+def kq_hai_ma(tmp_module) -> dict:
+    """Hai mã, `max_open_trades = 2` — lượt DUY NHẤT có danh mục KHÔNG rỗng.
+
+    🔴 Vì sao phải có: với một mã, `dang_mo` luôn rỗng, nên một cài đặt bỏ
+    hẳn việc đọc danh mục (`dang_mo=[]`) vẫn cho MỌI ca xanh. Đã phá thật để
+    xác nhận: `19 passed` sau khi cắt danh mục — tức bộ test cũ chứng minh
+    §6.8f B2 *chạy* nhưng KHÔNG chứng minh nó *đọc đúng thứ cần đọc*.
+    """
+    return _chay(tmp_module, SAN_XUAT, hai_ma=True)
 
 
 def _lenh_du_ba_tranche(kq: dict) -> dict:
@@ -274,3 +293,89 @@ class TestCungZoneVoiMinimal:
         cost = [float(o["cost"]) for o in _lenh_vao(t[0])]
         assert float(t[0]["leverage"]) == pytest.approx(1.0)
         assert cost[2] / cost[0] == pytest.approx(2.0, rel=0.02), f"Minimal phải ra 1:1:2, đo được {[c / cost[0] for c in cost]}"
+
+
+class TestTD0188KetNapChayTrenDuongThat:
+    """🔴 TD-0188 — §6.8f Bước 2 phải ĐƯỢC GỌI, không chỉ tồn tại.
+
+    Bài học TD-0168 ở đúng chiều đã cắn dự án một lần: 33 phép kiểm canh
+    một hàm mà đường sản xuất chưa từng gọi. `tests/unit/test_admission.py`
+    chứng minh phép kiểm ĐÚNG; lớp này chứng minh nó CHẠY — bằng dấu vết
+    `KET_NAP` mà `confirm_trade_entry` ghi ra trong chính lượt backtest.
+
+    🔴 **Freqtrade BỌC log theo bề rộng terminal (~80 cột), nên MỘT bản ghi
+    log KHÔNG phải một dòng vật lý.** Bản đầu của lớp này parse từng dòng và
+    đỏ vì `dien_giai()` bị cắt ngay sau "KẾT NẠP" — chuỗi thật dài 77 ký tự,
+    kiểm bằng cách gọi thẳng hàm trong container. Lỗi của TEST, không phải
+    của máy. Nên mọi phép so ở đây chạy trên log đã **gộp khoảng trắng**.
+    """
+
+    @staticmethod
+    def _log_phang(kq: dict) -> str:
+        """Gộp toàn bộ log thành một chuỗi, chuẩn hoá khoảng trắng — vô hiệu
+        hoá phép bọc dòng của Freqtrade."""
+        return " ".join(kq["_log"].split())
+
+    def test_co_dau_vet_KET_NAP_trong_log_backtest(self, kq_san_xuat) -> None:
+        phang = self._log_phang(kq_san_xuat)
+        assert "KET_NAP" in phang, "confirm_trade_entry không gọi kiem_ket_nap"
+        assert "KẾT NẠP" in phang
+
+    def test_so_lan_KET_NAP_khong_it_hon_so_lenh(self, kq_san_xuat) -> None:
+        """Không lệnh nào lọt qua mà không đi qua cửa kết nạp."""
+        nhan = self._log_phang(kq_san_xuat).count("KẾT NẠP")
+        assert nhan >= len(kq_san_xuat["trades"]), (nhan, len(kq_san_xuat["trades"]))
+
+    def test_tran_ghi_trong_log_dung_CAU_HINH_THAT(self, kq_san_xuat) -> None:
+        """Trần đọc từ `tool_d_config.yaml` THẬT (425 = 0,85 × 500; 40 = 8% ×
+        500), không phải hằng số dựng tay trong test."""
+        import re
+
+        from tool_d.admission import TRAN_MARGIN_TREN_E_D
+        from tool_d.config.loader import load_tool_d_config, resolve
+
+        cfg = load_tool_d_config()
+        e_d = float(resolve(cfg, "tier_a.E_D"))
+        m = re.search(r"rủi ro [\d.]+/([\d.]+) · margin [\d.]+/([\d.]+)", self._log_phang(kq_san_xuat))
+        assert m, "không parse được dấu vết KET_NAP"
+        assert float(m.group(1)) == pytest.approx(float(resolve(cfg, "tier_a.daily_loss_budget_pct")) / 100.0 * e_d)
+        assert float(m.group(2)) == pytest.approx(TRAN_MARGIN_TREN_E_D * e_d)
+
+
+class TestTD0188DocDanhMucTHAT:
+    """🔴 Phép kiểm kết nạp phải đọc DANH MỤC THẬT, không phải danh sách rỗng.
+
+    `TestTD0188KetNapChayTrenDuongThat` chứng minh cửa kết nạp được GỌI; lớp
+    này chứng minh nó được gọi với ĐÚNG đầu vào. Hai câu khác nhau, và phép
+    phá `dang_mo=[]` chỉ bị bắt bởi câu thứ hai.
+    """
+
+    @staticmethod
+    def _phang(kq: dict) -> str:
+        return " ".join(kq["_log"].split())
+
+    def test_co_lenh_tren_CA_HAI_ma(self, kq_hai_ma) -> None:
+        """Guard PASS RỖNG: mọi khẳng định dưới đây vô nghĩa nếu chỉ một mã
+        vào lệnh."""
+        cap = {t["pair"] for t in kq_hai_ma["trades"]}
+        assert cap == {"LTC/USDT:USDT", "XRP/USDT:USDT"}, cap
+
+    def test_co_lan_ket_nap_thay_danh_muc_KHONG_rong(self, kq_hai_ma) -> None:
+        """🔴 Ca bắt được phép phá `dang_mo=[]`. Với danh mục rỗng vĩnh viễn,
+        chuỗi "1 vị thế trước đó" KHÔNG BAO GIỜ xuất hiện."""
+        phang = self._phang(kq_hai_ma)
+        assert "KET_NAP" in phang
+        assert "(1 vị thế trước đó)" in phang, "cửa kết nạp luôn thấy danh mục rỗng"
+
+    def test_tong_margin_cong_don_theo_so_vi_the(self, kq_hai_ma) -> None:
+        """Tổng margin ở lần kết nạp thứ hai phải LỚN HƠN lần đầu — bằng
+        chứng số học rằng vị thế cũ thực sự được cộng vào."""
+        import re
+
+        phang = self._phang(kq_hai_ma)
+        mau = re.compile(r"margin ([\d.]+)/[\d.]+ \((\d+) vị thế trước đó\)")
+        theo_so_vi_the: dict[int, float] = {}
+        for m in mau.finditer(phang):
+            theo_so_vi_the.setdefault(int(m.group(2)), float(m.group(1)))
+        assert 0 in theo_so_vi_the and 1 in theo_so_vi_the, theo_so_vi_the
+        assert theo_so_vi_the[1] > theo_so_vi_the[0], theo_so_vi_the

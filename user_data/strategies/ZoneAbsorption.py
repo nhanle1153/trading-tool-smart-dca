@@ -100,6 +100,7 @@ import talib
 from freqtrade.persistence import Trade
 from freqtrade.strategy import IStrategy, merge_informative_pair, stoploss_from_absolute
 
+from tool_d.admission import AdmissionError, ViTheMo, kiem_ket_nap
 from tool_d.arm_switches import ARM_HOP_LE, cong_ap_dung, duoc_them_tranche
 from tool_d.config.loader import load_tool_d_config, resolve
 from tool_d.dg1_dg5_tranche_gates import danh_gia_tat_ca
@@ -324,9 +325,29 @@ class ZoneAbsorption(IStrategy):
         return stake1
 
     def confirm_trade_entry(self, pair, order_type, amount, rate, time_in_force, current_time, entry_tag, side, **kwargs) -> bool:
+        """§6.8f BƯỚC 2 — kiểm tra kết nạp danh mục (TD-0188).
+
+        Đặt ở đây chứ không ở `custom_stake_amount` vì hai câu khác nhau:
+        chỗ kia trả lời *"to bao nhiêu"*, chỗ này *"có được mở không"*. Trả
+        cỡ 0 để từ chối là cách một lệnh bị chặn trông giống một lệnh nhỏ.
+        """
         if pair in self._halt:
             return False  # HALT §12c.5 — ngừng MỞ lệnh mới
-        return pair in self._cho  # không có kế hoạch cỡ lệnh → không mở (fail-closed)
+        cho = self._cho.get(pair)
+        if cho is None:
+            return False  # không có kế hoạch cỡ lệnh → không mở (fail-closed)
+
+        kq = kiem_ket_nap(
+            cfg=self._cfg,
+            ung_vien=KeHoachCoLenh.from_dict(cho["co_lenh"]),
+            dang_mo=self._vi_the_mo_khac_theo_ke_hoach(pair),
+        )
+        # Dấu vết trên ĐƯỜNG CHẠY THẬT — test khoá grep dòng này để chứng
+        # minh phép kiểm có được gọi, không chỉ tồn tại (bài học TD-0168).
+        logger.info("KET_NAP %s %s", pair, kq.dien_giai())
+        if not kq.duoc_mo:
+            self._cho.pop(pair, None)  # không giữ kế hoạch chết lại cho lệnh sau
+        return kq.duoc_mo
 
     def order_filled(self, pair, trade, order, current_time, **kwargs) -> None:
         if order.ft_order_side != trade.entry_side or trade.nr_of_successful_entries != 1:
@@ -373,6 +394,23 @@ class ZoneAbsorption(IStrategy):
         if current_rate > muc:
             return None
 
+        # 🔴 "KHÔNG ĐO ĐƯỢC" phải TƯỜNG MINH, không đi qua DG5.
+        # `_zss_hien_tai()` trả NaN khi `volume_ratio`/`compression` không tính
+        # được. Đưa NaN vào `dg5_zss_khong_suy_yeu()` là để hành vi phụ thuộc
+        # cách hàm đó xử NaN — mà nó vừa đổi (TD-0170: trước trả `False` im
+        # lặng, nay `raise`). Cả hai đều xấu ở đây: `False` gộp "chưa đo được"
+        # vào "cổng đóng" (N6 cấm), còn `raise` bị `strategy_safe_wrapper`
+        # NUỐT thành im lặng không bơm tranche. Chặn ngay tại chỗ gọi: không
+        # bơm thêm tiền khi không xác minh được zone, và NÓI RA.
+        zss_now = self._zss_hien_tai(trade.pair, tag, current_time)
+        if zss_now != zss_now:  # NaN
+            logger.warning(
+                "DG5_KHONG_DO_DUOC %s trade=%s tranche=%d t=%s — không bơm thêm tranche "
+                "(khác 'cổng đóng': zone không tính lại được ZSS)",
+                trade.pair, trade.id, i, current_time,
+            )
+            return None
+
         cong = danh_gia_tat_ca(
             close_4h_ke_tu_tranche1=self._close_4h_ke_tu(trade, current_time),
             sl=kh.sl,
@@ -384,7 +422,7 @@ class ZoneAbsorption(IStrategy):
             so_nen_1h_da_troi=int((current_time - trade.open_date_utc).total_seconds() // 3600),
             dg4_bars_1h=int(resolve(self._cfg, "tier_b.dg4_bars_1h")),
             zss_tai_tranche1=float(tag["zs"]),
-            zss_hien_tai=self._zss_hien_tai(trade.pair, tag, current_time),
+            zss_hien_tai=zss_now,
             nguong_giam_toi_da=float(resolve(self._cfg, "tier_frozen.dg5_zss_decay_max.value")),
         )
         # Dấu vết GATE_CHECK (§8.3) — DEBUG để không nhiễu log thường; bộ chạy
@@ -487,6 +525,40 @@ class ZoneAbsorption(IStrategy):
 
     def _vi_the_mo_khac(self, pair: str) -> list:
         return [t for t in Trade.get_trades_proxy(is_open=True) if t.pair != pair]
+
+    def _vi_the_mo_khac_theo_ke_hoach(self, pair: str) -> list[ViTheMo]:
+        """Vị thế đang mở ở mức KẾ HOẠCH ĐẦY ĐỦ (§6.8f) — đọc từ
+        `custom_data["co_lenh"]`, KHÔNG từ `trade.stake_amount`.
+
+        `stake_amount` là phần ĐÃ khớp; dùng nó ở đây làm trần margin nới
+        ra gấp ~3 và chỉ vỡ đúng lúc mọi lệnh khớp đủ ba tranche — tức đúng
+        lúc thị trường đi ngược. Vị thế thiếu kế hoạch ở CẢ HAI nguồn thì
+        RAISE, không bỏ qua: bỏ qua một vị thế khi cộng tổng là hạ trần một
+        cách vô hình.
+
+        🔴 **Một `Trade` có thể ĐANG MỞ mà lệnh vào CHƯA KHỚP** — `custom_data`
+        chỉ được ghi ở `order_filled`. Lượt backtest hai mã đầu tiên đã nổ đúng
+        ca này (`AdmissionError` × 2, bị Freqtrade nuốt — chính chốt "cấm nuốt
+        exception" bắt được). Kế hoạch của nó vẫn tồn tại trong `self._cho`, và
+        rủi ro/margin của nó **đã cam kết** ngay khi lệnh được đặt (D0.3/D0.5),
+        nên nó PHẢI được cộng vào. Đọc `custom_data` trước, `self._cho` sau; hết
+        cả hai mới raise.
+        """
+        ra: list[ViTheMo] = []
+        for t in self._vi_the_mo_khac(pair):
+            cl = t.get_custom_data("co_lenh")
+            if cl is None:
+                cho = self._cho.get(t.pair)
+                cl = cho["co_lenh"] if cho else None
+            if cl is None:
+                raise AdmissionError(
+                    f"vị thế đang mở {t.pair} (trade {t.id}) không có `co_lenh` ở "
+                    "custom_data lẫn kế hoạch chờ — không cộng được vào tổng danh "
+                    "mục, và bỏ qua nó là hạ trần §6.8f một cách vô hình"
+                )
+            ra.append(ViTheMo(planned_risk_usdt=float(cl["planned_risk_usdt"]),
+                              planned_margin_usdt=float(cl["planned_margin_usdt"])))
+        return ra
 
     def _corr_pool(self, pair: str) -> float:
         khac = self._vi_the_mo_khac(pair)
