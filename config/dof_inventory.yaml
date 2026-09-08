@@ -158,6 +158,12 @@ khong_dem_vao_dof_goc:
     ly_do: "\"chưa định nghĩa\" trước v6 — định nghĩa MỚI"
   - khoa: "diag_thresholds"
     ly_do: "bổ sung v7/v8 (thang time-stop/TP-fallback), không thuộc bảng DR-010 gốc"
+  - khoa: "dg5_zss_decay_max"
+    ly_do: "DR-D4-02 (TD-0169) — §4 định nghĩa DG5 bằng ngưỡng \"giảm > 30%\"
+      nhưng bảng DR-010 KHÔNG có dòng nào cho DG5 (mục §4 chỉ có DG4). Khác
+      DG7/w_tranche ở \"bo_sot\": hai mục đó được CHÍNH SPEC thừa nhận thiếu và
+      đã cộng vào DOF_gốc=28; DG5 thì spec cũng không đếm, nên xếp vào bo_sot
+      sẽ là tuyên bố con số 28 trích nguyên văn là sai. Đóng băng, giữ N=114."
   - khoa: "k_swing_confirm"
     ly_do: "sống ở tier_c (Cấp C), không phải tier_frozen; \"chưa từng có trong 26\" (spec dòng 3167)"
 

@@ -68,6 +68,13 @@ tier_frozen: # 🔒 MỞ KHOÁ = +6 vào N (§12c.3)
   mult_regime: { value: { strong: 1.0, weak: 0.7, adx_split: 25 }, dof: -1 }
   tp2_trail_atr: { value: 1.5, dof: -1 }
   dg6b_bars_1h: { value: 8, dof: -1 } # = dg4_bars_1h
+  # 🆕 DR-D4-02 (TD-0169): §4 định nghĩa DG5 bằng ngưỡng "giảm > 30%" nhưng
+  # bảng DR-010 KHÔNG có dòng nào cho DG5 — chưa từng được đếm, nên `dof: 0`
+  # (đóng băng thứ chưa ai đếm KHÔNG trừ đi bậc tự do nào). Cùng hạng
+  # `adx_threshold`; xem `khong_dem_vao_dof_goc` trong dof_inventory.yaml.
+  # 🔴 Đây là chỗ giữ CHƯA CALIBRATE — không dữ liệu nào nói 30% đúng hơn
+  # 25% hay 35%. Đọc kèm mọi kết quả có DG5 tham gia (Z3, Z3b).
+  dg5_zss_decay_max: { value: 0.30, dof: 0 } # §4 — tỉ lệ, 0.30 = 30%
   trend_age_days: { value: 5, dof: -1, frozen_until: "Z0-T1_result" }
   mult_edge_thr: { value: 0.5, dof: 0 } # §6.2 hệ số 5 🆕
   mult_deploy_thr: { value: 0.85, dof: 0 } # §6.2 hệ số 6 🆕
