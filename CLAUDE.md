@@ -277,6 +277,24 @@ sạch): Bước 2 đo **gián tiếp** (không đặt lệnh thật; post-only 
 hàng đợi đều KHÔNG quan sát được, đều tính về phía bất lợi); chỉ **LONG** (bật Short thì L-Z56
 CHẶN ablation); Bước 3 **tương đương**; `p_nf = 0` đo trên tập **ĐÃ CẤP** khớp.
 
+🔴 **TD-0168 ✅ (sau khi cổng đã đóng) — phát hiện thứ TƯ, và nó là loại nguy nhất vì suite vẫn
+xanh suốt:** vòng đo chốt của TD-0162 **KHÔNG đi qua `do_ty_le_khong_khop()`**. Nó là kịch bản
+viết thẳng, quét mỗi dump một lượt rồi phân loại tại chỗ (gọi hàm kia ngây thơ sẽ mở lại 45 dump /
+599 MB tới 91 lần). Cùng LUẬT phân loại, **khác ĐƯỜNG CHẠY** ⇒ **33 phép kiểm của TD-0162 canh một
+hàm mà đường sản xuất chưa từng gọi**, và `chi_tiet` (dấu vết 91 ca mà docstring hứa "để truy ngược
+khi số trông lạ") chưa bao giờ được lưu ra đâu. Đây là câu hỏi chẩn đoán của dự án — *"ca sai có đi
+qua đường sản xuất thật không?"* — ở **CHIỀU NGƯỢC LẠI: thứ được canh không nằm trên đường chạy.**
+Nhận diện nó cần đọc kịch bản chạy thật, không phép kiểm nào tự nói ra.
+✅ **Đã vá và kết quả củng cố TD-0162, không lật:** `src/tool_d/dr015/buoc2_chi_tiet.py` gọi THẲNG
+hàm đó, ghi `docs/du-lieu-do/dr015-buoc2-chi-tiet.json` (91 dòng, **FILE RIÊNG** — không chạm ba
+artifact `L-Z56` đã niêm phong, không thêm vào `FILE_KET_QUA_D35`). Nó **TỪ CHỐI GHI** nếu lệch
+artifact, và đường chạy độc lập **tái lập ĐÚNG 8 con số niêm phong** (3 số đếm 91/0/0 · `p_nf` 0/0 ·
+biên −9,2828/−0,1403/−2,1233/0 ca · trễ −179,9989/+4,4055/−4,8849/76 ca) ⇒ **xác nhận độc lập cho
+`p_nf = [0,0]`**. Full suite **1126 passed**; `kiem_cong_d35()` vẫn xanh. 🔑 **Bài học chọn phép so:**
+P10/P25/P75/P90 cố ý đứng NGOÀI phép đối chiếu vì artifact không ghi cách nội suy — và đúng thế
+thật, `tre.P25`/`tre.P75` **lệch**, `bien.P10/P90` thì khớp. Một phép kiểm báo đỏ vì **chênh quy
+ước** sớm muộn bị gỡ, gỡ rồi mất luôn phần đúng của nó.
+
 **Bước tiếp theo:** **D4** — 🔴 Ablation D0.9, 9 cấu hình × 2 hướng, **blocker B4**. Chặn thêm bởi
 **TD-0041 (ngưỡng DSR, blocker B6)** — con số đó vẫn cần chủ dự án quyết.
 *(Đoạn "Đang ở" cũ bên dưới giữ nguyên làm lịch sử.)*
