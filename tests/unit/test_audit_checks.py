@@ -123,11 +123,36 @@ class TestLZ12NoDuplicateConfigHash:
 
 
 class TestLZ15CalibrateParamsHaveStatus:
-    def test_v_min_duoc_khai_trong_param_status_thi_dat(self) -> None:
-        # Dùng file thật của project — v_min khai FROZEN + frozen_rationale
-        # kể từ DR-D4-03 (trước đó là TUNED_PENDING, TD-0056).
+    def test_tren_FILE_THAT_du_12_muc_va_khai_ro_12_cho_giu(self) -> None:
+        """🔴 **KHẲNG ĐỊNH NGƯỢC, cố ý — TD-0190 (chủ dự án duyệt 08/09/2026).**
+
+        Ca này trước đây khẳng định `r.ok` trên file thật, và nó XANH —
+        nhưng xanh vì **phạm vi**, không vì hệ thống sạch: bản DR-D4-03
+        lấy `param_status.yaml` làm *nguồn sự thật cho DANH SÁCH*, mà danh
+        sách đó có ĐÚNG MỘT mục. Kiểm kê TD-0190: **11/12** tham số
+        `tier_b` có giá trị, **0 trial** (sổ thật chưa từng có
+        `param_under_test` là một khoá `tier_b`), **0 `frozen_rationale`**
+        — đúng trạng thái "im lặng" spec dòng 3884 cấm.
+
+        Nay `L-Z15` lấy danh sách từ chính `tier_b` (danh sách ĐÓNG, 12
+        khoá, `L-Z29` canh con số đó) nên phạm vi không co lại được nữa.
+
+        📌 **Ca này đã LẬT NGƯỢC HAI LẦN, và cả hai lần đều cố ý.** Bản
+        gốc (TD-0056) khẳng định `r.ok` — xanh vì phạm vi hẹp. TD-0190
+        lật thành `r.is_fail` — đỏ đúng sự thật khi 11 mục còn im lặng.
+        Rồi khi chủ dự án duyệt 12 trạng thái (08/09/2026) thì lật lại
+        `r.ok` — nhưng nay xanh vì **đã khai đủ**, không phải vì không
+        soi. Không lần nào XOÁ: xoá một ca đỏ cho sạch bảng là cách một
+        quyết định biến mất mà không ai ghi (tiền lệ TD-0150 / TD-0149).
+        """
         r = check_lz15_calibrate_params_have_status()
         assert r.ok, r.evidence
+        assert "12/12" in r.evidence, r.evidence
+        # 🔴 Phép kiểm ĐẠT chỉ trả lời "cả 12 đã KHAI chưa", KHÔNG phải "cả
+        # 12 đã được QUYẾT đúng chưa". Khoảng cách giữa hai câu đó là hình
+        # dạng của mọi bẫy PASS RỖNG dự án đã gặp — nên con số chỗ-giữ phải
+        # đi kèm ngay trong evidence, tức vào thẳng bằng chứng cổng.
+        assert "12 ở CHỖ GIỮ chưa calibrate, 0 đã TUNED" in r.evidence, r.evidence
 
     def test_tham_so_null_ma_khong_khai_thi_fail(self, tmp_path: Path) -> None:
         cfg_path = tmp_path / "cfg.yaml"

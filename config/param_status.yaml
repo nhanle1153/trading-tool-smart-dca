@@ -22,7 +22,8 @@
 
 params:
   v_min:
-    status: FROZEN # ✅ DR-D4-03 — rời TUNED_PENDING (L-Z15 chỉ cho TUNED|FROZEN)
+    status: FROZEN
+    chua_calibrate: true # 🆕 TD-0190 — máy đọc được, không chỉ nằm trong `note` # ✅ DR-D4-03 — rời TUNED_PENDING (L-Z15 chỉ cho TUNED|FROZEN)
     value: 1.0
     slot: "#4" # đúng số tunable trong §6.9.5 (12 tham số, KHÔNG đổi)
     frozen_rationale: >-
@@ -45,3 +46,156 @@ params:
       🔴 CHỖ GIỮ CHƯA CALIBRATE. Không dữ liệu nào nói 1.0 đúng hơn 0.9 hay
       1.2. Phải đọc kèm MỌI kết quả có Z0 tham gia — tức toàn bộ bảng
       ablation, vì Z0 là baseline.
+
+  # ══════════════════════════════════════════════════════════════════
+  # 🆕 TD-0190 (08/09/2026) — MƯỜI MỘT MỤC CÒN LẠI, chủ dự án duyệt.
+  #
+  # Kiểm kê phát hiện: `param_status.yaml` được DR-D4-03 đặt làm "nguồn
+  # sự thật cho DANH SÁCH", nên `L-Z15` chỉ soi những mục CÓ NGƯỜI TỰ
+  # KHAI — và danh sách khi đó có ĐÚNG MỘT mục. 11/12 tham số tier_b
+  # mang giá trị mà không trial, không frozen_rationale: đúng trạng thái
+  # "im lặng" spec dòng 3884 cấm, và phép kiểm vẫn XANH suốt.
+  #
+  # 🔑 Hình dạng lỗi THỨ BA của dự án, khác hai cái đã ghi: không phải
+  # lớp canh cùn (19/19 phép phá đều bị bắt), cũng không phải chĩa nhầm
+  # hướng (ca sai chỉ đi qua mẫu dựng tay) — mà là NGƯỜI BỊ CANH TỰ CHỌN
+  # PHẠM VI BỊ CANH. Một danh sách tự khai thì bỏ trống luôn hợp lệ.
+  # Nay `L-Z15` lấy danh sách từ chính `tier_b` (danh sách ĐÓNG, 12 khoá,
+  # `L-Z29` canh con số đó) nên phạm vi không co lại được nữa.
+  #
+  # VÌ SAO CẢ 11 ĐỀU `FROZEN` — không phải lựa chọn, mà là đường duy nhất
+  # còn lại nói thật được:
+  #   • `TUNED` đòi có trial. Sổ THẬT: `param_under_test` chưa từng là
+  #     một khoá tier_b (chỉ volume_24h_usdt · listing_age_days ·
+  #     post_only_cost_economics · tp_opposite_zone_distance ở B0, và
+  #     dr015_buoc1_lech_tranche_R ở CTRL).
+  #   • `TUNED_PENDING` bị DR-D4-03 cấm khi tham số ĐÃ CÓ giá trị.
+  #   ⇒ còn đúng `FROZEN`. Nhưng FROZEN ở đây = "đóng băng ở CHỖ GIỮ,
+  #     CHƯA calibrate", KHÔNG phải "đã đo và chốt". `chua_calibrate`
+  #     khai điều đó dưới dạng máy đọc được.
+  #
+  # 🔴 CON SỐ PHẢI ĐỌC KÈM MỌI KẾT QUẢ D4: 12/12 tham số tier_b là chỗ
+  # giữ; KHÔNG tham số nào từng được tune bằng một trial.
+  # ══════════════════════════════════════════════════════════════════
+
+  # ── NHÓM A — spec CÓ đánh dấu [CẦN CALIBRATE] ──────────────────────
+  zss_threshold:
+    status: FROZEN
+    value: 0.5
+    slot: "#1"
+    chua_calibrate: true
+    frozen_rationale: >-
+      §1.3, spec dòng 750, dấu [CẦN CALIBRATE] còn nguyên. Đóng băng ở giá
+      trị spec đề xuất; 0,5 là mốc GIỮA của thang ZSS [0,1] — chọn bằng
+      ĐỊNH NGHĨA, không bằng kết quả. Mở lại cần phân bố ZSS của zone đã
+      vào lệnh thật.
+  buf_sl_atr:
+    status: FROZEN
+    value: 0.4
+    slot: "#2"
+    chua_calibrate: true
+    frozen_rationale: >-
+      §3.1, spec dòng 980, dấu [CẦN CALIBRATE] còn nguyên. Nó quyết định
+      SL nằm bao xa dưới zone_low, tức chảy thẳng vào R_eff và cỡ lệnh
+      (§6.8e) — đổi nó là đổi MỌI con số tuyệt đối của D4. Mở lại cần
+      phân bố xuyên-thủng-zone của lệnh thật.
+  wick_close_upper_frac:
+    status: FROZEN
+    value: 0.5
+    slot: "#3"
+    chua_calibrate: true
+    frozen_rationale: >-
+      §3.3b, spec dòng 1080, dấu [CẦN CALIBRATE] còn nguyên. 0,5 là chính
+      ĐỊNH NGHĨA của chữ "nửa trên của range", không phải một ngưỡng chọn
+      được — đổi số này là đổi định nghĩa điều kiện, không phải hiệu
+      chỉnh nó.
+  funding_rate_pct:
+    status: FROZEN
+    value: -0.05
+    slot: "#5"
+    chua_calibrate: true
+    frozen_rationale: >-
+      §3.3d + DG6-D, HAI chỗ gộp thành một khoá. 🔴 Mâu thuẫn nội tại của
+      spec, GHI NHẬN chứ không tự hoà giải: dòng 1384 mang dấu [CẦN
+      CALIBRATE], nhưng bảng DOF ghi §3.3d là "🔒 đóng băng −0.05%, gộp
+      với DG6-D" — tức MỘT NỬA khoá này đã được spec chốt đóng băng. Đóng
+      băng trọn khoá là cách duy nhất giữ hai nửa không lệch nhau.
+  dg4_bars_1h:
+    status: FROZEN
+    value: 8
+    slot: "#7"
+    chua_calibrate: true
+    frozen_rationale: >-
+      §4, spec dòng 1346, dấu [CẦN CALIBRATE] còn nguyên (spec ghi "giảm
+      từ 12 → 8" kèm lý do ĐỊNH TÍNH, không kèm dữ liệu). Mở khoá phải đi
+      CÙNG LÚC với tier_frozen.dg6b_bars_1h — khoá đó đóng băng với ghi
+      chú "= dg4_bars_1h", nên hai số phải mở cùng nhau hoặc không cái
+      nào. 📌 TD-0190 đo được trên dữ liệu niêm phong: trần 8 nến cho qua
+      17/24 trade đủ ba tranche (71%) — nó ĐANG chặn thật, không phải một
+      trần chết.
+  dg6a_atr_ratio:
+    status: FROZEN
+    value: 1.8
+    slot: "#8"
+    chua_calibrate: true
+    frozen_rationale: >-
+      §4.1 điều kiện A, spec dòng 1361, dấu [CẦN CALIBRATE] còn nguyên.
+      DG6 là nhóm ĐÓNG vị thế — sai về phía chặt thì mất expectancy, sai
+      về phía lỏng thì mất vốn; chưa có dữ liệu lệnh thật để biết nghiêng
+      phía nào.
+  tp1_haircut_pct:
+    status: FROZEN
+    value: 20
+    slot: "#9"
+    chua_calibrate: true
+    frozen_rationale: >-
+      §5.1, spec dòng 1656, dấu [CẦN CALIBRATE] còn nguyên. 🔴 Đang CHẶN
+      TD-0189 (chốt lời PHẦN 5 — MT-17, 0 dòng code). Đóng băng ở đây là
+      ĐỂ TD-0189 dựng được, KHÔNG phải kết luận rằng 20% đúng: tầng TP
+      chưa tồn tại nên chưa phép đo nào chạm tới con số này.
+  max_hold_bars_4h:
+    status: FROZEN
+    value: 24
+    slot: "#11"
+    chua_calibrate: true
+    frozen_rationale: >-
+      §4b.3, spec dòng 1476 — chính spec gọi nó là "ỨNG VIÊN CHỐT" kèm
+      dấu [CẦN CALIBRATE], tức tự khai đây là số tạm. Đóng băng nguyên
+      trạng; mở lại cần phân bố thời-gian-tới-kết-cục của lệnh thật.
+
+  # ── NHÓM B — KHÔNG mang dấu [CẦN CALIBRATE] nhưng VẪN tunable ───────
+  # 🔴 Phát hiện phụ của TD-0190: ba mục này lọt CẢ HAI lưới — không mang
+  # dấu nên một L-Z15 đọc theo CHỮ của spec sẽ không đòi chúng khai,
+  # nhưng chúng vẫn nằm trong 12 tunable và đổi vẫn tiêu 1 trial từ B3.
+  # Đây chính là lý do danh sách phải lấy từ `tier_b`, không từ dấu.
+  dg6d_retrace_frac:
+    status: FROZEN
+    value: 0.5
+    slot: "#6"
+    chua_calibrate: true
+    frozen_rationale: >-
+      §3.3d ngưỡng hồi 50%. KHÔNG mang dấu [CẦN CALIBRATE] dù là tunable
+      #6. 0,5 là mốc "hồi một nửa" — chọn bằng định nghĩa. Chỉ áp cho
+      SHORT (DG6-D) nên hiện CHƯA có đường chạy nào chạm tới (chiến lược
+      LONG-only), đóng băng là rẻ nhất.
+  mult_corr_thresholds:
+    status: FROZEN
+    value: [0.60, 0.85]
+    slot: "#10"
+    chua_calibrate: true
+    frozen_rationale: >-
+      §6.2 hệ số 3. KHÔNG mang dấu [CẦN CALIBRATE] dù là tunable #10.
+      🔴 Chưa có đường chạy nào dùng nó: `mult_corr` cần ma trận tương
+      quan DANH MỤC, mà tầng kết nạp danh mục là TD-0188 — vừa xong, chưa
+      nối hệ số này. Đóng băng một tham số của tầng chưa dùng tới là rẻ
+      nhất; mở lại khi nó thật sự chảy vào cỡ lệnh.
+  dg7_funding_frac:
+    status: FROZEN
+    value: 0.3
+    slot: "#12"
+    chua_calibrate: true
+    frozen_rationale: >-
+      §4c "0.3 × R_eff". KHÔNG mang dấu [CẦN CALIBRATE] — và spec ghi nó
+      là mục v5 CHƯA TỪNG ĐẾM ("bỏ sót", nay là tunable #12). DG7 chỉ áp
+      cho SHORT nên hiện chưa có đường chạy nào chạm tới; cùng lý do với
+      dg6d_retrace_frac.

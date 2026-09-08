@@ -185,16 +185,15 @@ def check_lz15_calibrate_params_have_status(
     nguyên, không nới: khoá `null` mà không khai vẫn là vi phạm.
     """
     cfg = load_tool_d_config(config_path)
-    null_params = sorted(k for k, v in cfg.tier_b.items() if not k.startswith("_") and v is None)
+    moi_tham_so = sorted(k for k in cfg.tier_b if not k.startswith("_"))
+    null_params = sorted(k for k in moi_tham_so if cfg.tier_b[k] is None)
 
     if not status_path.exists():
-        if null_params:
-            return CheckResult(
-                "L-Z15",
-                Measured.ok(False),
-                evidence=f"thiếu {status_path}, nhưng có tham số null: {null_params}",
-            )
-        return CheckResult("L-Z15", Measured.ok(True), evidence="không có tham số nào null")
+        return CheckResult(
+            "L-Z15",
+            Measured.ok(False),
+            evidence=f"thiếu {status_path}, nhưng có {len(moi_tham_so)} tham số tier_b cần trạng thái",
+        )
 
     status_doc = yaml.safe_load(status_path.read_text(encoding="utf-8")) or {}
     khai_bao = status_doc.get("params") or {}
@@ -202,9 +201,28 @@ def check_lz15_calibrate_params_have_status(
 
     vi_pham: list[str] = []
 
-    # (1) Luật cũ, giữ nguyên: null mà không khai = im lặng.
+    # (1) TD-0190 — DANH SÁCH lấy từ `tier_b`, KHÔNG từ `param_status.yaml`.
+    #
+    # 🔴 Vì sao đổi nguồn danh sách, và vì sao bản trước vẫn chưa đủ dù đã
+    # siết một lần: DR-D4-03 §6 đặt `param_status.yaml` làm *"nguồn sự
+    # thật cho DANH SÁCH"*, nên phép kiểm chỉ soi những mục **có người tự
+    # khai**. Kiểm kê TD-0190 cho thấy hậu quả bằng số: danh sách có ĐÚNG
+    # MỘT mục (`v_min`) trong khi **11/12** tham số `tier_b` có giá trị,
+    # **0 trial** (sổ thật: `param_under_test` chưa từng là một khoá
+    # `tier_b`), **0 `frozen_rationale`** — tức đúng trạng thái "im lặng"
+    # spec dòng 3884 cấm. Phép kiểm vẫn XANH suốt.
+    #
+    # Đây KHÔNG phải lớp canh cùn, cũng không phải chĩa nhầm hướng — hai
+    # hình dạng dự án đã gặp. Nó là hình dạng thứ ba: **người bị canh tự
+    # chọn phạm vi bị canh**. Một danh sách tự khai thì bỏ trống là hợp lệ.
+    #
+    # `tier_b` là danh sách ĐÓNG (đúng 12 khoá, `L-Z29` canh con số đó),
+    # nên lấy nó làm nguồn thì phạm vi không co lại được nữa.
     vi_pham += [
-        f"{p}: null nhưng không khai trạng thái" for p in null_params if p not in declared
+        f"{p}: có trong tier_b nhưng không khai trạng thái"
+        + (" (giá trị null)" if p in null_params else f" (đang mang giá trị {cfg.tier_b[p]!r})")
+        for p in moi_tham_so
+        if p not in declared
     ]
 
     # (2) MỚI: mọi mục ĐÃ KHAI phải có trạng thái hợp lệ — kể cả khi khoá
@@ -231,10 +249,34 @@ def check_lz15_calibrate_params_have_status(
                 "phải là TUNED (có trial) hoặc FROZEN (có frozen_rationale)"
             )
 
+    if vi_pham:
+        return CheckResult("L-Z15", Measured.ok(False), evidence="; ".join(vi_pham))
+
+    # 🔴 TD-0190 — ĐẠT rồi vẫn phải NÓI RA con số, và đây là lý do.
+    #
+    # "Đạt" ở đây chỉ trả lời *"cả 12 đã KHAI trạng thái chưa?"* — nhưng
+    # người đọc sẽ nghe thành *"cả 12 đã được QUYẾT đúng chưa?"*. Hai câu
+    # khác nhau, và khoảng cách giữa chúng chính là hình dạng của mọi bẫy
+    # PASS RỖNG dự án đã gặp: một phép kiểm xanh trả lời câu hẹp hơn câu
+    # người ta tưởng.
+    #
+    # Sự thật tại 08/09/2026: **không tham số `tier_b` nào từng được tune
+    # bằng một trial** — `param_under_test` trong sổ thật chưa từng là một
+    # khoá `tier_b`. Cả 12 đều là CHỖ GIỮ. `chua_calibrate` khai điều đó
+    # dưới dạng MÁY ĐỌC ĐƯỢC thay vì chôn trong 12 đoạn văn xuôi, và con
+    # số dưới đây đi thẳng vào đầu ra E6, tức vào BẰNG CHỨNG CỔNG.
+    cho_giu = sorted(t for t in declared if (khai_bao.get(t) or {}).get("chua_calibrate"))
+    da_tune = sorted(
+        t for t in declared if (khai_bao.get(t) or {}).get("status") == "TUNED"
+    )
     return CheckResult(
         "L-Z15",
-        Measured.ok(len(vi_pham) == 0),
-        evidence="; ".join(vi_pham),
+        Measured.ok(True),
+        evidence=(
+            f"{len(declared)}/{len(moi_tham_so)} tham số tier_b đã khai trạng thái; "
+            f"{len(cho_giu)} ở CHỖ GIỮ chưa calibrate, {len(da_tune)} đã TUNED bằng trial"
+            + (f" — chỗ giữ: {cho_giu}" if cho_giu else "")
+        ),
     )
 
 
