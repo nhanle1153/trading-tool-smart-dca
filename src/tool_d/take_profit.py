@@ -53,6 +53,18 @@ Chặng 2 GỌI `notional.san_min_notional_freqtrade()` cùng
 `notional.sl_hieu_dung("backtest_phan_du", ...)`, KHÔNG viết bản thứ
 hai — hai bản sao của cùng một luật sàn là cơ chế đã gây lệch số của v5.
 
+🔴 CẢNH BÁO CRASH, đo bởi phiên `-f4` trên DỮ LIỆU THẬT (TD-0182, chưa
+commit): `zone_valid_4h` mang `NaN` ở vùng warmup của khung informative;
+pandas TỪ CHỐI dùng một mảng có `NaN` làm mặt nạ boolean ⇒ backtest
+CRASH thẳng, không phải một `False` an toàn. Bộ sinh dữ liệu tổng hợp
+(fixture) không có vùng warmup đó nên KHÔNG bao giờ chạm lỗi này — đúng
+hình dạng *"fixture đúng với hệ thống CŨ, im lặng sai với hệ thống
+MỚI"* đã gặp ở D3.5. `custom_exit()` của chặng 2 cũng đọc cột
+informative (giá zone đối diện, ATR 1H) — mọi cột đọc qua `_df_4h()`
+hay tương đương PHẢI qua `math.isnan()` trước khi dùng làm điều kiện,
+không được dùng thẳng trong so sánh/mặt nạ. Test chặng 2 phải dùng dữ
+liệu có vùng warmup thật, không phải fixture tổng hợp sạch NaN.
+
 🔒 `tp_fallback_dist_r` và `tp_fallback_target_r` ĐÓNG BĂNG, 0 trial
 (spec dòng 1674-1682). `frozen_rationale` của chính spec: nạng dự phòng
 KHÔNG phải nguồn edge — *"nếu phải tune nó để hệ thống có lãi, nghĩa là
