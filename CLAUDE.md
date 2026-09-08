@@ -295,9 +295,38 @@ chữ ✅ **trong `TASKS.md`** — thứ lừa được cả hai là một **câ
 không có cột trạng thái nào để mà nghi ngờ. **Một dòng trạng thái có ngày tháng trông giống một sự
 thật hơn là một cái ✅.** Đã gắn đính chính tại chỗ thay vì xoá.
 
-⏳ **Còn chờ chủ dự án:** (1) **MT-15** — có cho sửa `L-Z6` + viết điều kiện (c) không, và `v_min`
-lấy số ở đâu; (2) xoá `user_data/data/dr015cache/` (**599 MB**, gitignore, tái tạo được) — lệnh
-`rm` bị từ chối quyền, chưa xoá được.
+✅ **MT-15 ĐÃ THI HÀNH** (`DR-D4-03` `8046a27` + vá `942efe7`, chủ dự án chốt phương án C):
+`v_min = 1.0` **FROZEN, ĐÓNG BĂNG TẠI CHỖ** — giữ trong `tier_b` nên `|tier_b|` vẫn 12, **N vẫn
+114**, rào DSR vẫn **3,0777**. Docker **1217 passed, 0 failed**; +17 ca, −0 ca; phá thật trên
+**file sản xuất** ra đúng 1 ca đỏ. OQ-06 ✅ đóng. ✅ Cache 599 MB đã xoá.
+
+🔑 **Ba bài học của đợt MT-15, đáng nhớ hơn bản vá:**
+1. **Cùng một động tác, hai hậu quả trái ngược.** Đóng băng DG5 (`dof: 0`) giữ N = 114; đóng băng
+   `v_min` theo cách đó lại hạ N xuống 108 và **rào DSR xuống 3,0601** — vì `dof.py:91` tính N từ
+   số khoá THẬT trong `tier_b`. Phân biệt bằng đúng một câu: ***"thứ này đã nằm trong 12 chưa?"***
+   Rào thấp xuống = dễ qua cổng hơn; một quyết định chọn cho tiện mà nới chuẩn của chính mình.
+2. 🔴 **BẪY PASS RỖNG THỨ NĂM — và khác bốn cái trước ở chỗ nó DO CHÍNH HÀNH ĐỘNG SỬA TẠO RA.**
+   `check_lz15` chỉ soi tham số `tier_b` đang `null`, nên **khoảnh khắc ghi `1.0` vào là nó thôi
+   canh `v_min`**. Vá xong mà không siết thì tự làm câm lớp canh duy nhất theo dõi tham số đó.
+3. **Nỗi lo "phải phá một test khoá" hoá ra SAI.** 5 lời gọi cũ giữ NGUYÊN khẳng định, chỉ thêm
+   `bat_dieu_kien_c=False`, và **trở thành test khoá cho chính arm `Z0-V1`** — vì `(a) HOẶC (b)`
+   đúng là định nghĩa `Z0-V1`. Thứ trông như phá một test khoá hoá ra là **đổi nhãn nó về đúng
+   arm mà nó vẫn luôn mô tả**.
+
+🔴 **MT-16 — CHẶN CỔNG D4, chưa giải, chờ chủ dự án: KHÔNG CÓ TẦNG ĐỊNH CỠ LỆNH.**
+`custom_stake_amount` (§6.8e) **0 dòng code** toàn repo; 5/6 hệ số §6.2 **0 dòng**. Đo trên
+artifact D3.5 **đã niêm phong**: cỡ lệnh **39,98 USDT hằng số** (thiết kế: 62–208, biến theo
+`R_eff`), tỉ trọng **¼-¼-½** thay vì `[⅓,⅓,⅓]` mà `trade_plan.py:21` ghi *"ĐÓNG BĂNG"*.
+🔑 **Bằng chứng mạnh nhất là một dòng chú thích TỰ CHỨNG MINH MÌNH SAI:** `config.json:11` viết
+*"giá trị 10 không bao giờ thật sự được dùng"* vì `custom_stake_amount()` sẽ ghi đè — hàm đó
+chưa bao giờ được viết. **Đặt tên theo GỐC, không theo triệu chứng** (*"thiếu `mult_zss`"* sẽ
+khiến người sau vá `mult_zss` rồi tưởng xong). ⚠️ **Chi phí phải biết TRƯỚC khi quyết:** dựng
+tầng định cỡ ⇒ `planned_risk` đổi ⇒ **phải ĐO LẠI Δ_R**, tức mở lại artifact niêm phong của D3.5.
+
+⏳ **Còn chờ chủ dự án — hai câu, nên đi CÙNG một tờ trình:** (a) sửa `ZoneAbsorptionMinimal` hay
+dựng chiến lược SẢN XUẤT riêng (nghiêng: dựng riêng — đúng lời file tự khai, giữ `L-Z49` nguyên
+vẹn, không đụng `L-Z36`); (b) có đưa **tầng định cỡ §6.8e** vào cùng phạm vi không (nghiêng:
+**phải** — nếu không, dựng xong một chiến lược sản xuất vẫn không định cỡ theo thiết kế).
 
 **Chia việc đang chạy:** phiên này **TD-0182**; phiên `-d8` **TD-0181** (DG1–DG5). TD-0183 phụ
 thuộc CẢ HAI — ai xong trước cũng phải hỏi trước khi nhận.
