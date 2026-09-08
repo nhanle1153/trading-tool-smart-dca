@@ -136,7 +136,14 @@ class TestFileRegistryThatHopLe:
         # (TD-0083, chốt pool) — chưa có B1/B2/B3 nào. Nếu test này đỏ vì
         # đã có trial khác, đó là tín hiệu TỐT (nghiên cứu đã tiến thêm)
         # — cập nhật lại giả định, không phải dấu hiệu lỗi.
+        #
+        # Cập nhật 08/09/2026 (TD-0161): đúng dự đoán trên — sổ thật có thêm
+        # 1 dòng CTRL (D3.5 Bước 1, budget_line="CTRL", 0 trial, không tính
+        # vào N — MT-08). CTRL đứng NGOÀI ngân sách B0-B3 theo thiết kế, nên
+        # loại nó khỏi phép kiểm "mọi B0" thay vì gộp nó vào B0.
         events = _load_jsonl(REPO_ROOT / "registry/trial_registry.jsonl")
         reserve_events = [e for e in events if e["event"] == "RESERVE"]
-        assert all(e["budget_line"] == "B0" for e in reserve_events)
-        assert len(reserve_events) == 4
+        b0_events = [e for e in reserve_events if e["budget_line"] != "CTRL"]
+        assert all(e["budget_line"] == "B0" for e in b0_events)
+        assert len(b0_events) == 4
+        assert len(reserve_events) == 5
