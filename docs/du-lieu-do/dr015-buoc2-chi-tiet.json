@@ -2,7 +2,7 @@
  "_viec": "TD-0168 — dấu vết TỪNG CA của DR-015 Bước 2 (91 lượt khớp)",
  "_vi_sao_file_rieng": "Ba artifact trong FILE_KET_QUA_D35 đã được cổng D3.5 niêm phong (d3_5_git_sha); sửa chúng bây giờ làm 'thứ cổng đã thấy' khác 'thứ trên đĩa'. Dấu vết là thứ CHẨN ĐOÁN, không phải kết quả — file này KHÔNG thuộc FILE_KET_QUA_D35 và không được thêm vào đó.",
  "_duong_chay": "Sinh bằng tool_d.dr015.buoc2_chi_tiet.chay(), gọi THẲNG fill_probe.do_ty_le_khong_khop(). Vòng đo chốt của TD-0162 dùng kịch bản viết thẳng, cùng luật phân loại nhưng KHÁC đường chạy — nên đây là một lần chạy MỚI, và nó chỉ được ghi ra sau khi khớp đúng artifact niêm phong.",
- "_doi_chieu_niem_phong": "ĐẠT — số đếm ba trạng thái, p_nf hai đầu, biên xâm nhập (sâu nhất / nông nhất / trung vị / số ca nông hơn 0,05%) và độ trễ (min / max / trung vị / số ca xuyên trước mốc) đều khớp docs/du-lieu-do/dr015-buoc2-ty-le-khong-khop.json. P10/P25/P75/P90 KHÔNG đối chiếu: artifact không ghi cách nội suy, chênh ở đó là chênh quy ước chứ không phải chênh dữ liệu.",
+ "_doi_chieu_niem_phong": "ĐẠT — số đếm ba trạng thái, p_nf hai đầu, biên xâm nhập (sâu nhất / nông nhất / trung vị / số ca nông hơn 0,05%) và độ trễ (min / max / trung vị / số ca xuyên trước mốc) đều khớp docs/du-lieu-do/dr015-buoc2-ty-le-khong-khop.json. P10/P25/P75/P90 KHÔNG đối chiếu — hai bên dùng hai quy ước phân vị khác nhau, xem tom_tat.phan_vi_KHONG_doi_chieu._vi_sao.",
  "_cua_so": {
   "truoc_ms": 10800000,
   "sau_ms": 10800000
@@ -29,7 +29,7 @@
    "max": 4.4055333333333335
   },
   "phan_vi_KHONG_doi_chieu": {
-   "_vi_sao": "artifact niêm phong không ghi cách nội suy phân vị. Bốn ô dưới đây so cho biết chứ KHÔNG dùng để phán quyết; chênh ở đây không phải chênh dữ liệu.",
+   "_vi_sao": "HAI QUY ƯỚC PHÂN VỊ KHÁC NHAU trong cùng một repo, và đây là chỗ chúng gặp nhau. File này nội suy tuyến tính (mặc định của numpy.percentile) — cùng quy tắc với _p90() của TD-0161, vốn ghi rõ lựa chọn đó trong docstring. Vòng đo chốt của TD-0162 dùng CHỈ SỐ CẮT CỤT, KHÔNG nội suy (xs[int(q*(n-1))]) và không ghi ra ở đâu cả (tác giả xác nhận 08/09/2026). Vì n=91, trung vị rơi đúng phần tử thứ 46 và min/max không cần nội suy nên chúng khớp TUYỆT ĐỐI ở cả hai cách; còn 0,25*90 = 22,5 và 0,75*90 = 67,5 là chỗ BẮT BUỘC phải nội suy, nên P25/P75 lệch. Bốn ô dưới đây so cho biết chứ KHÔNG dùng để phán quyết: chênh ở đây là chênh QUY ƯỚC, không phải chênh dữ liệu — và điều đó đã được chứng minh chứ không phải phỏng đoán, vì mọi đại lượng không phụ thuộc phương pháp đều khớp.",
    "bien.P10": {
     "tinh_lai": -5.499128248274599,
     "artifact": -5.4991

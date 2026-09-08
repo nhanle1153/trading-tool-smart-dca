@@ -336,9 +336,18 @@ def _doi_chieu_niem_phong(
         # dữ liệu đã khớp, vì min/max/trung vị đều khớp tuyệt đối.
         "phan_vi_KHONG_doi_chieu": {
             "_vi_sao": (
-                "artifact niêm phong không ghi cách nội suy phân vị. Bốn ô dưới đây "
-                "so cho biết chứ KHÔNG dùng để phán quyết; chênh ở đây không phải "
-                "chênh dữ liệu."
+                "HAI QUY ƯỚC PHÂN VỊ KHÁC NHAU trong cùng một repo, và đây là chỗ "
+                "chúng gặp nhau. File này nội suy tuyến tính (mặc định của "
+                "numpy.percentile) — cùng quy tắc với _p90() của TD-0161, vốn ghi rõ "
+                "lựa chọn đó trong docstring. Vòng đo chốt của TD-0162 dùng CHỈ SỐ CẮT "
+                "CỤT, KHÔNG nội suy (xs[int(q*(n-1))]) và không ghi ra ở đâu cả "
+                "(tác giả xác nhận 08/09/2026). Vì n=91, trung vị rơi đúng phần tử thứ "
+                "46 và min/max không cần nội suy nên chúng khớp TUYỆT ĐỐI ở cả hai "
+                "cách; còn 0,25*90 = 22,5 và 0,75*90 = 67,5 là chỗ BẮT BUỘC phải nội "
+                "suy, nên P25/P75 lệch. Bốn ô dưới đây so cho biết chứ KHÔNG dùng để "
+                "phán quyết: chênh ở đây là chênh QUY ƯỚC, không phải chênh dữ liệu — "
+                "và điều đó đã được chứng minh chứ không phải phỏng đoán, vì mọi đại "
+                "lượng không phụ thuộc phương pháp đều khớp."
             ),
             "bien.P10": {"tinh_lai": _phan_vi(biens, 0.10), "artifact": niem_phong["bien_xam_nhap_pct"].get("P10")},
             "bien.P90": {"tinh_lai": _phan_vi(biens, 0.90), "artifact": niem_phong["bien_xam_nhap_pct"].get("P90")},
@@ -402,8 +411,8 @@ def chay(
             "ĐẠT — số đếm ba trạng thái, p_nf hai đầu, biên xâm nhập (sâu nhất / nông "
             "nhất / trung vị / số ca nông hơn 0,05%) và độ trễ (min / max / trung vị / "
             "số ca xuyên trước mốc) đều khớp docs/du-lieu-do/dr015-buoc2-ty-le-khong-"
-            "khop.json. P10/P25/P75/P90 KHÔNG đối chiếu: artifact không ghi cách nội "
-            "suy, chênh ở đó là chênh quy ước chứ không phải chênh dữ liệu."
+            "khop.json. P10/P25/P75/P90 KHÔNG đối chiếu — hai bên dùng hai quy ước "
+            "phân vị khác nhau, xem tom_tat.phan_vi_KHONG_doi_chieu._vi_sao."
         ),
         "_cua_so": {"truoc_ms": truoc_ms, "sau_ms": sau_ms},
         "_don_vi": {
