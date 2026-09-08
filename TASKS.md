@@ -305,7 +305,7 @@
 | ~~D1~~ ✅ **ĐÃ MỞ 07/09/2026** | H20 ✅ (xong ở D0-PRE) · H1-D · H4-D · H13 · H19 → **Khối 9–12** bên trên (TD-0090…TD-0110) | — |
 | ~~D2~~ ✅ **ĐÃ MỞ 07/09/2026** | Verify giả định D1–D7 (§9b.2), H15 → **Khối 13** bên trên (TD-0111…TD-0117). L-Z49 (D7) là điều kiện vào D4 | — |
 | ~~D3~~ ✅ **ĐÃ ĐÓNG 08/09/2026** | H3-D walk-forward orchestrator → **Khối 14** bên trên (TD-0140…TD-0148), tag `d3-complete`. 🔴 Cổng chứng nhận **bộ điều phối** đúng, **không** chứng nhận đã có kết quả WFO — chưa có bộ chạy backtest thật | — |
-| ~~D3.5~~ ✅ **ĐÃ MỞ 08/09/2026** | 🚪 Cổng sai lệch thước đo (DR-015) — **chặn D4** → **Khối 15** bên trên (TD-0160…TD-0166). 🔴 Chữ "cần testnet" ở đây là đóng khung SAI, xem DR-D35-01 | — |
+| ~~D3.5~~ ✅ **ĐÃ ĐÓNG 08/09/2026** (tag `d3-5-complete`) | 🚪 Cổng sai lệch thước đo (DR-015) — **chặn D4** → **Khối 15** bên trên (TD-0160…TD-0166). 🔴 Chữ "cần testnet" ở đây là đóng khung SAI, xem DR-D35-01 | — |
 | D4 | 🔴 Ablation D0.9, 9 cấu hình × 2 hướng — **blocker B4** | D3.5 + TD-0041 (B6) |
 | D9.5 | Lockbox chạm **đúng một lần** | D9 |
 | D10–D12 | Testnet quy mô đầy đủ → dry-run → live vốn nhỏ | D9.5 |
