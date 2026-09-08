@@ -305,6 +305,55 @@ hai quyết định đã chốt va nhau, quy tắc 11 buộc ghi nhận. Phân l
 
 *(Đoạn "Đang ở" cũ bên dưới giữ nguyên làm lịch sử.)*
 
+**Đang ở (cập nhật 09/09/2026, phiên TD-0171):** ✅ **TD-0171 đóng — `DR-D4-05` chốt, `E_D` 500 → 750.**
+Mở lại TD-0082 vì bảng cũ (*"102/102 qua, KHÔNG có vi phạm"*) so **cỡ lệnh tính sai** với **sàn tính
+sai**, và cả hai lệch **cùng một chiều — chiều nói "qua"**: tử số dùng `rho` thô (cỡ lệnh thật mang
+`Π mult_* ≤ 1`, §6.2), mẫu số dùng `MIN_NOTIONAL` trần trụi (sàn thật còn nhân hệ số dự trữ, và có
+vế `minQty × giá` mà code **chưa từng đọc** — nó là vế quyết định ở BTC). Đo lại trên metadata sàn
+THẬT (0 trial): **4/102 mã rớt ngay ở ca TỐT NHẤT** (BCH/ETC/LINK/LTC). Full suite **1406 passed**.
+
+🔴 **PHÁT HIỆN LỚN HƠN CON SỐ — backtest và live KHÔNG dùng cùng một sàn, lệch HAI CHIỀU NGƯỢC NHAU.**
+Freqtrade truyền một `stoploss` **khác nhau** cho từng đường chạy (backtest vào lệnh `-0.05` hằng số
+trong mã; phần dư `-0.1` không truyền `leverage`; live thì `strategy.stoploss`). Vào lệnh: live 7,50
+vs backtest 5,53. Phần dư: backtest 5,83 vs live 2,50. Ở `Π mult_* = 0,326` zone 3% thì **backtest
+cho 94/102 mã vào lệnh, live cho 0/102** — cùng cấu hình, cùng pool, cùng ngày. Đây là lỗ hổng
+**parity (quy tắc 9)**, nên `DR-D4-05` chốt Tool D **tự tính MỘT sàn = `max` mọi đường chạy** thay vì
+dùng sàn của đường đang chạy: lấy đúng từng đường thì D4 và D11 vẫn hành xử khác nhau, chỉ khác là ta
+biết về nó. Giá phải trả (chặt hơn Freqtrade ở vài đường) chấp nhận có ý thức.
+
+🔴 **Và lệnh dưới sàn BIẾN MẤT IM LẶNG:** `backtesting.py:1173` là một `if` **không có `else`**; phần
+dư ở `:774` cũng `return trade` không log. Phiên `-f4` chứng kiến **72 lệnh mất** trên một lượt
+backtest báo *thành công*. Vì thế `kiem_san_tool_d()` trả **lý do đọc được**, không trả `bool`.
+
+🔑 **BÀI HỌC ĐẮT NHẤT, và nó TỰ LẶP LẠI BA LẦN trong chính đợt này: một con số đo đúng MỘT LẦN rồi
+được đọc như thể LUÔN đúng.** (1) bảng `102/102` của TD-0082; (2) giả định *"config ghi `stoploss =
+-0.99` thì Freqtrade dùng −0,99"* — backtest **hardcode `-0.05`**, tôi phải đính chính bản đo của
+chính mình sau một giờ; (3) ba khẳng định `1.875` / `425.0` / `40.0` đóng băng trong test, đúng lúc
+viết và **im lặng hết đúng** khi Tầng A đổi — mà Tầng A là tầng *"chỉnh tự do"*, tức nó **sẽ** đổi.
+**Cách chữa KHÔNG phải cập nhật số, mà là TÁCH ghim QUAN HỆ khỏi ghim QUYẾT ĐỊNH:** quan hệ
+(`planned_risk == rho × E_D` đọc từ YAML) đúng ở mọi `E_D` và vẫn bắt lỗi thật vì đường tính của code
+khác đường của test; còn con số bị ghim **đúng MỘT chỗ**, nơi dòng `assert` **nêu đích danh DR** — đổi
+`E_D` vì thế buộc phải sửa một dòng có nhắc tới quyết định, không phải một hằng số vô danh. Kiểm có
+răng ba lần: bỏ hệ số dự trữ → 8 đỏ · phá `max` → 3 đỏ · trả `E_D` về 500 → **đúng 1 đỏ, đúng ca ghim
+quyết định**, ca ghim quan hệ vẫn xanh.
+
+📌 **`E_D` = 750 chứ KHÔNG phải 720 như tôi đề xuất đầu:** ở 720, tranche 1 zone 3% ra **đúng 30,00**
+trong khi sàn của 4 mã kia cũng **đúng 30,00**. Một chốt thoả bằng **đẳng thức chính xác** là chốt
+không có lề, và nó sẽ lật **im lặng**. Hệ quả tiền bạc đã trình và được duyệt: rủi ro mỗi lệnh
+1,875 → **2,8125 USDT (+50%)**, trần lỗ ngày xấu 40 → 60; số lệnh tối đa cùng lúc **không đổi**.
+Đây là **mở lại quyết định `DR-D0PRE-06` mà chủ dự án đã chủ động chọn khác** (tôi từng khuyến nghị
+≥ 1.000, chủ dự án chọn 500) — thông tin MỚI không phải *"tôi vẫn muốn số to hơn"* mà là quyết định
+đó dựa trên bảng `102/102` nay biết là sai. Đã gắn đính chính vào `DR-D0PRE-06`, **giữ nguyên chữ
+cũ** vì nó ghi lại thứ chủ dự án đã NHÌN THẤY khi quyết.
+
+⚠️ **CHƯA nối vào chiến lược.** `san_tool_d()`/`kiem_san_tool_d()` mới là tầng thuần; `ZoneAbsorption`
+chưa gọi. Phiên `-2f` dùng nó ở TD-0189. **Còn treo:** danh sách 17 mã rớt trên tập alt EXPLORE
+(phiên `-f4` sẽ gửi) để đối chiếu **tập DỰ ĐOÁN rớt** với **tập THỰC SỰ rớt** — lệch mới là thứ đáng
+giá, vì nó nghĩa là còn một vế nữa của sàn chưa đọc ra. Và **chưa ai đo** con số cho pool 102 mã trên
+lệnh thật (vướng ngân sách trial).
+*(Đoạn "Đang ở" cũ bên dưới giữ nguyên làm lịch sử.)*
+
+
 **Đang ở (cập nhật 08/09/2026, phiên mở D4):** 🚪 **D4 ĐÃ MỞ — Khối 16 (TD-0180…TD-0186).**
 **TD-0180 ✅** — `docs/decisions/DR-D4-01-pham-vi-va-ke-toan.md` (`df011da`), commit **RIÊNG và
 TRƯỚC** mọi dòng mã arm. Chủ dự án chốt: **(a) Long trước, 9 trial** (Short hoãn CÓ ĐIỀU KIỆN);
