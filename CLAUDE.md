@@ -248,6 +248,63 @@ với dòng phiên kia đang gõ dở cùng lúc — đã gây ít nhất 3 lầ
 > Mục này có thể lệch nhịp vài phút so với phiên kia — luôn `git log --oneline` +
 > đọc lại `TASKS.md` (cột 🔓/🔒/✅) trước khi chọn việc tiếp theo, đừng chỉ tin mục này.
 
+**Đang ở (cập nhật 09/09/2026, phiên `-f4`):** ✅ **TD-0182 ĐÓNG** — `7c06a8d` (code) +
+`88eaf5f` (TASKS) + `10cb8f2` (research-log). Full suite **1400 passed, 0 failed**.
+
+🔑 **KẾT LUẬN ĐO ĐƯỢC, GIỮ NGUYÊN QUYẾT ĐỊNH CŨ:** *"DG2 đọc chặt có giết tranche 3 không?"*
+→ **KHÔNG.** Đo trên **48 mã alt EXPLORE** (0 trial, [T0,T2], dữ liệu THẬT): DG2 chặt **21,0%**
+vs lỏng **22,2%** đủ ba tranche ⇒ giá của cách đọc chặt là **1,2 điểm phần trăm** ≈ một lệnh
+trên 81. Không mở DR, không đụng `dg2_trend_con_dung()`. Kiểm có răng: DG2 chặn ở tranche 2 rơi
+**16 → 0** khi nới.
+
+🔴 **HAI CON SỐ VỀ HỆ THỐNG, PHẢI ĐỌC KÈM MỌI KẾT QUẢ D4** (không phải về fixture):
+**chỉ ~21% lệnh bơm đủ ba tranche, 41% dừng ở MỘT tranche** — ablation D4 sắp đo một cỗ máy DCA
+mà tranche 2/3 hiếm khi xảy ra. Và **DG4 (trần chờ 8 nến 1H) chặn nhiều gấp bảy DG2**. ⚠️ Nhưng
+tỉ lệ theo *lần xét cổng* **thổi phồng cổng DAI** (hết cửa sổ rồi thì mọi lần hỏi sau đều chặn)
+và **làm nhẹ cổng THOÁNG QUA** — con số đáng tin là phân bố theo LỆNH. `dg4_bars_1h` là `tier_b`
+**chưa hề calibrate** (TD-0190: 12/12 đều là chỗ giữ).
+
+🔑 **HÌNH DẠNG LỖI THỨ TƯ — bộ sinh dữ liệu LỖI THỜI so với hệ thống nó nuôi.** Ba cái đã ghi:
+*lớp canh cùn* · *chĩa nhầm hướng* · *người bị canh tự chọn phạm vi*. Cái mới: **không ai viết
+sai dòng nào** — fixture đúng với hệ thống CŨ, im lặng sai với hệ thống MỚI, và im lặng theo
+hướng nguy nhất là **0 lệnh** (mọi khẳng định về lệnh đều **đúng-vô-nghĩa**). Fixture cũ khớp đủ
+3 tranche do **TRÙNG HỢP**: hệ thống cũ không lọc trend nên lệnh mở lúc 4H đang DOWN ⇒ `t4=DOWN`
+⇒ DG2 so `DOWN==DOWN` cho qua. Tức **nó nghiệm thu cỗ máy DCA bằng một lệnh mà hệ thống mới sẽ
+không bao giờ mở**.
+
+📌 **Bẫy PASS RỖNG cụ thể nhất từ trước tới nay, tự tạo rồi tự bắt:** ca `test_enter_tag_...`
+chép hằng số `"2025-01-01"` (lần thứ BA trong file) để đổi giờ ra chỉ số nến. Kéo dài lịch sử
+làm chỉ số trỏ vào **nến 513, giá 44,30 — cách nến tín hiệu 60 NGÀY** — mà **vẫn XANH** vì nến
+sai tình cờ cũng `UP`. Chỉ số đúng: 873, giá 96,90. Vá bằng `_moc_bat_dau()` suy từ ĐUÔI.
+
+🐛 **Ba lỗi chỉ lộ trên dữ liệu THẬT:** (i) `zone_valid_4h` mang `NaN` ở vùng warmup ⇒ pandas từ
+chối mảng có `NaN` làm mặt nạ ⇒ backtest **CRASH**; (ii) bug TD-0093 tái hiện y nguyên —
+`download-data --timerange` **không tôn trọng mốc kết thúc**, **10/10 file** lấn quá T2, hai file
+`1d`/`funding_rate` chạy tới **2026-09-07/08** (sâu 7 tháng vào LOCKBOX); (iii) **BTC/ETH không
+định cỡ nổi một lệnh nào** ở `E_D = 500` — 48+24 `SizingError`, xác nhận độc lập cho TD-0082.
+
+🔑 **BÀI HỌC LỜI KHAI — cùng cái bẫy TD-0041, ở chỗ THỨ BA.** Tôi chuyển mô tả TD-0082 (*"chưa
+chia đòn bẩy"*) cho phiên `-94` **như thể đã kiểm chứng**; họ đo lại và bác: `min_stake` đã chia
+đòn bẩy, `stake` ta cũng chia, **hai vế cùng chia nên đòn bẩy triệt tiêu**. N12 mục 3 dạy đừng
+tin ✅ trong `TASKS.md`; CLAUDE.md đã ghi *"một dòng trạng thái có ngày tháng trông giống sự thật
+hơn một cái ✅"*. Nay thêm: ***một dòng MÔ TẢ VIỆC cũng là lời khai, không phải bằng chứng.***
+
+⚠️ **Phạm vi, đừng đọc quá tay:** 72 exception BTC/ETH là bằng chứng **CƠ CHẾ**, không phải vi
+phạm của pool — BTC/ETH **không nằm trong pool giao dịch** (§0.3b). Con số alt là **17/81 trên 48
+mã EXPLORE**; **chưa ai đo** con số cho pool 102 mã.
+
+📂 Dữ liệu EXPLORE ở `user_data/data/explore/` (đã `.gitignore`), **tách hẳn** thư mục 102 mã pool
+để ràng buộc *"EXPLORE không rò vào pool"* nằm ở **tầng thư mục** chứ không ở kỷ luật con người.
+Tải không tiêu trial (DR-014 chỉ tính *đánh giá cấu hình*); đã cắt và kiểm nằm trọn [T0,T2].
+
+⏳ **Còn treo:** ghi **MT mới** vào `back-end-note.md` mục 7 — khoảng hở giữa *"đo mô tả được phép
+trên CALIB"* (N2) và *"`CTRL_OUTPUT_ALLOWED` chỉ nhận 3 trường của DR-015"* (`registry.py:33`):
+hai quyết định đã chốt va nhau, quy tắc 11 buộc ghi nhận. Phân loại 🟡 — không chặn việc vừa rồi
+(đã đi đường EXPLORE) nhưng **sẽ chặn ca đo mô tả tiếp theo trên dữ liệu pool**. Chờ lệnh
+"chuẩn hóa và lưu" (N9).
+
+*(Đoạn "Đang ở" cũ bên dưới giữ nguyên làm lịch sử.)*
+
 **Đang ở (cập nhật 08/09/2026, phiên mở D4):** 🚪 **D4 ĐÃ MỞ — Khối 16 (TD-0180…TD-0186).**
 **TD-0180 ✅** — `docs/decisions/DR-D4-01-pham-vi-va-ke-toan.md` (`df011da`), commit **RIÊNG và
 TRƯỚC** mọi dòng mã arm. Chủ dự án chốt: **(a) Long trước, 9 trial** (Short hoãn CÓ ĐIỀU KIỆN);
