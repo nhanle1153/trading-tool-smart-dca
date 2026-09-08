@@ -1,5 +1,15 @@
 # DR-D0PRE-06 — Chốt `E_D`, `L_exchange`, `rho_pct`, `daily_loss_budget_pct` (Tầng A, TD-0043)
 
+> 🔴 **`E_D` ĐÃ ĐỔI 500 → 750 bằng `DR-D4-05` (09/09/2026). Đọc mục 3 dưới đây kèm đính chính này.**
+> Mục 3 lập luận trên câu *"`E_D` = 500 → **102/102 mã qua**, nhưng sát sàn"* — câu đó **SAI**:
+> đúng ra là **98/102**, và bốn mã BCH/ETC/LINK/LTC đã **VƯỢT** sàn chứ không phải "sát". Bảng cũ
+> so cỡ lệnh tính bằng `rho` thô với `MIN_NOTIONAL` trần trụi, trong khi cỡ lệnh thật mang
+> `Π mult_* ≤ 1` và sàn thật còn nhân hệ số dự trữ. Chi tiết: `docs/min-notional-check.md` §4.
+>
+> **Giữ nguyên chữ cũ làm lịch sử** — không sửa số trong mục 3, vì nó ghi lại *thứ chủ dự án đã
+> nhìn thấy khi quyết*, và đó mới là thứ giải thích được vì sao 500 được chọn.
+
+
 > OQ-02. Bốn con số Tầng A (§6.9.2) — chỉnh tự do, **0 trial**, không tính vào N_ĐĂNG_KÝ.
 > Chủ dự án chốt ngày 06/09/2026 sau khi xem bảng đánh đổi đo trên dữ liệu thật của sàn.
 > Viết TRƯỚC khi có bất kỳ backtest nào (D0-PRE, N2) — đúng yêu cầu spec dòng 4449.
