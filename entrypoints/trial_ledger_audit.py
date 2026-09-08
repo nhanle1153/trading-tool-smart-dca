@@ -85,6 +85,17 @@ DUONG_DAN_TEST_D3 = (
     "tests/lock/test_lz45_dedup_key_append_only.py",
     "tests/lock/test_td0148_pham_vi_du_lieu_that.py",
 )
+# TD-0166 — năm file test khoá CỐT LÕI của D3.5, mỗi file chạy RIÊNG một
+# lượt. Phủ đủ BỐN thành phần của DR-015, không rút gọn còn "vài cái tiêu
+# biểu": Bước 1 (Δ_R), Bước 2 (tỷ lệ không khớp), Bước 3 (đối chứng Z0),
+# §4 (hiệu chỉnh hai chiều, L-Z58), và chốt chặn ablation (L-Z56).
+DUONG_DAN_TEST_D3_5 = (
+    "tests/unit/test_dr015_buoc1_lech_tranche.py",
+    "tests/lock/test_td0162_ty_le_khong_khop.py",
+    "tests/lock/test_td0163_doi_chung_z0.py",
+    "tests/lock/test_lz58_hieu_chinh_hai_chieu.py",
+    "tests/lock/test_lz56_chan_ablation_thieu_delta_r.py",
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -126,6 +137,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--close-d3-gate",
         action="store_true",
         help="TD-0147 — đóng cổng D3, ghi runtime_state.json.d3_complete. Chạy được đúng một lần.",
+    )
+    parser.add_argument(
+        "--close-d3-5-gate",
+        action="store_true",
+        help="TD-0166 — đóng cổng D3.5, ghi runtime_state.json.d3_5_complete. Chạy được đúng một lần.",
     )
     return parser
 
@@ -692,6 +708,194 @@ def close_d3_gate(
     )
 
 
+def _chay_rieng_tung_file(
+    duong_dans: tuple[str, ...],
+    *,
+    ten_cong: str,
+    repo_dir: Path,
+    pytest_cmd: list[str] | None,
+) -> tuple[str | None, list[str]]:
+    """Chạy RIÊNG từng file test khoá, đòi mỗi file có >= 1 ca PASS.
+
+    Trả `(lý_do_từ_chối, bằng_chứng)` — `None` ở vế đầu nghĩa là đạt.
+
+    🔴 Mỗi file MỘT lượt, không gộp: gộp lại thì một file bị xoá hoặc lọc
+    hết vẫn cho tổng `N passed > 0` nhờ các file kia, và cổng vẫn đóng
+    được trong khi một phép kiểm cốt lõi đã biến mất (bài học TD-0117).
+    """
+    bang_chung: list[str] = []
+    for duong_dan in duong_dans:
+        lenh = (
+            [*pytest_cmd, duong_dan]
+            if pytest_cmd
+            else [sys.executable, "-m", "pytest", "-q", duong_dan]
+        )
+        kq = subprocess.run(lenh, cwd=repo_dir, capture_output=True, text=True)
+        tom_tat = kq.stdout.strip().splitlines()[-1] if kq.stdout.strip() else "(không có output)"
+        if kq.returncode != 0:
+            return (
+                f"🛑 TỪ CHỐI đóng cổng {ten_cong} — test khoá cốt lõi CHƯA xanh: "
+                f"{duong_dan}\n{tom_tat}\n{kq.stdout[-2000:]}",
+                bang_chung,
+            )
+        if _dem_ca_pass(kq.stdout) < 1:
+            return (
+                f"🛑 TỪ CHỐI đóng cổng {ten_cong} — chạy riêng {duong_dan} thu được 0 ca "
+                f"PASS. Exit 0 mà không ca nào chạy là PASS RỖNG, không phải bằng "
+                f"chứng.\n{tom_tat}",
+                bang_chung,
+            )
+        bang_chung.append(f"{duong_dan}: {tom_tat}")
+    return None, bang_chung
+
+
+def close_d3_5_gate(
+    *,
+    runtime_state_path: Path = DEFAULT_RUNTIME_STATE_PATH,
+    repo_dir: Path = Path("."),
+    pytest_cmd: list[str] | None = None,
+    pytest_d35_cmd: list[str] | None = None,
+    **run_audit_kwargs,
+) -> tuple[int, str]:
+    """TD-0166 — ghi `d3_5_complete: true` (điều kiện vào D4).
+
+    Cùng khuôn `close_d3_gate()` và mang theo cả ba bài học của lần đóng
+    cổng D3 hôm nay: tự chạy pytest THẬT (nhãn `do-duoc`, MT-10), kiểm
+    cây làm việc **không có thay đổi ảnh hưởng phép đo**, và chạy RIÊNG
+    từng file test cốt lõi.
+
+    🔴 **Điểm khác biệt lớn nhất so với ba cổng trước: cổng này gọi
+    `kiem_cong_d35()` — chính cái máy mà E3 dùng để TỪ CHỐI chạy
+    ablation.** Nghĩa là điều kiện đóng cổng D3.5 và điều kiện cho phép
+    chạy ablation là **MỘT**, không phải hai danh sách song song sẽ trôi
+    lệch nhau. Nó kiểm ba artifact của D3.5 đã commit thật, và tính lại
+    Δ_R từ dữ liệu thô để chắc artifact chưa trôi khỏi code.
+
+    TỪ CHỐI nếu: bất kỳ cổng D0-PRE/D1/D2/D3 nào chưa đóng; đã có
+    `d3_5_complete`; cây có thay đổi chưa commit ảnh hưởng phép đo; suite
+    fail; bất kỳ file test cốt lõi nào fail hoặc 0 ca; `kiem_cong_d35()`
+    từ chối; hoặc audit sổ trial chưa sạch.
+    """
+    if not is_d0_pre_complete():
+        return EXIT_GATE_AUDIT_DIRTY, "🛑 TỪ CHỐI đóng cổng D3.5 — D0-PRE chưa đóng (§N2)."
+
+    state: dict = {}
+    if runtime_state_path.exists():
+        try:
+            state = json.loads(runtime_state_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            state = {}
+    for khoa, ten in (("d1_complete", "D1"), ("d2_complete", "D2"), ("d3_complete", "D3")):
+        if state.get(khoa) is not True:
+            return (
+                EXIT_GATE_AUDIT_DIRTY,
+                f"🛑 TỪ CHỐI đóng cổng D3.5 — chưa có {khoa}=true "
+                f"(D3.5 không thể đứng trước {ten}).",
+            )
+    if state.get("d3_5_complete") is True:
+        return (
+            EXIT_GATE_ALREADY_CLOSED,
+            f"🛑 {runtime_state_path} đã có d3_5_complete=true — cổng đã đóng, không ghi lại.",
+        )
+
+    git_info = get_git_info(repo_dir)
+    ban = _thay_doi_anh_huong_phep_do(repo_dir)
+    if ban:
+        return (
+            EXIT_GATE_AUDIT_DIRTY,
+            "🛑 TỪ CHỐI đóng cổng D3.5 — cây làm việc có thay đổi ẢNH HƯỞNG PHÉP ĐO "
+            f"nhưng chưa commit. d3_5_git_sha = {git_info.sha[:12]} sẽ KHÔNG khớp thứ "
+            "vừa được kiểm.\n" + "\n".join(f"  {d}" for d in ban),
+        )
+
+    # 🔴 Cùng một máy mà E3 dùng để TỪ CHỐI chạy ablation. Điều kiện đóng
+    # cổng và điều kiện chạy ablation là MỘT — hai danh sách song song sẽ
+    # trôi lệch, và lúc đó "cổng đã đóng" không còn bảo đảm E3 chạy được.
+    from tool_d.dr015.cong_d35 import CongD35ChuaDongError, kiem_cong_d35
+
+    try:
+        delta_niem_phong = kiem_cong_d35(repo_dir=repo_dir)
+    except CongD35ChuaDongError as exc:
+        return EXIT_GATE_AUDIT_DIRTY, f"🛑 TỪ CHỐI đóng cổng D3.5 — {exc}"
+
+    suite = subprocess.run(
+        pytest_cmd or [sys.executable, "-m", "pytest", "-q"],
+        cwd=repo_dir,
+        capture_output=True,
+        text=True,
+    )
+    suite_summary = suite.stdout.strip().splitlines()[-1] if suite.stdout.strip() else "(không có output)"
+    if suite.returncode != 0:
+        return (
+            EXIT_GATE_AUDIT_DIRTY,
+            f"🛑 TỪ CHỐI đóng cổng D3.5 — suite pytest CHƯA sạch:\n{suite_summary}\n"
+            f"{suite.stdout[-2000:]}",
+        )
+
+    ly_do, d35_bang_chung = _chay_rieng_tung_file(
+        DUONG_DAN_TEST_D3_5, ten_cong="D3.5", repo_dir=repo_dir, pytest_cmd=pytest_d35_cmd
+    )
+    if ly_do:
+        return EXIT_GATE_AUDIT_DIRTY, ly_do
+
+    audit_exit, audit_text = run_audit(**run_audit_kwargs)
+    if audit_exit != 0:
+        return (
+            EXIT_GATE_AUDIT_DIRTY,
+            f"🛑 TỪ CHỐI đóng cổng D3.5 — audit sổ trial chưa sạch:\n{audit_text}",
+        )
+
+    state["d3_5_complete"] = True
+    state["d3_5_closed_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    state["d3_5_git_sha"] = git_info.sha
+    state["d3_5_cay_sach"] = True
+    state["d3_5_delta_r_niem_phong"] = {
+        h: v.get("gia_tri") if v.get("trang_thai") == "ok" else v.get("trang_thai")
+        for h, v in delta_niem_phong.items()
+    }
+    state["d3_5_evidence"] = {
+        "full_suite": {"nguon": "do-duoc", "noi_dung": suite_summary},
+        "test_khoa_d3_5": {"nguon": "do-duoc", "noi_dung": " | ".join(d35_bang_chung)},
+        "cong_d35_kiem_cong": {
+            "nguon": "do-duoc",
+            "noi_dung": "kiem_cong_d35() PASS — ba artifact đã commit, Δ_R tính lại khớp",
+        },
+        "trial_ledger_audit": {"nguon": "do-duoc", "noi_dung": audit_text.splitlines()[0]},
+    }
+    state["d3_5_han_che"] = {
+        "nguon": "nguoi-khai",
+        "noi_dung": (
+            "(1) Bước 2 đo GIÁN TIẾP: suy tỷ lệ không khớp từ dữ liệu khớp lệnh thật, "
+            "KHÔNG đặt lệnh thật (DR-D35-01 — testnet bị loại vì sổ lệnh riêng, con số ở "
+            "đó nói về một thị trường khác). Ba thứ KHÔNG quan sát được: post-only bị sàn "
+            "từ chối, khớp MỘT PHẦN, vị trí hàng đợi — cả ba tính về phía p_nf_cao, không "
+            "cái nào làm kết luận lạc quan hơn thực tế. "
+            "(2) Chỉ hướng LONG (ZoneAbsorptionMinimal LONG-only, TD-0114); Δ_R(SHORT) là "
+            "`unreadable`, KHÔNG phải 0. Bật Short thì L-Z56 sẽ TỪ CHỐI chạy ablation cho "
+            "tới khi có Δ_R(SHORT) thật. "
+            "(3) 🔴 Bước 3 kết luận hai nhánh lệch TƯƠNG ĐƯƠNG (Δ_R Z0/DCA = 1,04) — phần "
+            "lớn Δ_R là sai số CHUNG cho cả hai nhánh và tự triệt tiêu khi so sánh, nên "
+            "hiệu chỉnh của §4 RỘNG HƠN bất lợi thực của riêng DCA. Đọc kết quả §4 mà "
+            "thiếu câu này là để một phép phạt bất đối xứng chạy sau khi đã mất phần lớn "
+            "căn cứ. "
+            "(4) p_nf = 0 đo trên tập backtest ĐÃ CẤP khớp — đúng tập §3 cần (phép hiệu "
+            "chỉnh trừ đi tranche 'backtest đã cho'), KHÔNG trả lời câu rộng hơn 'mô hình "
+            "khớp của backtest có rộng tay nói chung không'."
+        ),
+    }
+    runtime_state_path.parent.mkdir(parents=True, exist_ok=True)
+    runtime_state_path.write_text(
+        json.dumps(state, ensure_ascii=False, indent=2, sort_keys=False) + "\n",
+        encoding="utf-8",
+    )
+    return (
+        0,
+        f"✅ Đã đóng cổng D3.5 — ghi {runtime_state_path}.\n{suite_summary}\n"
+        + "\n".join(f"  {d}" for d in d35_bang_chung)
+        + f"\n{audit_text}",
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else list(argv)
     args, _ = build_parser().parse_known_args(argv)
@@ -727,6 +931,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.close_d3_gate:
         exit_code, text = close_d3_gate()
+        print(text)
+        return exit_code
+
+    if args.close_d3_5_gate:
+        exit_code, text = close_d3_5_gate()
         print(text)
         return exit_code
 
