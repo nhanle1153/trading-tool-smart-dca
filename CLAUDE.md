@@ -248,6 +248,61 @@ với dòng phiên kia đang gõ dở cùng lúc — đã gây ít nhất 3 lầ
 > Mục này có thể lệch nhịp vài phút so với phiên kia — luôn `git log --oneline` +
 > đọc lại `TASKS.md` (cột 🔓/🔒/✅) trước khi chọn việc tiếp theo, đừng chỉ tin mục này.
 
+**Đang ở (cập nhật 08/09/2026, phiên mở D4):** 🚪 **D4 ĐÃ MỞ — Khối 16 (TD-0180…TD-0186).**
+**TD-0180 ✅** — `docs/decisions/DR-D4-01-pham-vi-va-ke-toan.md` (`df011da`), commit **RIÊNG và
+TRƯỚC** mọi dòng mã arm. Chủ dự án chốt: **(a) Long trước, 9 trial** (Short hoãn CÓ ĐIỀU KIỆN);
+**(b) xác nhận tiêu B2**, 9 trên 110 suất còn lại. Full suite **1186 passed, 0 failed** (7:56).
+
+🔴 **PHÁT HIỆN LỚN NHẤT KHI MỞ KHỐI: D4 phần lớn là DỰNG arm, KHÔNG phải chạy arm.** Tên khối
+*"Ablation"* gợi ý sai rằng việc còn lại là bấm nút. Đối chiếu §10.1/§10.1b với mã ngày 08/09:
+**DG1–DG5 không có một dòng nào**; Z1/Z2/Z0-V1/Z0-S1 chưa có công tắc; Phần 2 và §3.3b có module
+nhưng **chưa nối vào tín hiệu vào lệnh**. Chính docstring `ZoneAbsorptionMinimal` đã tự khai điều
+này — không ai giấu, chỉ là không ai đọc.
+
+🔑 **Vòng lặp Short, và vì sao KHÔNG phá bằng cách nới chốt:** `L-Z56` từ chối chạy nếu
+`enable_short: true` mà thiếu Δ_R(SHORT); Δ_R(SHORT) lại cần lệnh Short để đo; chiến lược đang
+LONG-only. Nới `L-Z56` = chạy arm Short trên một thước chưa từng kiểm cho hướng Short, đúng trạng
+thái DR-015 §1 gọi là *"tệ nhất có thể"*. **Chốt đang chặn thì không được gỡ vì nó đang chặn.**
+Đường đã chọn (spec §3.3d cho phép bằng chữ): Long trước, kèm **ba điều kiện mở lại viết TRƯỚC**
+(khuôn OQ-07) — chỉ điều kiện 2 có máy canh; §7 của DR ghi ba dòng ❌ để không ai coi `L-Z56` xanh
+là đủ. 🔴 Kết luận D4 đợt này **chỉ có giá trị cho LONG**, phải ghi vào `d4_han_che` khi đóng cổng.
+
+🔴 **`Z0-T2` KHÔNG phải arm thứ 10 — nó CHÍNH LÀ `Z0`** (§10.1b: *"không tốn trial thêm"*). Chín
+cấu hình, không phải mười. Đếm nhầm là tiêu thừa một suất thật. Có test ghim ở `arms.py`.
+
+**TD-0182 làm DỞ, có lý do:** `d87203a` — `src/tool_d/arms.py` + test khoá (**15 passed**), ba tầng
+`KHONG`/`CHI_4H`/`DAY_DU`. Phần **nối vào tín hiệu vào lệnh CHƯA làm**, bị chặn bởi **MT-15**.
+Hai điểm thiết kế: (i) `CHI_4H` cố ý **KHÔNG** gọi `xac_nhan_da_khung()` — hàm đó so 1D với 4H,
+tức nó CHÍNH LÀ tầng 1D mà Z0-T1 đang bỏ; giữ lại thì arm không đo được thứ nó sinh ra để đo
+(diễn giải, đã ghi docstring để cãi lại được); (ii) khoá `tier_c.arm_ablation` **chưa thêm** vào
+YAML — thêm bây giờ là một khoá không ai đọc.
+
+🔴 **MT-15 — bẫy PASS RỖNG ở một dạng CHƯA từng gặp: nó không làm hỏng phép đo, nó ĐỐT NGÂN SÁCH.**
+`entry_confirmation.py` + test khoá `L-Z6` thi hành `(a) HOẶC (b)`; spec PHẦN 3b (dòng 1289–1317)
+đòi `(a VÀ c) HOẶC (b)` và dòng 1115 gọi (c) là *"BỔ NGỮ **BẮT BUỘC** cho (a)"*. Điều kiện (c)
+volume có **0 dòng code**, `v_min` vẫn `null` (OQ-06). Hệ quả nặng nhất **không phải** thiếu một
+bộ lọc: §10.1b định nghĩa `Z0-V1` **đúng bằng "tắt (c)"**, tức `(a) HOẶC (b)` — chính là thứ code
+đang có ⇒ **`Z0` TRÙNG KHỚP `Z0-V1`**, một suất trial trong 114 tiêu để đo khác biệt **bằng
+không**, và bảng kết quả trông hoàn toàn bình thường, chỉ là hai cột giống hệt nhau. **Không phép
+kiểm nào hiện có báo đỏ vì nó.** Để **chờ** theo quy tắc 11 (sửa = phải đổi một test trong
+`tests/lock/`). **MT-14** ghi nợ đặc tả từ D3.5: Bước 2 đo KHÔNG trên testnet, lệch chữ spec dòng
+39/2975 — đã chốt TRƯỚC khi đo bằng `DR-D35-01`, kèm giá phải trả.
+
+🔴 **BÀI HỌC N12 Ở MỘT CHỖ QUY TẮC CHƯA NÓI TỚI — chính mục này lừa được hai phiên.** Câu *"Chặn
+thêm bởi TD-0041… vẫn cần chủ dự án quyết"* ở cuối đoạn D3.5 **SAI** (TD-0041 đóng từ 06/09,
+`ba2af6a`), và **cả tôi lẫn phiên `-d8` đều tin nó** cho tới khi kiểm đĩa. N12 mục 3 dạy đừng tin
+chữ ✅ **trong `TASKS.md`** — thứ lừa được cả hai là một **câu văn xuôi trong `CLAUDE.md`**, nơi
+không có cột trạng thái nào để mà nghi ngờ. **Một dòng trạng thái có ngày tháng trông giống một sự
+thật hơn là một cái ✅.** Đã gắn đính chính tại chỗ thay vì xoá.
+
+⏳ **Còn chờ chủ dự án:** (1) **MT-15** — có cho sửa `L-Z6` + viết điều kiện (c) không, và `v_min`
+lấy số ở đâu; (2) xoá `user_data/data/dr015cache/` (**599 MB**, gitignore, tái tạo được) — lệnh
+`rm` bị từ chối quyền, chưa xoá được.
+
+**Chia việc đang chạy:** phiên này **TD-0182**; phiên `-d8` **TD-0181** (DG1–DG5). TD-0183 phụ
+thuộc CẢ HAI — ai xong trước cũng phải hỏi trước khi nhận.
+*(Đoạn "Đang ở" cũ bên dưới giữ nguyên làm lịch sử.)*
+
 **Đang ở (cập nhật 08/09/2026, phiên D3.5):** 🚪 **D3.5 ĐÓNG — tag `d3-5-complete`.** Khối 15
 xong sạch: **TD-0160…TD-0167 đều ✅**. Chạy thật qua service **`freqtrade`** (`E6 --close-d3-5-gate`,
 exit 0): `full_suite` **1102 passed** · năm file test cốt lõi mỗi file chạy RIÊNG (Bước 1 **23** ·
@@ -295,8 +350,13 @@ P10/P25/P75/P90 cố ý đứng NGOÀI phép đối chiếu vì artifact không 
 thật, `tre.P25`/`tre.P75` **lệch**, `bien.P10/P90` thì khớp. Một phép kiểm báo đỏ vì **chênh quy
 ước** sớm muộn bị gỡ, gỡ rồi mất luôn phần đúng của nó.
 
-**Bước tiếp theo:** **D4** — 🔴 Ablation D0.9, 9 cấu hình × 2 hướng, **blocker B4**. Chặn thêm bởi
-**TD-0041 (ngưỡng DSR, blocker B6)** — con số đó vẫn cần chủ dự án quyết.
+**Bước tiếp theo:** **D4** — 🔴 Ablation D0.9, 9 cấu hình × 2 hướng, **blocker B4**. ~~Chặn thêm bởi
+**TD-0041 (ngưỡng DSR, blocker B6)** — con số đó vẫn cần chủ dự án quyết.~~
+🔴 **ĐÍNH CHÍNH 08/09/2026 — câu gạch trên SAI, và nó đã lừa HAI phiên.** TD-0041 đã đóng từ
+**06/09/2026** (commit `ba2af6a`, `DR-D0PRE-03`): `gates/thresholds.py:24` →
+`DSR_ADJ_EXPECTANCY_MIN = 0.10`, **blocker B6 đã gỡ**. Thứ còn `-inf` là
+`BEST_KNOWN_DSR_ADJ_EXPECTANCY` — *kết quả tốt nhất hiện có*, đúng như nó phải thế.
+Giữ nguyên chữ cũ làm lịch sử, gắn đính chính tại chỗ để cái bẫy hết hiệu lực.
 *(Đoạn "Đang ở" cũ bên dưới giữ nguyên làm lịch sử.)*
 
 **Đang ở (cập nhật 08/09/2026, phiên cổng D3):** 🚪 **D3 ĐÓNG — tag `d3-complete`.**
