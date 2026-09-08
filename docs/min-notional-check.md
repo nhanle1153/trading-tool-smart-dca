@@ -191,7 +191,10 @@ thật**, không chỉ đúng trên giấy. Và với BTC thì vế thắng là 
 
 1. **BTC/ETH KHÔNG nằm trong pool giao dịch** (TD-0083 loại hẳn, chỉ giữ ở tập EXPLORE). Nên 72
    exception của BTC/ETH **không phải** vi phạm mới của pool 102 mã — nó là bằng chứng về **cơ chế**.
-   Con số đáng lo là **17/81 trên tập alt**.
+   Con số đáng lo là **17/81 trên tập alt**. ⚠️ Và chính 17/81 đó cũng đo trên **48 mã alt EXPLORE**,
+   **không** trên pool 102 mã: nó **cùng họ** với ca pool chứ không phải bằng chứng trực tiếp về pool.
+   Muốn con số cho pool thì phải chạy trên chính 102 mã đó — đường ấy vướng ngân sách trial, nên đến
+   nay **chưa ai đo**, và mục này không được đọc như thể đã đo. (Phiên `-f4` nêu, 09/09/2026.)
 2. **Cỡ lệnh rơi dưới sàn theo GIÁ của mã, không theo mã.** Mã đắt dính nặng, alt rẻ hầu như không.
    Nên một lượt kiểm chỉ chạy trên một mã rẻ sẽ **không thấy gì**.
 3. 🔴 **Vế *"chưa chia đòn bẩy"* vẫn SAI, kể cả trước số liệu này** — và đây là chỗ dễ kết luận
