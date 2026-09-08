@@ -49,6 +49,7 @@ DG6 giữ hằng số đóng băng của nó.
 
 from __future__ import annotations
 
+import math
 from typing import Literal, Sequence
 
 from tool_d.trend_context import TrendDir
@@ -163,6 +164,26 @@ def dg5_zss_khong_suy_yeu(
         raise TrancheGateError(
             f"nguong_giam_toi_da phải nằm trong (0, 1), nhận {nguong_giam_toi_da} "
             "— đây là TỈ LỆ giảm (0.30 = 30%), không phải phần trăm"
+        )
+    # 🐛 TD-0170 — `NaN` phải RAISE, không được trả `False`.
+    #
+    # `NaN >= x` là `False` theo IEEE-754, nên bản đầu của hàm này **im
+    # lặng trả `False`** khi `zss_hien_tai` không tính được — tức gộp
+    # *"không đo được"* vào *"cổng đóng"*, đúng hai thứ `TrancheGateError`
+    # sinh ra để tách và N6 cấm gộp. Đường chạy thật đưa `NaN` vào đây
+    # thật: `ZoneAbsorption._zss_hien_tai()` trả `float("nan")` khi
+    # `volume_ratio`/`compression` thiếu dữ liệu.
+    #
+    # Nguy hơn một ô trống: một cổng "đóng" trông giống hệt một quyết định
+    # đã cân nhắc, nên không ai đi hỏi vì sao. Và `ZoneAbsorption.py:505`
+    # đã ghi sẵn *"dg5 fail-closed với NaN (TrancheGateError)"* — một chú
+    # thích mô tả theo Ý ĐỊNH chứ không theo thứ code làm, cùng hạng
+    # `_comment_stake_amount` của MT-16.
+    if math.isnan(zss_hien_tai) or math.isnan(zss_tai_tranche1):
+        raise TrancheGateError(
+            f"ZSS không đọc được (zss_tai_tranche1={zss_tai_tranche1}, "
+            f"zss_hien_tai={zss_hien_tai}) — 'không đo được' KHÁC 'cổng đóng'. "
+            "Bên gọi phải xử tường minh, không nhận một `False` im lặng"
         )
     if zss_tai_tranche1 <= 0:
         raise TrancheGateError(
