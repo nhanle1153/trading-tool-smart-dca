@@ -1,0 +1,81 @@
+{
+  "_viec": "TD-0162 — DR-015 Bước 2: tỷ lệ KHÔNG khớp, suy từ dữ liệu khớp lệnh THẬT",
+  "_quyet_dinh_nen": "docs/decisions/DR-D35-01-moi-truong-do-buoc-2.md (chủ dự án 08/09/2026)",
+  "_du_lieu_vao": {
+    "file": "docs/du-lieu-do/dr015-luot-khop-tranche.json",
+    "n": 91,
+    "tap": "CALIB",
+    "huong": "LONG (chiến lược hiện LONG-only)",
+    "nguon_giao_dich": "data.binance.vision — dump aggTrades ngày, 45 file"
+  },
+  "_tap_do": "Tập backtest ĐÃ CẤP khớp (91 lượt) — chủ dự án chốt 08/09/2026. Đây là tập ĐÚNG cho mục đích §3: phép hiệu chỉnh trừ đi những tranche 'backtest đã cho'. Nó KHÔNG trả lời câu rộng hơn 'mô hình khớp của backtest có rộng tay nói chung không'.",
+  "ket_qua": {
+    "cua_so": "±3 giờ quanh order_filled_timestamp",
+    "chac_chan_khop": 91,
+    "bat_dinh": 0,
+    "chac_chan_khong_khop": 0,
+    "p_nf_thap": 0.0,
+    "p_nf_cao": 0.0
+  },
+  "do_nhay_cua_so_ve_sau": [
+    {
+      "cua_so_sau_gio": 0,
+      "so_khong_khop": 15,
+      "p_nf": 0.164835
+    },
+    {
+      "cua_so_sau_gio": 0.25,
+      "so_khong_khop": 0,
+      "p_nf": 0.0
+    },
+    {
+      "cua_so_sau_gio": 0.5,
+      "so_khong_khop": 0,
+      "p_nf": 0.0
+    },
+    {
+      "cua_so_sau_gio": 1,
+      "so_khong_khop": 0,
+      "p_nf": 0.0
+    },
+    {
+      "cua_so_sau_gio": 1.5,
+      "so_khong_khop": 0,
+      "p_nf": 0.0
+    },
+    {
+      "cua_so_sau_gio": 2,
+      "so_khong_khop": 0,
+      "p_nf": 0.0
+    },
+    {
+      "cua_so_sau_gio": 3,
+      "so_khong_khop": 0,
+      "p_nf": 0.0
+    }
+  ],
+  "_vi_sao_do_nhay_quan_trong": "Cùng dữ liệu, cùng logic: cửa sổ 0 cho p_nf = 16,5%; cửa sổ ≥ 15 PHÚT cho 0%. Đường cong DỰNG ĐỨNG chứ không dốc dần — nên kết luận 0% KHÔNG phụ thuộc một giả định rộng tay. Lý do: order_filled_timestamp của backtest lệch so với lần giá chạm thật, tối đa +4,4 phút, tức DƯỚI MỘT NẾN 5m (đúng hiện tượng TD-0115 đã ghi).",
+  "tre_so_voi_moc_backtest_phut": {
+    "min": -179.9989,
+    "P25": -48.3536,
+    "trung_vi": -4.8849,
+    "P75": -1.6177,
+    "max": 4.4055,
+    "so_ca_xuyen_TRUOC_moc": 76
+  },
+  "bien_xam_nhap_pct": {
+    "y_nghia": "giá thấp nhất thật so với p kế hoạch; âm = xuyên qua dưới p",
+    "sau_nhat": -9.2828,
+    "P10": -5.4991,
+    "trung_vi": -2.1233,
+    "P90": -0.6546,
+    "nong_nhat": -0.1403,
+    "so_ca_nong_hon_0_05pct": 0
+  },
+  "_vi_sao_vung_bat_dinh_RONG_khong_phai_hien_vat": "Ca NÔNG NHẤT vẫn xuyên 0,140% dưới p — với 1000PEPE (tickSize 1e-7, giá ~0,018) là ~250 bước giá; 0/91 ca xuyên dưới 0,05%. Không ca nào ở thế cân não về vị trí hàng đợi, nên làm tròn về bước giá sàn KHÔNG lật được ca nào (đã kiểm tickSize thật).",
+  "_han_che_con_lai": [
+    "Không quan sát được: post-only bị sàn TỪ CHỐI, khớp MỘT PHẦN, vị trí hàng đợi. Cả ba đều tính về phía p_nf_cao, không cái nào làm kết luận lạc quan hơn thực tế.",
+    "Bản xuất backtest KHÔNG mang thời điểm ĐẶT lệnh — chỉ có order_filled_timestamp. Nếu ghi được mốc đặt lệnh thì độ nhạy trên biến mất hoàn toàn. Đáng làm trước D4.",
+    "Chỉ LONG. Short: unreadable, KHÔNG phải 0 (N6)."
+  ]
+}

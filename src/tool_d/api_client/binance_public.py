@@ -29,6 +29,8 @@ import json
 import time
 import urllib.parse
 import urllib.request
+from datetime import date
+from pathlib import Path
 from urllib.error import HTTPError, URLError
 
 BASE_URL = "https://fapi.binance.com"
@@ -197,6 +199,74 @@ def latency_samples_ms(
         if conn is not None:
             conn.close()
     return samples
+
+
+AGG_TRADES_HOST = "data.binance.vision"
+
+
+class AggTradesNotFoundError(BinancePublicApiError):
+    """Không có dump `aggTrades` cho mã/ngày đó (HTTP 404). Tách riêng khỏi
+    lỗi mạng: một ngày không có dump là DỮ KIỆN (mã chưa niêm yết, hoặc
+    kho chưa cập nhật), không phải sự cố — bên gọi phải xử tường minh,
+    không được lặng lẽ coi như 'không có giao dịch nào'."""
+
+
+def tai_dump_agg_trades(
+    *,
+    symbol: str,
+    ngay: date,
+    thu_muc_cache: Path,
+    timeout: float = 120.0,
+) -> Path:
+    """TD-0162 — tải dump `aggTrades` MỘT NGÀY từ `data.binance.vision`.
+
+    🔴 Vì sao không dùng REST `/fapi/v1/aggTrades`: Binance giới hạn cửa sổ
+    tra cứu **2 ngày gần nhất** (`-4166: Search window is restricted to
+    recent 2 days only`, kiểm 08/09/2026). Tập CALIB là 2024-06 → 2025-06,
+    nên đường REST KHÔNG dùng được cho phép đo này. Kho dump lịch sử là
+    nguồn duy nhất — cùng nguồn đã dùng ở TD-0095 cho mã đã huỷ niêm yết
+    (`docs/decisions/DR-D1-01-nguon-danh-sach-lich-su.md`).
+
+    Đặt ở đây, không phải module riêng, vì **R1 Single Egress**: đây phải
+    là module DUY NHẤT gọi thẳng ra mạng tới Binance — kể cả tới host phụ
+    `data.binance.vision`.
+
+    Có cache trên đĩa: đã tải rồi thì KHÔNG tải lại. Dump ngày là bất biến
+    (dữ liệu lịch sử đã đóng), nên cache không cần vân tay như cache WFO
+    (TD-0143) — nhưng cũng vì thế, **đừng dùng hàm này cho ngày HÔM NAY**:
+    ngày chưa đóng thì dump chưa đầy đủ.
+    """
+    ten = f"{symbol}-aggTrades-{ngay.isoformat()}.zip"
+    dich = thu_muc_cache / ten
+    if dich.exists() and dich.stat().st_size > 0:
+        return dich
+
+    duong_dan = f"/data/futures/um/daily/aggTrades/{symbol}/{ten}"
+    conn = http.client.HTTPSConnection(AGG_TRADES_HOST, timeout=timeout)
+    try:
+        conn.request("GET", duong_dan)
+        resp = conn.getresponse()
+        if resp.status == 404:
+            resp.read()
+            raise AggTradesNotFoundError(
+                f"không có dump aggTrades cho {symbol} ngày {ngay} "
+                f"(HTTP 404 tại {AGG_TRADES_HOST}{duong_dan})"
+            )
+        if resp.status != 200:
+            raise BinancePublicApiError(
+                f"tải {AGG_TRADES_HOST}{duong_dan} thất bại: HTTP {resp.status}"
+            )
+        noi_dung = resp.read()
+    except OSError as exc:
+        raise BinancePublicApiError(f"tải {AGG_TRADES_HOST}{duong_dan} thất bại: {exc}") from exc
+    finally:
+        conn.close()
+
+    thu_muc_cache.mkdir(parents=True, exist_ok=True)
+    tam = dich.with_suffix(".zip.dang-tai")
+    tam.write_bytes(noi_dung)
+    tam.replace(dich)  # đổi tên nguyên tử: không để lại file tải dở mang tên thật
+    return dich
 
 
 def get_open_interest_hist(
