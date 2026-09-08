@@ -107,9 +107,34 @@ class TestZ0VaZ0T2LaMOT:
     def test_Z0_va_Z0_T2_cung_mot_tang(self) -> None:
         assert tang_cua_arm("Z0") == tang_cua_arm("Z0-T2") == "DAY_DU"
 
-    def test_bang_arm_chi_co_ba_TANG_dù_co_bon_TEN(self) -> None:
-        assert len(TANG_THEO_ARM) == 4
+    def test_bang_arm_chi_co_ba_TANG_dù_co_MUOI_TEN(self) -> None:
+        """🔴 SỬA từ "bốn tên" — bản đầu chỉ phủ nhóm T0/T1/T2 vì lúc đó
+        chưa cần nạp CHIẾN LƯỢC với arm khác. Thiếu sót lộ ra khi
+        `ZoneAbsorption` chạy arm mặc định `Z3` và `tang_cua_arm` raise —
+        không xoá khẳng định cũ, sửa thành đúng số 10 (9 arm thật của
+        `arm_switches.ARM_HOP_LE` + alias `Z0-T2`), vẫn chỉ ba TẦNG."""
+        assert len(TANG_THEO_ARM) == 10
         assert set(TANG_THEO_ARM.values()) == set(TANG_HOP_LE)
+
+    def test_TANG_THEO_ARM_phu_dung_CHIN_arm_that(self) -> None:
+        """Không để hai bảng trôi lệch: mọi arm `arm_switches.ARM_HOP_LE`
+        khai phải tra được tầng trend ở đây, nếu không `ZoneAbsorption`
+        nạp arm đó sẽ raise ngay ở `__init__` — đúng ca đã xảy ra."""
+        from tool_d.arm_switches import ARM_HOP_LE
+
+        thieu = set(ARM_HOP_LE) - set(TANG_THEO_ARM)
+        assert not thieu, f"arm chưa có tầng trend: {thieu}"
+
+    def test_moi_arm_ngoai_T0_T1_deu_DAY_DU(self) -> None:
+        """Chỉ trục trend của Z0-T0/Z0-T1 bị đổi; các arm còn lại đo trục
+        KHÁC (SL/cỡ lệnh/DG/volume) nên KHÔNG được tắt trend filter theo —
+        tắt lây là trộn hai biến vào một arm (bài học MT-15)."""
+        from tool_d.arm_switches import ARM_HOP_LE
+
+        cho_day_du = set(ARM_HOP_LE) - {"Z0-T0", "Z0-T1"}
+        assert all(TANG_THEO_ARM[a] == "DAY_DU" for a in cho_day_du), {
+            a: TANG_THEO_ARM[a] for a in cho_day_du
+        }
 
 
 class TestFailClosed:

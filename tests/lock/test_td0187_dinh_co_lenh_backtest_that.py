@@ -49,13 +49,76 @@ _spec.loader.exec_module(_lz49)  # type: ignore[union-attr]
 _chia_nho, _ghi_feather, _lenh_vao = _lz49._chia_nho, _lz49._ghi_feather, _lz49._lenh_vao
 
 
+N_NGAY_GIAM = 60  # TD-0182 — pha GIẢM dựng trước, xem docstring bên dưới
+N_NGAY_TANG = 85  # độ DÀI pha tăng, giữ nguyên từ bản `-e8`
+GIA_DAY = 20.0
+"""Đáy chữ V — TD-0182 đổi từ 60 xuống 20, và đây là một phép ĐO chứ không
+phải nới tay cho test xanh.
+
+Bản `-e8` chọn 60 sau khi sweep, với tiêu chí *"EMA(4H) sống sót qua cú rơi
+của nến swing"* — tức chỉ đòi `trend_dir_4h` còn UP **tại nến tín hiệu**.
+Hệ thống lúc đó không hỏi gì thêm. Nhưng DG2 (§4) so `trend_dir` tại tranche
+2/3 với giá trị ghi trong tag lúc tranche 1, nên nay phải giữ UP **qua cả ba
+nến tranche**, một đòi hỏi chặt hơn hẳn.
+
+Sweep đo được (khoảng cách EMA20−EMA50 tại nến tín hiệu → hướng tại tín
+hiệu, p1, p2, p3):
+
+    60 → 0,169 → FLAT, DOWN, DOWN, DOWN     ← bản cũ: hỏng ngay tại tín hiệu
+    40 → 0,730 → UP,   UP,   FLAT, FLAT
+    30 → 1,010 → UP,   UP,   UP,   FLAT     ← còn hụt đúng một nến
+    20 → 1,291 → UP,   UP,   UP,   UP       ← ngưỡng tối thiểu
+
+20 là giá trị ĐẦU TIÊN đủ, không phải giá trị an toàn nhất — cùng kỷ luật
+"chọn ngưỡng tối thiểu" mà `-e8` đã dùng khi chọn 60."""
+
+
 def _bars_4h_co_trend() -> list[tuple[float, float, float, float, float]]:
-    """85 ngày uptrend 80 → 100 (ADX 1D cao), rồi ĐÚNG mẫu zone của L-Z49
-    neo ở mức 100, rồi đuôi phẳng để lệnh có chỗ đóng theo DG8."""
+    """`N_NGAY_GIAM` ngày downtrend 100 → 60, RỒI `N_NGAY_TANG` ngày
+    uptrend 60 → 100, rồi ĐÚNG mẫu zone của L-Z49 neo ở mức 100, rồi đuôi
+    tăng nhẹ đơn điệu để lệnh có chỗ đóng theo DG8 mà không tạo swing giả.
+
+    🔴 **PHA GIẢM THÊM VÀO Ở TD-0182, và lý do là một phép ĐO chứ không
+    phải một linh cảm.** Bản trước chỉ có đoạn dốc tăng đơn điệu. Đo trên
+    chính bộ sinh này (92 nến 1D): `tuoi_trend_nen()` trả `None` ở
+    **92/92** nến, vì EMA20/50 khung 1D **chỉ mang MỘT dấu trên toàn
+    chuỗi** — dốc đơn điệu thì không bao giờ có cross, mà hàm đó đếm từ
+    lần cross gần nhất. Điều kiện (4) của §2.5 (`tuổi ≥ 5`) do đó chặn
+    100% số nến ⇒ `enter_long` KHÔNG BAO GIỜ được đặt ⇒ backtest ra **0
+    lệnh** cho mọi arm `DAY_DU`.
+
+    🔑 **Không ai viết sai dòng nào — fixture đúng với hệ thống CŨ.** Chú
+    thích dốc `60→100` bên dưới ghi rõ đã sweep cho *"tuổi trend ≥5 ngày"*,
+    nhưng là ở khung **4H**; lúc đó `populate_entry_trend` chỉ có mẩu
+    ADX(1D). Phần nối TD-0182 mới bật cổng **hướng 1D + tuổi trend 1D**,
+    và fixture im lặng sai với hệ thống MỚI. Cùng họ với bài học TD-0170:
+    bộ test dựa vào chi tiết của bộ sinh **được thêm vì lý do khác**.
+
+    Hình chữ V tạo ra một cross THẬT ở khung ngày. Vì sao pha giảm phải
+    dài: `EMA50(1D)` ăn 49 nến warmup, mà `tuoi_trend_nen()` quét ngược
+    gặp `NaN` là trả `None` — nên điểm cross phải nằm SAU vùng NaN thì
+    mới đếm được tuổi. 60 ngày cho cross rơi vào khoảng ngày 75-80 trên
+    tổng ~145, cách vùng NaN một quãng an toàn.
+
+    ⚠️ Đáy chữ V là một swing THẬT nên sinh zone thật — nhưng nó nằm
+    ngoài `TIMERANGE` (18 ngày cuối), nên KHÔNG tạo thêm lệnh nào và
+    không làm lệch phép so `ZoneAbsorption` ↔ `Minimal`. Đó cũng là lý do
+    `_sinh_du_lieu()` neo mốc KẾT THÚC chứ không neo mốc bắt đầu."""
     b: list[tuple[float, float, float, float, float]] = []
-    n_pre = 85 * 6
+    n_giam = N_NGAY_GIAM * 6
+    for k in range(n_giam):
+        # Gương của đoạn dốc tăng: 100 → GIA_DAY, cùng biên độ nến. Kết thúc
+        # ở ~GIA_DAY nên nối liền mạch với khởi điểm của pha tăng.
+        base = 100.0 - (100.0 - GIA_DAY) * k / n_giam
+        o = base + (0.2 if k % 2 else -0.2)
+        b.append((o, o + 0.4, o - 0.4, o + (0.1 if k % 2 else -0.1), 1000.0))
+    n_pre = N_NGAY_TANG * 6
     for k in range(n_pre):
-        base = 80.0 + 20.0 * k / n_pre
+        # 🔴 ĐO, không đoán — nguyên tắc của `-e8`, giữ nguyên; chỉ CON SỐ
+        # đổi 60 → `GIA_DAY` = 20 vì DG2 đòi chặt hơn tiêu chí cũ (xem
+        # docstring của `GIA_DAY`). Độ dài `n_pre` giữ nguyên cho warmup
+        # 1000 nến 1H + tuổi trend ≥ 5 ngày.
+        base = GIA_DAY + (100.0 - GIA_DAY) * k / n_pre
         o = base + (0.2 if k % 2 else -0.2)
         b.append((o, o + 0.4, o - 0.4, o + (0.1 if k % 2 else -0.1), 1000.0))
     b += [
@@ -70,15 +133,50 @@ def _bars_4h_co_trend() -> list[tuple[float, float, float, float, float]]:
         (95.10, 95.60, 95.00, 95.50, 1000.0),
         (95.50, 96.00, 95.40, 95.90, 1000.0),
     ]
+    # 🔴 Bug thật bắt được bằng ĐO, không đoán: `low` HẰNG SỐ trong đuôi
+    # tạo một cao nguyên phẳng, và `la_diem_swing()` so `gia[i] ==
+    # min(cửa_sổ)` — với mọi giá trị BẰNG NHAU thì MỌI bar trong đuôi đều
+    # "hoà điểm tối thiểu", sinh ra 26 swing GIẢ (đo được: index 523-546,
+    # `low` = 95.5 không đổi). Zone giả ở đuôi có thể tạo lệnh THỨ HAI
+    # ngoài ý muốn, làm `_lenh_du_ba_tranche()` chọn nhầm swing (đã xảy ra
+    # — hàm chọn `found[-1]` tưởng là tín hiệu thật, hoá ra là swing giả
+    # cuối đuôi). Sửa: `low` TĂNG ĐƠN ĐIỆU nghiêm ngặt, không còn hoà.
     for k in range(30):
-        b.append((95.9, 96.3, 95.5, 95.9 + (0.1 if k % 2 else -0.1), 1000.0))
+        low = 95.5 + k * 0.01
+        b.append((95.9, 96.3 + k * 0.01, low, 95.9 + (0.1 if k % 2 else -0.1) + k * 0.01, 1000.0))
     return b
+
+
+KET_THUC_1H = pd.Timestamp("2025-04-02 15:00", tz="UTC")
+"""Mốc nến 1H CUỐI CÙNG của bộ sinh — neo ở ĐUÔI, không ở đầu (xem chú
+thích trong `_sinh_du_lieu`)."""
+
+
+def _moc_bat_dau(so_nen_1h: int) -> pd.Timestamp:
+    """Mốc nến 1H ĐẦU TIÊN, suy từ đuôi và độ dài chuỗi.
+
+    🔴 Tồn tại để có MỘT nguồn sự thật cho mốc thời gian. Bản trước neo
+    mốc đầu bằng hằng số `"2025-01-01"` viết ở hai chỗ, và ca
+    `test_enter_tag_...` chép lại hằng số đó lần thứ ba để đổi giờ mở lệnh
+    ra chỉ số nến. Khi TD-0182 kéo dài lịch sử (thêm pha giảm), mốc đầu
+    dịch về 2024-11 nhưng ca test vẫn tính theo 2025-01-01 ⇒ nó soi **sai
+    nến** — mà vẫn XANH, vì nến sai tình cờ cũng UP. Một phép kiểm xanh vì
+    trùng hợp còn tệ hơn không có, nên mốc phải suy ra chứ không chép lại.
+    """
+    return KET_THUC_1H - pd.Timedelta(hours=so_nen_1h - 1)
 
 
 def _sinh_du_lieu(datadir: Path) -> None:
     rows4 = _bars_4h_co_trend()
     rows1 = [x for bar in rows4 for x in _chia_nho(bar, 4)]
-    idx1 = pd.date_range("2025-01-01", periods=len(rows1), freq="1h", tz="UTC")
+    # 🔴 TD-0182 — NEO MỐC KẾT THÚC, không neo mốc bắt đầu. `TIMERANGE`
+    # chỉ phủ 18 ngày CUỐI (phần trước là warmup), nên nối thêm lịch sử
+    # vào đầu chuỗi không sinh thêm lệnh nào — miễn là mẫu zone vẫn rơi
+    # đúng chỗ cũ trên lịch. Neo mốc bắt đầu thì mẫu zone trôi ra khỏi
+    # `TIMERANGE` và backtest ra 0 lệnh vì một lý do HOÀN TOÀN KHÁC với
+    # lý do đang sửa — đúng loại nhầm lẫn tốn cả buổi để truy.
+    bat_dau = _moc_bat_dau(len(rows1))
+    idx1 = pd.date_range(bat_dau, periods=len(rows1), freq="1h", tz="UTC")
     df1 = pd.DataFrame(rows1, columns=["open", "high", "low", "close", "volume"])
     df1.insert(0, "date", idx1)
     agg = {"open": "first", "high": "max", "low": "min", "close": "last", "volume": "sum"}
@@ -86,7 +184,7 @@ def _sinh_du_lieu(datadir: Path) -> None:
     df1d = df1.set_index("date").resample("1D").agg(agg).reset_index()
     rows5 = [x for bar in rows1 for x in _chia_nho(bar, 12)]
     df5 = pd.DataFrame(rows5, columns=["open", "high", "low", "close", "volume"])
-    df5.insert(0, "date", pd.date_range("2025-01-01", periods=len(rows5), freq="5min", tz="UTC"))
+    df5.insert(0, "date", pd.date_range(bat_dau, periods=len(rows5), freq="5min", tz="UTC"))
 
     d = datadir / "futures"
     fund = pd.DataFrame({"date": idx1, "open": 0.0, "high": 0.0, "low": 0.0, "close": 0.0, "volume": 0.0})
@@ -254,10 +352,19 @@ class TestTagMangDuKhoaMoi:
         import talib
         from tool_d.trend_context import trend_dir_tai
 
-        dong = np.asarray([b[3] for b in _bars_4h_co_trend()], dtype=float)
-        t0 = pd.Timestamp("2025-01-01", tz="UTC")
+        rows4 = _bars_4h_co_trend()
+        dong = np.asarray([b[3] for b in rows4], dtype=float)
+        # 🔴 Mốc đầu SUY RA từ `_moc_bat_dau()`, KHÔNG chép hằng số. Bản
+        # trước viết cứng `"2025-01-01"`; TD-0182 kéo dài lịch sử làm mốc
+        # thật lùi về 2024-11, nên chỉ số tính ra trỏ vào GIỮA đoạn dốc —
+        # sai nến, mà vẫn xanh vì nến sai tình cờ cũng UP.
+        t0 = _moc_bat_dau(len(rows4) * 4)
         mo = pd.Timestamp(t["open_date"])
         idx_nen_dong_truoc = int((mo - t0) / pd.Timedelta(hours=4)) - 1
+        assert 0 <= idx_nen_dong_truoc < len(rows4), (
+            f"chỉ số nến {idx_nen_dong_truoc} nằm ngoài chuỗi {len(rows4)} nến — "
+            "mốc thời gian và bộ sinh đã lệch nhau"
+        )
         ema_f, ema_s = talib.EMA(dong, timeperiod=20), talib.EMA(dong, timeperiod=50)
         # tín hiệu sinh ở nến j (đóng trước lệnh); trend ghi vào tag là trend TẠI j
         ky_vong = {trend_dir_tai(ema_f, ema_s, i) for i in (idx_nen_dong_truoc, idx_nen_dong_truoc - 1)}

@@ -56,11 +56,27 @@ TANG_HOP_LE: tuple[TangLocTrend, ...] = ("KHONG", "CHI_4H", "DAY_DU")
 
 #: Ánh xạ tên arm → tầng. `Z0` và `Z0-T2` TRÙNG nhau có chủ đích (xem
 #: docstring module): Z0-T2 là mốc so sánh, không phải arm mới.
+#:
+#: 🔴 **9 khoá — trùng đúng `arm_switches.ARM_HOP_LE` + alias `Z0-T2`.**
+#: Chỉ `Z0-T0`/`Z0-T1` đổi trục trend; trục MÀ ARM ĐÓ THỰC SỰ ĐO
+#: (SL/cỡ lệnh/DG/volume) không liên quan tới trục trend, nên Z1, Z2, Z3,
+#: Z3b, Z0-V1, Z0-S1 đều giữ `DAY_DU` — tắt trend filter cho chúng sẽ đo
+#: một biến thứ hai không ai đăng ký (MT-15's bài học: trộn hai trục vào
+#: một arm). Bản đầu (TD-0182 phần độc lập, trước khi nối vào chiến lược)
+#: chỉ có 4 khoá vì lúc đó chưa cần chạy CHIẾN LƯỢC với arm khác ngoài
+#: nhóm T0/T1/T2 — thiếu sót lộ ra ngay khi `ZoneAbsorption` nạp với
+#: `arm_ablation.arm = "Z3"` (cấu hình mặc định) và `tang_cua_arm` raise.
 TANG_THEO_ARM: dict[str, TangLocTrend] = {
     "Z0-T0": "KHONG",
     "Z0-T1": "CHI_4H",
     "Z0-T2": "DAY_DU",
     "Z0": "DAY_DU",
+    "Z1": "DAY_DU",
+    "Z2": "DAY_DU",
+    "Z3": "DAY_DU",
+    "Z3b": "DAY_DU",
+    "Z0-V1": "DAY_DU",
+    "Z0-S1": "DAY_DU",
 }
 
 

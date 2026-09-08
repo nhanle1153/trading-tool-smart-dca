@@ -118,9 +118,10 @@ from tool_d.sizing import (
     mult_regime,
     mult_zss,
 )
+from tool_d.arms import du_dieu_kien_trend_theo_tang, tang_cua_arm
 from tool_d.time_stop import is_time_stop_triggered
 from tool_d.trade_plan import KeHoachTranche, tinh_ke_hoach
-from tool_d.trend_context import trend_dir_tai
+from tool_d.trend_context import trend_dir_tai, tuoi_trend_nen
 from tool_d.zone_detection import K_XAC_NHAN, la_diem_swing, zone_da_bi_huy
 from tool_d.zone_strength import compression, touch_count, volume_ratio, zone_hop_le, zss
 
@@ -196,6 +197,7 @@ class ZoneAbsorption(IStrategy):
         self._notional_co_dinh = resolve(self._cfg, "tier_c.arm_ablation.notional_co_dinh_usdt")
         self._l_exchange = float(resolve(self._cfg, "tier_a.L_exchange"))
         self._adx_threshold = float(resolve(self._cfg, "tier_frozen.adx_threshold.value"))
+        self._tang_loc_trend = tang_cua_arm(self._arm)  # TD-0182 — công tắc Phần 2 theo arm
         self._cho: dict[str, dict] = {}   # pair → kế hoạch cỡ lệnh chờ order_filled
         self._halt: set[str] = set()      # pair đang bị HALT tại lúc định cỡ
         self._dinh_equity: float | None = None
@@ -214,9 +216,33 @@ class ZoneAbsorption(IStrategy):
         dataframe = merge_informative_pair(dataframe, inf4, self.timeframe, self.informative_timeframe, ffill=True)
 
         inf1d = self.dp.get_pair_dataframe(pair=metadata["pair"], timeframe=self.informative_1d)
-        inf1d["adx"] = talib.ADX(inf1d["high"], inf1d["low"], inf1d["close"], timeperiod=14)
-        dataframe = merge_informative_pair(dataframe, inf1d[["date", "adx"]], self.timeframe, self.informative_1d, ffill=True)
+        inf1d = self._tinh_trend_1d(inf1d)
+        dataframe = merge_informative_pair(
+            dataframe, inf1d[["date", "adx", "trend_dir_1d", "tuoi_trend_1d"]],
+            self.timeframe, self.informative_1d, ffill=True,
+        )
         return dataframe
+
+    def _tinh_trend_1d(self, inf1d: pd.DataFrame) -> pd.DataFrame:
+        """§2.1/§2.3 — `trend_dir_tai`/`tuoi_trend_nen` trên khung 1D, cùng
+        cặp EMA20/50 dùng ở khung 4H (`_tinh_zone_4h`). Hàm THUẦN của
+        `trend_context` không đổi; đây chỉ là chỗ gọi theo hàng.
+
+        `tuoi_trend_nen()` trả `None` khi chưa đủ dữ liệu — lưu tạm thành
+        `NaN` (giới hạn của cột `float`), rồi **đổi ngược về `None`** trước
+        khi gọi `du_dieu_kien_vao_lenh()` ở `populate_entry_trend`. Không
+        đổi ngược là một lỗi câm: `NaN < 5` là `False` trong Python, nên
+        chốt `tuoi_nen is None or tuoi_nen < 5` sẽ ĐI QUA nhánh `None` mà
+        không raise và cũng không chặn — tức "chưa đủ dữ liệu" bị đọc
+        nhầm thành "đã qua chốt", đúng chiều fail-OPEN mà N6 cấm.
+        """
+        n = len(inf1d)
+        dong = np.asarray(inf1d["close"].tolist(), dtype=float)
+        ema_f, ema_s = talib.EMA(dong, timeperiod=EMA_NHANH), talib.EMA(dong, timeperiod=EMA_CHAM)
+        inf1d["adx"] = talib.ADX(inf1d["high"], inf1d["low"], inf1d["close"], timeperiod=14)
+        inf1d["trend_dir_1d"] = [trend_dir_tai(ema_f, ema_s, i) for i in range(n)]
+        inf1d["tuoi_trend_1d"] = [tuoi_trend_nen(ema_f, ema_s, i) for i in range(n)]
+        return inf1d
 
     def _tinh_zone_4h(self, inf: pd.DataFrame) -> pd.DataFrame:
         """CHÉP NGUYÊN logic Minimal._tinh_zone_4h — cùng zone trên cùng dữ
@@ -259,13 +285,51 @@ class ZoneAbsorption(IStrategy):
         return inf
 
     def populate_entry_trend(self, dataframe: pd.DataFrame, metadata: dict) -> pd.DataFrame:
-        sfx = f"_{self.informative_timeframe}"
-        # Mẩu DUY NHẤT của §2.5 nối ở đây: ADX(1D) ≥ ngưỡng — vì mult_regime
-        # không có nhánh cho ADX thấp hơn (spec: "§2.5 đã chặn"). Phần còn lại
-        # của Phần 2 + §3.3b là TD-0182.
-        hop_le = dataframe[f"zone_valid{sfx}"] & (dataframe[f"adx_{self.informative_1d}"] >= self._adx_threshold)
+        """TD-0182 — Phần 2 (bộ lọc trend) nối qua công tắc theo arm.
+
+        Trước bản này, cổng DUY NHẤT ở đây là mẩu §2.5 `ADX(1D) ≥ ngưỡng`
+        (giữ lại vì `mult_regime` cần nó — xem docstring module). Từ đây
+        toàn bộ Phần 2 chạy qua `arms.du_dieu_kien_trend_theo_tang()`, đúng
+        tầng của arm đang chạy: `KHONG` (Z0-T0) tắt hết, `CHI_4H` (Z0-T1)
+        chỉ còn hướng 4H, `DAY_DU` (Z0/Z0-T2 và mọi arm khác) đủ bốn điều
+        kiện §2.1/§2.2/§2.5/§2.3. `huong_muc_tieu = "UP"` cố định — LONG
+        only (DR-D4-01).
+        """
+        sfx4, sfx1d = f"_{self.informative_timeframe}", f"_{self.informative_1d}"
+
+        def _dat_dieu_kien_trend(hang: pd.Series) -> bool:
+            huong_1d, huong_4h = hang[f"trend_dir_1d{sfx1d}"], hang[f"trend_dir_4h{sfx4}"]
+            adx, tuoi = hang[f"adx{sfx1d}"], hang[f"tuoi_trend_1d{sfx1d}"]
+            # Vùng warmup: informative chưa có giá trị nào để ffill ⇒ NaN.
+            # KHÔNG vào lệnh khi thiếu bằng chứng — với bộ lọc VÀO LỆNH thì
+            # `False` đúng nghĩa "chưa đủ căn cứ để mở", không phải gộp
+            # "không đo được" vào "đã đo và trượt" như ở tầng cổng DG.
+            if pd.isna(huong_1d) or pd.isna(huong_4h) or pd.isna(adx):
+                return False
+            return du_dieu_kien_trend_theo_tang(
+                tang=self._tang_loc_trend,
+                huong_muc_tieu="UP",
+                huong_1d=huong_1d,
+                huong_4h=huong_4h,
+                adx_1d=adx,
+                tuoi_nen_1d=None if pd.isna(tuoi) else int(tuoi),
+            )
+
+        # 🔴 `.fillna(False)` KHÔNG phải cho gọn: `zone_valid_4h` mang NaN ở
+        # vùng warmup (trước nến 4H đầu tiên chưa có gì để ffill), và pandas
+        # TỪ CHỐI dùng mảng chứa NaN làm mặt nạ ("Cannot mask with non-boolean
+        # array containing NA / NaN values"). Bộ sinh tổng hợp không có vùng
+        # đó nên lỗi này chỉ lộ ra trên dữ liệu THẬT.
+        zone_ok = dataframe[f"zone_valid{sfx4}"].fillna(False).astype(bool)
+        # Chỉ đánh giá trend trên các hàng có zone hợp lệ — tránh gọi hàm
+        # Python hàng trăm nghìn lần vô ích trên toàn bộ dataframe.
+        trend_ok = pd.Series(False, index=dataframe.index)
+        if zone_ok.any():
+            trend_ok.loc[zone_ok] = dataframe.loc[zone_ok].apply(_dat_dieu_kien_trend, axis=1)
+
+        hop_le = zone_ok & trend_ok
         dataframe.loc[hop_le, "enter_long"] = 1
-        dataframe.loc[hop_le, "enter_tag"] = dataframe.loc[hop_le, f"ke_hoach_json{sfx}"]
+        dataframe.loc[hop_le, "enter_tag"] = dataframe.loc[hop_le, f"ke_hoach_json{sfx4}"]
         return dataframe
 
     def populate_exit_trend(self, dataframe: pd.DataFrame, metadata: dict) -> pd.DataFrame:
