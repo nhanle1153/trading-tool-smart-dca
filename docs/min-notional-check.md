@@ -145,7 +145,7 @@ Bốn mã rớt ngay ở ca tốt nhất trên **cả hai** đường chạy: **
 L-Z20 không đổi (dung sai neo vào `rho` thô theo spec dòng 2751, không hạ theo `mult_*`):
 81/102 · 91/102 · 94/102.
 
-### 4.3 Vách 0/102 — điều đáng sợ hơn con số
+### 4.4 Vách 0/102 — điều đáng sợ hơn con số
 
 Sàn thấp nhất mà mọi mã đều có là `5 × hệ_số` — 5,53 ở backtest, 7,50 ở live. Nên khi tranche 1 tụt
 xuống dưới ngưỡng đó thì **không phải "vài mã rớt" mà là KHÔNG MÃ NÀO vào lệnh được**: bảng live
@@ -165,7 +165,48 @@ Không log, không exception. Lệnh biến mất **im lặng**, y hệt hình d
 fail-closed bị nuốt là một chốt KHÔNG TỒN TẠI"*. Hệ quả cho D4: hai arm khác nhau ở `Π mult_*` sẽ
 khác nhau ở **số lệnh vào được**, mà bảng kết quả §10.2 trông vẫn hoàn toàn bình thường.
 
-### 4.4 Kết luận theo tiêu chí nghiệm thu gốc của TD-0082
+### 4.5 Xác nhận độc lập trên LỆNH THẬT (phiên `-f4`, 09/09/2026)
+
+Mục 4.2–4.4 đo trên **metadata sàn** — nó nói *"cỡ lệnh sẽ rớt sàn"*, chưa nói *"đã rớt"*. Phiên `-f4`
+tình cờ gặp mặt còn lại khi chạy backtest `ZoneAbsorption` trên [T0, T2] cho TD-0182, và báo lại:
+
+| Tập | Quan sát |
+|---|---|
+| BTC | **48 exception** `SizingError: stake tranche 1 = 7–17 < min_stake 23–36 USDT`; 2 lệnh, **0 tranche khớp** |
+| ETH | 24 exception cùng dạng |
+| 48 mã alt EXPLORE | **17 exception / 81 lệnh** (~21% số lệnh mất một tranche) |
+
+**Tái lập bằng mô hình của mục này** (đo lại 09/09/2026, không lấy con số của phiên kia làm gốc):
+
+| Mã | `MIN_NOTIONAL` | `minQty × giá` | Sàn notional (backtest) | Sàn ký quỹ ở 3x |
+|---|---|---|---|---|
+| BTCUSDT | 50,00 | **78,54** ← vế thắng | 82,47 | **27,49** |
+| ETHUSDT | 20,00 ← vế thắng | 2,49 | 22,11 | 7,37 |
+
+27,49 nằm gọn trong dải **23–36** mà `-f4` quan sát ⇒ mô hình sàn của mục này **tái lập được lệnh
+thật**, không chỉ đúng trên giấy. Và với BTC thì vế thắng là **`minQty × giá`** — đúng cái vế mà
+`build_symbol_filters()` bản đầu **không đọc**.
+
+🔴 **Ba ghi chú để không ai đọc quá tay số liệu này:**
+
+1. **BTC/ETH KHÔNG nằm trong pool giao dịch** (TD-0083 loại hẳn, chỉ giữ ở tập EXPLORE). Nên 72
+   exception của BTC/ETH **không phải** vi phạm mới của pool 102 mã — nó là bằng chứng về **cơ chế**.
+   Con số đáng lo là **17/81 trên tập alt**.
+2. **Cỡ lệnh rơi dưới sàn theo GIÁ của mã, không theo mã.** Mã đắt dính nặng, alt rẻ hầu như không.
+   Nên một lượt kiểm chỉ chạy trên một mã rẻ sẽ **không thấy gì**.
+3. 🔴 **Vế *"chưa chia đòn bẩy"* vẫn SAI, kể cả trước số liệu này** — và đây là chỗ dễ kết luận
+   ngược nhất. Freqtrade đòi `min_stake` 27,49 = `82,47 / 3`: nó **đã** chia đòn bẩy. Nhưng `stake`
+   ta trả cũng là `notional / 3`. Hai vế **cùng** chia 3 nên tỉ số không đổi; chia thêm lần nữa ở
+   phía ta sẽ làm mọi mã "qua" trong khi sàn thật không hề đổi. Cùng một quan sát (*"con số của
+   Freqtrade đã tính đòn bẩy"*) dẫn tới hai kết luận trái ngược tuỳ người đọc có nhìn **cả hai vế**
+   hay chỉ một. Test ghim: `test_don_bay_khong_co_mat_va_do_la_co_y`.
+
+**Điều mục 4.2 KHÔNG đo được mà số liệu này đo được:** exception `SizingError` của ta bị Freqtrade
+**NUỐT** (`strategy_safe_wrapper` hạ xuống WARNING, `rc = 0`) — backtest báo thành công với 72 lệnh
+biến mất. Cùng hình dạng MT-16 (vii), nhưng lần này chứng kiến trên lượt chạy thật chứ không suy ra
+từ mã nguồn.
+
+### 4.6 Kết luận theo tiêu chí nghiệm thu gốc của TD-0082
 
 **Min notional: CÓ vi phạm** (4/102 ở ca tốt nhất trên cả hai đường chạy; 100% ở
 `Π mult_* ≤ 0,326` zone rộng với đường live, ≤ 0,175 với đường backtest) ⇒ theo đúng
