@@ -266,6 +266,37 @@
 
 ---
 
+## Khối 15 — D3.5: 🚪 Cổng sai lệch thước đo (DR-015), CHẶN D4 (mở 08/09/2026)
+
+> 🔴 **Vì sao cổng này tồn tại và vì sao nó đứng TRƯỚC D4.** Z0 và các nhánh DCA **không được đo
+> bằng cùng một bộ máy**: Z0 đi đường vào lệnh chuẩn (một lần khớp), tranche 2+ đi qua
+> `adjust_trade_position()` — đánh giá THEO NẾN tại giá MỞ nến (giả định D6). Chênh lệch quan sát
+> được = chênh CHIẾN LƯỢC thật **+** chênh THƯỚC ĐO, và backtest **không tách được**. Sai số cộng
+> dồn theo số tranche: nhánh k tranche chịu k lần, Z0 chịu một — **không tự triệt tiêu**.
+>
+> v7 để trạng thái tệ nhất có thể (đo D6 ở D10, tức SAU ablation, rồi "đọc lại"). v8 tách phép
+> thăm dò ra thành cổng chặn TRƯỚC D4, vì *đọc kết quả Z0-vs-DCA rồi mới đo thước là kết luận đã
+> hình thành trên thước chưa kiểm* (spec dòng 278).
+>
+> 🔑 **Ba việc đã có sẵn, không phải làm lại:** Bước 1 gần như đo xong ở **TD-0115** (91 lượt khớp
+> tranche trên CALIB, dữ liệu 5m thật — spec đòi ≥30); `L-Z55` đã có máy canh timerange;
+> `binance_public.py` đã là cửa mạng duy nhất (R1) và biết ký request (TD-0116).
+>
+> 🔢 **Đánh số từ TD-0160, bỏ trống 0151–0159** — cùng lý do Khối 14 bỏ trống 0131–0139: các phiên
+> song song đang ở TD-0150 và sẽ đi tiếp lên.
+
+| Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
+|---|---|---|---|---|
+| TD-0160 | 🔴 **DR-D35-01 — chốt MÔI TRƯỜNG ĐO Bước 2 + cách quy đổi sang đơn vị R.** Lộ trình cũ ghi *"cần testnet, mà Freqtrade tắt testnet"* — **đóng khung SAI**: Bước 2 không cần Freqtrade (spec §2: *"không cần chiến lược hoàn chỉnh, không cần bot chạy thật"*), và testnet có thật, gọi được. Câu hỏi thật là **đo ở đâu thì con số mang thông tin về thị trường ta sẽ giao dịch** | ✅ | TD-0147 ✅ | File `docs/decisions/DR-D35-01-moi-truong-do-buoc-2.md` commit **RIÊNG và TRƯỚC** mọi dòng code đo — DR-015 §4 tự cấm đặt ngưỡng sau khi thấy số, chọn môi trường sau khi thấy kết quả là uốn kết luận bằng cách khác. **Xác nhận** (commit `4c55b78`): chốt **suy tỷ lệ không-khớp từ `aggTrades` production THẬT, không đặt lệnh nào**; đầu ra là **KHOẢNG** `[p_nf_thap, p_nf_cao]` chứ không phải một số. **LOẠI testnet dù là chữ của spec** — sổ lệnh riêng, mỏng, phần lớn bot thử ⇒ con số về MỘT THỊ TRƯỜNG KHÁC, đúng lỗi `N6` chặn, nguy gấp đôi vì Δ_R chảy thẳng vào phân xử Z0-vs-DCA. Ghi rõ 3 thứ phương án KHÔNG thấy được (post-only bị từ chối / khớp một phần / vị trí hàng đợi) — cả ba đều được vùng bất định bao phủ về phía an toàn. 3 điều kiện mở lại viết trước. 🔴 Sai khác với spec → **mục Mâu thuẫn `back-end-note.md`**, chờ lệnh "chuẩn hóa và lưu" |
+| TD-0161 | **Bước 1 — quy đổi phân phối lệch sang đơn vị R và tính Δ_R** (KHÔNG đo lại: dùng đúng 91 lượt khớp của TD-0115). `lệch_R = (fill − p_i) / planned_risk_usdt` với mẫu số **ĐÓNG BĂNG tại tranche 1** (DR-013 §2 — không dùng giá vào trung bình, không `initial_stop_loss_abs`) | 🔓 | TD-0160 | `lệch-mỗi-lệnh = Σ|lệch_R|` của tranche **≥ 2** (tranche 1 không tính — Z0 cũng có nó); `Δ_R = P90` nếu `n ≥ 30`, `= max` nếu `n < 30` (fail-closed); tách **Long/Short**, Short ghi **`unreadable` KHÔNG phải 0** (chiến lược hiện LONG-only). Ghi **dòng `CTRL`, 0 trial** + assert timerange `L-Z55`. Chạy trên **CALIB**, không WFO |
+| TD-0162 | **Bước 2 — đo tỷ lệ NO_FILL từ dữ liệu khớp lệnh THẬT** (`aggTrades` production, không đặt lệnh). Ba trạng thái: chắc chắn khớp / bất định (low == `p`, hoặc khớp một phần) / chắc chắn không khớp | 🔓 | TD-0160 | Trả về **KHOẢNG** `[p_nf_thap, p_nf_cao]`, **cấm tự thu về một điểm**; mọi lệnh gọi mạng đi qua `binance_public.py` (R1 single egress), không module thứ hai. Không đủ sự kiện → ghi **`UNKNOWN`** theo đường fail-closed của DR-015 §2, KHÔNG bịa số |
+| TD-0163 | **Bước 3 — đối chứng âm (BẮT BUỘC)**: chạy CẢ Bước 1 và Bước 2 cho nhánh **Z0** | 🔓 | TD-0161, TD-0162 | Không có mốc tham chiếu thì con số lệch của DCA **không biết là lớn hay nhỏ**. Hai nhánh lệch tương đương ⇒ sai số phần lớn triệt tiêu khi so sánh; chỉ DCA lệch ⇒ xác nhận đúng vấn đề. Kết luận phải ghi rõ rơi vào vế nào |
+| TD-0164 | **§4 — hiệu chỉnh cực đoan HAI CHIỀU + `L-Z58`**. Chiều 1: trừ Δ_R khỏi expectancy mọi arm DCA. Chiều 2: cộng Δ_R. Cùng nhánh thắng ở CẢ HAI ⇒ kết luận VỮNG; người thắng ĐỔI ⇒ backtest **không đủ tư cách phân xử** ⇒ áp §5.1 (mặc định **Z0**) | 🔓 | TD-0163 | 🔴 **Cố ý KHÔNG có ngưỡng phần trăm cho "lệch bao nhiêu là nhiều"** — ngưỡng tuỳ tiện là chỗ uốn kết luận sau khi thấy số. `L-Z58`: bộ giả lập chênh **NHỎ hơn** Δ_R → kết luận "KHÔNG PHÂN XỬ ĐƯỢC" + chọn Z0; chênh **LỚN hơn** → kết luận không đổi giữa hai chiều và biên hiệu chỉnh ghi kèm kết quả |
+| TD-0165 | 🔴 **`L-Z56` CRITICAL — bộ chạy ablation TỪ CHỐI khởi động** khi chưa có kết quả Δ_R của cổng D3.5 (cả ba bước, cả hai chiều) đã commit | 🔓 | TD-0164 | Chạy bất kỳ arm ablation nào mà thiếu Δ_R đã commit → **exit ≠ 0, không chạm dữ liệu**. Đây là thứ biến "phải đo thước trước" từ kỷ luật con người thành máy từ chối |
+| TD-0166 | 🚪 **GATE D3.5** — điều kiện vào D4 | 🔓 | TD-0161…TD-0165 | `runtime_state.json.d3_5_complete` + tag `d3-5-complete`, dùng lại khuôn `close_d3_gate()`: đòi `d3_complete`, **kiểm cây làm việc sạch**, chạy RIÊNG từng file test khoá cốt lõi (`L-Z56`, `L-Z58`) đòi số ca PASS ≥ 1. Ghi `d3_5_han_che` nói rõ Bước 2 đo **gián tiếp** từ dữ liệu khớp lệnh, không phải từ lệnh thật — và ba thứ nó không thấy được |
+
+---
+
 ## Việc đã biết là sẽ có, chưa mở
 
 | Giai đoạn | Nội dung | Chặn bởi |
@@ -273,7 +304,7 @@
 | ~~D1~~ ✅ **ĐÃ MỞ 07/09/2026** | H20 ✅ (xong ở D0-PRE) · H1-D · H4-D · H13 · H19 → **Khối 9–12** bên trên (TD-0090…TD-0110) | — |
 | ~~D2~~ ✅ **ĐÃ MỞ 07/09/2026** | Verify giả định D1–D7 (§9b.2), H15 → **Khối 13** bên trên (TD-0111…TD-0117). L-Z49 (D7) là điều kiện vào D4 | — |
 | ~~D3~~ ✅ **ĐÃ ĐÓNG 08/09/2026** | H3-D walk-forward orchestrator → **Khối 14** bên trên (TD-0140…TD-0148), tag `d3-complete`. 🔴 Cổng chứng nhận **bộ điều phối** đúng, **không** chứng nhận đã có kết quả WFO — chưa có bộ chạy backtest thật | — |
-| D3.5 | 🚪 Cổng sai lệch thước đo (DR-015) — **chặn D4**, cần testnet | D3 |
+| ~~D3.5~~ ✅ **ĐÃ MỞ 08/09/2026** | 🚪 Cổng sai lệch thước đo (DR-015) — **chặn D4** → **Khối 15** bên trên (TD-0160…TD-0166). 🔴 Chữ "cần testnet" ở đây là đóng khung SAI, xem DR-D35-01 | — |
 | D4 | 🔴 Ablation D0.9, 9 cấu hình × 2 hướng — **blocker B4** | D3.5 + TD-0041 (B6) |
 | D9.5 | Lockbox chạm **đúng một lần** | D9 |
 | D10–D12 | Testnet quy mô đầy đủ → dry-run → live vốn nhỏ | D9.5 |
