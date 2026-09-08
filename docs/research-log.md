@@ -1477,3 +1477,84 @@ tập §3 cần, **không** trả lời câu rộng hơn.
   `close_d3_gate()` nay trùng với helper `_chay_rieng_tung_file()`. KHÔNG refactor code của một
   cổng ĐÃ ĐÓNG. Đây là trùng lặp của một **cơ chế an toàn** — đáng gộp khi có dịp an toàn.
 
+
+## 09/09/2026 — DG2 có giết tranche 3 không? Đo trên dữ liệu thật (TD-0182, phiên `-f4`)
+
+**Chẩn đoán §0d.7: "bot sai" hay "tầng đo sai"?** → **Tầng đo sai (fixture), bot đúng.**
+
+### Chuỗi bốn giả thuyết, mỗi cái bị một phép đo bác
+
+| # | Giả thuyết nghe hợp lý | Phép đo bác nó | Thời gian đo |
+|---|---|---|---|
+| 1 | "125 dòng nối TD-0182 bị lỗi nên 0 lệnh" | `tuoi_trend_nen()` trả `None` ở **92/92** nến 1D; EMA20/50 chỉ **một dấu** trên toàn chuỗi ⇒ dốc đơn điệu không bao giờ cross | < 1 phút |
+| 2 | "pha giảm tôi thêm vào làm lật EMA 4H" | EMA 4H quanh nến tín hiệu **giống hệt từng con số** cũ/mới | < 1 phút |
+| 3 | "DG2 đọc chặt giết tranche 3 một cách hệ thống" | 48 mã alt EXPLORE, [T0,T2]: chặt **21,0%** vs lỏng **22,2%** đủ ba tranche | 2 lượt backtest |
+| 4 | "DG4 cũng chặn nên vá dốc chưa đủ" | Các dòng `DG4: False` nằm ở **+11h**, tức phần đuôi log tôi đã cắt bằng `tail -30`; ở mốc +8h chỉ DG2 chặn | đọc lại log |
+
+### Kết luận
+
+**DG2 đọc chặt (`UP → FLAT` cũng fail) KHÔNG giết tranche 3.** Giá của nó là **1,2 điểm
+phần trăm** ≈ một lệnh trên 81. Diễn giải của phiên `-2f` đứng vững; không mở DR.
+
+Fixture cũ khớp đủ 3 tranche là **TRÙNG HỢP**: hệ thống cũ không lọc trend nên lệnh mở
+lúc 4H đang DOWN ⇒ `t4=DOWN` ⇒ tranche 2/3 vẫn DOWN ⇒ `DOWN == DOWN` cho qua. Hệ thống
+mới bắt vào lệnh khi 4H UP, cú lùi kéo EMA20 xuống dưới EMA50 trong 1-2 nến ⇒ chặn.
+**Fixture cũ nghiệm thu cỗ máy DCA bằng một lệnh mà hệ thống mới sẽ không bao giờ mở.**
+
+### Hai con số về hệ thống, KHÔNG phải về fixture — phải đọc kèm mọi kết quả D4
+
+- **Chỉ ~21% số lệnh bơm đủ ba tranche; 41% dừng ở một tranche.** Ablation D4 sắp đo
+  một hệ thống mà tranche 2/3 hiếm khi xảy ra.
+- **DG4 (trần chờ 8 nến 1H) chặn nhiều gấp bảy DG2.** ⚠️ Nhưng tỉ lệ theo *lần xét cổng*
+  **thổi phồng cổng DAI** (hết cửa sổ rồi thì mọi lần hỏi sau đều chặn) và **làm nhẹ cổng
+  THOÁNG QUA**. Con số đáng tin là phân bố theo LỆNH. `dg4_bars_1h` là tham số `tier_b`
+  **chưa hề calibrate** (TD-0190: 12/12 đều là chỗ giữ).
+
+### Hình dạng lỗi thứ tư của dự án: BỘ SINH LỖI THỜI SO VỚI HỆ THỐNG NÓ NUÔI
+
+Ba hình dạng đã ghi trước đây: *lớp canh cùn* · *chĩa nhầm hướng* (ca sai chỉ đi qua mẫu
+dựng tay) · *người bị canh tự chọn phạm vi bị canh* (TD-0190). Cái thứ tư:
+**không ai viết sai dòng nào — fixture đúng với hệ thống CŨ và im lặng sai với hệ thống MỚI.**
+Nó im lặng theo hướng nguy nhất: không lỗi cú pháp, không ngoại lệ, chỉ **0 lệnh** — mà
+`0 lệnh` thì **mọi khẳng định về lệnh đều đúng-vô-nghĩa**. Nếu hai file test đó không có
+chốt PASS RỖNG thì cả 17 ca đã XANH và không ai biết gì.
+
+### Bẫy PASS RỖNG tự tạo rồi tự bắt — trường hợp cụ thể nhất từ trước tới nay
+
+`test_enter_tag_co_zs_t4_sw_va_t4_la_UP` chép hằng số `"2025-01-01"` (lần thứ BA trong
+file) để đổi giờ mở lệnh ra chỉ số nến. Kéo dài lịch sử làm mốc thật lùi về 2024-11:
+
+    chỉ số ĐÚNG (suy ra)          : 873  → nến giá 96,90  dir=UP   ← nến tín hiệu
+    chỉ số CŨ (hardcode 2025-01-01): 513  → nến giá 44,30  dir=UP   ← giữa đoạn dốc
+    lệch 360 nến = 60 NGÀY, và vẫn XANH vì nến sai tình cờ cũng UP
+
+Vá bằng `_moc_bat_dau()` suy từ đuôi — một nguồn sự thật cho mốc — cộng chốt chặn chỉ số
+ngoài phạm vi.
+
+### Lỗi chỉ lộ trên dữ liệu THẬT
+
+`zone_valid_4h` mang `NaN` ở vùng warmup; pandas từ chối dùng mảng chứa `NaN` làm mặt nạ
+⇒ backtest **crash**. Bộ sinh tổng hợp không có vùng warmup đó nên không bao giờ chạm tới.
+Cùng họ: `download-data --timerange` **không tôn trọng mốc kết thúc** (bug TD-0093) tái
+hiện y nguyên — **10/10 file** lấn quá T2, hai file `1d`/`funding_rate` chạy tới
+**2026-09-07/08**, lấn sâu 7 tháng vào vùng LOCKBOX.
+
+### 🔑 Bài học về LỜI KHAI, mở rộng bài học `TD-0041` đã ghi ở CLAUDE.md
+
+Tôi chuyển cho phiên `-94` mô tả của TD-0082 (*"chưa nhân `mult_*`, chưa chia đòn bẩy"*)
+**như thể đã kiểm chứng** — tôi chỉ trích lại chữ. Họ đo lại và bác vế đòn bẩy: `min_stake`
+của Freqtrade đã chia đòn bẩy, mà `stake` ta trả cũng chia, **hai vế cùng chia nên đòn bẩy
+triệt tiêu khỏi phép so**; "sửa cho khớp" bằng cách chia thêm lần nữa sẽ làm mọi mã qua
+trong khi sàn thật không đổi. Nguyên nhân thật với BTC là vế `minQty × giá` (78,54) thắng
+`MIN_NOTIONAL` (50).
+
+N12 mục 3 dạy đừng tin dấu ✅ trong `TASKS.md`; CLAUDE.md đã ghi *"một dòng trạng thái có
+ngày tháng trông giống một sự thật hơn là một cái ✅"*. Đây là **cùng cái bẫy ở chỗ thứ ba**:
+> **Một dòng MÔ TẢ VIỆC cũng là lời khai, không phải bằng chứng.**
+
+### Ghi chú phạm vi — đừng đọc quá tay
+
+- 72 exception `SizingError` trên BTC/ETH là bằng chứng về **cơ chế**, KHÔNG phải vi phạm
+  của pool: BTC/ETH **không nằm trong pool giao dịch** (§0.3b, chỉ ở EXPLORE).
+- Con số 17/81 đo trên **48 mã alt EXPLORE**, cùng họ với ca pool nhưng **chưa ai đo** con
+  số cho pool 102 mã.
