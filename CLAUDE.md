@@ -346,10 +346,46 @@ chưa bao giờ được viết. **Đặt tên theo GỐC, không theo triệu c
 khiến người sau vá `mult_zss` rồi tưởng xong). ⚠️ **Chi phí phải biết TRƯỚC khi quyết:** dựng
 tầng định cỡ ⇒ `planned_risk` đổi ⇒ **phải ĐO LẠI Δ_R**, tức mở lại artifact niêm phong của D3.5.
 
-⏳ **Còn chờ chủ dự án — hai câu, nên đi CÙNG một tờ trình:** (a) sửa `ZoneAbsorptionMinimal` hay
-dựng chiến lược SẢN XUẤT riêng (nghiêng: dựng riêng — đúng lời file tự khai, giữ `L-Z49` nguyên
-vẹn, không đụng `L-Z36`); (b) có đưa **tầng định cỡ §6.8e** vào cùng phạm vi không (nghiêng:
-**phải** — nếu không, dựng xong một chiến lược sản xuất vẫn không định cỡ theo thiết kế).
+✅ **ĐÃ QUYẾT — `DR-D4-04` (`e5138ec`), và chủ dự án BÁC cách tôi đóng khung.** Tôi trình *"có đưa
+tầng định cỡ vào phạm vi không"* như một **lựa chọn** kèm chữ "nghiêng". Sai: §10.2 phán quyết
+bằng expectancy **theo R**; không định cỡ theo rủi ro cố định thì *"1 R"* trôi theo từng lệnh và
+con số phán quyết **không có đơn vị**. Chốt: dựng **`ZoneAbsorption.py`** (file MỚI, sản xuất;
+Minimal giữ nguyên làm fixture `L-Z49`), **bảy tầng BẮT BUỘC**, thứ tự **định cỡ TRƯỚC**.
+
+**TD-0187 ✅** (`c0ba7a0` `sizing.py` + `bfe01ed` chiến lược): full suite **1288 passed, 0 failed**.
+Đo trên **FILL backtest THẬT**: tỉ trọng **1 : 1 : 1** (MT-16 là 1:1:2) · `leverage = 3` (trước:
+1x) · `stake × L == cost` · cỡ lệnh biến theo `1/R_eff`. Phá thật (trả `trade.stake_amount` về)
+→ **đúng 3 ca đỏ**. Còn **TD-0188** (kết nạp §6.8f B2), **TD-0189** (TP = MT-17), TD-0182 phần nối.
+
+🔴 **BA LỖI CHỈ LỘ RA KHI ĐÒN BẨY THÀNH THẬT — MT-16 (v)(vi)(vii), đọc trước khi động vào chiến lược:**
+1. **Không file nào cài `leverage()`** ⇒ Freqtrade mặc định **1x** ⇒ mọi backtest tới 08/09 chạy
+   1x, không phải `L_exchange = 3`. Kéo theo **`L-Z3` (đệm thanh lý) CHƯA TỪNG bị thử thách** —
+   ở 1x không có thanh lý. Một cổng an toàn chưa bao giờ có cơ hội đỏ.
+2. **SL bị NHÂN đòn bẩy — bug sống từ D1, vô hình ĐÚNG VÌ tầng đòn bẩy chưa tồn tại.**
+   `ZoneAbsorptionMinimal:256` trả `(kh.sl / current_rate) − 1`; Freqtrade hiểu đó là *rủi ro trên
+   vốn ĐÃ NHÂN đòn bẩy*. Ở 3x SL thật gần **gấp BA** kế hoạch — đo được **38/38 lệnh nổ stop
+   trong vài phút, ở giá CAO HƠN `sl`**. Dùng `stoploss_from_absolute(..., leverage=)`.
+3. **Freqtrade NUỐT exception của callback.** `strategy_safe_wrapper` hạ mọi lỗi thành WARNING rồi
+   đi tiếp, `rc = 0` — `SizingError` fail-closed bị nuốt 12 lần, lệnh mẫu biến mất trong im lặng.
+   **Một chốt fail-closed bị nuốt là một chốt KHÔNG TỒN TẠI** — PASS RỖNG ở tầng framework, không
+   phép kiểm nào của dự án nhìn thấy. Test khoá TD-0187 nay **CẤM** dòng log đó; TD-0184 phải kế thừa.
+
+🔴 **Lookahead ở CALLBACK — mặt cắt `H4-D` KHÔNG phủ:** `dp.get_pair_dataframe()` gọi từ callback
+trả **toàn bộ** dữ liệu kể cả nến TƯƠNG LAI (chỉ `get_analyzed_dataframe()` mới bị cắt). DG1/DG2/DG5
+phải đi qua `_df_4h(pair, current_time)` cắt `date + 4h ≤ now`. Test khoá riêng: phiên `-f6` nhận.
+
+🔑 **BÀI HỌC LỚN NHẤT NGÀY 08/09 — NĂM lần suy luận nghe hợp lý bị một phép đo dưới một phút bác:**
+*"phiên kia sửa file"* (thật ra là hai container chồng nhau) · *"phải đo lại Δ_R"* (Δ_R **bất biến**
+với cỡ lệnh tới bit cuối — câu sai này đã **lan qua hai phiên** trước khi có ai đo) · *"biên DG4"*
+(DG4 cho qua 71% số ca) · `mult = 1` (thật ra `mult_zss ≈ 0,62`) · `t4 = "UP"` (thật ra `DOWN`).
+**Câu chặn, dùng từ nay:** *"đại lượng này có NHÌN THẤY thứ tôi sắp đổi không?"* và *"đo rẻ hơn đoán"*.
+Hai ca cuối là **giả định của TEST sai, không phải máy sai** — xử bằng cách đổi giả định thành
+**phép đo**, không sửa số cho khớp. Đó là ranh giới giữa *sửa test* và *nới test*.
+
+⏳ **Còn chờ chủ dự án:** (1) `tp1_haircut_pct = 20` — có giá trị, **không có trạng thái** trong
+`param_status.yaml`; TUNED hay FROZEN, quyết **trước khi TD-0189 chạy**; (2) phương án cho **`L-Z15`
+mở rộng phạm vi** của phiên `-f6` (**11/12 tham số `tier_b` đang "im lặng"**, sẽ làm suite đỏ 22 ca
+— *"đỏ nói thật"*); (3) **mở lại `TD-0082`** (min-notional chưa nhân `mult_*`/chia đòn bẩy).
 
 **Chia việc đang chạy:** phiên này **TD-0182**; phiên `-d8` **TD-0181** (DG1–DG5). TD-0183 phụ
 thuộc CẢ HAI — ai xong trước cũng phải hỏi trước khi nhận.
