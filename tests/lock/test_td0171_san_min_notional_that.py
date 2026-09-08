@@ -166,3 +166,48 @@ class TestDaiMultCuaBangDoiChieu:
         MULT_GRID = _mult_grid()
 
         assert any(gt == 1.0 for _, gt in MULT_GRID)
+
+
+class TestSauDuongChayBonSan:
+    """🔴 Đo 09/09/2026: Freqtrade KHÔNG dùng `stoploss` của config cho mọi
+    phép kiểm sàn. Nó truyền một hằng số KHÁC NHAU theo từng đường chạy, và
+    **backtest với live không dùng cùng một sàn** — một cấu hình qua sàn ở
+    D4 (backtest) vẫn có thể rớt sàn ở D11/D12 (live), im lặng.
+
+    Bằng chứng (đọc trong image):
+      backtesting.py:1087  vào lệnh          → -0.05  (pos_adjust → 0.0)
+      backtesting.py:723   phần dư sau TP    → -0.1, KHÔNG truyền leverage
+      freqtradebot.py:1185 vào lệnh live     → strategy.stoploss
+      freqtradebot.py:846  phần dư live      → strategy.stoploss
+    """
+
+    def test_sau_duong_chay_deu_co_ten_va_gia_tri(self) -> None:
+        from tool_d.notional import sl_hieu_dung
+
+        assert sl_hieu_dung("backtest_vao_lenh", strategy_stoploss=-0.99) == -0.05
+        assert sl_hieu_dung("backtest_tranche_2_3", strategy_stoploss=-0.99) == 0.0
+        assert sl_hieu_dung("backtest_phan_du", strategy_stoploss=-0.99) == -0.1
+        assert sl_hieu_dung("live_vao_lenh", strategy_stoploss=-0.99) == -0.99
+        assert sl_hieu_dung("live_tranche_2_3", strategy_stoploss=-0.99) == 0.0
+        assert sl_hieu_dung("live_phan_du", strategy_stoploss=-0.99) == -0.99
+
+    def test_duong_chay_la_khong_biet_thi_raise(self) -> None:
+        from tool_d.notional import sl_hieu_dung
+
+        with pytest.raises(ValueError):
+            sl_hieu_dung("backtest", strategy_stoploss=-0.99)
+
+    def test_backtest_va_live_KHAC_san_o_cung_mot_ma(self) -> None:
+        """Ca chính: sàn backtest THẤP HƠN sàn live ⇒ D4 dễ hơn D11."""
+        from tool_d.notional import sl_hieu_dung
+
+        f = _f()
+        san_bt = san_min_notional_freqtrade(
+            f, stoploss=sl_hieu_dung("backtest_vao_lenh", strategy_stoploss=-0.99)
+        )
+        san_live = san_min_notional_freqtrade(
+            f, stoploss=sl_hieu_dung("live_vao_lenh", strategy_stoploss=-0.99)
+        )
+        assert san_bt == pytest.approx(5.0 * 1.05 / 0.95)
+        assert san_live == pytest.approx(7.5)
+        assert san_bt < san_live

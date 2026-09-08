@@ -86,30 +86,72 @@ PASS/FAIL y hệt ở 1x và 3x. Thêm đòn bẩy vào phép kiểm này là ch
 **mọi mã đều "qua"** — tức đúng chiều tâng kết quả lên, lần thứ ba. Có test ghim
 (`test_don_bay_khong_co_mat_va_do_la_co_y`) để không ai "sửa cho đủ" sau này.
 
-### 4.2 Bảng mới — số mã qua sàn THẬT / 102
+### 4.2 🔴 Đính chính TRONG CHÍNH ĐỢT NÀY — có SÁU đường chạy, BỐN sàn
 
-Vế quyết định sàn: **cost 99 mã · amount (minQty×giá) 3 mã**.
+Bản đo đầu của TD-0171 (09/09/2026, sáng) giả định Freqtrade dùng `stoploss` của
+`config.json` (−0,99) cho mọi phép kiểm sàn. **Sai.** Đọc kỹ mã nguồn thì mỗi đường chạy truyền một
+hằng số khác nhau:
+
+| Đường chạy | `stoploss` truyền vào | Hệ số dự trữ | Sàn ở mã sàn 5 USDT |
+|---|---|---|---|
+| Backtest — vào lệnh (`backtesting.py:1087`) | **−0,05** (hằng số trong mã) | 1,105 | **5,53** |
+| Backtest — tranche 2/3 (`pos_adjust`) | **0,0** | 1,05 | 5,25 |
+| Backtest — phần dư sau thoát một phần (`:723`) | **−0,1**, KHÔNG truyền `leverage` | 1,167 | 5,83 |
+| Live — vào lệnh (`freqtradebot.py:1185`) | `strategy.stoploss` = **−0,99** | **1,5** (trần) | **7,50** |
+| Live — tranche 2/3 | 0,0 | 1,05 | 5,25 |
+| Live — phần dư (`:846`) | `strategy.stoploss`, **CÓ** truyền `leverage` | 1,5 rồi **chia 3** | 2,50 |
+
+🔴 **Hệ quả nặng nhất là một lỗ hổng PARITY (quy tắc 9), không phải một con số lệch:** backtest và
+live **không dùng cùng một sàn**, và lệch theo **hai chiều ngược nhau** — vào lệnh thì live chặt hơn
+(7,50 vs 5,53), phần dư thì backtest chặt hơn (5,83 vs 2,50). Một cấu hình qua sàn ở **D4
+(backtest)** vẫn có thể không mở được lệnh nào ở **D11/D12 (live)**, và không có gì báo.
+
+Bảng đo được tham số hoá theo đường chạy (`notional.sl_hieu_dung`) chứ không chọn một sàn rồi gọi
+nó là *"sàn"* — chính việc tưởng có một sàn duy nhất đã sinh ra bản sai ở trên.
+
+### 4.3 Bảng mới — số mã qua sàn THẬT / 102
+
+
+**Đường chạy `backtest_vao_lenh`** (sàn 5,53 — đây là sàn D4 chạy dưới). Vế quyết định sàn: cost 98
+mã · amount 4 mã.
 
 | Π mult_* | R_eff 3,0% | R_eff 1,5% | R_eff 0,9% |
 |---|---|---|---|
-| 1,000 — mọi hệ số tối đa (ca TỐT NHẤT, tương đương bảng cũ) | **98/102** (tr.1 = 20,83) | 102/102 (41,67) | 102/102 (69,44) |
-| 0,700 — regime weak (ADX 20–25) | 98/102 (14,58) | 98/102 (29,17) | 102/102 (48,61) |
-| 0,434 — weak × ZSS 0,62 (ZSS đo thật ở MT-16) | 97/102 (9,04) | 98/102 (18,08) | 102/102 (30,14) |
-| 0,326 — thêm corr 0,75 | **0/102** (6,78) | 97/102 (13,56) | 98/102 (22,60) |
-| 0,175 — weak × ZSS sàn 0,5 × corr 0,5 | **0/102** (3,65) | **0/102** (7,29) | 97/102 (12,15) |
-| 0,044 — ca XẤU NHẤT khả dĩ (thêm dd soft 0,5 × deploy 0,5) | **0/102** (0,91) | **0/102** (1,82) | **0/102** (3,04) |
+| 1,000 — mọi hệ số tối đa (ca TỐT NHẤT) | **98/102** (tr.1 = 20,83) | 102/102 (41,67) | 102/102 (69,44) |
+| 0,700 — regime weak (ADX 20–25) | 98/102 (14,58) | 102/102 (29,17) | 102/102 (48,61) |
+| 0,434 — weak × ZSS 0,62 (đo thật ở MT-16) | 97/102 (9,04) | 98/102 (18,08) | 102/102 (30,14) |
+| 0,326 — thêm corr 0,75 | 94/102 (6,78) | 97/102 (13,56) | 102/102 (22,60) |
+| 0,175 — weak × ZSS sàn 0,5 × corr 0,5 | **0/102** (3,65) | 95/102 (7,29) | 97/102 (12,15) |
+| 0,044 — ca XẤU NHẤT khả dĩ | **0/102** (0,91) | **0/102** (1,82) | **0/102** (3,04) |
 
-Bốn mã rớt ngay ở ca tốt nhất (sàn sàn 20 USDT ⇒ sàn thật 30 > 20,83): **BCHUSDT, ETCUSDT,
-LINKUSDT, LTCUSDT**.
+**Đường chạy `live_vao_lenh`** (sàn 7,50). Vế quyết định sàn: cost 99 mã · amount 3 mã.
+
+| Π mult_* | R_eff 3,0% | R_eff 1,5% | R_eff 0,9% |
+|---|---|---|---|
+| 1,000 | **98/102** (20,83) | 102/102 (41,67) | 102/102 (69,44) |
+| 0,700 | 98/102 (14,58) | 98/102 (29,17) | 102/102 (48,61) |
+| 0,434 | 97/102 (9,04) | 98/102 (18,08) | 102/102 (30,14) |
+| 0,326 | **0/102** (6,78) | 97/102 (13,56) | 98/102 (22,60) |
+| 0,175 | **0/102** (3,65) | **0/102** (7,29) | 97/102 (12,15) |
+| 0,044 | **0/102** (0,91) | **0/102** (1,82) | **0/102** (3,04) |
+
+🔴 **So hai bảng ở ô `Π mult_* = 0,326`, zone 3%: backtest 94/102 · live 0/102.** Cùng một cấu hình,
+cùng một pool, cùng một ngày — backtest cho gần như cả pool vào lệnh, live không cho mã nào. Đây là
+chỗ lỗ hổng parity thôi trừu tượng.
+
+Bốn mã rớt ngay ở ca tốt nhất trên **cả hai** đường chạy: **BCHUSDT, ETCUSDT, LINKUSDT, LTCUSDT**
+(sàn sàn 20 USDT ⇒ 22,11 ở backtest / 30,00 ở live, đều > 20,83).
 
 L-Z20 không đổi (dung sai neo vào `rho` thô theo spec dòng 2751, không hạ theo `mult_*`):
 81/102 · 91/102 · 94/102.
 
 ### 4.3 Vách 0/102 — điều đáng sợ hơn con số
 
-Sàn thấp nhất mà mọi mã đều có là `5 × 1,5 = 7,5` USDT. Nên khi tranche 1 tụt xuống dưới 7,5 thì
-**không phải "vài mã rớt" mà là KHÔNG MÃ NÀO vào lệnh được** — bảng nhảy thẳng từ 97/102 xuống
-0/102 chỉ vì `Π mult_*` đi từ 0,434 xuống 0,326. Không có vùng suy giảm dần để ai đó kịp nhận ra.
+Sàn thấp nhất mà mọi mã đều có là `5 × hệ_số` — 5,53 ở backtest, 7,50 ở live. Nên khi tranche 1 tụt
+xuống dưới ngưỡng đó thì **không phải "vài mã rớt" mà là KHÔNG MÃ NÀO vào lệnh được**: bảng live
+nhảy thẳng 97/102 → 0/102 chỉ vì `Π mult_*` đi từ 0,434 xuống 0,326; bảng backtest cũng có vách
+nhưng ở chỗ khác (94/102 → 0/102 giữa 0,326 và 0,175). Không có vùng suy giảm dần để ai kịp nhận ra,
+và **hai vách nằm ở hai chỗ khác nhau**.
 
 🔴 **Và hệ thống KHÔNG kêu khi điều đó xảy ra.** `optimize/backtesting.py:1173`:
 
@@ -125,6 +167,7 @@ khác nhau ở **số lệnh vào được**, mà bảng kết quả §10.2 trô
 
 ### 4.4 Kết luận theo tiêu chí nghiệm thu gốc của TD-0082
 
-**Min notional: CÓ vi phạm** (4/102 ở ca tốt nhất; 100% ở `Π mult_* ≤ 0,326`, zone rộng) ⇒ theo đúng
+**Min notional: CÓ vi phạm** (4/102 ở ca tốt nhất trên cả hai đường chạy; 100% ở
+`Π mult_* ≤ 0,326` zone rộng với đường live, ≤ 0,175 với đường backtest) ⇒ theo đúng
 tiêu chí gốc, phải **nâng `E_D` / đặt sàn / thu pool, và ghi DR**. Đây là quyết định của chủ dự án
 (quy tắc 2) — TD-0171 dừng ở phép đo, **chưa** chọn phương án.

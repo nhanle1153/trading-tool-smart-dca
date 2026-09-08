@@ -85,6 +85,43 @@ def tranche1_notional(*, e_d: float, rho_pct: float, r_eff: float, n_tranches: i
     return (rho_pct / 100.0) * e_d / r_eff / n_tranches
 
 
+#: 🔴 Đo 09/09/2026 trong image: Freqtrade KHÔNG dùng `stoploss` của config
+#: cho mọi phép kiểm sàn — nó truyền một hằng số KHÁC NHAU theo từng đường
+#: chạy. Hệ quả nặng nhất: **backtest và live không cùng một sàn**, nên một
+#: cấu hình qua sàn ở D4 (backtest) vẫn có thể rớt sàn ở D11/D12 (live) —
+#: đúng thứ quy tắc 9 (parity local–staging–prod) tồn tại để chặn.
+#:
+#: `"strategy"` = lấy `strategy.stoploss` (của ta: -0.99 → chạm trần 1,5).
+#:   backtesting.py:1087   vào lệnh        -0.05   (pos_adjust → 0.0)
+#:   backtesting.py:723    phần dư sau TP  -0.1, KHÔNG truyền leverage
+#:   freqtradebot.py:1185  vào lệnh live   strategy.stoploss (pos_adjust → 0.0)
+#:   freqtradebot.py:846   phần dư live    strategy.stoploss
+SL_THEO_DUONG_CHAY: dict[str, float | str] = {
+    "backtest_vao_lenh": -0.05,
+    "backtest_tranche_2_3": 0.0,
+    "backtest_phan_du": -0.1,
+    "live_vao_lenh": "strategy",
+    "live_tranche_2_3": 0.0,
+    "live_phan_du": "strategy",
+}
+
+
+def sl_hieu_dung(duong_chay: str, *, strategy_stoploss: float) -> float:
+    """`stoploss` Freqtrade THỰC SỰ truyền vào phép kiểm sàn ở `duong_chay`.
+
+    Tên đường chạy phải khai tường minh — không có mặc định "cái hay dùng":
+    chính việc tưởng mọi đường dùng chung `stoploss` của config đã làm bảng
+    đo đầu của TD-0171 quá bi quan ở backtest (7,50 thay vì 5,53).
+    """
+    if duong_chay not in SL_THEO_DUONG_CHAY:
+        raise ValueError(
+            f"đường chạy không rõ: {duong_chay!r}. Phải là một trong "
+            f"{sorted(SL_THEO_DUONG_CHAY)}"
+        )
+    gt = SL_THEO_DUONG_CHAY[duong_chay]
+    return strategy_stoploss if gt == "strategy" else float(gt)
+
+
 def san_min_notional_freqtrade(
     f: SymbolFilters,
     *,
