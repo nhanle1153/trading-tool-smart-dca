@@ -40,18 +40,34 @@ cả hai, nhưng sàn live bị chia `trade.leverage` còn sàn backtest thì
 không. Câu chặn *"đại lượng này có NHÌN THẤY thứ tôi sắp đổi không?"*
 ở đây trả lời CÓ.
 
-Ca cắn KHÔNG phải ca biên mà là cấu hình trung tâm: `E_D = 500`,
-Π `mult_*` = 0,434 (ZSS 0,62 đo thật), zone 3% ⇒ tranche 1 = 9,04 ⇒
-nửa còn lại **4,52 < 5,83** ⇒ phần dư rớt sàn. Và `backtesting.py:1173`
-là một `if` KHÔNG có `else`: dưới sàn thì rơi thẳng qua, không log,
-không ngoại lệ. Hệ quả nặng hơn ca vào lệnh — lệnh vào biến mất thì
-bảng kết quả thiếu một dòng, còn **chốt lời biến mất thì lệnh vẫn nằm
-đó chạy tiếp tới SL hoặc DG8**, tức tầng TP im lặng không tồn tại
-trong khi mọi chỉ số vẫn có số để in.
+Ca cắn KHÔNG phải ca biên, nhưng ⚠️ **con số cụ thể ĐỔI THEO `E_D`
+(DR-D4-05), đừng ghim một giá trị `E_D` vào chặng 2** — ở `E_D = 500`
+(giá trị cũ), Π `mult_*` = 0,434, zone 3% ⇒ tranche 1 = 9,04 ⇒ nửa còn
+lại 4,52 < 5,83 ⇒ phần dư rớt sàn; ở `E_D = 750` (chốt mới, `7972c4f`)
+cùng ca đó **qua sàn** (6,78 > 5,83). Nhánh vẫn cắn thật ở zone rộng
+hơn hoặc `Π mult_*` thấp hơn — chỉ là ví dụ minh hoạ phải ĐỌC TỪ
+CẤU HÌNH lúc viết test chặng 2, không phải một con số chép tay ở đây.
+Và `backtesting.py:1173` là một `if` KHÔNG có `else`: dưới sàn thì rơi
+thẳng qua, không log, không ngoại lệ. Hệ quả nặng hơn ca vào lệnh —
+lệnh vào biến mất thì bảng kết quả thiếu một dòng, còn **chốt lời
+biến mất thì lệnh vẫn nằm đó chạy tiếp tới SL hoặc DG8**, tức tầng TP
+im lặng không tồn tại trong khi mọi chỉ số vẫn có số để in.
 
-Chặng 2 GỌI `notional.san_min_notional_freqtrade()` cùng
-`notional.sl_hieu_dung("backtest_phan_du", ...)`, KHÔNG viết bản thứ
-hai — hai bản sao của cùng một luật sàn là cơ chế đã gây lệch số của v5.
+🔴 Sàn để so KHÔNG phải sàn của một đường chạy riêng lẻ — `-94`
+(`DR-D4-05`, `08afba1`) dựng `notional.kiem_san_tool_d()`: sàn Tool D
+là **`max` sàn của MỌI đường chạy** (backtest/live × vào lệnh/tranche
+2-3/phần dư), cố ý CHẶT HƠN Freqtrade để backtest và live hành xử
+giống nhau. Chặng 2 GỌI `notional.kiem_san_tool_d(f, notional_usdt=...,
+strategy_stoploss=...)`, KHÔNG gọi `san_min_notional_freqtrade()` một
+đường lẻ và KHÔNG viết bản thứ hai — hai bản sao của cùng một luật sàn
+là cơ chế đã gây lệch số của v5. Kết quả trả `KetQuaSan` có `.dat`,
+`.san_usdt`, `.ve_thang`, `.ly_do` — **`.ly_do` PHẢI được ghi vào
+Decision Log khi từ chối**, không được im lặng bỏ qua.
+
+📊 Phân bố tranche ảnh hưởng trực tiếp thiết kế TP2 (đo bởi `-f4` trên
+dữ liệu thật, 08/09-09/09): chỉ **~21%** số lệnh bơm đủ ba tranche,
+**41%** dừng ở MỘT tranche. TP2 trail sau TP1 phần lớn chạy trên một
+vị thế chỉ có một tranche — đọc kèm mọi kết quả D4, không phải ca hiếm.
 
 🔴 CẢNH BÁO CRASH, đo bởi phiên `-f4` trên DỮ LIỆU THẬT (TD-0182, chưa
 commit): `zone_valid_4h` mang `NaN` ở vùng warmup của khung informative;
