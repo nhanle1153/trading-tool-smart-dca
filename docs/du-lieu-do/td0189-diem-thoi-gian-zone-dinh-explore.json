@@ -1,0 +1,16 @@
+{
+  "nguon": "TD-0189, phản hồi phát hiện 21/21 TP1=nạng của phiên -be (TD-0193)",
+  "so_file_4h": 100,
+  "so_ma_co_zone_dinh_confirmed": 91,
+  "tong_zone_dinh_confirmed": 4775,
+  "tong_nen_do": 219299,
+  "ty_le_nen_co_zone_trong_5pct": 0.17593787477371078,
+  "ty_le_nen_co_zone_trong_12pct": 0.3593404438688731,
+  "khoang_cach_gan_nhat_pct": {
+    "median": 16.359796248043033,
+    "p10": 2.4577496976680946,
+    "p90": 68.64659659186523,
+    "n": 194066
+  },
+  "ket_luan": "_quet_zone_dinh hoat dong dung (khong phai 0/bug) — ty le co zone trong tam KHONG DIEU KIEN theo trend la can tren cua ty le thuc te tai diem entry (entry can trend UP xac nhan, dieu kien lam zone doi dien gan do de bi pha)."
+}

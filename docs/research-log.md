@@ -1856,3 +1856,33 @@ từ 2/88 mã**. ⇒ 98,5 tín hiệu/năm và 63,6 lệnh/năm là **CẬN TRÊ
 📌 Bản đầu của phép so trùng tên gộp cả khối `explore` của `pool.yaml` ⇒ "trùng 100/100" — vô
 nghĩa nhưng trông như một kết quả. Tự bắt vì 100/100 quá đẹp; sửa `_ten_pool()` đọc đúng khối
 `trading`.
+
+## 09/09/2026 (tiếp, phiên mới) — TD-0189: 21/21 lệnh TP1 đều rơi nạng — bug hay cấu trúc thị trường?
+
+Phiên `be` báo (đo trên chính con số ở mục trên, 62 lệnh THẬT của TD-0193 trên EXPLORE): **0/21**
+lệnh có TP1 nào dùng zone đối diện — 100% `TP1_fallback_r_multiple`. Đây là code của tôi
+(`_quet_zone_dinh`/`_zone_dinh_tren`, TD-0189), nên nhận đo lại trước khi ai đó coi 0% là một kết
+luận về D4.
+
+**Không phải bug.** Đo trực tiếp (`docs/du-lieu-do/td0189-diem-thoi-gian-zone-dinh-explore.py`,
+0 trial, DR-014 §2) trên chính 100 mã EXPLORE: `_quet_zone_dinh` tìm được **4.775 zone đỉnh
+CONFIRMED** trên 219.338 nến 4H (91/100 mã có ít nhất một) — hàm hoạt động, không phải trả về
+rỗng có hệ thống.
+
+🔑 **Nhưng tại một điểm thời gian bất kỳ (KHÔNG điều kiện theo trend), tỉ lệ có ≥1 zone đỉnh CÒN
+SỐNG (chưa bị giá đóng cửa vượt qua) nằm trong 5% phía trên giá chỉ 17,6%; trong 12% (≈ trần tìm
+zone `4×R_eff` ở `R_eff` điển hình ~3%) là 35,9%.** Đây là **CẬN TRÊN** của tỉ lệ thật tại các
+điểm ENTRY, vì entry chỉ mở khi 4H/1D đã xác nhận UP một thời gian (Phần 2) — đúng điều kiện làm
+zone đối diện gần đó nhiều khả năng ĐÃ bị phá (giá đã vượt qua trong chính cú tăng dẫn tới entry).
+`_zone_dinh_tren()` không tự lọc "còn sống", chỉ lọc `zone > p_avg` — nhưng trong ngữ cảnh uptrend
+đã xác nhận, một zone bị phá thường đã nằm DƯỚI `p_avg` hiện tại (giá đã đi qua nó) nên bị lọc
+gián tiếp; hai cách lọc trùng nhau phần lớn ĐÚNG trong ngữ cảnh entry thật (LONG-only).
+
+Kết luận: 0/21 (n nhỏ, không đủ khẳng định tỉ lệ chính xác) là kết quả **PLAUSIBLE**, cùng chiều
+với DR-D4-06 (79-87% nạng khi áp hạn tuổi) — không phải dấu hiệu lỗi trong `_quet_zone_dinh`.
+
+⚠️ **Việc CHƯA làm, và không nên làm bằng script rời:** đo H-4 chính xác (`ty_le_khong_co_zone`/
+`ty_le_zone_qua_han`, DR-D4-06 §3) cần TỪNG lệnh thật với đúng `p_avg`/`R_eff`/thời điểm tại lúc
+xét TP — không suy ra đáng tin từ một phép đo không điều kiện như trên. Đợi TD-0184 (bộ chạy E3,
+Decision Log thật) sinh dữ liệu đúng hạt, đo lại từ đó — tránh dựng một đường đo song song rồi có
+hai con số cho cùng một câu hỏi (đúng bài học N1/MT-03).
