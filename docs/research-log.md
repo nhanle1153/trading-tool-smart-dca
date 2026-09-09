@@ -1824,3 +1824,35 @@ Phân tích trước khi code tốn hơn một giờ và tìm ra chín khoảng 
 không thấy — nhưng thứ đắt nhất lại không nằm trong chín cái đó: **con số lệnh/năm** chỉ đo được
 *sau khi* nối, và nó nói D4 sắp đo một hệ thống chưa đủ mẫu để nói gì. Nếu không có điều kiện
 §6 viết TRƯỚC trong DR, phiên này đã đóng TD-0193 ✅ và TD-0184 sẽ đặt chỗ 9 suất ngay.
+
+### Bổ sung theo góp ý của `-46` — hai câu có thể đổi HƯỚNG kết luận, cả hai đều lật một giả thuyết
+
+**(1) Trong 95% mà bộ lọc trend cắt, bao nhiêu là điều kiện tuổi (hiện tượng đo `None`/NaN)?**
+Tách bốn điều kiện §2.5 tại 2.103 nến C:
+
+| Điều kiện | Còn lại | Cắt |
+|---|---|---|
+| Tại C | 2.103 | — |
+| §2.1 hướng 1D = UP | **400** | **81%** (DOWN 1.339 · FLAT 364 · NaN warmup 126) |
+| §2.2 4H đồng hướng | 160 | 60% của phần còn |
+| §2.5 ADX ≥ 20 | 137 | 14% |
+| §2.3 tuổi ≥ 5 | **96** | chỉ **41** tín hiệu (2% số C) trượt riêng vì tuổi |
+
+Giả thuyết của `-46` **không đứng** — và đó là kết quả tốt: chốt cắt là **§2.1 hướng 1D**, một
+**tính chất cấu trúc** của chiến lược (zone đáy hình thành chủ yếu trong xu hướng giảm; hệ thống
+chỉ mua chúng trong xu hướng tăng), không phải hiện tượng của phép đo. Hệ quả cho D4: hai arm
+`Z0-T0`/`Z0-T1` (§10.1b) chính là câu hỏi *"tầng 1D đáng giá bao nhiêu mẫu"* — và số mẫu của chúng
+sẽ **lớn gấp nhiều lần** các arm còn lại, tức bảng arm sẽ so những cỡ mẫu rất khác nhau.
+
+**(2) Phép quy đổi 88 mã EXPLORE → 102 mã pool sai về hướng nào?** `EXPLORE ∩ pool(trading) = 0`
+(tách hẳn theo `DR-D0PRE-05`) nên không kiểm chéo được mà không chạm pool (MT-19). Nhưng phân bố
+theo mã lộ ra một hướng lệch rõ: **median 0 tín hiệu/mã-năm** (quá nửa số mã KHÔNG có tín hiệu
+nào trong 1,8 năm), P75 1,33, max 3,87; **BTC + ETH — KHÔNG thuộc pool — góp 13/96 tín hiệu (13,5%)
+từ 2/88 mã**. ⇒ 98,5 tín hiệu/năm và 63,6 lệnh/năm là **CẬN TRÊN theo chiều BTC/ETH** (bỏ hai mã
+đó: 0,87/mã-năm ⇒ ~88 tín hiệu/năm). Phần alt còn lại lệch hướng nào so với pool (thanh khoản
+≥ 15M, tuổi niêm yết ≥ 180 ngày) — **chưa biết**, ghi là chưa biết. Kết luận "dưới sàn 150" vì thế
+**không phải quá sớm**: sửa theo chiều đã biết thì con số còn thấp hơn.
+
+📌 Bản đầu của phép so trùng tên gộp cả khối `explore` của `pool.yaml` ⇒ "trùng 100/100" — vô
+nghĩa nhưng trông như một kết quả. Tự bắt vì 100/100 quá đẹp; sửa `_ten_pool()` đọc đúng khối
+`trading`.
