@@ -73,6 +73,55 @@ hiệu, p1, p2, p3):
 "chọn ngưỡng tối thiểu" mà `-e8` đã dùng khi chọn 60."""
 
 
+#: TD-0194 — chỉ số nến 4H đặt hai ĐỈNH swing, tính từ công thức dốc chứ không
+#: gõ tay. Chọn để `zone_low` của chúng rơi hai phía của trần tìm zone TP1
+#: (`p_avg + 4,0 × R_eff ≈ 98,368` trên mẫu zone hiện tại):
+#:    A ở 848 → đỉnh ~96,95 → zone_low ~96,81  → TRONG tầm (95,0 · 98,368)
+#:    B ở 861 → đỉnh ~98,99 → zone_low ~98,85  → NGOÀI tầm
+#: 🔴 Ràng buộc thật là GIÁ, KHÔNG phải TUỔI: `_zone_dinh_tren()` lọc
+#: `zone > p_avg` nên đỉnh phải > 95,0, mà giá chỉ vượt 95 ở đoạn cuối pha
+#: tăng. Cả hai phiên `-f4`/`-2f` ban đầu cùng khai nhầm `tuoi_nen ≤ 40` —
+#: nhưng CẢ BA chỗ gọi `zone_hop_le()` truyền `tuoi_nen=K_XAC_NHAN` (hằng 3)
+#: nên vế tuổi LUÔN thoả, và `DR-D4-06` đã bỏ hạn tuổi cho zone TP. Đúng cửa
+#: sổ, sai lý do — ai nới ngưỡng tuổi rồi tưởng cửa sổ rộng ra sẽ chèn đỉnh ở
+#: chỗ giá thấp và nó IM LẶNG không thành ứng viên.
+I_DINH_TRONG_TAM, I_DINH_NGOAI_TAM = 848, 861
+
+#: Chiều cao đỉnh khai TƯỜNG MINH, KHÔNG suy từ nến dốc tại chỗ đó.
+#: 🔴 Bản đầu lấy `P = b[i][1]` và swing rơi nhầm sang nến `i-1`: nến dốc có
+#: `open` so le `±0,2` nên `high` nhảy giữa `base+0,2` và `base+0,6` — nến LẺ
+#: liền trước cao hơn đỉnh vừa đặt. Ràng buộc thật: `P` phải lớn hơn
+#: `max(high[i-3 .. i-1]) = base(i-1) + 0,6 ≈ base(i) + 0,443` (ba nến SAU đã
+#: là nến motif nên không tính). Đo, không đoán — đây đúng loại giả định
+#: "nến dốc trơn tru" mà `low` hằng số từng làm sinh 26 swing giả.
+CAO_DINH_TRONG_TAM, CAO_DINH_NGOAI_TAM = 97.4, 99.2
+
+
+def _motif_dinh(cao_dinh: float) -> list[tuple[float, float, float, float, float]]:
+    """Bốn nến tạo MỘT zone đỉnh hợp lệ, thay tại chỗ cho nến dốc.
+
+    Thoả đồng thời bốn điều kiện của vòng quét đỉnh (`_quet_zone_dinh`):
+      1. `la_diem_swing(cao, i, loai="dinh", k=3)` — ba nến sau `high` thấp hơn.
+      2. `zone_da_bi_huy(..., loai="dinh")` sai — không nến nào đóng TRÊN zone.
+      3. `touch_count(..., loai="dinh") ≥ 1` — nến `i+1` có `high` chui vào
+         `[zone_low, zone_high]` **rồi đóng cửa DƯỚI `zone_low`**, tức trọn một
+         cụm chạm-rồi-bật-ra trong đúng một nến. Đây là chiều ĐẢO so với zone
+         đáy, và là chỗ đuôi tăng đơn điệu của bản cũ không bao giờ thoả được.
+      4. `zss ≥ 0.5` — nến đỉnh mang volume cao (thành phần volume chạm trần),
+         bù cho `touch = 1` chỉ đóng góp 1/3.
+
+    Thay TẠI CHỖ (không chèn thêm) để chỉ số nến phía sau **không dịch** — mẫu
+    zone đáy giữ nguyên vị trí 870 và mốc lịch giữ nguyên.
+    """
+    P = cao_dinh
+    return [
+        (P - 0.45, P, P - 0.55, P - 0.40, 4000.0),          # đỉnh, volume cao
+        (P - 0.42, P - 0.05, P - 0.60, P - 0.50, 1200.0),   # chạm lại RỒI đóng dưới
+        (P - 0.52, P - 0.30, P - 0.65, P - 0.45, 1000.0),
+        (P - 0.47, P - 0.25, P - 0.60, P - 0.40, 1000.0),
+    ]
+
+
 def _bars_4h_co_trend() -> list[tuple[float, float, float, float, float]]:
     """`N_NGAY_GIAM` ngày downtrend 100 → 60, RỒI `N_NGAY_TANG` ngày
     uptrend 60 → 100, rồi ĐÚNG mẫu zone của L-Z49 neo ở mức 100, rồi đuôi
@@ -121,6 +170,14 @@ def _bars_4h_co_trend() -> list[tuple[float, float, float, float, float]]:
         base = GIA_DAY + (100.0 - GIA_DAY) * k / n_pre
         o = base + (0.2 if k % 2 else -0.2)
         b.append((o, o + 0.4, o - 0.4, o + (0.1 if k % 2 else -0.1), 1000.0))
+    # TD-0194 — thay TẠI CHỖ hai motif đỉnh; chỉ số phía sau không dịch.
+    for i_dinh, cao_dinh in (
+        (I_DINH_TRONG_TAM, CAO_DINH_TRONG_TAM),
+        (I_DINH_NGOAI_TAM, CAO_DINH_NGOAI_TAM),
+    ):
+        motif = _motif_dinh(cao_dinh)
+        b[i_dinh : i_dinh + len(motif)] = motif
+
     b += [
         (99.5, 99.5, 95.0, 96.0, 4000.0),      # swing đáy, volume cao
         (96.0, 96.8, 95.2, 96.6, 1200.0),
@@ -166,7 +223,77 @@ def _moc_bat_dau(so_nen_1h: int) -> pd.Timestamp:
     return KET_THUC_1H - pd.Timedelta(hours=so_nen_1h - 1)
 
 
+def _dem_zone(rows4, loai: str) -> int:
+    """Đếm zone HỢP LỆ của một loại trên chuỗi 4H — mô phỏng đúng vòng quét
+    của chiến lược (`_tinh_zone_4h` cho `"day"`, `_quet_zone_dinh` cho
+    `"dinh"`), dùng lại các hàm thuần, không chép phép tính."""
+    import numpy as np
+    import talib
+    from tool_d.zone_detection import K_XAC_NHAN, la_diem_swing, zone_da_bi_huy
+    from tool_d.zone_strength import compression, touch_count, volume_ratio, zone_hop_le, zss
+
+    cao = [b[1] for b in rows4]; thap = [b[2] for b in rows4]
+    dong = [b[3] for b in rows4]; vol = [b[4] for b in rows4]
+    atr = talib.ATR(np.asarray(cao, float), np.asarray(thap, float), np.asarray(dong, float), 14)
+    gia = cao if loai == "dinh" else thap
+    dem = 0
+    for i in range(K_XAC_NHAN, len(rows4)):
+        j = i + K_XAC_NHAN
+        if j >= len(rows4) or not la_diem_swing(gia, i, loai=loai):
+            continue
+        if np.isnan(atr[i]) or dong[i] == 0 or zone_da_bi_huy(gia, i, j, loai=loai):
+            continue
+        buf = BUF_ZONE_TEST * atr[i] / dong[i]
+        zl, zh = (gia[i] * (1 - buf), gia[i] * (1 + buf)) if loai == "dinh" else (gia[i], dong[i])
+        v_r = volume_ratio(vol, i_swing=i)
+        comp = compression(cao, thap, dong, i_hinh_thanh=i, i_hien_tai=j)
+        if v_r is None or comp is None:
+            continue
+        tc = touch_count(gia, dong, min(zl, zh), max(zl, zh), i_swing=i, t=j, loai=loai)
+        if zone_hop_le(zss_value=zss(touch=tc, ty_le_volume=v_r, do_nen=comp),
+                       so_touch=tc, tuoi_nen=K_XAC_NHAN):
+            dem += 1
+    return dem
+
+
+BUF_ZONE_TEST = 0.3  # = BUF_ZONE của chiến lược (§1.1)
+
+
+def _khang_dinh_bo_sinh_du_hai_loai_zone() -> None:
+    """🔴 ĐỐI CHỨNG THƯỜNG TRỰC — chạy MỌI lần bộ sinh được dùng.
+
+    **Vì sao gắn vào `_sinh_du_lieu` chứ không để thành một ca test riêng:**
+    một ca riêng chỉ chạy khi ai đó nhớ giữ nó; gắn ở đây thì mọi file dùng
+    chung bộ sinh (`test_td0170`, và tầng TP của TD-0189) đều được che.
+
+    **Vì sao cần:** trong MỘT ngày, bộ sinh này im lặng sai với hệ thống mới
+    **hai lần**, và **không lần nào làm đỏ một ca nào**:
+      1. TD-0182 — chuỗi 1D là dốc đơn điệu ⇒ `tuoi_trend_nen()` trả `None` ở
+         92/92 nến ⇒ **0 lệnh**. Mà `0 lệnh` thì mọi khẳng định về lệnh đều
+         **đúng-vô-nghĩa**.
+      2. TD-0194 — **0 zone ĐỈNH** ⇒ nhánh *"TP1 lấy từ zone đối diện"* (§5.1)
+         không có nguồn dữ liệu ⇒ H-4 = 100% nạng, mọi khẳng định về nhánh
+         zone **xanh-vô-nghĩa**.
+
+    Cả hai đều là *"fixture đúng với hệ thống CŨ, im lặng sai với hệ thống
+    MỚI"* — không ai viết sai dòng nào. Ca này biến lần thứ ba thành **báo đỏ
+    ngay tại bộ sinh**, thay vì chờ ai đó tình cờ đi đo phễu.
+
+    ⚠️ Giới hạn tự khai: nó canh *"có tồn tại zone"*, KHÔNG canh *"zone rơi
+    đúng chỗ cần"*. Vế thứ hai do `test_hai_zone_dinh_o_hai_phia_tran_TP`
+    canh, và hai vế cố ý tách: cái này là điều kiện SỐNG của mọi ca dùng bộ
+    sinh, cái kia là điều kiện riêng của tầng TP.
+    """
+    rows4 = _bars_4h_co_trend()
+    for loai, ten in (("day", "ĐÁY"), ("dinh", "ĐỈNH")):
+        assert _dem_zone(rows4, loai) >= 1, (
+            f"bộ sinh không cho zone {ten} hợp lệ nào — mọi khẳng định dựa trên "
+            f"nhánh {ten} sẽ XANH-VÔ-NGHĨA. Xem docstring hàm này."
+        )
+
+
 def _sinh_du_lieu(datadir: Path) -> None:
+    _khang_dinh_bo_sinh_du_hai_loai_zone()
     rows4 = _bars_4h_co_trend()
     rows1 = [x for bar in rows4 for x in _chia_nho(bar, 4)]
     # 🔴 TD-0182 — NEO MỐC KẾT THÚC, không neo mốc bắt đầu. `TIMERANGE`
@@ -271,6 +398,59 @@ def _lenh_du_ba_tranche(kq: dict) -> dict:
     ung = [t for t in kq["trades"] if len(_lenh_vao(t)) == 3]
     assert ung, f"không lệnh nào đủ 3 tranche — số tranche: {[len(_lenh_vao(t)) for t in kq['trades']]}"
     return ung[0]
+
+
+
+class TestTD0194ZoneDinhChoTangTP:
+    """🔴 TD-0194 — bộ sinh phải cho ĐỦ zone đỉnh để tầng TP §5.1 kiểm được.
+
+    Trước bản này: **0 zone đỉnh** trên 910 nến (ứng viên swing 1, qua
+    `touch ≥ 1` là 0). Đuôi tăng đơn điệu không bao giờ tạo được cụm
+    *chạm-rồi-đóng-DƯỚI-zone* — chiều ĐẢO so với zone đáy.
+    """
+
+    def test_co_dung_HAI_zone_dinh_o_HAI_PHIA_tran_TP(self, kq_san_xuat) -> None:
+        """🔴 HAI đỉnh, KHÔNG phải một — và đây là chỗ có RĂNG.
+
+        Với **một** đỉnh duy nhất trong tầm, một bản nối hỏng kiểu *"lấy đại
+        zone đỉnh nào cũng được, bỏ qua phép lọc `4,0 × R_eff`"* vẫn cho ra
+        đúng zone đó ⇒ **xanh giả**. Hai đỉnh ở hai phía trần thì bản hỏng ấy
+        sẽ chọn nhầm cái ngoài tầm và bị bắt.
+
+        `R_eff` là **KHOẢNG GIÁ** (v8 dòng 1667 cấm viết "4R"), tính từ chính
+        `enter_tag` của lệnh THẬT — không gõ tay, nên đổi bộ sinh thì ca này
+        đi theo chứ không đỏ giả.
+        """
+        rows4 = _bars_4h_co_trend()
+        assert _dem_zone(rows4, "dinh") == 2, "cần ĐÚNG hai đỉnh — xem docstring"
+
+        t = _lenh_du_ba_tranche(kq_san_xuat)
+        d = json.loads(t["enter_tag"])
+        p_avg = (d["p1"] + d["p2"] + d["p3"]) / 3
+        r_eff_gia = p_avg - d["sl"]          # KHOẢNG GIÁ, không phải tỉ lệ
+        tran = p_avg + 4.0 * r_eff_gia
+
+        trong = CAO_DINH_TRONG_TAM * (1 - 0.004)   # xấp xỉ mép dưới zone
+        ngoai = CAO_DINH_NGOAI_TAM * (1 - 0.004)
+        assert p_avg < trong < tran, (
+            f"đỉnh TRONG tầm phải nằm trong ({p_avg:.3f}, {tran:.3f}), thực tế {trong:.3f}"
+        )
+        assert ngoai > tran, (
+            f"đỉnh NGOÀI tầm phải > {tran:.3f}, thực tế {ngoai:.3f}"
+        )
+
+    def test_doi_chung_thuong_truc_co_RANG(self) -> None:
+        """Chốt canh chính nó: nếu bộ sinh mất một loại zone thì
+        `_khang_dinh_bo_sinh_du_hai_loai_zone()` phải RAISE, không im lặng."""
+        with pytest.raises(AssertionError, match="ĐỈNH"):
+            rows_khong_dinh = [b for b in _bars_4h_co_trend()]
+            for i in (I_DINH_TRONG_TAM, I_DINH_NGOAI_TAM):
+                # hạ đỉnh xuống ngang nến dốc ⇒ thôi là swing đỉnh
+                rows_khong_dinh[i] = (95.0, 95.1, 94.9, 95.0, 1000.0)
+            for loai, ten in (("day", "ĐÁY"), ("dinh", "ĐỈNH")):
+                assert _dem_zone(rows_khong_dinh, loai) >= 1, (
+                    f"bộ sinh không cho zone {ten} hợp lệ nào"
+                )
 
 
 class TestKhongPassRong:
