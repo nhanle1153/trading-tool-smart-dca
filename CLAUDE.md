@@ -271,6 +271,37 @@ với dòng phiên kia đang gõ dở cùng lúc — đã gây ít nhất 3 lầ
 > Mục này có thể lệch nhịp vài phút so với phiên kia — luôn `git log --oneline` +
 > đọc lại `TASKS.md` (cột 🔓/🔒/✅) trước khi chọn việc tiếp theo, đừng chỉ tin mục này.
 
+**Đang ở (cập nhật 09/09/2026 đêm, phiên mới — TD-0189 ĐÓNG):** ✅ **TD-0189 chặng 2b XONG
+(`1b90456`+`0152158`)** — TP1/TP2 §5.1 đã NỐI vào `ZoneAbsorption.py`. TP1 qua
+`adjust_trade_position` (`stake_amount` ÂM ⇒ `ExitType.PARTIAL_EXIT`, đọc mã nguồn Freqtrade trước
+khi viết dòng nào — N7/rule 6), chốt đúng 50% theo AMOUNT; TP2 qua `custom_exit` (trail ATR trên đỉnh
+giá TỪ MỐC TP1 khớp, không phải từ lúc mở lệnh). `custom_data["chot_loi"]` mang đủ `tp_zone_age_bars`
+(DR-D4-06 ràng buộc 1) cho TD-0184 đọc sau; `_cap_nhat_chot_loi()` tính lại TP1 ở MỌI lần entry khớp
+(DR-D4-06 §3 ràng buộc 5), `zone_dinh` (danh sách ứng viên) vẫn đóng băng một lần ở tranche 1.
+
+🔴 **Chốt MỚI, hỏi chủ dự án ngay lúc đo bắt được ca thật (không phải giả định tự chọn): ĐÃ CHỐT
+TP1 THÌ KHÔNG DCA THÊM** — dù giá sau đó tụt về đúng `p2`/`p3` kế hoạch, tranche 2/3 KHÔNG được bơm.
+Lý do: tranche 2/3 tồn tại để bảo vệ một thesis CHƯA xác nhận (hạ giá vào trung bình lúc giá còn đi
+ngược); TP1 xác nhận NGƯỢC LẠI — giá đã đi đúng hướng đủ để chốt lời. KHÔNG phải chữ tường minh của
+spec — ghi là DIỄN GIẢI, cãi lại được.
+
+🔑 **Bài học đo lường của phiên — hình dạng lỗi lặp lại LẦN THỨ BA trong tuần:** fixture
+`test_td0187_dinh_co_lenh_backtest_that.py` có một nến "chạm p1 → tranche 1" mang wick lên tới 97,0
+ngay sau tín hiệu — vô hại với hệ thống CHƯA có TP, nhưng với `--timeframe-detail 5m` thì
+`adjust_trade_position`/`custom_exit` thấy giá ở độ phân giải 5 phút cho vị thế ĐÃ MỞ (đọc
+`backtesting.py:backtest_loop`, nhánh `has_detail` — không đoán), nên wick đó chạm luôn ngưỡng
+TP1-nạng ngay khi tranche 1 vừa khớp, khiến bản đầu của chặng 2b cho DCA thêm SAU KHI đã chốt TP1 —
+đúng cùng hình "fixture đúng hệ thống CŨ, im lặng sai hệ thống MỚI" đã gặp ở TD-0182/TD-0194. Đã hạ
+wick (đã báo phiên khác trước khi sửa, không giao chỉ số nến với TD-0194) + sửa 1 test
+(`test_stake_la_ky_quy_bang_cost_chia_L`: `stake_amount` hiện tại không còn dùng được làm mẫu số sau
+khi có exit, đổi sang `max_stake_amount`). Test mới `test_td0189_chot_loi_noi_vao_chien_luoc.py` (8
+ca) khoá cả TP1/TP2 (dùng lại fixture `kq_san_xuat`) và chốt không-DCA (fixture riêng + kiểm-có-răng
+bằng AST — đã thử phá-thật-chạy-lại-backtest trước nhưng TP2 tự đóng hết vị thế trước khi giá chạm
+p2/p3 nên không phân biệt được hai nhánh, đổi hướng sang kiểm cấu trúc). Docker: **1467 passed, 0
+failed**. ⚠️ `chi_so_h4()` (H-4 tổng hợp D4) vẫn là việc của bộ chạy E3 (TD-0184).
+
+*(Đoạn "Đang ở" cũ bên dưới giữ nguyên làm lịch sử.)*
+
 **Đang ở (cập nhật 09/09/2026, phiên `-2f`, TD-0189 chốt lời):** 🔒 **TD-0189 chặng 1 + 2a ĐÓNG,
 chặng 2b CHỜ.** Chặng 1 (`f9e9132`+`7db6d44`+`dd790c4`) dựng `src/tool_d/take_profit.py` — hàm THUẦN
 TP1/TP2/nạng, đơn vị đi qua đúng một hàm `khoang_r_eff()` (`r_eff_plan` là TỈ LỆ, `R_eff` của §5.1 là
