@@ -49,7 +49,7 @@
         "max": 39.292,
         "mean": 19.032
       },
-      "giay": 11.9
+      "giay": 11.7
     },
     "Z0-T1": {
       "so_ma": 88,
@@ -96,7 +96,7 @@
         "max": 13.003,
         "mean": 4.421
       },
-      "giay": 11.7
+      "giay": 11.6
     },
     "Z0": {
       "so_ma": 88,
@@ -144,53 +144,6 @@
         "mean": 0.754
       },
       "giay": 11.7
-    },
-    "Z3": {
-      "so_ma": 88,
-      "ma_nam": 99.4,
-      "zone": 4918,
-      "A_xac_nhan": 2103,
-      "B_phan_thuc": 3318,
-      "tin_hieu_sau_trend": 96,
-      "ty_le_A_tren_zone": 0.4276,
-      "ty_le_B_tren_zone": 0.6747,
-      "tin_hieu_moi_ma_nam": 0.966,
-      "tin_hieu_quy_doi_pool_102_moi_nam": 98.5,
-      "phan_bo_wait_bars": {
-        "0": 1140,
-        "1": 599,
-        "2": 364
-      },
-      "phan_bo_nhanh_xac_nhan": {
-        "b": 972,
-        "ac": 1131
-      },
-      "phan_bo_luot_cham_phan_thuc_B": {
-        "1": 2103
-      },
-      "pheu_trend_tai_C": {
-        "C": 2103,
-        "nan_1d_hoac_adx": 126,
-        "tuoi_None_NaN": 598,
-        "1_huong_1d_UP": 400,
-        "2_4h_dong_huong": 160,
-        "3_adx_ge_20": 137,
-        "4_tuoi_ge_5": 96,
-        "chi_truot_tuoi": 41,
-        "huong_1d_FLAT": 364,
-        "huong_1d_DOWN": 1339,
-        "tuoi_ge_5_bat_ke_dk_khac": 1363
-      },
-      "tin_hieu_moi_ma_nam_theo_ma": {
-        "n": 88,
-        "min": 0.0,
-        "P25": 0.0,
-        "median": 0.0,
-        "P75": 1.328,
-        "max": 3.874,
-        "mean": 0.754
-      },
-      "giay": 11.8
     }
   },
   "huong_lech_quy_doi": {
@@ -211,97 +164,98 @@
     "Z0-T0": {
       "so_ma": 88,
       "ma_nam": 99.4,
-      "so_lenh": 949,
-      "lenh_moi_ma_nam": 9.547,
-      "lenh_quy_doi_pool_102_moi_nam": 973.8,
+      "so_lenh": 1244,
+      "lenh_moi_ma_nam": 12.515,
+      "lenh_quy_doi_pool_102_moi_nam": 1276.5,
       "phan_bo_tranche": {
-        "1": 949
+        "1": 1244
       },
       "exit_reason": {
-        "FUNDING_STOP": 158,
-        "trailing_stop_loss": 522,
-        "TP2_TRAIL": 253,
-        "TIME_STOP": 16
+        "FUNDING_STOP": 191,
+        "trailing_stop_loss": 734,
+        "TP2_TRAIL": 295,
+        "TIME_STOP": 20,
+        "force_exit": 4
       },
       "tp1_theo_nguon": {
-        "TP1_fallback_r_multiple": 279
+        "TP1_fallback_r_multiple": 327
       },
       "cong_ket_nap": {
-        "ket_nap": 1186
+        "ket_nap": 1546
       },
       "lenh_theo_thang": {
-        "2024-05": 8,
-        "2024-06": 27,
-        "2024-07": 31,
-        "2024-08": 48,
-        "2024-09": 24,
-        "2024-10": 39,
-        "2024-11": 33,
-        "2024-12": 37,
-        "2025-01": 34,
-        "2025-02": 56,
-        "2025-03": 43,
-        "2025-04": 52,
-        "2025-05": 45,
-        "2025-06": 44,
-        "2025-07": 53,
-        "2025-08": 58,
-        "2025-09": 46,
-        "2025-10": 64,
-        "2025-11": 90,
-        "2025-12": 73,
-        "2026-01": 44
+        "2024-05": 9,
+        "2024-06": 34,
+        "2024-07": 36,
+        "2024-08": 59,
+        "2024-09": 34,
+        "2024-10": 53,
+        "2024-11": 54,
+        "2024-12": 40,
+        "2025-01": 51,
+        "2025-02": 60,
+        "2025-03": 48,
+        "2025-04": 66,
+        "2025-05": 63,
+        "2025-06": 95,
+        "2025-07": 70,
+        "2025-08": 86,
+        "2025-09": 77,
+        "2025-10": 67,
+        "2025-11": 68,
+        "2025-12": 101,
+        "2026-01": 73
       },
-      "exception_bi_nuot": 588,
-      "giay": 122.2,
+      "exception_bi_nuot": 4,
+      "giay": 158.7,
       "ghi_chu": "KHÔNG --timeframe-detail (EXPLORE không có 5m); chỉ đếm, không PnL"
     },
     "Z0-T1": {
       "so_ma": 88,
       "ma_nam": 99.4,
-      "so_lenh": 245,
-      "lenh_moi_ma_nam": 2.465,
-      "lenh_quy_doi_pool_102_moi_nam": 251.4,
+      "so_lenh": 325,
+      "lenh_moi_ma_nam": 3.27,
+      "lenh_quy_doi_pool_102_moi_nam": 333.5,
       "phan_bo_tranche": {
-        "1": 245
+        "1": 325
       },
       "exit_reason": {
-        "FUNDING_STOP": 57,
-        "trailing_stop_loss": 114,
-        "TP2_TRAIL": 73,
+        "FUNDING_STOP": 71,
+        "trailing_stop_loss": 163,
+        "TP2_TRAIL": 90,
         "TIME_STOP": 1
       },
       "tp1_theo_nguon": {
-        "TP1_fallback_r_multiple": 79
+        "TP1_fallback_r_multiple": 99
       },
       "cong_ket_nap": {
-        "ket_nap": 316
+        "ket_nap": 418
       },
       "lenh_theo_thang": {
-        "2024-05": 4,
+        "2024-05": 5,
         "2024-06": 1,
-        "2024-07": 12,
-        "2024-08": 8,
-        "2024-09": 14,
-        "2024-10": 6,
-        "2024-11": 28,
+        "2024-07": 14,
+        "2024-08": 11,
+        "2024-09": 21,
+        "2024-10": 11,
+        "2024-11": 34,
         "2024-12": 13,
-        "2025-01": 4,
+        "2025-01": 8,
         "2025-02": 8,
-        "2025-03": 10,
+        "2025-03": 11,
         "2025-04": 16,
-        "2025-05": 11,
-        "2025-06": 2,
-        "2025-07": 28,
-        "2025-08": 15,
-        "2025-09": 9,
-        "2025-10": 13,
-        "2025-11": 9,
-        "2025-12": 14,
-        "2026-01": 20
+        "2025-05": 12,
+        "2025-06": 4,
+        "2025-07": 41,
+        "2025-08": 21,
+        "2025-09": 15,
+        "2025-10": 16,
+        "2025-11": 13,
+        "2025-12": 21,
+        "2026-01": 29
       },
-      "exception_bi_nuot": 123,
-      "giay": 46.7,
+      "exception_bi_nuot": 3,
+      "giay": 51.4,
       "ghi_chu": "KHÔNG --timeframe-detail (EXPLORE không có 5m); chỉ đếm, không PnL"
     },
     "Z0": {
@@ -340,48 +294,7 @@
         "2026-01": 1
       },
       "exception_bi_nuot": 0,
-      "giay": 37.5,
-      "ghi_chu": "KHÔNG --timeframe-detail (EXPLORE không có 5m); chỉ đếm, không PnL"
-    },
-    "Z3": {
-      "so_ma": 88,
-      "ma_nam": 99.4,
-      "so_lenh": 62,
-      "lenh_moi_ma_nam": 0.624,
-      "lenh_quy_doi_pool_102_moi_nam": 63.6,
-      "phan_bo_tranche": {
-        "1": 32,
-        "2": 20,
-        "3": 10
-      },
-      "exit_reason": {
-        "TP2_TRAIL": 16,
-        "trailing_stop_loss": 23,
-        "FUNDING_STOP": 23
-      },
-      "tp1_theo_nguon": {
-        "TP1_fallback_r_multiple": 21
-      },
-      "cong_ket_nap": {
-        "ket_nap": 83
-      },
-      "lenh_theo_thang": {
-        "2024-09": 5,
-        "2024-10": 2,
-        "2024-11": 13,
-        "2024-12": 13,
-        "2025-04": 2,
-        "2025-05": 5,
-        "2025-07": 5,
-        "2025-08": 8,
-        "2025-09": 4,
-        "2025-10": 2,
-        "2025-11": 1,
-        "2025-12": 1,
-        "2026-01": 1
-      },
-      "exception_bi_nuot": 0,
-      "giay": 35.9,
+      "giay": 37.2,
       "ghi_chu": "KHÔNG --timeframe-detail (EXPLORE không có 5m); chỉ đếm, không PnL"
     }
   }

@@ -269,12 +269,33 @@ def do_backtest(ma: list[str], arm: str) -> dict:
         "tp1_theo_nguon": dict(tp1),
         "cong_ket_nap": dict(ket_nap),
         "lenh_theo_thang": dict(sorted(theo_thang.items())),
+        # Góp ý `-46`: "cùng số lệnh mỗi tháng" CHƯA phải "cùng từng lệnh". Phép so
+        # PAIRED của `DR-D4-09` chỉ hợp lệ trên tập GIAO — nên tập lệnh phải đo,
+        # không giả định. Khuôn `so_tung_lenh` của dg2-explore-quet-arm.json.
+        "_tap_lenh": sorted({f"{t['pair']}|{str(t['open_date'])[:16]}" for t in trades}),
         "exception_bi_nuot": len(nuot),
         "giay": round(time.time() - t0, 1),
         "ghi_chu": "KHÔNG --timeframe-detail (EXPLORE không có 5m); chỉ đếm, không PnL",
     }
     print(f"[backtest] {arm}: {ra}", flush=True)
     shutil.rmtree(tmp, ignore_errors=True)
+    return ra
+
+
+def _so_tap_lenh(lenh_that: dict) -> dict:
+    """Hai arm có chạy trên ĐÚNG cùng tập lệnh không — điều kiện của phép so
+    PAIRED (`DR-D4-09`). Trả `n_giao` cho từng cặp; `trung_khop_hoan_toan`
+    False nghĩa là paired phải chạy trên phần giao và n ≠ n_arm."""
+    ten = list(lenh_that)
+    ra = {}
+    for i, a in enumerate(ten):
+        for b in ten[i + 1:]:
+            ta, tb = set(lenh_that[a]["_tap_lenh"]), set(lenh_that[b]["_tap_lenh"])
+            ra[f"{a} vs {b}"] = {
+                "n_A": len(ta), "n_B": len(tb), "n_giao": len(ta & tb),
+                "chi_co_o_A": len(ta - tb), "chi_co_o_B": len(tb - ta),
+                "trung_khop_hoan_toan": ta == tb,
+            }
     return ra
 
 
@@ -301,6 +322,10 @@ def main() -> int:
     print(f"[quy đổi] {kq['huong_lech_quy_doi']}", flush=True)
     if not a.skip_backtest:
         kq["lenh_that"] = {arm: do_backtest(ma, arm) for arm in arms}
+        kq["so_tap_lenh"] = _so_tap_lenh(kq["lenh_that"])
+        for v in kq["lenh_that"].values():
+            v.pop("_tap_lenh", None)
+        print(f"[so tập lệnh] {kq['so_tap_lenh']}", flush=True)
     KET_QUA.write_text(json.dumps(kq, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"→ {KET_QUA}")
     return 0
