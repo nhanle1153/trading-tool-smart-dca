@@ -209,6 +209,34 @@ thật**, không chỉ đúng trên giấy. Và với BTC thì vế thắng là 
 biến mất. Cùng hình dạng MT-16 (vii), nhưng lần này chứng kiến trên lượt chạy thật chứ không suy ra
 từ mã nguồn.
 
+### 4.7 Đo lại SAU khi `DR-D4-05` nâng `E_D` 500 → 750 (09/09/2026)
+
+Cùng lệnh, cùng nguồn metadata sàn, chỉ khác `E_D`. **Chỉ đọc metadata sàn — không chạm dữ liệu giá
+của pool**, nên vẫn 0 trial và KHÔNG vướng MT-19 (xem ghi chú cuối mục).
+
+| Π mult_* | R_eff 3,0% | R_eff 1,5% | R_eff 0,9% |
+|---|---|---|---|
+| 1,000 (ca tốt nhất) | **102/102** (tr.1 = 31,25) | 102/102 (62,50) | 102/102 (104,17) |
+| 0,700 | 98/102 (21,88) | 102/102 (43,75) | 102/102 (72,92) |
+| 0,434 (ZSS 0,62 đo thật) | 97/102 (13,56) | 102/102 (27,13) | 102/102 (45,21) |
+| 0,326 | 97/102 (10,17) | 98/102 (20,34) | 102/102 (33,91) |
+| 0,175 | **0/102** (5,47) | 97/102 (10,94) | 98/102 (18,23) |
+| 0,044 (xấu nhất khả dĩ) | **0/102** (1,37) | **0/102** (2,73) | **0/102** (4,56) |
+
+**Rớt ở ca tốt nhất: 0/102 trên CẢ HAI đường chạy** (trước: 4/102). Bốn mã BCH/ETC/LINK/LTC nay qua
+với **lề đúng 4,2%** — 31,25 so với sàn live 30,00 — tức đúng con số lề mà `DR-D4-05` §2.2 chọn 750
+thay vì 720 để có. L-Z20 cũng khá lên theo (81 → **87**/102 ở zone rộng) vì ngân sách rủi ro lớn hơn
+làm sai số làm tròn lot nhẹ đi tương đối.
+
+⚠️ **Vách vẫn còn, chỉ dịch chỗ:** ở `Π mult_* ≤ 0,175` zone rộng vẫn **0/102**. Nâng `E_D` mua được
+lề, không xoá được vách — vách là tính chất của việc mọi mã có chung một sàn tối thiểu.
+
+🔑 **Phân biệt phải giữ, vì một phiên đã suýt kết luận nhầm:** câu *"bốn mã này có rớt sàn không"*
+cần **metadata sàn** (`MIN_NOTIONAL`, `LOT_SIZE`, giá) — đọc được tự do, 0 trial, đúng tiền lệ
+TD-0082. Câu **bị MT-19 chặn** là câu khác: *"bốn mã này thực tế vào lệnh bao nhiêu lần ở zone
+rộng"* — đó mới cần dữ liệu giá pool. Gộp hai câu làm một sẽ khiến một phép đo **đang làm được** bị
+xếp nhầm vào nhóm cần một DR hoặc một suất trial.
+
 ### 4.6 Kết luận theo tiêu chí nghiệm thu gốc của TD-0082
 
 **Min notional: CÓ vi phạm** (4/102 ở ca tốt nhất trên cả hai đường chạy; 100% ở
