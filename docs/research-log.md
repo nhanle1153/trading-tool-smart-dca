@@ -1658,3 +1658,96 @@ hẳn `Z2`≡`Z3`. `-94` đang báo cáo đầy đủ cho chủ dự án; **khô
 
 ⚠️ Giới hạn: mọi con số trên đo trên **EXPLORE alt**, không phải pool 102 mã. `Z2`≡`Z3` là
 phát biểu về **tập dữ liệu này**, không phải về DG5 nói chung.
+
+---
+
+## 09/09/2026 (tiếp, phiên `-46`) — TD-0195: một tham số "tunable" mà đường chạy không đọc; phép đối chứng đo được giá của nó
+
+### Câu hỏi không ai đặt: giá trị trong YAML có CHẢY tới phép tính không?
+
+Dự án đã có `L-Z15` (khai `TUNED`/`FROZEN` đủ chưa), có `dof_inventory.yaml` (đếm bậc tự do),
+có `param_status.yaml`, có kiểm kê DOF nuôi rào DSR. Cả bốn đều nói về **tư cách** của một
+tham số. Không cái nào hỏi **đường đi** của nó.
+
+Đo tĩnh bằng AST (`docs/du-lieu-do/do_duong_doc_tham_so_tier_b.py`, 0 trial, không mở một nến
+nào): **7 trong 12 khoá `tier_b` không có một literal `"tier_b.<khoá>"` nào** ở vị trí giá trị
+trong `src/`, `user_data/strategies/`, `entrypoints/` — tức `resolve()` không thể được gọi cho
+chúng. Giá trị thật đến từ hằng số cứng trong `.py`:
+
+| khoá `tier_b` | hằng số cứng | hàm đóng cứng | có trên đường chạy sản xuất? |
+|---|---|---|---|
+| `zss_threshold` | `zone_strength.py:20 NGUONG_ZSS` | `zone_hop_le` | ✅ `ZoneAbsorption:314`/`:400` |
+| `buf_sl_atr` | `trade_plan.py:20 BUF_SL_HE_SO` | `tinh_ke_hoach` | ✅ qua `ke_hoach_theo_arm` `:322` |
+| `dg6a_atr_ratio` | `dg6_early_invalidation.py:22` | `dieu_kien_a` | ✅ `:808` |
+| `dg6d_retrace_frac` | `:26 NGUONG_HOI_GIA_D` | `dieu_kien_d` | ❌ chưa ai gọi (`d=False` cứng) |
+| `funding_rate_pct` | `:25 NGUONG_FUNDING_D` | `dieu_kien_d` | ❌ như trên |
+| `wick_close_upper_frac` | số ma `0.5` (`entry_confirmation:134,136`) | `_la_nen_rejection` | ❌ MT-21 |
+| `v_min` | — (đối số, chưa ai truyền) | — | ❌ MT-21 |
+
+### 🔑 Phép đối chứng — đo được GIÁ của lỗ hổng, thay vì suy luận về nó
+
+Suy luận *"đổi YAML sẽ không có tác dụng"* nghe hiển nhiên, nhưng dự án này đã bị **sáu lần**
+một phát biểu nghe hợp lý bị một phép đo dưới một phút bác (ghi 09/09 phần trên). Nên đo:
+
+Lab dựng bằng `git clone --local` (không `cp -r` — bài học 08/09). Đổi `zss_threshold` từ
+`0.5` lên `0.99` trong YAML, chạy `test_td0187` (backtest THẬT) ở hai commit:
+
+| cây | kết quả | nghĩa là |
+|---|---|---|
+| `0152158` — TRƯỚC bản vá | **17 passed** | ngưỡng gần như không thể đạt, mà **mọi thứ vẫn xanh** |
+| `0b5112d` — SAU bản vá | **1 failed, 16 errors** (số zone hợp lệ → 0) | YAML thật sự điều khiển phép tính |
+
+Dòng đầu là bằng chứng trực tiếp: một trial B3 chi cho việc calibrate `zss_threshold` sẽ mua
+về **thông tin bằng không**, và bảng kết quả trông hoàn toàn bình thường vì hai cấu hình cho
+ra cùng một tập lệnh. Đây là **cùng họ MT-15** (bẫy PASS RỖNG đốt ngân sách) nhưng ở tầng
+khác: MT-15 làm hai *arm* trùng nhau, cái này làm hai *cấu hình* trùng nhau.
+
+🔴 **Và nó im lặng hơn MT-15 một bậc.** MT-15 ít nhất còn để lại hai cột giống hệt nhau trong
+bảng arm. Ở đây, hai cấu hình khác nhau trong sổ trial cho cùng một kết quả — mà **sổ trial
+ghi cấu hình, không ghi tập lệnh**, nên không có chỗ nào để hai cột đứng cạnh nhau mà lộ ra.
+
+### Lớp canh, và giới hạn của chính nó — được chứng minh bằng phép phá, không bằng lời
+
+`tests/lock/test_td0195_*` quét AST đòi mỗi khoá `tier_b` có ít nhất một literal đường dẫn.
+Kiểm có răng: trả `NGUONG_ZSS` về hằng số cứng ⇒ **đúng 1 ca đỏ** (`test_hang_so_khong_quay_lai`).
+
+🔑 Nhưng phép phá đó cũng phơi ra **giới hạn của lớp canh, đúng chỗ docstring tự khai**: ca
+`test_co_it_nhat_mot_duong_doc[zss_threshold]` **VẪN XANH** sau khi phá — vì `ZoneAbsorption`
+vẫn *đọc* YAML rồi *truyền xuống*, chỉ có hàm nhận là bỏ qua giá trị đó. Literal vẫn còn, nên
+phép kiểm tĩnh vẫn thấy "có đường đọc". **Lớp canh chứng minh được chiều PHỦ ĐỊNH (không có
+literal ⇒ chắc chắn không đọc), không chứng minh được chiều KHẲNG ĐỊNH.** Vế khẳng định do
+phép đối chứng đổi-YAML ở trên gánh, và đó là lý do phải làm nó chứ không dừng ở AST.
+
+### Vì sao XOÁ hằng số chứ không đổi tên hay để làm mặc định
+
+Ba hằng số bị xoá hẳn. Giữ lại làm giá trị mặc định của đối số nghe tiện và không phá test nào
+— nhưng đó chính là cơ chế đã sinh ra lỗ hổng: một đường gọi quên khai sẽ chạy bằng con số ai
+đó viết một lần trong quá khứ, **và không có gì báo**. Cùng lý do `bat_dieu_kien_c` của
+`entry_confirmation` không có mặc định (nếu có, hai arm lại nhập làm một).
+
+Fixture `L-Z49` (`ZoneAbsorptionMinimal`) và `ZoneDetectionProbe` cũng phải đọc YAML: một
+fixture giữ bản sao riêng thì thứ nó chứng minh chạy được là **một cấu hình không ai chạy**.
+
+### 📌 Phát hiện phụ chưa xử — ĐƠN VỊ, và vì sao không vá luôn
+
+`funding_rate_pct` trong YAML là **-0.05** (phần trăm); hằng số cũ là **-0.0005** (tỉ lệ). Cùng
+một số vật lý, khác đơn vị. Nối mà quên ÷100 thì ngưỡng sai **100 lần** — đúng lớp lỗi `L-Z48c`
+sinh ra để chặn. Vì `dieu_kien_d()` chưa có người gọi trên đường chạy, vá bây giờ là vá một
+đường không ai đi, và câu đơn vị phải chốt TRƯỚC. Đã ghi vào `MIEN_TRU` của lớp canh kèm điều
+kiện gỡ, và lớp canh có ca **báo đỏ khi miễn trừ hết hạn** — một danh sách miễn trừ không tự
+dọn sẽ lặng lẽ phình ra cho tới lúc che mất chính thứ nó được lập ra để theo dõi.
+
+### 🐛 Lỗi của chính bản vá, và thứ đã bắt được nó
+
+`_quet_zone_dinh` là `@staticmethod`; tôi truyền `self._nguong_zss` vào. Mọi backtest
+`ZoneAbsorption` crash `NameError` — **5 failed + 27 errors**. Không phải đọc lại code bắt
+được, mà là **chạy suite**. Đọc lại chỉ xác nhận thứ mình đã tin; chạy là thứ phân biệt "sửa
+xong" với "tưởng là xong". Sau khi sửa: **1481 passed, 0 failed** (Docker, 2:18).
+
+### Phối hợp ba phiên — quy ước N12 mục 6 hoạt động đúng như thiết kế
+
+Ba phiên cùng thư mục. Trước khi mở tài liệu/mã việc mới tôi nhắn cả hai; `-28` (đang giữ
+`take_profit.py`/`ZoneAbsorption.py` dở) trả lời rồi commit xong mới tới lượt tôi, `-be` xác
+nhận không giữ gì. Khi commit, `api-integration-rules.md` của `-28` đang sửa dở nằm trong cây —
+`git commit -- <pathspec đích danh>` bỏ qua nó đúng như N12 mục 5 mô tả. Kiểm lại sau commit:
+file đó **không** nằm trong commit của tôi.
