@@ -231,6 +231,13 @@ làm sai số làm tròn lot nhẹ đi tương đối.
 ⚠️ **Vách vẫn còn, chỉ dịch chỗ:** ở `Π mult_* ≤ 0,175` zone rộng vẫn **0/102**. Nâng `E_D` mua được
 lề, không xoá được vách — vách là tính chất của việc mọi mã có chung một sàn tối thiểu.
 
+🔴 **ĐÍNH CHÍNH 09/09/2026 — cột `R_eff 0,9%` mô tả một chế độ KHÔNG TỒN TẠI trong dữ liệu.** Phiên
+`-f4` đo `R_eff` trên **83 lệnh `Z0` thật**: min **1,303%** · P10 **2,073%** · **trung vị 3,028%**.
+Zone 0,9% **không xuất hiện lần nào**. Ba con số `R_eff` của các bảng §4.3/§4.7 lấy từ ví dụ minh
+hoạ §6.8f, không từ đo đạc — nên **cột lạc quan nhất của mọi bảng trên là cột không dùng được**, và
+tình huống thật nằm quanh cột **3,0%**, tức cột **xấu nhất**. Đọc mọi bảng ở trên với cột 0,9% bị
+gạch đi. (Giới hạn: 83 lệnh, một arm, trên bộ sinh của TD-0187 — chiều thì chắc, con số lẻ thì không.)
+
 🔑 **Phân biệt phải giữ, vì một phiên đã suýt kết luận nhầm:** câu *"bốn mã này có rớt sàn không"*
 cần **metadata sàn** (`MIN_NOTIONAL`, `LOT_SIZE`, giá) — đọc được tự do, 0 trial, đúng tiền lệ
 TD-0082. Câu **bị MT-19 chặn** là câu khác: *"bốn mã này thực tế vào lệnh bao nhiêu lần ở zone
