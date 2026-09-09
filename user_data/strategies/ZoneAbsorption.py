@@ -105,7 +105,12 @@ from freqtrade.persistence import Trade
 from freqtrade.strategy import IStrategy, merge_informative_pair, stoploss_from_absolute
 
 from tool_d.admission import AdmissionError, ViTheMo, kiem_ket_nap
-from tool_d.arm_switches import ARM_HOP_LE, cong_ap_dung, duoc_them_tranche
+from tool_d.arm_switches import (
+    ARM_HOP_LE,
+    CHE_DO_CO_LENH_THEO_ARM,
+    cong_ap_dung,
+    duoc_them_tranche,
+)
 from tool_d.config.loader import load_tool_d_config, resolve
 from tool_d.dg1_dg5_tranche_gates import danh_gia_tat_ca
 from tool_d.notional import bo_loc_tu_market, kiem_san_tool_d
@@ -199,7 +204,21 @@ class ZoneAbsorption(IStrategy):
         self._arm = str(resolve(self._cfg, "tier_c.arm_ablation.arm"))
         if self._arm not in ARM_HOP_LE:
             raise SizingError(f"tier_c.arm_ablation.arm = {self._arm!r} không thuộc {ARM_HOP_LE}")
-        self._notional_co_dinh = resolve(self._cfg, "tier_c.arm_ablation.notional_co_dinh_usdt")
+        # DR-D4-07: THAM CHIẾU R_eff, không phải con số USDT cứng. Notional của
+        # Z0-S1 là đại lượng dẫn xuất `rho_pct/100 × E_D / ref` nên tự khớp thang
+        # khi `E_D` đổi — một số cứng sẽ lặng lẽ đổi ý nghĩa arm (E_D vừa đi
+        # 500 → 750).
+        #
+        # 🔴 CHỈ truyền cho arm định cỡ theo VỐN. `arm_switches` cố ý raise khi
+        # arm rủi-ro-cố-định nhận tham số này ("một trong hai chỗ đang hiểu sai
+        # arm"), nên truyền vô điều kiện làm MỌI arm khác chết. Bản trước không
+        # lộ ra vì khoá cũ là `null`: giá trị `None` đi lọt, và cái lọt đó chính
+        # là arm Z0-S1 không chạy được. Con dao hai lưỡi của cùng một dòng.
+        self._notional_ref_r_eff = (
+            resolve(self._cfg, "tier_c.arm_ablation.notional_ref_r_eff")
+            if CHE_DO_CO_LENH_THEO_ARM[self._arm] == "NOTIONAL_CO_DINH"
+            else None
+        )
         self._l_exchange = float(resolve(self._cfg, "tier_a.L_exchange"))
         self._adx_threshold = float(resolve(self._cfg, "tier_frozen.adx_threshold.value"))
         self._tang_loc_trend = tang_cua_arm(self._arm)  # TD-0182 — công tắc Phần 2 theo arm
@@ -440,7 +459,7 @@ class ZoneAbsorption(IStrategy):
 
         plan = lap_ke_hoach_co_lenh(
             cfg=self._cfg, arm=self._arm, r_eff=kh.r_eff_plan, mult=mult,
-            notional_co_dinh_usdt=self._notional_co_dinh,
+            notional_ref_r_eff=self._notional_ref_r_eff,
         )
         stake1 = plan.stake_tranche(1)
         # Freqtrade sẽ cắt về max_stake / từ chối dưới min_stake một cách IM

@@ -173,53 +173,72 @@ def notional_tranche1_theo_arm(
     rho_pct: float,
     r_eff: float,
     n_tranches: int,
-    notional_co_dinh_usdt: float | None = None,
+    notional_ref_r_eff: float | None = None,
 ) -> float:
     """Notional tranche 1 theo chế độ định cỡ của arm.
 
     `RUI_RO_CO_DINH` (§6.8e): gọi thẳng `notional.tranche1_notional()`,
     không chép công thức.
 
-    `NOTIONAL_CO_DINH` (arm `Z0-S1`): **không chia cho `R_eff`**. Đó chính
-    là điều arm này kiểm chứng — §10.1b: *"nó KHÔNG phụ thuộc `R_eff` tính
-    đúng; nếu công thức `R_eff` sai, rủi ro-cố-định sai theo, vốn-cố-định
-    thì không"*. Vì thế `r_eff` **không được** tham gia nhánh này; có test
-    ghim bằng cách đổi `r_eff` và đòi kết quả KHÔNG đổi.
+    `NOTIONAL_CO_DINH` (arm `Z0-S1`): **không phụ thuộc `R_eff` của lệnh**.
+    Đó chính là điều arm này kiểm chứng — §10.1b: *"nó KHÔNG phụ thuộc
+    `R_eff` tính đúng; nếu công thức `R_eff` sai, rủi ro-cố-định sai theo,
+    vốn-cố-định thì không"*. Vì thế `r_eff` **không được** tham gia nhánh
+    này; có test ghim bằng cách đổi `r_eff` và đòi kết quả KHÔNG đổi.
 
-    🔴 **`notional_co_dinh_usdt` BẮT BUỘC khi arm là `Z0-S1`, cố ý KHÔNG
-    có mặc định** — cùng lý do `dg5_zss_khong_suy_yeu()` bắt buộc ngưỡng
-    (TD-0169): **spec không cho con số này ở đâu cả**. §10.1b chỉ nói
-    *"notional CỐ ĐỊNH mỗi lệnh"*; dòng 1285 có nhắc *"300 USDT"* nhưng
-    trong một lập luận minh hoạ, không phải giá trị đã chốt, và
-    `tool_d_config.yaml` không có khoá nào cho nó. Điền hộ một số ở đây là
-    tạo một bậc tự do không ai đếm — đúng thứ `N_ĐĂNG_KÝ = 114` tồn tại để
-    kiểm soát. Bắt buộc khai thì không ai chạy nhầm bằng một con số chưa
-    duyệt, và chỗ trống này **nhìn thấy được**.
+    🔑 **DR-D4-07 — hai nhánh nay dùng CHUNG một hàm, khác nhau đúng một
+    thứ: `R_eff` nào được truyền vào.** Nhánh rủi-ro-cố-định lấy `R_eff`
+    THẬT của lệnh; nhánh vốn-cố-định lấy `notional_ref_r_eff` ĐÓNG BĂNG.
+    Viết như vậy làm tính chất *"không phụ thuộc R_eff của lệnh"* thành
+    **cấu trúc** chứ không phải một lời hứa cần test canh, và không chép
+    lại công thức §6.8e ra chỗ thứ hai (bài học MT-03: hai bản sẽ trôi lệch).
+
+    🔴 **`notional_ref_r_eff` BẮT BUỘC, cố ý KHÔNG có mặc định** — cùng lý
+    do `dg5_zss_khong_suy_yeu()` bắt buộc ngưỡng (TD-0169). Trước
+    DR-D4-07, tham số ở đây là `notional_co_dinh_usdt` (con số USDT cứng)
+    và nó `null` trong cấu hình, nên arm `Z0-S1` **raise và sinh ra 0
+    lệnh** trên 48 mã EXPLORE trong 22 tháng — một suất trial trong 114
+    mua thông tin bằng không.
+
+    🔴 **Vì sao THAM CHIẾU chứ không phải con số USDT:** notional phải giữ
+    nguyên **thang tương đối** so với arm rủi-ro-cố-định, nếu không phép so
+    trộn hai nguyên nhân (*cách tính cỡ lệnh* và *quy mô vị thế*). Một con
+    số cứng mất tính chất đó ngay khi `E_D` đổi: `E_D` vừa đi 500 → 750
+    (DR-D4-05), và một `300` chọn hồi 500 sẽ tương đương `R_ref` 0,625%
+    lúc đó nhưng 0,9375% bây giờ — ý nghĩa của arm tự đổi 50% mà không ai
+    quyết gì. Cùng họ với `E_D = 500` ghim trong docstring và
+    `"2025-01-01"` ghim trong test.
     """
     _kiem_arm(arm)
     if CHE_DO_CO_LENH_THEO_ARM[arm] == "RUI_RO_CO_DINH":
-        if notional_co_dinh_usdt is not None:
+        if notional_ref_r_eff is not None:
             raise ArmSwitchError(
                 f"arm {arm} định cỡ theo RỦI RO nhưng lại được truyền "
-                "`notional_co_dinh_usdt` — một trong hai chỗ đang hiểu sai arm này"
+                "`notional_ref_r_eff` — một trong hai chỗ đang hiểu sai arm này"
             )
         return tranche1_notional(
             e_d=e_d, rho_pct=rho_pct, r_eff=r_eff, n_tranches=n_tranches
         )
 
-    if notional_co_dinh_usdt is None:
+    if notional_ref_r_eff is None:
         raise ArmSwitchError(
-            f"arm {arm} định cỡ theo VỐN nên phải khai `notional_co_dinh_usdt`. "
-            "KHÔNG có mặc định: spec không chốt con số này ở đâu (§10.1b chỉ nói "
-            "'notional CỐ ĐỊNH'), tự điền là thêm một bậc tự do không ai đếm."
+            f"arm {arm} định cỡ theo VỐN nên phải khai `notional_ref_r_eff` "
+            "(tier_c.arm_ablation). KHÔNG có mặc định: xem DR-D4-07 — con số này "
+            "chọn để Z0-S1 triển khai CÙNG vốn trung bình với Z0, tự điền là "
+            "thêm một bậc tự do không ai đếm."
         )
-    if notional_co_dinh_usdt <= 0:
+    if not 0 < notional_ref_r_eff < 1:
         raise ArmSwitchError(
-            f"notional_co_dinh_usdt phải > 0, nhận {notional_co_dinh_usdt}"
+            f"notional_ref_r_eff phải nằm trong (0, 1) — là TỈ LỆ, không phải "
+            f"phần trăm; nhận {notional_ref_r_eff}. Truyền 3.0 thay vì 0.03 làm "
+            "cỡ lệnh nhỏ đi 100 lần mà không có phép kiểm nào báo đỏ."
         )
     if n_tranches <= 0:
         raise ArmSwitchError(f"n_tranches phải > 0, nhận {n_tranches}")
-    return notional_co_dinh_usdt / n_tranches
+    # 🔴 `r_eff` của lệnh KHÔNG xuất hiện ở đây — đó là toàn bộ điểm của arm.
+    return tranche1_notional(
+        e_d=e_d, rho_pct=rho_pct, r_eff=notional_ref_r_eff, n_tranches=n_tranches
+    )
 
 
 # ── Z2: bỏ DG5 ────────────────────────────────────────────────────────

@@ -137,10 +137,21 @@ tier_c: # 🔒 KHOÁ — KHÔNG có ô nhập, ghi ở đây
     # ghi đè theo từng arm khi chạy và ghi arm vào bản ghi kết quả — không tin
     # giá trị này khi đọc kết quả, tin `arm` trong bản ghi.
     arm: "Z3"
-    # Z0-S1 định cỡ theo VỐN cần con số này; các arm khác PHẢI để null (truyền
-    # cho arm rủi-ro-cố-định là raise — arm_switches). Spec KHÔNG chốt con số
-    # (300 USDT dòng 1285 là minh hoạ) → chờ chủ dự án, không tự điền (DR-D4-04 §5).
-    notional_co_dinh_usdt: null
+    # Z0-S1 định cỡ theo VỐN. ✅ DR-D4-07 — khai bằng THAM CHIẾU, không phải con
+    # số USDT cứng: notional = rho_pct/100 × E_D / notional_ref_r_eff, tức dùng
+    # CHUNG công thức §6.8e với arm rủi-ro-cố-định, chỉ khác R_eff nào được đưa vào.
+    # 🔒 dof: 0 — thuộc tier_c (công tắc arm), CHƯA TỪNG có trong dof_inventory nên
+    # đóng băng không trừ gì (tiền lệ DR-D4-02/DG5): dof_goc 28, |tier_b| 12,
+    # N_ĐĂNG_KÝ 114, rào DSR 3,0777 — KHÔNG ĐỔI.
+    # Vì sao 0.03: đo 83 lệnh Z0 trên EXPLORE 48 mã [T0,T2] (09/09/2026) → median
+    # R_eff 3,028%, trung bình ĐIỀU HOÀ 2,868%, min 1,303%. Chọn để Z0-S1 triển
+    # khai CÙNG vốn trung bình với Z0 ⇒ phép so cô lập được CÁCH TÍNH cỡ lệnh,
+    # không lẫn QUY MÔ. Làm tròn 2,868 → 3,00 vì lệch 5% là dưới sai số mẫu n=83;
+    # ghi 2,868 là độ chính xác giả. 🔴 KHÔNG tối ưu theo kết quả — chỉ dùng phân
+    # bố ĐẦU VÀO (độ rộng zone), không PnL. Đổi về sau: xem DR-D4-07 §8.
+    notional_ref_r_eff: 0.03
+    # Các arm khác PHẢI để khoá này không được truyền vào (truyền cho arm
+    # rủi-ro-cố-định là raise — arm_switches).
   api_calls_per_min: 30 # 🆕 v7 — §6.6(3), LD-23. Điền theo nhịp
     # thật: 100 mã / 60 phút + lề. KHÔNG polling.
   entry_order_ttl_bars_1h: 3 # 🆕 v7 — §3.5, = §3.3b chờ

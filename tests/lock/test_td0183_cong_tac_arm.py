@@ -118,10 +118,27 @@ class TestZ1SLNeoATR:
 
 
 class TestZ0S1DinhCoTheoVon:
+    """📌 **DR-D4-07 đổi ĐƯỜNG VÀO, không nới một khẳng định nào.** Tham số
+    `notional_co_dinh_usdt` (con số USDT cứng) bị bỏ vì cấu hình để `null` ⇒
+    arm raise ⇒ **0 lệnh** trên 48 mã EXPLORE/22 tháng. Nay notional là đại
+    lượng dẫn xuất `rho_pct/100 × E_D / notional_ref_r_eff`.
+
+    Năm ca dưới đây **giữ nguyên khẳng định**, chỉ đổi tên tham số; `ref =
+    0.00625` tái lập đúng notional 300 USDT của bản cũ nên các con số ghim
+    không đổi. Một ca được **SIẾT** (khoảng hợp lệ `(0,1)` thay vì `> 0`).
+    KHÔNG xoá ca nào — xoá một ca đỏ cho sạch bảng là cách một quyết định
+    biến mất mà không ai ghi (tiền lệ TD-0150 xử hai ca của TD-0149).
+
+    Bất biến MỚI mà DR-D4-07 thêm — *notional phải đổi khi `E_D` đổi* — nằm
+    ở `test_td0191_thang_notional_z0_s1.py`, không nhồi vào đây."""
+
     def test_DOI_HANH_VI_THAT_khac_Z0_tren_cung_dau_vao(self) -> None:
         z0 = notional_tranche1_theo_arm(arm="Z0", r_eff=0.03, **CO_LENH)
+        # DR-D4-07: tham số đổi từ con số USDT cứng sang THAM CHIẾU R_eff.
+        # `ref = 0.00625` tái lập đúng notional 300 USDT của bản cũ, nên khẳng
+        # định gốc giữ NGUYÊN GIÁ TRỊ — không nới, chỉ đổi đường vào.
         s1 = notional_tranche1_theo_arm(
-            arm="Z0-S1", r_eff=0.03, notional_co_dinh_usdt=300.0, **CO_LENH
+            arm="Z0-S1", r_eff=0.03, notional_ref_r_eff=0.00625, **CO_LENH
         )
         assert s1 != z0
         assert s1 == pytest.approx(100.0)
@@ -131,10 +148,10 @@ class TestZ0S1DinhCoTheoVon:
         đúng"*. Đổi `r_eff` gấp ba mà kết quả đổi thì arm mất ý nghĩa —
         và một test chỉ hỏi "có nhánh riêng không" sẽ không bắt được."""
         a = notional_tranche1_theo_arm(
-            arm="Z0-S1", r_eff=0.01, notional_co_dinh_usdt=300.0, **CO_LENH
+            arm="Z0-S1", r_eff=0.01, notional_ref_r_eff=0.00625, **CO_LENH
         )
         b = notional_tranche1_theo_arm(
-            arm="Z0-S1", r_eff=0.03, notional_co_dinh_usdt=300.0, **CO_LENH
+            arm="Z0-S1", r_eff=0.03, notional_ref_r_eff=0.00625, **CO_LENH
         )
         assert a == b
         # đối chứng: nhánh RỦI RO thì PHẢI đổi theo r_eff
@@ -152,7 +169,7 @@ class TestZ0S1DinhCoTheoVon:
         này ở đâu. §10.1b chỉ nói "notional CỐ ĐỊNH"; "300 USDT" ở dòng
         1285 nằm trong một lập luận minh hoạ, và `tool_d_config.yaml`
         không có khoá nào. Điền hộ là thêm một bậc tự do không ai đếm."""
-        with pytest.raises(ArmSwitchError, match="notional_co_dinh_usdt"):
+        with pytest.raises(ArmSwitchError, match="notional_ref_r_eff"):
             notional_tranche1_theo_arm(arm="Z0-S1", r_eff=0.03, **CO_LENH)
 
     def test_truyen_notional_co_dinh_cho_arm_RUI_RO_thi_RAISE(self) -> None:
@@ -160,14 +177,23 @@ class TestZ0S1DinhCoTheoVon:
         chạy Z0-S1 trong khi thực ra chạy Z0."""
         with pytest.raises(ArmSwitchError, match="hiểu sai arm"):
             notional_tranche1_theo_arm(
-                arm="Z0", r_eff=0.03, notional_co_dinh_usdt=300.0, **CO_LENH
+                arm="Z0", r_eff=0.03, notional_ref_r_eff=0.00625, **CO_LENH
             )
 
-    @pytest.mark.parametrize("xau", [0.0, -300.0])
-    def test_notional_khong_duong_thi_RAISE(self, xau: float) -> None:
+    @pytest.mark.parametrize("xau", [0.0, -0.00625, 1.0, 3.0, 100.0])
+    def test_tham_chieu_ngoai_khoang_thi_RAISE(self, xau: float) -> None:
+        """DR-D4-07 SIẾT ca này, không nới: bản cũ chỉ chặn `≤ 0`. Tham chiếu
+        là TỈ LỆ nên `1.0` trở lên cũng vô nghĩa, và `3.0` (gõ `3` thay vì
+        `0.03`) làm cỡ lệnh nhỏ đi 100 lần mà không phép kiểm nào khác báo đỏ.
+
+        ⚠️ **Giới hạn thật của chốt này, nói thẳng:** nó chỉ bắt được ca gõ
+        nhầm ra ngoài `(0,1)`. Gõ `0.625` thay vì `0.00625` vẫn LỌT, vì cả hai
+        đều là tỉ lệ hợp lệ về mặt hình thức. Không có cách nào phân biệt bằng
+        kiểu dữ liệu — chỗ chặn ca đó là `test_gia_tri_dan_xuat_tren_cau_hinh_that`
+        của TD-0191, đối chiếu với cấu hình THẬT."""
         with pytest.raises(ArmSwitchError):
             notional_tranche1_theo_arm(
-                arm="Z0-S1", r_eff=0.03, notional_co_dinh_usdt=xau, **CO_LENH
+                arm="Z0-S1", r_eff=0.03, notional_ref_r_eff=xau, **CO_LENH
             )
 
 

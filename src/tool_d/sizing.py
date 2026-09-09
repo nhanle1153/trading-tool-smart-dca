@@ -260,7 +260,7 @@ def lap_ke_hoach_co_lenh(
     arm: str,
     r_eff: float,
     mult: HeSoMult,
-    notional_co_dinh_usdt: float | None = None,
+    notional_ref_r_eff: float | None = None,
 ) -> KeHoachCoLenh:
     """Dựng kế hoạch cỡ lệnh cho MỘT lệnh, lúc tranche 1 — §6.8f Bước 1.
 
@@ -299,7 +299,7 @@ def lap_ke_hoach_co_lenh(
         rho_pct=rho_eff_pct,
         r_eff=r_eff,
         n_tranches=n_tranches,
-        notional_co_dinh_usdt=notional_co_dinh_usdt,
+        notional_ref_r_eff=notional_ref_r_eff,
     )
     n_full = t1 * n_tranches
 

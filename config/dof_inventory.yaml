@@ -158,6 +158,18 @@ khong_dem_vao_dof_goc:
     ly_do: "\"chưa định nghĩa\" trước v6 — định nghĩa MỚI"
   - khoa: "diag_thresholds"
     ly_do: "bổ sung v7/v8 (thang time-stop/TP-fallback), không thuộc bảng DR-010 gốc"
+  - khoa: "notional_ref_r_eff"
+    ly_do: "DR-D4-07 (TD-0191) — thang notional của arm đối chứng Z0-S1. Thuộc
+      tier_c.arm_ablation (CÔNG TẮC ARM, không phải tham số chiến lược): nó không
+      đổi hành vi của bất kỳ arm nào khác, và bảng DR-010 chưa từng có dòng nào cho
+      nó. Cùng hạng dg5_zss_decay_max: đóng băng một thứ CHƯA TỪNG được đếm thì
+      không trừ gì ⇒ dof: 0, KHÔNG phải -1 (dof âm nghĩa là trừ đi thứ đã đếm — ở
+      đây sẽ là trừ khống, đúng LỖI 1 của v5). N_ĐĂNG_KÝ giữ 114, rào DSR 3,0777
+      không đổi, 0 trial.
+      Giá trị 0.03 chọn từ phân bố ĐẦU VÀO (độ rộng zone) của 83 lệnh Z0 trên
+      EXPLORE — median R_eff 3,028%, trung bình điều hoà 2,868% — để Z0-S1 triển
+      khai cùng vốn trung bình với Z0. KHÔNG tối ưu theo kết quả: không PnL nào
+      tham gia phép chọn. Điều kiện mở lại viết TRƯỚC ở DR-D4-07 §9."
   - khoa: "dg5_zss_decay_max"
     ly_do: "DR-D4-02 (TD-0169) — §4 định nghĩa DG5 bằng ngưỡng \"giảm > 30%\"
       nhưng bảng DR-010 KHÔNG có dòng nào cho DG5 (mục §4 chỉ có DG4). Khác

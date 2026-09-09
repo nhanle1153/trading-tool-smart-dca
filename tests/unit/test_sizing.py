@@ -52,6 +52,12 @@ def _cfg(*, e_d=500.0, rho_pct=0.375, l_exchange=3.0, w=(0.3333, 0.3333, 0.3334)
     )
 
 
+#: DR-D4-07 — tham chiếu tái lập ĐÚNG n_full = 90 USDT mà các ca dưới đây
+#: ghim từ trước khi tham số đổi tên. TÍNH, không gõ tay: nếu `_cfg()` đổi
+#: `e_d`/`rho_pct` thì hằng số này đi theo, không đỏ giả.
+REF_90 = (0.375 / 100) * 500.0 / 90.0
+
+
 # ── 1. D0.1 — rủi ro cố định, không phụ thuộc R_eff ────────────────────
 
 class TestBatBienD01:
@@ -78,8 +84,10 @@ class TestBatBienD01:
     def test_Z0_S1_CO_Y_pha_bat_bien_nay(self) -> None:
         """§10.1b: vốn cố định KHÔNG chia R_eff ⇒ rủi ro biến thiên. Nếu ca
         này báo 'bằng nhau' thì Z0-S1 đang chạy như Z0 — hình dạng MT-15."""
-        a = lap_ke_hoach_co_lenh(cfg=_cfg(), arm="Z0-S1", r_eff=0.01, mult=MULT_1, notional_co_dinh_usdt=90.0)
-        b = lap_ke_hoach_co_lenh(cfg=_cfg(), arm="Z0-S1", r_eff=0.03, mult=MULT_1, notional_co_dinh_usdt=90.0)
+        # DR-D4-07: tham số đổi sang THAM CHIẾU R_eff; `REF_90` tái lập đúng
+        # n_full = 90 USDT của bản cũ nên mọi khẳng định dưới GIỮ NGUYÊN SỐ.
+        a = lap_ke_hoach_co_lenh(cfg=_cfg(), arm="Z0-S1", r_eff=0.01, mult=MULT_1, notional_ref_r_eff=REF_90)
+        b = lap_ke_hoach_co_lenh(cfg=_cfg(), arm="Z0-S1", r_eff=0.03, mult=MULT_1, notional_ref_r_eff=REF_90)
         assert a.n_full_usdt == b.n_full_usdt == pytest.approx(90.0)
         assert a.planned_risk_usdt == pytest.approx(0.9) and b.planned_risk_usdt == pytest.approx(2.7)
 
@@ -241,15 +249,15 @@ class TestFailClosed:
             with pytest.raises(SizingError):
                 lap_ke_hoach_co_lenh(cfg=_cfg(), arm="Z0", r_eff=r, mult=MULT_1)
 
-    def test_Z0_S1_thieu_notional_co_dinh_thi_raise_KHONG_mac_dinh(self) -> None:
+    def test_Z0_S1_thieu_tham_chieu_thi_raise_KHONG_mac_dinh(self) -> None:
         from tool_d.arm_switches import ArmSwitchError
-        with pytest.raises(ArmSwitchError, match="notional_co_dinh_usdt"):
+        with pytest.raises(ArmSwitchError, match="notional_ref_r_eff"):
             lap_ke_hoach_co_lenh(cfg=_cfg(), arm="Z0-S1", r_eff=0.02, mult=MULT_1)
 
-    def test_arm_rui_ro_co_dinh_ma_truyen_notional_co_dinh_thi_raise(self) -> None:
+    def test_arm_rui_ro_co_dinh_ma_truyen_tham_chieu_thi_raise(self) -> None:
         from tool_d.arm_switches import ArmSwitchError
         with pytest.raises(ArmSwitchError):
-            lap_ke_hoach_co_lenh(cfg=_cfg(), arm="Z0", r_eff=0.02, mult=MULT_1, notional_co_dinh_usdt=50.0)
+            lap_ke_hoach_co_lenh(cfg=_cfg(), arm="Z0", r_eff=0.02, mult=MULT_1, notional_ref_r_eff=REF_90)
 
     def test_doc_cau_hinh_THAT_cua_project_dung_duoc(self) -> None:
         """Đường sản xuất thật: E_D/rho/L_exchange/w_tranche từ YAML thật.
