@@ -1751,3 +1751,76 @@ Ba phiên cùng thư mục. Trước khi mở tài liệu/mã việc mới tôi 
 nhận không giữ gì. Khi commit, `api-integration-rules.md` của `-28` đang sửa dở nằm trong cây —
 `git commit -- <pathspec đích danh>` bỏ qua nó đúng như N12 mục 5 mô tả. Kiểm lại sau commit:
 file đó **không** nằm trong commit của tôi.
+
+---
+
+## 09/09/2026 (tiếp, phiên `be`) — TD-0193: nối §3.3b, và con số đầu tiên đo trên hệ thống ĐỦ tầng nói gì về D4
+
+### Bối cảnh và cách đi
+
+TD-0193 là mảnh cuối của tầng vào lệnh (MT-21): `entry_confirmation.py` có test khoá từ TD-0129,
+`quet_xac_nhan_zone()` có từ chặng 1 (`c80e3bd`), nhưng `ZoneAbsorption.py` chưa gọi một dòng
+nào — `Z0 ≡ Z0-V1` 83/83 lệnh. Trước khi code, phân tích hệ thống trình chủ dự án (không phải
+"nối một bộ lọc" mà là **đổi cơ chế vào lệnh**: từ *vào ngay tại nến 4H xác nhận zone* sang *vào
+tại nến 1H xác nhận C sau lần chạm đầu*), chốt `DR-D4-08` (P1 + sáu diễn giải) rồi mới có lệnh
+"bắt đầu code". Bốn commit thi hành: `99114fb` (tầng thuần) → `19dfabc` (nối + fixture + 15 ca
+khoá) → `2a76b74` (đo). Full suite Docker **1552 passed, 0 failed** = 1524 + 11 + 15 + 2, đúng cộng.
+
+### Chín khoảng hở tìm ra khi ĐỌC (không có trong TASKS.md) — ba cái đáng nhớ
+
+1. **`quet_xac_nhan_zone` ghi cứng `bat_dieu_kien_c=True`** — tức arm `Z0-V1` KHÔNG biểu diễn được
+   qua chính hàm sinh ra để nối §3.3b. Nối nguyên như thế là tái diễn MT-15 ngay sau khi vừa bịt,
+   và không phép kiểm nào ở tầng hàm thuần báo (mọi ca đều `True`). Thứ bắt được là câu hỏi
+   *"arm này đi vào hàm này bằng đối số nào?"* — hỏi ở tầng NỐI, không phải tầng hàm.
+2. **Script đo MT-22 bắt đầu quét từ giờ MỞ của nến 4H `j`** (`moc.get(z["ts_j"])`), tức 4 nến 1H
+   *trước khi* zone xác nhận — lookahead nhẹ trong một phép đo mô tả. Đo lại với mốc đúng
+   (`date4[j] + 4h`): A **42,8%** vs 43,1% cũ — con số gần như không đổi, nhưng **cơ chế** thì sai,
+   và ở sản xuất cùng cái sai đó là lookahead thật. Đúng bài học `4ec0fd3`: đúng con số không
+   chứng minh đúng cơ chế.
+3. **Fixture `test_td0187` lỗi thời lần thứ BA** (TD-0182, TD-0194, nay TD-0193): nến "chạm p1"
+   qua `_chia_nho()` đóng SÁT ĐÁY, không phải rejection ⇒ hệ thống mới ra 0 lệnh ⇒ 13+ ca
+   xanh-vô-nghĩa. Vá bằng **bốn nến 1H tường minh gộp lại ĐÚNG nến 4H cũ** (khung 4H không đổi
+   một giá trị) + đối chứng thường trực thứ hai gắn vào `_sinh_du_lieu` gọi đúng hàm sản xuất.
+   📌 Bản đầu tìm nến chạm theo offset −36 từ cuối — vỡ ngay ở fixture `test_td0189` vì file đó
+   cắt đuôi rồi nối kịch bản riêng. Tìm theo GIÁ TRỊ (phải duy nhất) thay vì theo vị trí.
+
+### Phép phá và giới hạn tự khai
+
+- Đối chứng âm lookahead có răng: bản chép ghi tín hiệu tại C−1 ⇒ ca cắt-tại-C đỏ. **Nhưng** phép
+  phá "quét từ giờ mở `j`" (lỗi thật của script MT-22) **KHÔNG cắn** trên bộ sinh này — không có
+  lần chạm nào bên trong `j`. Canh riêng bằng AST + ca thời gian `C ≥ close(j)`. Ghi ra vì đây là
+  đúng dạng *"lớp canh sắc nhưng fixture không có ca để nó cắn"* (08/09).
+- Test Z0 ≠ Z0-V1 bản đầu đòi `sum(Z0) < sum(Z0-V1)` — SAI: Z0 vẫn vào ở nến khác trong cửa sổ
+  (qua (b)), hai tập có cùng LỰC LƯỢNG mà khác PHẦN TỬ. Tiêu chí đúng là *tập tín hiệu khác nhau*,
+  chính là thứ MT-21 đo (83/83 trùng khít), không phải *ít hơn*.
+
+### 🔴 Con số quan trọng nhất — và nó không phải về §3.3b
+
+`docs/du-lieu-do/td0193-lenh-nam-explore.json` (88 mã EXPLORE, 99,4 mã-năm, [T0,T2], 0 trial,
+chỉ đếm):
+
+| Bước | Số | |
+|---|---|---|
+| Zone đáy hợp lệ | 4.918 | |
+| §3.3b A xác nhận | 2.103 | 42,8% zone; nhánh (b) 46% |
+| Sau bộ lọc trend Phần 2 | **96** | **4,6%** số xác nhận |
+| Lệnh thật (backtest, cấu hình thật) | **62** (Z3 = Z0) | 0,62/mã-năm ⇒ quy đổi pool **63,6/năm** |
+
+**Sàn Nhánh 1 (§10.2) là 150 lệnh/năm.** Theo `DR-D4-08` §6: DỪNG, không đặt chỗ TD-0184, trình
+chủ dự án. Ba điều phải đọc kèm: (a) **bộ lọc trend là chốt cắt 95%, không phải §3.3b** — nới
+§3.3b không cứu được số mẫu; (b) EXPLORE ≠ pool, quy đổi ×102/88 là tỉ lệ thô; (c) không
+`--timeframe-detail` (EXPLORE không có 5m) — đủ để ĐẾM lệnh, không đủ để nói gì về TP.
+
+### 📌 Phát hiện phụ, ngoài phạm vi, chỉ ghi
+
+TP1 nổ 21/62 lệnh, **100% là nạng** (`TP1_fallback_r_multiple`), **0** lệnh TP theo zone đỉnh —
+H-4 = 100% trên EXPLORE. Có thể là dữ liệu (không zone đỉnh trong `4,0 × R_eff`) hoặc là
+`_zone_dinh_tren` trên dữ liệu thật; chưa phân biệt được, chưa ai đo. Không sửa trong TD-0193
+(quy tắc 4) — báo `-28` (TD-0189) và ghi vào TASKS.
+
+### Bài học về cách làm
+
+Phân tích trước khi code tốn hơn một giờ và tìm ra chín khoảng hở mà "nối vào" theo TASKS.md sẽ
+không thấy — nhưng thứ đắt nhất lại không nằm trong chín cái đó: **con số lệnh/năm** chỉ đo được
+*sau khi* nối, và nó nói D4 sắp đo một hệ thống chưa đủ mẫu để nói gì. Nếu không có điều kiện
+§6 viết TRƯỚC trong DR, phiên này đã đóng TD-0193 ✅ và TD-0184 sẽ đặt chỗ 9 suất ngay.
