@@ -73,8 +73,20 @@ ngưỡng ta tự áp sai ngữ cảnh.
 
 1. **Ghi `tp_zone_age_bars` vào Decision Log mỗi lệnh.** Biến *"zone cũ có tệ hơn không"* từ tranh
    luận thành số đo được **sau** D4, **0 trial** (đọc lại dữ liệu D4 đã có).
-2. **Tách H-4 làm HAI số:** nạng vì *không có zone nào* / nạng vì *zone quá hạn*. Ngưỡng 40% khi đó
-   được đánh giá trên **đúng mẫu số** mà spec viết về nó.
+2. **Tách H-4 làm HAI số** — và căn cứ mạnh hơn "để dễ đọc":
+
+   | Số | Đếm ca | Nói lên điều gì |
+   |---|---|---|
+   | `h4_nang_khong_co_zone` | không zone đỉnh nào trong `4.0 × R_eff` | thị trường thiếu cấu trúc đối diện — **đúng tiền đề §5.1 đặt cược** |
+   | `h4_nang_zone_qua_han` | có zone trong tầm nhưng quá 40 nến | **chính sách của ta**, KHÔNG phải sự thật thị trường |
+
+   🔑 **Ngưỡng 40% ⇒ L2 áp cho số THỨ NHẤT.** Đọc nguyên văn tiền đề mà H-4 canh (dòng 1684):
+   *"luôn tìm được zone đối diện trong **KHOẢNG CÁCH** hợp lý"* — tiền đề về **khoảng cách**, không
+   về **tuổi**. Gộp tuổi vào cùng một số là **đổi ý nghĩa phép đo mà giữ nguyên ngưỡng viết cho ý
+   nghĩa cũ** ⇒ phán quyết L2 sẽ nổ vì một **lựa chọn cấu hình của chính ta**, không phải vì thị
+   trường. Đúng họ lỗi dự án sợ nhất — một phép kiểm trả lời câu **khác** câu người đọc tưởng, ở đây
+   theo chiều **báo động giả**. Lập luận này đúng **bất kể** A hay B thắng.
+   *(Nhận từ bản DR trùng số của phiên `-2f`, xem §6.)*
 3. **DR này commit TRƯỚC mọi dòng mã thi hành** (đang làm).
 4. **MT ghi mâu thuẫn §1.3 ↔ §5.1** vào mục 7 `back-end-note.md`, phân loại 🔴, **không chốt bên
    nào đúng** — quy tắc 11.
@@ -92,8 +104,8 @@ ngưỡng ta tự áp sai ngữ cảnh.
 1. 🔑 **Phép kiểm chính, 0 trial:** sau D4, tách kết quả theo `tp_zone_age_bars`. **Nếu lệnh dùng
    zone > 40 nến có hiệu quả tệ hơn rõ rệt lệnh dùng zone mới** ⇒ §1.3 đúng cả cho TP ⇒ **quyết định
    này SAI**, quay về A và chấp nhận L2. Đây là cách tự bác bỏ đã cài sẵn, không phải lời hứa.
-2. H-4 (vế *"không có zone nào"*, sau khi tách theo ràng buộc 2) **vẫn > 40%** ⇒ tiền đề §5.1 hỏng
-   **độc lập với chuyện tuổi** ⇒ L2 theo đúng spec, và lần này là kết luận rút từ dữ liệu.
+2. **`h4_nang_khong_co_zone` > 40%** trên kết quả D4 THẬT ⇒ tiền đề §5.1 hỏng **độc lập với
+   chuyện tuổi** ⇒ L2 đúng theo nghĩa spec viết, và là phán quyết thật chứ không phải tự tạo.
 3. Pool đổi sang nhóm mã có phân bố giá/biến động khác hẳn ⇒ phân bố tuổi zone phải **đo lại**.
 
 ## 5. Cái quyết định này KHÔNG giải quyết
@@ -108,3 +120,35 @@ ngưỡng ta tự áp sai ngữ cảnh.
 - ❌ **Không** đụng tới rủi ro mỗi lệnh. Cả A lẫn B đều không đổi cắt lỗ; đây thuần tuý là câu hỏi
   *chốt lời ở đâu*.
 - ❌ **Không** phủ hướng SHORT (D4 đợt này chỉ LONG — DR-D4-01).
+
+## 6. Nếu về sau muốn có trần tuổi cho zone đối diện
+
+Phải là một tham số **ĐẶT TÊN RIÊNG, khai tường minh** — **KHÔNG** tái dùng con số 40 của §1.3, vì
+hai thứ đo hai chuyện khác nhau: §1.3 đo *"giả thuyết hấp thụ còn sống không"*, còn trần tuổi cho TP
+sẽ đo *"mức giá này còn được thị trường nhớ không"*. Đó sẽ là **một khoá mới trong kiểm kê DOF**,
+tức một quyết định riêng của chủ dự án về `N` và rào DSR (xem giá ở mục 2, phương án C) — không phải
+một dòng sửa cấu hình.
+
+## 7. Thứ DR này KHÔNG nói
+
+- ❌ **Không** nói zone cũ **tốt** làm mục tiêu TP. Nó nói ta **CHƯA BIẾT**, và chọn con đường **đo
+  được** thay vì con đường chốt trước bằng một ngưỡng mượn từ chỗ khác.
+- ❌ **Không** nói §1.3 sai. §1.3 đúng cho việc nó được viết ra — **zone vào lệnh**.
+- ❌ **Không** gỡ ngưỡng 40%. Ngưỡng giữ nguyên, chỉ áp lên **đúng mẫu số** spec viết về nó.
+- ❌ **Không** đụng zone đáy. `_tinh_zone_4h` và `ZoneAbsorptionMinimal` không đổi một dòng.
+
+## 8. Ghi chú va chạm — hai DR-D4-06 được viết song song
+
+Phiên này và phiên `-2f` **cùng lúc** viết hai DR độc lập cho cùng một quyết định
+(`0d56d01` và `d49acc4`). Pathspec của N12 chặn được việc nuốt file của nhau nhưng **không** chặn
+được việc trùng số — hai file mô tả cùng một quyết định là **hai nguồn sự thật**, đúng thứ MT-03 và
+N1 sinh ra để cấm.
+
+Giải: **giữ file này, phiên `-2f` xoá file của họ**, theo đúng tiêu chí đã dùng khi giải va chạm
+TD-0119/TD-0120 — *phía nào có ĐỊNH DANH MÁY ĐỌC thì phía đó không đổi*: file này trỏ tới
+`docs/du-lieu-do/do_tuoi_zone_dinh_explore.py`. Ba phần chỉ có ở bản kia đã được **nhận nguyên ý**
+vào ràng buộc 2, điều kiện mở lại 2, và hai mục 6-7 trên.
+
+🔑 **Bài học cho quy ước hai phiên:** hai phiên **cùng nhận ra một mâu thuẫn** thì sẽ **cùng muốn
+ghi nó** — và giấy tờ không có cơ chế khoá nào tương đương `TASKS.md` 🔒. Với tài liệu quyết định,
+**nhắn trước khi mở file** là quy ước còn thiếu.
