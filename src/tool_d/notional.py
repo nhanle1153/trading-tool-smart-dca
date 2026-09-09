@@ -163,6 +163,36 @@ class KetQuaSan:
     ly_do: str
 
 
+def bo_loc_tu_market(pair: str, market: dict, *, gia: float) -> SymbolFilters:
+    """Dựng `SymbolFilters` từ một bản ghi `exchange.markets[pair]` của ccxt.
+
+    🔴 Thiếu giới hạn thì **RAISE**, không gán 0: sàn = 0 làm **mọi** mã
+    "qua sàn", tức fail-OPEN ở đúng chốt fail-closed (N6 — *không đo được*
+    khác *đã đo và đạt*).
+
+    `step_size` chỉ dùng cho L-Z20 (làm tròn lot), không tham gia phép kiểm
+    sàn; lấy từ `precision.amount` nếu có, không thì bằng `min_qty`.
+    """
+    gioi_han = market.get("limits") or {}
+    cost_min = (gioi_han.get("cost") or {}).get("min")
+    amount_min = (gioi_han.get("amount") or {}).get("min")
+    if cost_min is None or amount_min is None:
+        raise ValueError(
+            f"{pair}: thiếu limits.cost.min / limits.amount.min trong market — không có "
+            "sàn thì không kết luận được, và gán 0 sẽ cho MỌI mã qua"
+        )
+    if gia != gia or gia <= 0:
+        raise ValueError(f"{pair}: giá phải > 0, nhận {gia}")
+    buoc = (market.get("precision") or {}).get("amount")
+    return SymbolFilters(
+        symbol=pair,
+        min_notional_usdt=float(cost_min),
+        step_size=float(buoc) if isinstance(buoc, (int, float)) else float(amount_min),
+        min_qty=float(amount_min),
+        price=float(gia),
+    )
+
+
 def san_tool_d(f: SymbolFilters, *, strategy_stoploss: float) -> float:
     """DR-D4-05 §2.1 — MỘT sàn duy nhất của Tool D: `max` sàn của mọi đường
     chạy trong `SL_THEO_DUONG_CHAY`.

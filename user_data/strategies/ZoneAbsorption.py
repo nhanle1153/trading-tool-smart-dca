@@ -108,6 +108,7 @@ from tool_d.admission import AdmissionError, ViTheMo, kiem_ket_nap
 from tool_d.arm_switches import ARM_HOP_LE, cong_ap_dung, duoc_them_tranche
 from tool_d.config.loader import load_tool_d_config, resolve
 from tool_d.dg1_dg5_tranche_gates import danh_gia_tat_ca
+from tool_d.notional import bo_loc_tu_market, kiem_san_tool_d
 from tool_d.dg6_early_invalidation import dg6_dong_vi_the, dieu_kien_a, dieu_kien_b
 from tool_d.funding_stop import funding_paid_cumulative, is_funding_stop_triggered
 from tool_d.sizing import (
@@ -446,8 +447,13 @@ class ZoneAbsorption(IStrategy):
         # LẶNG — cả hai đều phá D0.1 mà không để lại dấu vết. Raise thay vì để nó cắt.
         if stake1 > max_stake:
             raise SizingError(f"{pair}: stake tranche 1 = {stake1:.4f} > max_stake {max_stake:.4f} — ví không đủ, không được cắt ngầm")
-        if min_stake is not None and stake1 < min_stake:
-            raise SizingError(f"{pair}: stake tranche 1 = {stake1:.4f} < min_stake {min_stake:.4f} — dưới sàn sàn giao dịch (TD-0082 đáng lẽ đã lọc)")
+        # 🔴 KHÔNG kiểm sàn ở đây nữa (TD-0171b). Bản cũ `raise SizingError`
+        # khi `stake1 < min_stake`, mà `strategy_safe_wrapper` NUỐT exception
+        # của callback (MT-16 vii) ⇒ lệnh biến mất IM LẶNG — đúng thứ
+        # DR-D4-05 sinh ra để chặn. Và `min_stake` là sàn của ĐÚNG MỘT đường
+        # chạy, không phải sàn Tool D (`max` mọi đường, §2.1). Phép kiểm nay
+        # ở `confirm_trade_entry`, nơi trả `False` là cửa từ chối ĐƯỢC HỖ TRỢ
+        # nên không bị nuốt, và có dòng log để phép từ chối ĐẾM ĐƯỢC.
         self._cho[pair] = {"co_lenh": plan.to_dict(), "ke_hoach": kh.to_dict(), "tag": d}
         return stake1
 
@@ -464,9 +470,20 @@ class ZoneAbsorption(IStrategy):
         if cho is None:
             return False  # không có kế hoạch cỡ lệnh → không mở (fail-closed)
 
+        ke_hoach = KeHoachCoLenh.from_dict(cho["co_lenh"])
+
+        # DR-D4-05 §2.1 — sàn Tool D (`max` mọi đường chạy), TỪ CHỐI TƯỜNG
+        # MINH. Đặt ở đây vì trả `False` là cửa từ chối được framework hỗ
+        # trợ; `raise` trong callback bị nuốt (MT-16 vii) nên nó không dừng
+        # được gì. So bằng NOTIONAL, không phải ký quỹ: đòn bẩy chia cả hai
+        # vế của phép so nên nó triệt tiêu (test khoá TD-0171).
+        if not self._qua_san_tool_d(pair, ke_hoach, rate):
+            self._cho.pop(pair, None)
+            return False
+
         kq = kiem_ket_nap(
             cfg=self._cfg,
-            ung_vien=KeHoachCoLenh.from_dict(cho["co_lenh"]),
+            ung_vien=ke_hoach,
             dang_mo=self._vi_the_mo_khac_theo_ke_hoach(pair),
         )
         # Dấu vết trên ĐƯỜNG CHẠY THẬT — test khoá grep dòng này để chứng
@@ -475,6 +492,33 @@ class ZoneAbsorption(IStrategy):
         if not kq.duoc_mo:
             self._cho.pop(pair, None)  # không giữ kế hoạch chết lại cho lệnh sau
         return kq.duoc_mo
+
+    def _qua_san_tool_d(self, pair: str, ke_hoach, rate: float) -> bool:
+        """Notional tranche 1 có qua sàn Tool D không — DR-D4-05 §2.1.
+
+        Không đọc được bộ lọc sàn ⇒ **TỪ CHỐI** (fail-closed): *không kiểm
+        được* không bao giờ được đọc thành *đã kiểm và đạt*.
+        """
+        try:
+            market = self.dp._exchange._markets[pair]  # noqa: SLF001 — ccxt limits không có API công khai
+            f = bo_loc_tu_market(pair, market, gia=rate)
+        except (AttributeError, KeyError, TypeError, ValueError) as exc:
+            logger.info("SAN_TOOL_D %s TU_CHOI khong-doc-duoc-bo-loc: %s", pair, exc)
+            return False
+
+        notional1 = ke_hoach.notional_tranche(1)
+        kq = kiem_san_tool_d(
+            f,
+            notional_usdt=notional1,
+            strategy_stoploss=float(self.stoploss),
+        )
+        # Dấu vết trên ĐƯỜNG CHẠY THẬT — cùng khuôn dòng KET_NAP của TD-0188:
+        # một phép từ chối không đếm được thì không khác gì bỏ qua im lặng.
+        logger.info(
+            "SAN_TOOL_D %s %s notional=%.4f san=%.4f ve=%s",
+            pair, "DAT" if kq.dat else "TU_CHOI", kq.notional_usdt, kq.san_usdt, kq.ve_thang,
+        )
+        return kq.dat
 
     def order_filled(self, pair, trade, order, current_time, **kwargs) -> None:
         if order.ft_order_side != trade.entry_side or trade.nr_of_successful_entries != 1:
