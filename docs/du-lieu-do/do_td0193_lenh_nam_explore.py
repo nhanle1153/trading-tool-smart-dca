@@ -99,7 +99,8 @@ def do_pheu(ma: list[str], arms: list[str]) -> dict:
     for arm in arms:
         s = _chien_luoc(arm)
         tong = Counter()
-        wb, ec, lc = Counter(), Counter(), Counter()
+        wb, ec, lc, dk = Counter(), Counter(), Counter(), Counter()
+        tin_hieu_theo_ma: dict[str, tuple[int, float]] = {}
         nam = 0.0
         t0 = time.time()
         for ten in ma:
@@ -123,7 +124,24 @@ def do_pheu(ma: list[str], arms: list[str]) -> dict:
             tong["zone"] += int(z4["zone_valid"].sum())
             tong["A"] += int(d.loc[trong, "xac_nhan_3_3b"].sum())
             tong["B"] += int(d.loc[trong, "xac_nhan_phan_thuc_b"].sum())
-            tong["tin_hieu_sau_trend"] += int(d.loc[trong, "enter_long"].fillna(0).sum()) if "enter_long" in d else 0
+            th = int(d.loc[trong, "enter_long"].fillna(0).sum()) if "enter_long" in d else 0
+            tong["tin_hieu_sau_trend"] += th
+            tin_hieu_theo_ma[ten] = (th, _nam_phu(df1))
+            # Tách BỐN điều kiện §2.5 tại nến C (góp ý `-46`): phần cắt nào là
+            # tính chất chiến lược, phần nào là hiện tượng của phép đo (`None`/NaN).
+            tai_c = d.loc[trong & d["xac_nhan_3_3b"].astype(bool)]
+            h1d, h4h = tai_c["trend_dir_1d_1d"], tai_c["trend_dir_4h_4h"]
+            adx, tuoi = tai_c["adx_1d"], tai_c["tuoi_trend_1d_1d"]
+            dk["C"] += len(tai_c)
+            dk["nan_1d_hoac_adx"] += int((h1d.isna() | adx.isna()).sum())
+            dk["tuoi_None_NaN"] += int(tuoi.isna().sum())
+            dk["1_huong_1d_UP"] += int((h1d == "UP").sum())
+            dk["2_4h_dong_huong"] += int(((h1d == "UP") & (h4h == "UP")).sum())
+            dk["3_adx_ge_20"] += int(((h1d == "UP") & (h4h == "UP") & (adx >= 20)).sum())
+            dk["4_tuoi_ge_5"] += int(((h1d == "UP") & (h4h == "UP") & (adx >= 20) & (tuoi.fillna(-1) >= 5)).sum())
+            dk["chi_truot_tuoi"] += int(((h1d == "UP") & (h4h == "UP") & (adx >= 20) & ~(tuoi.fillna(-1) >= 5)).sum())
+            dk["huong_1d_FLAT"] += int((h1d == "FLAT").sum()); dk["huong_1d_DOWN"] += int((h1d == "DOWN").sum())
+            dk["tuoi_ge_5_bat_ke_dk_khac"] += int((tuoi.fillna(-1) >= 5).sum())
             for tag in d.loc[trong & d["xac_nhan_3_3b"].astype(bool), "ke_hoach_json_3_3b"]:
                 j = json.loads(tag)
                 wb[j["wb"]] += 1; ec[j["ec"]] += 1; lc[j["lc"]] += 1
@@ -138,10 +156,48 @@ def do_pheu(ma: list[str], arms: list[str]) -> dict:
             "phan_bo_wait_bars": dict(sorted(wb.items())),
             "phan_bo_nhanh_xac_nhan": dict(ec),
             "phan_bo_luot_cham_phan_thuc_B": dict(sorted(lc.items())),
+            "pheu_trend_tai_C": dict(dk),
+            "tin_hieu_moi_ma_nam_theo_ma": _phan_vi([v / n for v, n in tin_hieu_theo_ma.values() if n > 0]),
             "giay": round(time.time() - t0, 1),
         }
+        ra[arm]["_theo_ma"] = tin_hieu_theo_ma
         print(f"[phễu] {arm}: {ra[arm]}", flush=True)
     return ra
+
+
+def _phan_vi(xs: list[float]) -> dict:
+    if not xs:
+        return {}
+    a = np.asarray(xs, float)
+    return {"n": len(xs), "min": round(float(a.min()), 3), "P25": round(float(np.percentile(a, 25)), 3),
+            "median": round(float(np.median(a)), 3), "P75": round(float(np.percentile(a, 75)), 3),
+            "max": round(float(a.max()), 3), "mean": round(float(a.mean()), 3)}
+
+
+def _ten_pool() -> set[str]:
+    """CHỈ đọc TÊN mã trong `config/pool.yaml` — không đọc một byte dữ liệu pool
+    (MT-19: cửa ghi CTRL không nhận phép đo mô tả trên pool)."""
+    import yaml
+
+    doc = yaml.safe_load((REPO / "config" / "pool.yaml").read_text(encoding="utf-8"))
+    # CHỈ khối `trading` (102 mã) — file còn các khối khác (EXPLORE, đã loại…),
+    # gộp cả file sẽ "trùng 100/100" một cách vô nghĩa (bản đầu dính đúng thế).
+    return {str(s).replace("USDT", "") for s in doc["trading"]}
+
+
+def _huong_lech_quy_doi(pheu: dict) -> dict:
+    """Góp ý `-46` #2: EXPLORE ≠ pool — quy đổi ×102 sai về hướng nào? So tín
+    hiệu/mã-năm giữa mã EXPLORE CÓ trong pool và KHÔNG có trong pool (theo TÊN)."""
+    pool = _ten_pool()
+    theo_ma = next(iter(pheu.values()))["_theo_ma"]
+    trong = {m: v for m, v in theo_ma.items() if m.replace("_USDT_USDT", "") in pool}
+    ngoai = {m: v for m, v in theo_ma.items() if m.replace("_USDT_USDT", "") not in pool}
+
+    def _tong(d):
+        s, n = sum(v for v, _ in d.values()), sum(n for _, n in d.values())
+        return {"so_ma": len(d), "tin_hieu": s, "ma_nam": round(n, 2), "tin_hieu_moi_ma_nam": round(s / n, 3) if n else None}
+
+    return {"explore_trong_pool": _tong(trong), "explore_ngoai_pool": _tong(ngoai)}
 
 
 def _yaml_voi_arm(arm: str, dest: Path) -> None:
@@ -223,6 +279,10 @@ def main() -> int:
         "timerange": TIMERANGE, "san_nhanh_1": 150,
         "pheu_tin_hieu": do_pheu(ma, arms),
     }
+    kq["huong_lech_quy_doi"] = _huong_lech_quy_doi(kq["pheu_tin_hieu"])
+    for v in kq["pheu_tin_hieu"].values():
+        v.pop("_theo_ma", None)
+    print(f"[quy đổi] {kq['huong_lech_quy_doi']}", flush=True)
     if not a.skip_backtest:
         kq["lenh_that"] = {arm: do_backtest(ma, arm) for arm in arms}
     KET_QUA.write_text(json.dumps(kq, ensure_ascii=False, indent=2), encoding="utf-8")
