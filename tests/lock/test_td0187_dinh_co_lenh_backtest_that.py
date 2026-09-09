@@ -274,6 +274,111 @@ def _dem_zone(rows4, loai: str) -> int:
 
 BUF_ZONE_TEST = 0.3  # = BUF_ZONE của chiến lược (§1.1)
 
+#: Nến 4H "chạm p1 → tranche 1" — tìm theo GIÁ TRỊ (phải là DUY NHẤT), không
+#: theo offset từ cuối: `test_td0189` cắt đuôi và nối kịch bản riêng sau nến
+#: này nên offset −36 của bộ sinh gốc không còn đúng ở đó (đã dính thật).
+NEN_4H_CHAM_P1 = (95.50, 95.50, 95.30, 95.40, 1000.0)
+
+
+def _i_cham_p1(rows4) -> int:
+    ung = [k for k, b in enumerate(rows4) if b == pytest.approx(NEN_4H_CHAM_P1)]
+    assert len(ung) == 1, f"nến chạm p1 {NEN_4H_CHAM_P1} phải xuất hiện ĐÚNG MỘT lần, thấy {len(ung)}"
+    return ung[0]
+
+#: TD-0193 (DR-D4-08 §3 #6) — BỐN nến 1H thay cho `_chia_nho()` của nến 4H
+#: "chạm p1". Gộp lại VẪN đúng nến 4H cũ (95.50, 95.50, 95.30, 95.40, 1000) nên
+#: mọi phép tính khung 4H (zone, EMA/DG2, TP) KHÔNG đổi; chỉ hình dạng 1H đổi:
+#:   b2 = lần CHẠM đầu (low 95,30 ∈ zone ≈ [94,66, 95,34]) đồng thời là nến
+#:        REJECTION (range 0,20; bóng dưới 0,15 ≥ 0,5×0,20; đóng 95,45 ≥
+#:        95,30 + 0,10) với volume 550 ≥ v_min × MA20(1H) ≈ 240 ⇒ (a VÀ c)
+#:        ⇒ C = b2, wait_bars = 0.
+#:   b3 = nến ĐẶT lệnh (p1_order = min(zone_high, close(C)) = zone_high ≈ 95,34;
+#:        open 95,45 > 95,34 ⇒ limit; low 95,30 ≤ 95,34 ⇒ KHỚP); mọi giá ≤ 95,5
+#:        nằm xa DƯỚI nạng TP1 (~96,53) nên TP1 không nổ trước tranche 2/3
+#:        (bài học TD-0189 chặng 2b về wick và `--timeframe-detail 5m`).
+#: Bản `_chia_nho()` cũ cho nến chạm (95.5, 95.5, 95.3, 95.3) đóng SÁT ĐÁY —
+#: không phải rejection ⇒ hệ thống MỚI ra 0 lệnh ⇒ mọi khẳng định về lệnh
+#: xanh-vô-nghĩa. Lần thứ BA "fixture đúng hệ thống cũ" (TD-0182, TD-0194).
+NEN_1H_CHAM_P1: tuple[tuple[float, float, float, float, float], ...] = (
+    (95.50, 95.50, 95.50, 95.50, 150.0),
+    (95.50, 95.50, 95.50, 95.50, 150.0),
+    (95.50, 95.50, 95.30, 95.45, 550.0),  # CHẠM + rejection + volume ⇒ C
+    (95.45, 95.45, 95.30, 95.40, 150.0),  # đặt lệnh tại open, khớp tại 95,34
+)
+
+
+def _rows1_tu_rows4(rows4) -> list[tuple[float, float, float, float, float]]:
+    """1H từ 4H: `_chia_nho` cho mọi nến, TRỪ nến "chạm p1" (xem `NEN_1H_CHAM_P1`).
+
+    Đối chứng ngay tại đây (N6): nến bị thay phải là đúng nến 95,30 và bốn
+    nến thay phải gộp lại ĐÚNG nến 4H cũ — sai một trong hai thì RAISE, không
+    lặng lẽ sinh một chuỗi khác chuỗi mọi ca khác đang tin.
+    """
+    i = _i_cham_p1(rows4)
+    goc = rows4[i]
+    gop = (
+        NEN_1H_CHAM_P1[0][0], max(b[1] for b in NEN_1H_CHAM_P1),
+        min(b[2] for b in NEN_1H_CHAM_P1), NEN_1H_CHAM_P1[-1][3], sum(b[4] for b in NEN_1H_CHAM_P1),
+    )
+    assert gop == pytest.approx(goc), f"bốn nến 1H gộp thành {gop}, khác nến 4H gốc {goc}"
+    rows1: list[tuple[float, float, float, float, float]] = []
+    for k, bar in enumerate(rows4):
+        rows1.extend(NEN_1H_CHAM_P1 if k == i else _chia_nho(bar, 4))
+    return rows1
+
+
+def _khang_dinh_bo_sinh_co_nen_xac_nhan_3_3b(rows4, rows1) -> None:
+    """🔴 ĐỐI CHỨNG THƯỜNG TRỰC thứ hai (TD-0193): zone đáy của bộ sinh phải
+    có ít nhất một lần chạm ĐƯỢC XÁC NHẬN theo §3.3b Phương án A — gọi đúng
+    `quet_xac_nhan_zone()` sản xuất với cùng RSI/volume_MA mà chiến lược tính.
+    Không có ⇒ hệ thống mới ra 0 lệnh và mọi ca dùng bộ sinh xanh-vô-nghĩa."""
+    import numpy as np
+    import talib
+    from tool_d.entry_confirmation import quet_xac_nhan_zone
+    from tool_d.zone_detection import K_XAC_NHAN, la_diem_swing, zone_da_bi_huy
+    from tool_d.zone_strength import compression, touch_count, volume_ratio, zone_hop_le, zss
+
+    cao4 = [b[1] for b in rows4]; thap4 = [b[2] for b in rows4]
+    dong4 = [b[3] for b in rows4]; vol4 = [b[4] for b in rows4]
+    atr4 = talib.ATR(np.asarray(cao4, float), np.asarray(thap4, float), np.asarray(dong4, float), 14)
+    zones = []
+    for i in range(K_XAC_NHAN, len(rows4)):
+        j = i + K_XAC_NHAN
+        if j >= len(rows4) or not la_diem_swing(thap4, i, loai="day"):
+            continue
+        if np.isnan(atr4[i]) or dong4[i] == 0 or zone_da_bi_huy(thap4, i, j, loai="day"):
+            continue
+        buf = BUF_ZONE_TEST * atr4[i] / dong4[i]
+        zl, zh = thap4[i] * (1 - buf), thap4[i] * (1 + buf)
+        v_r = volume_ratio(vol4, i_swing=i)
+        comp = compression(cao4, thap4, dong4, i_hinh_thanh=i, i_hien_tai=j)
+        if v_r is None or comp is None:
+            continue
+        tc = touch_count(thap4, dong4, zl, zh, i_swing=i, t=j, loai="day")
+        if zone_hop_le(zss_value=zss(touch=tc, ty_le_volume=v_r, do_nen=comp), so_touch=tc,
+                       tuoi_nen=K_XAC_NHAN, nguong_zss=0.5):
+            zones.append((j, zl, zh))
+    assert zones, "bộ sinh không có zone đáy hợp lệ — đối chứng thứ nhất lẽ ra đã bắt"
+
+    mo1, cao1, thap1, dong1, vol1 = (list(x) for x in zip(*[(b[0], b[1], b[2], b[3], b[4]) for b in rows1]))
+    rsi1 = talib.RSI(np.asarray(dong1, float), 14).tolist()
+    vma1 = pd.Series(vol1).rolling(20).mean().tolist()
+    co = False
+    for j, zl, zh in zones:
+        k_start = (j + 1) * 4  # nến 1H đầu tiên SAU khi nến 4H j đóng (DR-D4-08 §3 #3)
+        kq = quet_xac_nhan_zone(
+            mo1, cao1, thap1, dong1, rsi1, vol1, vma1,
+            zone_low=zl, zone_high=zh, tu=k_start, den=min(len(rows1), k_start + 160),
+            v_min=1.0, loai="day", lan_cham_truoc_khi_xac_nhan=None,
+            bat_dieu_kien_c=True, wick_frac=0.5,
+        )
+        co = co or kq.nen_xac_nhan_that is not None
+    assert co, (
+        "không zone đáy nào của bộ sinh có lần chạm đầu được XÁC NHẬN §3.3b — "
+        "hệ thống mới sẽ ra 0 lệnh, mọi ca dùng bộ sinh này XANH-VÔ-NGHĨA. "
+        "Xem NEN_1H_CHAM_P1."
+    )
+
 
 def _khang_dinh_bo_sinh_du_hai_loai_zone() -> None:
     """🔴 ĐỐI CHỨNG THƯỜNG TRỰC — chạy MỌI lần bộ sinh được dùng.
@@ -311,7 +416,8 @@ def _khang_dinh_bo_sinh_du_hai_loai_zone() -> None:
 def _sinh_du_lieu(datadir: Path) -> None:
     _khang_dinh_bo_sinh_du_hai_loai_zone()
     rows4 = _bars_4h_co_trend()
-    rows1 = [x for bar in rows4 for x in _chia_nho(bar, 4)]
+    rows1 = _rows1_tu_rows4(rows4)
+    _khang_dinh_bo_sinh_co_nen_xac_nhan_3_3b(rows4, rows1)
     # 🔴 TD-0182 — NEO MỐC KẾT THÚC, không neo mốc bắt đầu. `TIMERANGE`
     # chỉ phủ 18 ngày CUỐI (phần trước là warmup), nên nối thêm lịch sử
     # vào đầu chuỗi không sinh thêm lệnh nào — miễn là mẫu zone vẫn rơi
@@ -586,14 +692,22 @@ class TestCungZoneVoiMinimal:
         """Phần zone của `ZoneAbsorption` là bản chép của Minimal — canh nó không trôi."""
         assert kq_toi_thieu["trades"], "Minimal không vào lệnh trên dữ liệu này — bộ sinh đã lệch khỏi L-Z49"
         ta, tb = _lenh_du_ba_tranche(kq_san_xuat), _lenh_du_ba_tranche(kq_toi_thieu)
-        # Cùng zone ⇒ cùng thời điểm mở (lệnh mẫu: 2025-03-27 16:00). Lần chạy
-        # đầu ZoneAbsorption KHÔNG có lệnh này (bị min_stake chặn trong im lặng)
+        # Cùng zone ⇒ cùng NGÀY mở và sản xuất mở KHÔNG SỚM HƠN Minimal. Bản
+        # trước đòi cùng GIỜ — đúng khi cả hai vào ngay tại nến xác nhận zone;
+        # TD-0193 (DR-D4-08) cho sản xuất vào tại nến xác nhận C của §3.3b
+        # (sau lần chạm đầu), Minimal thì không có §3.3b — ca này ĐỎ ĐÚNG rồi
+        # được SỬA khẳng định, không xoá (tiền lệ TD-0150). Lần chạy đầu
+        # ZoneAbsorption KHÔNG có lệnh này (bị min_stake chặn trong im lặng)
         # mà chỉ có các zone ở đuôi — so tag của "lệnh đủ 3 tranche đầu tiên"
         # thôi thì không phát hiện được sự vắng mặt đó.
-        assert ta["open_date"][:13] == tb["open_date"][:13], (ta["open_date"], tb["open_date"])
+        assert ta["open_date"][:10] == tb["open_date"][:10], (ta["open_date"], tb["open_date"])
+        assert ta["open_date"] >= tb["open_date"], (ta["open_date"], tb["open_date"])
         a, b = json.loads(ta["enter_tag"]), json.loads(tb["enter_tag"])
-        for k in ("zl", "zh", "p1", "p2", "p3", "sl"):
+        # p1 KHÔNG so: Minimal = min(zone_high, close4H[j]); sản xuất = p1_order
+        # §3.5 = min(zone_high, close(C)). Cùng zone thì bốn mức còn lại phải khớp.
+        for k in ("zl", "zh", "p2", "p3", "sl"):
             assert a[k] == pytest.approx(b[k], abs=1e-9), (k, a[k], b[k])
+        assert a["p1"] <= a["zh"] + 1e-9
 
     def test_minimal_van_1x_va_1_1_2_de_doi_chung(self, kq_toi_thieu) -> None:
         """Đối chứng âm: chính Minimal trên cùng dữ liệu vẫn cho 1x và 1:1:2 —

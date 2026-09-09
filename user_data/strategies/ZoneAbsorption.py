@@ -119,6 +119,7 @@ from tool_d.arm_switches import (
 )
 from tool_d.config.loader import load_tool_d_config, resolve
 from tool_d.dg1_dg5_tranche_gates import danh_gia_tat_ca
+from tool_d.entry_confirmation import bat_dieu_kien_c_cua_arm, quet_xac_nhan_zone
 from tool_d.notional import bo_loc_tu_market, kiem_san_tool_d
 from tool_d.dg6_early_invalidation import dg6_dong_vi_the, dieu_kien_a, dieu_kien_b
 from tool_d.funding_stop import funding_paid_cumulative, is_funding_stop_triggered
@@ -147,9 +148,20 @@ from tool_d.time_stop import is_time_stop_triggered
 from tool_d.trade_plan import KeHoachTranche
 from tool_d.trend_context import trend_dir_tai, tuoi_trend_nen
 from tool_d.zone_detection import K_XAC_NHAN, la_diem_swing, zone_da_bi_huy
-from tool_d.zone_strength import compression, touch_count, volume_ratio, zone_hop_le, zss
+from tool_d.zone_strength import (
+    NGUONG_TUOI_ZONE_TOI_DA,
+    compression,
+    touch_count,
+    volume_ratio,
+    zone_hop_le,
+    zss,
+)
 
 logger = logging.getLogger(__name__)
+
+NEN_1H_MOI_NEN_4H = 4
+RSI_KY = 14      # §3.3b(b) — RSI(14, 1H)
+VOLUME_MA_KY = 20  # PHẦN 3b (c) — volume_MA(20, 1H)
 
 BUF_ZONE = 0.3  # §1.1 — như Minimal
 CUA_SO_CORR_NEN_1H = 720  # §6.2 hệ số 3 — 30 ngày, HẰNG SỐ ĐỊNH NGHĨA (LD-35b)
@@ -158,17 +170,25 @@ EMA_NHANH, EMA_CHAM = 20, 50  # §2.1
 # Khoá viết tắt của enter_tag. Bốn khoá mới so với Minimal: zs (ZSS tại tín
 # hiệu — cho mult_zss và DG5), t4 (trend_dir 4H tại tín hiệu — mốc DG2),
 # sw (timestamp ms nến swing 4H — để tính lại ZSS hiện tại cho DG5).
+# TD-0193 (DR-D4-08): thêm ec (nhánh xác nhận §3.3b "ac"/"b"), wb (số nến đã
+# chờ = wait_bars của Decision Log §8), lc (lượt chạm mà PHẢN THỰC B xác
+# nhận — 0 nếu B cũng không, 1 = B trùng A). Ba khoá này KHÔNG bắt buộc khi
+# giải mã (tag của Minimal/L-Z49 không có), nhưng test khoá TD-0193 đòi
+# chúng có mặt trên MỌI lệnh thật của chiến lược sản xuất (L-Z6).
 _KHOA_JSON = ("zl", "zh", "p1", "p2", "p3", "sl", "zs", "t4", "sw")
 
 
-def _ma_hoa(kh: KeHoachTranche, *, zss_value: float, trend_4h: str, swing_ts_ms: int) -> str:
-    return json.dumps(
-        {
-            "zl": kh.zone_low, "zh": kh.zone_high, "p1": kh.p1, "p2": kh.p2, "p3": kh.p3,
-            "sl": kh.sl, "zs": round(zss_value, 6), "t4": trend_4h, "sw": swing_ts_ms,
-        },
-        separators=(",", ":"),
-    )
+def _ma_hoa(
+    kh: KeHoachTranche, *, zss_value: float, trend_4h: str, swing_ts_ms: int,
+    xac_nhan: dict | None = None,
+) -> str:
+    d = {
+        "zl": kh.zone_low, "zh": kh.zone_high, "p1": kh.p1, "p2": kh.p2, "p3": kh.p3,
+        "sl": kh.sl, "zs": round(zss_value, 6), "t4": trend_4h, "sw": swing_ts_ms,
+    }
+    if xac_nhan is not None:
+        d.update(xac_nhan)
+    return json.dumps(d, separators=(",", ":"))
 
 
 def _giai_ma(tag: str | None, *, atr_1h_tai_tranche1: float) -> tuple[KeHoachTranche, dict] | None:
@@ -243,6 +263,11 @@ class ZoneAbsorption(IStrategy):
         self._nguong_zss = float(resolve(self._cfg, "tier_b.zss_threshold"))
         self._buf_sl_he_so = float(resolve(self._cfg, "tier_b.buf_sl_atr"))
         self._dg6a_atr_ratio = float(resolve(self._cfg, "tier_b.dg6a_atr_ratio"))
+        # TD-0193 (DR-D4-08) — hai tham số §3.3b, hai khoá cuối của MT-23 được
+        # gỡ khỏi MIEN_TRU vì từ đây chúng THẬT SỰ chảy tới phép tính.
+        self._v_min = float(resolve(self._cfg, "tier_b.v_min"))
+        self._wick_frac = float(resolve(self._cfg, "tier_b.wick_close_upper_frac"))
+        self._bat_dieu_kien_c = bat_dieu_kien_c_cua_arm(self._arm)  # Z0-V1 = False
         self._l_exchange = float(resolve(self._cfg, "tier_a.L_exchange"))
         self._adx_threshold = float(resolve(self._cfg, "tier_frozen.adx_threshold.value"))
         self._tang_loc_trend = tang_cua_arm(self._arm)  # TD-0182 — công tắc Phần 2 theo arm
@@ -258,9 +283,15 @@ class ZoneAbsorption(IStrategy):
 
     def populate_indicators(self, dataframe: pd.DataFrame, metadata: dict) -> pd.DataFrame:
         dataframe["atr_1h"] = talib.ATR(dataframe["high"], dataframe["low"], dataframe["close"], timeperiod=14)
+        dataframe["rsi_1h"] = talib.RSI(dataframe["close"], timeperiod=RSI_KY)
+        dataframe["volume_ma_1h"] = dataframe["volume"].rolling(VOLUME_MA_KY).mean()
 
         inf4 = self.dp.get_pair_dataframe(pair=metadata["pair"], timeframe=self.informative_timeframe)
         inf4 = self._tinh_zone_4h(inf4)
+        # TD-0193 (DR-D4-08) — §3.3b chạy TRÊN KHUNG 1H, trước khi ghép: cần
+        # chỉ số nến 1H tuyệt đối để quét cụm chạm, và cần `inf4` chưa bị
+        # dịch ngày để ánh xạ đúng "nến 1H đầu tiên SAU khi nến 4H j đóng".
+        self._xac_nhan_3_3b(dataframe, inf4, metadata["pair"])
         dataframe = merge_informative_pair(dataframe, inf4, self.timeframe, self.informative_timeframe, ffill=True)
 
         inf1d = self.dp.get_pair_dataframe(pair=metadata["pair"], timeframe=self.informative_1d)
@@ -341,8 +372,150 @@ class ZoneAbsorption(IStrategy):
         inf["zone_valid"] = zone_valid
         inf["ke_hoach_json"] = tag_col
         inf["trend_dir_4h"] = trend
+        inf["atr_4h"] = atr  # TD-0193 — tính lại kế hoạch tại C với ATR đóng băng tại j (DR-D4-08 §3 #4)
         inf["zone_dinh_gia"] = self._quet_zone_dinh(cao, thap, dong, volume, atr, self._nguong_zss)
         return inf
+
+    def _xac_nhan_3_3b(self, df1: pd.DataFrame, inf4: pd.DataFrame, pair: str) -> None:
+        """TD-0193 / DR-D4-08 — §3.3b + §3.5 trên khung 1H, ghi BỐN cột vào `df1`:
+
+          `xac_nhan_3_3b`      True tại nến C (xác nhận thật, Phương án A)
+          `ke_hoach_json_3_3b` kế hoạch TÍNH LẠI tại C (p1_order = min(zone_high,
+                               close(C)); Z1: sl = p1_order − 2,2×ATR(j))
+          `xac_nhan_phan_thuc_b`, `lan_cham_phan_thuc`  — PHẢN THỰC B, CHỈ ghi.
+
+        Sáu diễn giải đã chốt (DR-D4-08 §3), chỗ nào thi hành ghi ngay tại dòng.
+
+        🔴 Vì sao ở `populate_indicators` chứ không ở callback (P1 vs P2): hàm
+        quét NHÌN VỀ PHÍA TRƯỚC để tìm C, nhưng tín hiệu ghi tại C chỉ dùng dữ
+        liệu ≤ C — test khoá TD-0193 chứng minh bằng cách cắt dataframe tại C−1
+        (mất tín hiệu) và tại C (còn). Callback là vùng `TD-0170` từng dính
+        lookahead và bị Freqtrade nuốt exception.
+        """
+        n1 = len(df1)
+        xac_nhan = [False] * n1
+        ke_hoach = [""] * n1
+        phan_thuc_b = [False] * n1
+        lan_cham_b = [0] * n1
+        so_zone = so_a = so_b = trung_nen = 0
+
+        if n1 == 0 or inf4.empty or not inf4["zone_valid"].any():
+            self._ghi_cot_3_3b(df1, xac_nhan, ke_hoach, phan_thuc_b, lan_cham_b)
+            return
+
+        mo, cao, thap, dong = (df1[c].tolist() for c in ("open", "high", "low", "close"))
+        vol = df1["volume"].tolist()
+        rsi = df1["rsi_1h"].tolist()
+        vma = df1["volume_ma_1h"].tolist()
+        ngay1 = df1["date"].to_numpy(dtype="datetime64[ns]")
+        ngay4 = inf4["date"].to_numpy(dtype="datetime64[ns]")
+        dong4 = inf4["close"].tolist()
+        atr4 = inf4["atr_4h"].tolist()
+        trend4 = inf4["trend_dir_4h"].tolist()
+        bon_gio = np.timedelta64(4, "h")
+        mot_gio = np.timedelta64(1, "h")
+        # Nến 4H `m` ĐÃ ĐÓNG tại nến 1H `t` ⇔ ngay4[m] + 4h ≤ ngay1[t]. Dùng đúng
+        # mốc `merge_informative_pair` dùng (date + 4h) để "nến 4H đã đóng gần
+        # nhất tại C" trùng với thứ các cột `_4h` cho C nhìn thấy.
+        dong_cua4 = ngay4 + bon_gio
+
+        for j in np.flatnonzero(inf4["zone_valid"].to_numpy(dtype=bool)):
+            tag = json.loads(inf4["ke_hoach_json"].iloc[j])
+            zl, zh = float(tag["zl"]), float(tag["zh"])
+            so_zone += 1
+
+            # #3 — quét từ nến 1H ĐẦU TIÊN sau khi j ĐÓNG. Không phải giờ mở của
+            # j (script đo MT-22 làm thế — zone khi đó CHƯA xác nhận).
+            k_start = int(np.searchsorted(ngay1, dong_cua4[j]))
+            if k_start >= n1:
+                continue
+            # #5 — den = min(hạn §1.3 quy ra 1H, nến 1H đầu sau nến 4H đầu tiên
+            # ĐÓNG DƯỚI SL kiểu zone). SL huỷ zone là SL kiểu ZONE (§3.1), độc
+            # lập arm — Z1 không được sống lâu hơn Z0 trên cùng zone.
+            den = min(n1, k_start + NGUONG_TUOI_ZONE_TOI_DA * NEN_1H_MOI_NEN_4H)
+            sl_zone = zl * (1.0 - self._buf_sl_he_so * atr4[j] / zl)
+            for m in range(j + 1, len(dong4)):
+                if dong4[m] < sl_zone:
+                    den = min(den, int(np.searchsorted(ngay1, dong_cua4[m])))
+                    break
+            if den <= k_start:
+                continue
+
+            # #2 — mốc (giá, RSI) cho (b): đáy THẬT của cụm chạm 1H CUỐI CÙNG trong
+            # cửa sổ hình thành [nến 1H mở cùng swing i, k_start). RSI tại đúng
+            # nến đáy. `zone_hop_le` đòi so_touch ≥ 1 nên mốc gần như luôn có;
+            # không có (hoặc RSI NaN) thì (b) đơn giản không dùng được ở lượt đầu.
+            k_i = int(np.searchsorted(ngay1, np.datetime64(int(tag["sw"]), "ms").astype("datetime64[ns]")))
+            moc = self._moc_cham_truoc_xac_nhan(thap, rsi, zl, zh, k_i, k_start)
+
+            kq = quet_xac_nhan_zone(
+                mo, cao, thap, dong, rsi, vol, vma,
+                zone_low=zl, zone_high=zh, tu=k_start, den=den,
+                v_min=self._v_min, loai="day",
+                lan_cham_truoc_khi_xac_nhan=moc,
+                bat_dieu_kien_c=self._bat_dieu_kien_c, wick_frac=self._wick_frac,
+            )
+            if kq.nen_xac_nhan_phan_thuc is not None:
+                phan_thuc_b[kq.nen_xac_nhan_phan_thuc] = True
+                lan_cham_b[kq.nen_xac_nhan_phan_thuc] = kq.lan_cham_phan_thuc
+                so_b += 1
+            c = kq.nen_xac_nhan_that
+            if c is None:
+                continue
+            if xac_nhan[c]:
+                trung_nen += 1  # zone xác nhận SỚM hơn giữ chỗ (DR-D4-08 §3, chi tiết 1)
+                continue
+            # #4 — tính lại kế hoạch tại C: p1_order = min(zone_high, close(C)) (§3.5),
+            # ATR(4H) ĐÓNG BĂNG tại j; `ke_hoach_theo_arm` vẫn là nơi DUY NHẤT
+            # phân nhánh SL theo arm (TD-0192) — Z1 lấy sl = p1_order − 2,2×ATR(j).
+            kh = ke_hoach_theo_arm(
+                arm=self._arm, zone_low=zl, zone_high=zh, gia_dong_cua=dong[c],
+                atr_4h=atr4[j], atr_1h_tai_tranche1=0.0, buf_sl_he_so=self._buf_sl_he_so,
+            )
+            # t4 = trend 4H của nến ĐÃ ĐÓNG gần nhất tại C (mốc DG2 — tranche 1 nay ở C).
+            m_c = int(np.searchsorted(dong_cua4, ngay1[c] + mot_gio)) - 1
+            xac_nhan[c] = True
+            ke_hoach[c] = _ma_hoa(
+                kh, zss_value=float(tag["zs"]), trend_4h=str(trend4[m_c]), swing_ts_ms=int(tag["sw"]),
+                xac_nhan={
+                    "ec": kq.loai_xac_nhan_that,
+                    "wb": int(c - kq.nen_cham_dau_that),
+                    "lc": int(kq.lan_cham_phan_thuc),
+                },
+            )
+            so_a += 1
+
+        # Dấu vết trên ĐƯỜNG CHẠY THẬT — test khoá grep dòng này (bài học TD-0168/TD-0188).
+        logger.info(
+            "XAC_NHAN_3_3B %s zone=%d A=%d B=%d trung_nen=%d arm=%s c=%s",
+            pair, so_zone, so_a, so_b, trung_nen, self._arm, self._bat_dieu_kien_c,
+        )
+        self._ghi_cot_3_3b(df1, xac_nhan, ke_hoach, phan_thuc_b, lan_cham_b)
+
+    @staticmethod
+    def _ghi_cot_3_3b(df1, xac_nhan, ke_hoach, phan_thuc_b, lan_cham_b) -> None:
+        df1["xac_nhan_3_3b"] = xac_nhan
+        df1["ke_hoach_json_3_3b"] = ke_hoach
+        df1["xac_nhan_phan_thuc_b"] = phan_thuc_b
+        df1["lan_cham_phan_thuc"] = lan_cham_b
+
+    @staticmethod
+    def _moc_cham_truoc_xac_nhan(thap, rsi, zl: float, zh: float, k_i: int, k_start: int):
+        """Đáy thật + RSI của cụm chạm 1H CUỐI trong `[k_i, k_start)` — DR-D4-08 §3 #2."""
+        moc = None
+        t = max(k_i, 0)
+        while t < k_start:
+            if not (zl <= thap[t] <= zh):
+                t += 1
+                continue
+            t_day, gia_day = t, thap[t]
+            while t < k_start and (zl <= thap[t] <= zh):
+                if thap[t] < gia_day:
+                    t_day, gia_day = t, thap[t]
+                t += 1
+            if rsi[t_day] == rsi[t_day]:  # not NaN
+                moc = (gia_day, rsi[t_day])
+        return moc
 
     @staticmethod
     def _quet_zone_dinh(cao, thap, dong, volume, atr, nguong_zss: float) -> list[float]:
@@ -434,21 +607,21 @@ class ZoneAbsorption(IStrategy):
                 tuoi_nen_1d=None if pd.isna(tuoi) else int(tuoi),
             )
 
-        # 🔴 `.fillna(False)` KHÔNG phải cho gọn: `zone_valid_4h` mang NaN ở
-        # vùng warmup (trước nến 4H đầu tiên chưa có gì để ffill), và pandas
-        # TỪ CHỐI dùng mảng chứa NaN làm mặt nạ ("Cannot mask with non-boolean
-        # array containing NA / NaN values"). Bộ sinh tổng hợp không có vùng
-        # đó nên lỗi này chỉ lộ ra trên dữ liệu THẬT.
-        zone_ok = dataframe[f"zone_valid{sfx4}"].fillna(False).astype(bool)
-        # Chỉ đánh giá trend trên các hàng có zone hợp lệ — tránh gọi hàm
+        # TD-0193 (DR-D4-08) — tín hiệu vào lệnh nằm ở nến C của §3.3b, KHÔNG
+        # còn ở khối 4 nến 1H ngay sau nến 4H xác nhận zone (`zone_valid_4h`).
+        # Cột này là bool thuần (không NaN) vì `_xac_nhan_3_3b` ghi đủ mọi hàng.
+        # Bộ lọc trend (Phần 2, theo arm) xét TẠI C — cùng luật cũ áp lên nến
+        # tín hiệu mới; các cột `_4h`/`_1d` tại C là nến đã đóng gần nhất.
+        xn_ok = dataframe["xac_nhan_3_3b"].astype(bool)
+        # Chỉ đánh giá trend trên các hàng có xác nhận — tránh gọi hàm
         # Python hàng trăm nghìn lần vô ích trên toàn bộ dataframe.
         trend_ok = pd.Series(False, index=dataframe.index)
-        if zone_ok.any():
-            trend_ok.loc[zone_ok] = dataframe.loc[zone_ok].apply(_dat_dieu_kien_trend, axis=1)
+        if xn_ok.any():
+            trend_ok.loc[xn_ok] = dataframe.loc[xn_ok].apply(_dat_dieu_kien_trend, axis=1)
 
-        hop_le = zone_ok & trend_ok
+        hop_le = xn_ok & trend_ok
         dataframe.loc[hop_le, "enter_long"] = 1
-        dataframe.loc[hop_le, "enter_tag"] = dataframe.loc[hop_le, f"ke_hoach_json{sfx4}"]
+        dataframe.loc[hop_le, "enter_tag"] = dataframe.loc[hop_le, "ke_hoach_json_3_3b"]
         return dataframe
 
     def populate_exit_trend(self, dataframe: pd.DataFrame, metadata: dict) -> pd.DataFrame:

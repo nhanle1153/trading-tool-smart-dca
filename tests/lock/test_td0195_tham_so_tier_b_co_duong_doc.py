@@ -45,14 +45,9 @@ THU_MUC_MA_CHAY = ("src", "user_data/strategies", "entrypoints")
 # đường không ai đi. Khi tầng tương ứng được nối, XOÁ dòng ở đây — nếu
 # quên, phép kiểm `test_mien_tru_het_han` bên dưới sẽ báo đỏ.
 MIEN_TRU: dict[str, str] = {
-    "v_min": (
-        "§3.3b điều kiện (c) — `entry_confirmation.tim_xac_nhan_entry()` chưa "
-        "được gọi trên đường chạy (MT-21). Gỡ miễn trừ khi TD-0193 nối xong."
-    ),
-    "wick_close_upper_frac": (
-        "§3.3b điều kiện (a) — cùng lý do với `v_min`. Hiện là số ma `0.5` "
-        "trong `entry_confirmation._la_nen_rejection`, chưa có tên hằng số."
-    ),
+    # `v_min` và `wick_close_upper_frac` ĐÃ GỠ 09/09/2026 — TD-0193 (DR-D4-08)
+    # nối §3.3b vào `ZoneAbsorption.populate_indicators`, hai khoá nay có đường
+    # đọc thật (`self._v_min`, `self._wick_frac`) và chảy tới `quet_xac_nhan_zone`.
     "funding_rate_pct": (
         "DG6-D — `dieu_kien_d()` chưa có người gọi (`ZoneAbsorption` truyền "
         "`d=False` cứng). 🔴 Gỡ miễn trừ PHẢI kèm chốt ĐƠN VỊ: YAML ghi "

@@ -182,7 +182,10 @@ KET_THUC_RIENG = pd.Timestamp("2025-04-10 00:00", tz="UTC")
 
 def _sinh_du_lieu_rieng(datadir: Path) -> None:
     rows4 = _rows4_khong_dca_sau_tp1()
-    rows1 = [x for bar in rows4 for x in _chia_nho(bar, 4)]
+    # TD-0193 (DR-D4-08): nến "chạm p1" phải mang nến xác nhận §3.3b ở khung 1H,
+    # nếu không hệ thống mới ra 0 lệnh và cả nhóm 2 xanh-vô-nghĩa. Dùng đúng
+    # bộ tách của `test_td0187` (cùng offset −36, tự đối chứng low == 95,30).
+    rows1 = _td0187._rows1_tu_rows4(rows4)
     bat_dau = KET_THUC_RIENG - pd.Timedelta(hours=len(rows1) - 1)
     idx1 = pd.date_range(bat_dau, periods=len(rows1), freq="1h", tz="UTC")
     df1 = pd.DataFrame(rows1, columns=["open", "high", "low", "close", "volume"])
