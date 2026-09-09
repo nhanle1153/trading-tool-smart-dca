@@ -360,12 +360,21 @@ này**; cả sáu đều do phiên khác (hoặc một lần tự kiểm) bắt.
 quả đứng vững **kể cả khi nó bác chính đề xuất của tôi**. Chi tiết `docs/research-log.md` 09/09.
 
 ⏳ **HAI CÂU CHẶN, CHỜ CHỦ DỰ ÁN:**
-1. **MT-22** — spec dòng 1075 nói cửa sổ xác nhận entry mở khi giá chạm **LẦN ĐẦU**, nhưng điều
-   kiện (b) dòng 1082 so với *"lần chạm gần nhất **trước đó**"* ⇒ ở lần chạm đầu **không có mốc
-   so** ⇒ **(b) là code chết**, entry rút về `(a VÀ c)`. Hai phiên đọc độc lập ra cùng chỗ. Cả hai
-   nghiêng *"mỗi lần chạm"* nhưng **từ chối tự chọn** (trái chữ spec, quy tắc 11). 🔴 Đã chốt
-   **KHÔNG code hai chiều sau một cờ**: làm thế biến một **DIỄN GIẢI** thành một **THAM SỐ**, rồi
-   ai đó thử cả hai và chọn cái đẹp hơn — dò cấu hình **trốn sổ trial**.
+1. ✅ **MT-22 ĐÃ CHỐT** (`7b1efdd`): **Phương án A + ghi phản thực cho B.** Cửa sổ chờ xác nhận
+   mở ĐÚNG MỘT LẦN mỗi zone. 🔑 **Lý do ban đầu của cả hai phiên — *"chọn B để cứu điều kiện
+   (b)"* — bị CHÍNH PHÉP ĐO BÁC:** `zone_hop_le()` đòi `so_touch >= 1` đếm TRƯỚC nến xác nhận, nên
+   ở lần chạm đầu (b) **vẫn có mốc so**; đo được (b) gánh **51,3%** số lệnh của A. Bằng chứng văn
+   bản **cắt cả hai chiều**: dòng 1075 (*"lần đầu"*) nghiêng A, dòng 1085 (*"BỎ LƯỢT chạm **NÀY**"*
+   — hàm ý còn lượt khác) nghiêng B; cả hai phiên đều đọc sót chữ "này". Chọn A vì **hướng sai của
+   A (bỏ lỡ) an toàn hơn hướng sai của B** (vào lệnh trên một xác nhận chỉ xuất hiện vì đã thử
+   nhiều lần). Đo EXPLORE: A **43,1%** zone vào lệnh · B **81,2%** — ⚠️ B là **CẬN TRÊN**, vì phản
+   thực chạy trên đường A nên bỏ qua cổng kết nạp §6.8f và ảnh hưởng lên `mult_corr`/`mult_deploy`.
+   🔴 **Điều kiện mở lại BẤT ĐỐI XỨNG** (vá một chốt không-bao-giờ-thoả-được): **loại B ra = 0
+   trial** (chỉ cần ĐẾM), **nhận B vào = PHẢI trả một suất trial B1 đăng ký trước** — vì "B tốt
+   hơn" đòi *expectancy*, mà expectancy của một cấu hình trên CALIB **chính là** định nghĩa "chạm"
+   của DR-014 §2. Phản thực **CHỈ GHI**, không đụng state của A (có ca test: bật/tắt ⇒ tập lệnh
+   thật không đổi một lệnh). 🔴 Vẫn giữ: **KHÔNG code hai chiều sau một cờ** — làm thế biến một
+   **DIỄN GIẢI** thành một **THAM SỐ**, rồi ai đó thử cả hai và chọn cái đẹp hơn.
 2. **MT-19** — đo phân bố `R_eff` trên pool 102 mã (điều kiện mở lại DR-D4-07 §9) cần mở rộng
    `CTRL_OUTPUT_ALLOWED` bằng một DR, **hoặc** tiêu 1 suất trial.
 
