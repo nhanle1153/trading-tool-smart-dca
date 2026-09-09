@@ -1558,3 +1558,103 @@ ngày tháng trông giống một sự thật hơn là một cái ✅"*. Đây l
   của pool: BTC/ETH **không nằm trong pool giao dịch** (§0.3b, chỉ ở EXPLORE).
 - Con số 17/81 đo trên **48 mã alt EXPLORE**, cùng họ với ca pool nhưng **chưa ai đo** con
   số cho pool 102 mã.
+
+## 09/09/2026 (tiếp) — Quét 9 arm trên EXPLORE: HAI loại "arm trùng nhau", và bốn lần tôi nói quá phạm vi đã đo
+
+Phiên `-f4`. Bằng chứng: `docs/du-lieu-do/dg2-explore-quet-arm.json` (48 mã EXPLORE alt,
+`[T0,T2]`, `E_D = 750`, **0 trial** — `DR-D0PRE-05 §4` cho EXPLORE sinh giả thuyết).
+Ranh giới cố ý: chỉ đếm lệnh / phân bố tranche / phân bố `R_eff`. **KHÔNG** đo expectancy
+theo arm — EXPLORE bị cấm dùng để validate.
+
+### Vì sao quét: D4 sắp đặt chỗ 9 suất trial trong 114
+
+| arm | lệnh | 1tr | 2tr | 3tr |
+|---|---|---|---|---|
+| Z0 · Z1 · Z0-V1 | 83 | 83 | 0 | 0 |
+| Z2 · Z3 | 83 | 34 | 34 | 15 |
+| Z3b | 84 | 35 | 34 | 15 |
+| Z0-T0 | 1202 | 1202 | 0 | 0 |
+| Z0-T1 | 292 | 292 | 0 | 0 |
+| Z0-S1 (trước DR-D4-07) | **0** | — | — | — |
+
+So **TỪNG LỆNH** (mã + giờ mở + số tranche + giờ đóng): `Z2` ≡ `Z3` và `Z0` ≡ `Z0-V1`,
+**0 lệch trên 83 lệnh**.
+
+### 🔴 HAI loại "trùng nhau" — khác nhau về BẢN CHẤT, và cách xử trái ngược
+
+| | `Z1`, `Z0-V1` ≡ `Z0` | `Z2` ≡ `Z3` |
+|---|---|---|
+| Nguyên nhân | **Công tắc KHÔNG được nối vào chiến lược** | DG5 có nối, nhưng **không ràng buộc lần nào** |
+| Bản chất | **LỖI cài đặt** | **PHÁT HIỆN về dữ liệu** |
+| Sửa được không | Có — nối vào | Không có gì để "sửa" |
+| Đổi tham số có tác dụng? | **KHÔNG** — `v_min` chưa từng được đọc | Có, nếu ngưỡng đổi |
+
+Đo (đếm ký hiệu trong `ZoneAbsorption.py` tại `ebc5089`):
+
+```
+entry_confirmation / tim_xac_nhan_entry / bat_dieu_kien_c : 0   ← §3.3b KHÔNG nối
+sl_neo_atr / ke_hoach_theo_arm / CHE_DO_SL_THEO_ARM       : 0   ← SL của Z1 KHÔNG nối
+── đối chứng, những thứ CÓ nối ──
+danh_gia_tat_ca 3 · cong_ap_dung 2 · duoc_them_tranche 3
+tang_cua_arm 2 · du_dieu_kien_trend_theo_tang 4
+```
+
+`v_min` chỉ xuất hiện trong chính `entry_confirmation.py` và hai dòng chú thích ⇒ **đường
+chạy sản xuất chưa bao giờ đọc nó**. Phát hiện của phiên `-94`.
+
+🔑 **Vì sao phân biệt này đắt:** hai giả thuyết dẫn tới **hai hành động khác nhau**. Nếu
+`Z0-V1` ≡ `Z0` vì *"`v_min = 1.0` trung tính"* thì siết `v_min` sẽ tách được hai arm. Nếu vì
+*"code không hề gọi"* thì đổi `v_min` **không làm gì cả**. Tôi đưa ra giả thuyết thứ nhất từ
+**hậu quả** (83/83 trùng khít); `-94` đọc **cơ chế** và bác. Con số của tôi đúng, lời giải
+thích thì không.
+
+Cùng hình dạng `TD-0188` đã đặt tên: **canh đúng chỗ nhưng đường chạy không bao giờ đi qua**.
+`test_td0183_cong_tac_arm.py` canh công tắc ở tầng module và **xanh** — không test nào ở tầng
+chiến lược hỏi *"công tắc này có được GỌI không"*.
+
+### Bốn lần tôi phát biểu vượt quá phạm vi đã đo — cùng một buổi, cùng một người bắt
+
+| # | Tôi nói | Thực tế |
+|---|---|---|
+| 1 | *"chưa chia đòn bẩy"* (chép mô tả TD-0082) | `min_stake` và `stake` **cùng** chia ⇒ triệt tiêu |
+| 2 | *"`E_D` 750 xoá sạch 17 lỗi định cỡ"* | Đúng — nhưng là **sàn Freqtrade**, không phải sàn Tool D (chặt hơn 36%, chưa nối) |
+| 3 | Áp `MT-19` vào câu hỏi về 4 mã pool | Câu đó chỉ cần **metadata sàn**, không cần dữ liệu giá pool ⇒ không bị chặn |
+| 4 | *"log không lọt vì mức DEBUG"* | Cả hai dòng đã là `logger.info`; tôi suy từ ca của mình (`GATE_CHECK` **thật sự** là DEBUG) sang ca của họ mà không `grep` |
+
+Cả bốn **không sai ở phép đo** mà sai ở **nhãn dán lên phép đo**. Và cả bốn bị bắt bởi **một
+người khác chạy lại**, **không** bởi bất kỳ lớp canh nào — vì không công cụ nào ở đây kiểm
+tra *phạm vi hiệu lực* của một con số đúng.
+
+📌 Ghi thêm một vế mà `-94` chỉ ra: ở ca #4, **chính tôi** là người đã tự bắt cùng cái bẫy ba
+giờ trước (thấy `GATE_CHECK: 0` và suýt kết luận *"không cổng nào chặn"*, rồi tự kiểm ra là
+`_chay()` không truyền `-vv`). Tức cơ chế tự sửa **đã có hiệu lực một lần** trước khi thất
+bại ở lần thứ hai — hiểu đúng nó là *"chưa thành phản xạ"*, không phải *"không có"*.
+
+### Ảnh trong gương của PASS RỖNG — tên do `-94` đặt
+
+| | PASS RỖNG | Chặn nhầm |
+|---|---|---|
+| Chốt nằm ở | đúng chỗ, nhưng **không thể đỏ** | **sai chỗ**, chặn câu nó vốn không chặn |
+| Im lặng theo chiều | **nguy hiểm** — số đẹp, tưởng đã kiểm | **an toàn** — tưởng mình đang thận trọng |
+| Cơ hội bị lộ | còn, khi kết quả vô lý | **không có** |
+
+Vế cuối là chỗ đắt: hậu quả duy nhất của chặn nhầm là **một phép đo không bao giờ được chạy**
+— mà một phép đo không chạy thì **không để lại dấu vết nào để nghi ngờ**, và **không ai đi
+kiểm một chốt vì nó quá nghiêm**. Ca hôm nay suýt tiêu một suất trial cho thứ đọc miễn phí.
+
+Và một hạng thứ ba, phát hiện khi phá thật `TD-0191`: **PASS RỖNG do CHỌN SAI BẤT BIẾN**.
+Quay `Z0-S1` về hằng số USDT cứng → 4 ca đỏ, **nhưng ca *"không phụ thuộc `R_eff`"* VẪN XANH**
+— một hằng số dĩ nhiên thoả bất biến ấy. Bất biến **đúng**; nó chỉ không phân biệt được thứ
+cần phân biệt. Khác *lớp canh cùn* (bất biến vô nghĩa) và khác *chĩa nhầm hướng* (ca sai
+không đi qua). `-94` báo cùng buổi họ dính đúng dạng đó với 7 ca AST/chuỗi.
+
+### Hệ quả cho D4 — chưa đặt chỗ
+
+Sau `DR-D4-07`, `Z0-S1` chạy được (0 → 83 lệnh). Còn lại: **`Z1` và `Z0-V1` là bản sao của
+`Z0` do lỗi nối** — hai suất trial mua thông tin bằng không, và đây là lỗi **sửa được**, khác
+hẳn `Z2`≡`Z3`. `-94` đang báo cáo đầy đủ cho chủ dự án; **không phiên nào tự sửa**, vì nối
+§3.3b đổi hành vi vào lệnh của toàn hệ thống và vùng đó có rủi ro lookahead thật (cùng vùng
+`TD-0170` từng dính).
+
+⚠️ Giới hạn: mọi con số trên đo trên **EXPLORE alt**, không phải pool 102 mã. `Z2`≡`Z3` là
+phát biểu về **tập dữ liệu này**, không phải về DG5 nói chung.
