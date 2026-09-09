@@ -271,6 +271,33 @@ với dòng phiên kia đang gõ dở cùng lúc — đã gây ít nhất 3 lầ
 > Mục này có thể lệch nhịp vài phút so với phiên kia — luôn `git log --oneline` +
 > đọc lại `TASKS.md` (cột 🔓/🔒/✅) trước khi chọn việc tiếp theo, đừng chỉ tin mục này.
 
+**Đang ở (cập nhật 09/09/2026 khuya, phiên `be` — TD-0193 ĐÓNG, TD-0184 BỊ CHẶN BỞI SỐ MẪU):**
+✅ **TD-0193 xong** — `DR-D4-08` (`b50a175`, P1 + sáu diễn giải, commit TRƯỚC code) → `99114fb`
+(tầng thuần) → `19dfabc` (nối) → `2a76b74` (đo). §3.3b nay chạy trong `populate_indicators` trên
+khung 1H: mỗi zone đáy 4H → `quet_xac_nhan_zone()` từ nến 1H đầu tiên SAU khi nến 4H `j` ĐÓNG,
+`enter_long` đặt tại nến xác nhận C, kế hoạch TÍNH LẠI tại C (`p1_order = min(zone_high, close(C))`,
+ATR(4H) đóng băng tại `j`), tag thêm `ec`/`wb`/`lc`, phản thực B hai cột CHỈ ghi. `Z0-V1` biểu diễn
+được (bản chặng 1 ghi cứng `bat_dieu_kien_c=True` — tái diễn MT-15 nếu nối nguyên). `v_min` +
+`wick_close_upper_frac` có đường đọc thật, `MIEN_TRU` của TD-0195 còn đúng 2 khoá DG6-D. Full suite
+Docker **1552 passed, 0 failed** (1524 + 11 + 15 + 2, đúng cộng). Fixture `test_td0187` lỗi thời lần
+thứ BA (nến "chạm p1" tách thành bốn nến 1H gộp ĐÚNG nến 4H cũ; tìm theo GIÁ TRỊ, không theo offset
+— offset −36 vỡ ở `test_td0189`).
+
+🔴 **CON SỐ QUAN TRỌNG NHẤT, và nó KHÔNG phải về §3.3b** (`docs/du-lieu-do/td0193-lenh-nam-explore.json`,
+88 mã EXPLORE, 99,4 mã-năm, 0 trial, chỉ đếm): 4.918 zone → §3.3b A **2.103 (42,8%)** → sau bộ lọc
+trend **96** (4,6%) → lệnh thật **62** (Z3 = Z0) ⇒ **63,6 lệnh/năm quy đổi pool < sàn 150 của Nhánh 1
+(§10.2)**. Theo `DR-D4-08` §6 (viết TRƯỚC): **DỪNG, không đặt chỗ TD-0184, chờ chủ dự án.** Bộ lọc
+trend Phần 2 là chốt cắt **95%**, không phải §3.3b — nới §3.3b không cứu được số mẫu. Nếu không có
+điều kiện §6 viết trước, TD-0184 đã đặt 9 suất để mua một kết cục INCONCLUSIVE.
+
+📌 **Ngoài phạm vi, chỉ ghi (đã báo `-28`):** TP1 nổ 21/62 lệnh, **100% nạng, 0 zone đỉnh** — H-4 =
+100% trên EXPLORE. Chưa phân biệt được "dữ liệu không có zone đỉnh trong tầm" với lỗi
+`_zone_dinh_tren` trên dữ liệu thật. ⚠️ Mọi bảng arm đo TRƯỚC `19dfabc` (`dg2-explore-quet-arm.json`)
+không so trực tiếp được với sau (DR-D4-08 §8). ⏳ **Chờ "chuẩn hóa và lưu"** để ghi MT-21 → đã nối
+cả hai vế và mở mục mới về số mẫu trong `back-end-note.md`.
+
+*(Đoạn "Đang ở" cũ bên dưới giữ nguyên làm lịch sử.)*
+
 **Đang ở (cập nhật 09/09/2026 đêm, phiên mới — TD-0189 ĐÓNG):** ✅ **TD-0189 chặng 2b XONG
 (`1b90456`+`0152158`)** — TP1/TP2 §5.1 đã NỐI vào `ZoneAbsorption.py`. TP1 qua
 `adjust_trade_position` (`stake_amount` ÂM ⇒ `ExitType.PARTIAL_EXIT`, đọc mã nguồn Freqtrade trước
