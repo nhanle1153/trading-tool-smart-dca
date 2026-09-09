@@ -80,6 +80,15 @@ ngưỡng ta tự áp sai ngữ cảnh.
    | `h4_nang_khong_co_zone` | không zone đỉnh nào trong `4.0 × R_eff` | thị trường thiếu cấu trúc đối diện — **đúng tiền đề §5.1 đặt cược** |
    | `h4_nang_zone_qua_han` | có zone trong tầm nhưng quá 40 nến | **chính sách của ta**, KHÔNG phải sự thật thị trường |
 
+   🔴 **Số thứ hai là PHẢN THỰC, không phải quan sát** (phiên `-2f` sửa lúc thi hành, và bản sửa
+   đúng hơn bản tôi viết): vì mục 2 **bỏ hẳn** phép lọc tuổi nên hệ thống **không bao giờ** rơi vào
+   nạng-vì-quá-hạn ⇒ một `tp_source` thứ ba sẽ là **nhánh chết**, đúng thứ TD-0183 đã cấm ở vế
+   `mult_zss`. Nên nó được **tính lại từ `tp_zone_age_bars` của các lệnh ĐÃ DÙNG zone**, trả lời:
+   *"nếu ta ĐÃ lọc thì bao nhiêu lệnh phải dùng nạng?"* — tức **đo giá của phương án A trên chính
+   dữ liệu D4, 0 trial**. Đây là **nửa còn lại** của phép tự bác bỏ ở mục 4.1: một bản ba-tag không
+   bao giờ sinh ra được con số đó. Lệnh dùng zone mà **thiếu tuổi** thì phép tính **RAISE**, không
+   đếm thầm về vế nào — im lặng ở đó làm hỏng đúng phép tự bác bỏ mà DR này dựng ra.
+
    🔑 **Ngưỡng 40% ⇒ L2 áp cho số THỨ NHẤT.** Đọc nguyên văn tiền đề mà H-4 canh (dòng 1684):
    *"luôn tìm được zone đối diện trong **KHOẢNG CÁCH** hợp lý"* — tiền đề về **khoảng cách**, không
    về **tuổi**. Gộp tuổi vào cùng một số là **đổi ý nghĩa phép đo mà giữ nguyên ngưỡng viết cho ý
