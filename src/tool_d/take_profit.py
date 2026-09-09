@@ -233,10 +233,31 @@ class KeHoachChotLoi:
     khoang_r_eff_gia: float
     tran_tim_zone_gia: float
     ty_le_chot_tp1: float = TY_LE_CHOT_TP1
+    zone_gia_goc: float | None = None
+    """Giá ZONE THÔ (mép dưới, trước khi trừ hao) đã chọn — `None` khi
+    `tp_source == TP_SOURCE_NANG`. Chặng 2 (TD-0189) cần con số này để tra
+    tuổi zone (`DR-D4-06` ràng buộc 1: `tp_zone_age_bars` PHẢI vào Decision
+    Log) — `tp1_gia` đã qua trừ hao nên không dùng để TRA lại zone gốc
+    được (không invertible an toàn: `haircut` có thể đổi giữa các bản
+    cấu hình, tra ngược sẽ âm thầm dùng haircut SAI khi ai đó đổi nó)."""
 
     @property
     def dung_nang(self) -> bool:
         return self.tp_source == TP_SOURCE_NANG
+
+    def to_dict(self) -> dict:
+        return {
+            "tp1_gia": self.tp1_gia,
+            "tp_source": self.tp_source,
+            "khoang_r_eff_gia": self.khoang_r_eff_gia,
+            "tran_tim_zone_gia": self.tran_tim_zone_gia,
+            "ty_le_chot_tp1": self.ty_le_chot_tp1,
+            "zone_gia_goc": self.zone_gia_goc,
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "KeHoachChotLoi":
+        return cls(**d)
 
 
 def chon_muc_tp1(
@@ -285,6 +306,7 @@ def chon_muc_tp1(
         tp_source=TP_SOURCE_ZONE,
         khoang_r_eff_gia=khoang,
         tran_tim_zone_gia=tran,
+        zone_gia_goc=gan_nhat,
     )
 
 

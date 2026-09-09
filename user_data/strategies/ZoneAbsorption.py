@@ -79,8 +79,13 @@ phải làm đúng trước D11 (dry-run có API equity), không phải chỗ đ
     TD-0041" đã lừa hai phiên).
   - **Kết nạp danh mục §6.8f B2** (Σ risk / Σ margin) — TD-0188; móc ở
     `confirm_trade_entry()`.
-  - **Chốt lời PHẦN 5** — TD-0189; `minimal_roi` vẫn tắt, `stoploss` chỉ là
-    lưới cuối.
+  - **Chốt lời PHẦN 5 — TD-0189 chặng 2b, NỐI XONG.** TP1 (`adjust_trade_
+    position`, thoát 50%) + TP2 (`custom_exit`, trail ATR, thoát phần còn
+    lại) — xem `_xet_tp1`/`_xet_tp2`/`_cap_nhat_chot_loi`. `minimal_roi`
+    vẫn tắt, `stoploss` chỉ là lưới cuối — TP THẬT không đi qua ROI.
+    Chỉ số H-4 (`take_profit.chi_so_h4`) và `tp_zone_age_bars` (ràng buộc 1
+    của `DR-D4-06`) là việc của bộ chạy E3 (TD-0184), đọc lại từ
+    `custom_data["chot_loi"]`/Decision Log — KHÔNG tính trong file này.
   - **Ghi Decision Log PLAN/GATE_CHECK** — TD-0184 (bộ chạy). Mọi trường
     §8.3 cần (`mult_breakdown`, `rho_eff`, `planned_risk_usdt`,
     `planned_margin_usdt`, `l_exchange_at_entry`, `tranche_weights`) đã có
@@ -130,6 +135,14 @@ from tool_d.sizing import (
     mult_zss,
 )
 from tool_d.arms import du_dieu_kien_trend_theo_tang, tang_cua_arm
+from tool_d.take_profit import (
+    TP_SOURCE_ZONE,
+    KeHoachChotLoi,
+    TakeProfitError,
+    chon_muc_tp1,
+    doc_tham_so_tp,
+    tp2_muc_trail,
+)
 from tool_d.time_stop import is_time_stop_triggered
 from tool_d.trade_plan import KeHoachTranche
 from tool_d.trend_context import trend_dir_tai, tuoi_trend_nen
@@ -550,29 +563,80 @@ class ZoneAbsorption(IStrategy):
         return kq.dat
 
     def order_filled(self, pair, trade, order, current_time, **kwargs) -> None:
-        if order.ft_order_side != trade.entry_side or trade.nr_of_successful_entries != 1:
-            return
-        cho = self._cho.pop(pair, None)
-        if cho is None:
-            raise SizingError(f"{pair}: tranche 1 khớp mà không có kế hoạch cỡ lệnh chờ — thứ tự callback đã hỏng")
-        hang = self._hang_hien_tai(pair)
-        kh = cho["ke_hoach"]
-        kh["atr_1h_tai_tranche1"] = float(hang["atr_1h"]) if hang is not None and not math.isnan(hang["atr_1h"]) else 0.0
-        trade.set_custom_data("co_lenh", cho["co_lenh"])
-        trade.set_custom_data("ke_hoach", kh)
-        trade.set_custom_data("tag", cho["tag"])
-        # 🔒 `DR-D4-06` §2 ràng buộc 5 — ĐÓNG BĂNG danh sách zone đỉnh tại
-        # lúc vào lệnh, cùng kỷ luật `N_full` / `sl` bất biến (L-Z49).
-        #
-        # 🔴 Vì sao bắt buộc, và vì sao nó ĐỘC LẬP với việc có lọc tuổi hay
-        # không: TP1 theo zone nằm trong khoảng `(0 … 3,2 × R_eff]` còn nạng
-        # là ĐÚNG `1,5 × R_eff`. Tính lại danh sách ở mỗi lần xét TP làm mục
-        # tiêu nhảy CẢ HAI CHIỀU giữa lúc lệnh đang mở — và chiều XUỐNG
-        # (3,2 → 1,5) có thể thoát lệnh gần như tức thì, ở một mức không ai
-        # quyết định. Một mục tiêu thoát không được phép trôi (cùng lập luận
-        # spec dòng 1670 dùng để neo hai bội số vào `R_eff` chứ không vào R
-        # tiền tệ). Tính lại CHỈ khi `p_avg` đổi, tức khi có tranche mới.
-        trade.set_custom_data("zone_dinh", self._zone_dinh_tren(pair, current_time, trade.open_rate))
+        if order.ft_order_side != trade.entry_side:
+            return  # lệnh THOÁT (vd TP1 — TD-0189) không lắp kế hoạch ở đây
+        if trade.nr_of_successful_entries == 1:
+            cho = self._cho.pop(pair, None)
+            if cho is None:
+                raise SizingError(f"{pair}: tranche 1 khớp mà không có kế hoạch cỡ lệnh chờ — thứ tự callback đã hỏng")
+            hang = self._hang_hien_tai(pair)
+            kh = cho["ke_hoach"]
+            kh["atr_1h_tai_tranche1"] = float(hang["atr_1h"]) if hang is not None and not math.isnan(hang["atr_1h"]) else 0.0
+            trade.set_custom_data("co_lenh", cho["co_lenh"])
+            trade.set_custom_data("ke_hoach", kh)
+            trade.set_custom_data("tag", cho["tag"])
+            # 🔒 `DR-D4-06` §2 ràng buộc 5 — ĐÓNG BĂNG danh sách ỨNG VIÊN zone
+            # đỉnh tại lúc VÀO LỆNH (tranche 1). Đây là danh sách CANDIDATE,
+            # khác với mục tiêu TP1 tự nó (`_cap_nhat_chot_loi` bên dưới, gọi
+            # lại ở MỌI tranche — xem docstring của hàm đó).
+            #
+            # 🔴 Vì sao bắt buộc, và vì sao nó ĐỘC LẬP với việc có lọc tuổi hay
+            # không: TP1 theo zone nằm trong khoảng `(0 … 3,2 × R_eff]` còn nạng
+            # là ĐÚNG `1,5 × R_eff`. Tính lại DANH SÁCH ứng viên mỗi lần xét TP
+            # (thay vì đóng băng một lần) làm mục tiêu nhảy CẢ HAI CHIỀU giữa
+            # lúc lệnh đang mở — và chiều XUỐNG (3,2 → 1,5) có thể thoát lệnh
+            # gần như tức thì, ở một mức không ai quyết định. Một mục tiêu
+            # thoát không được phép trôi (cùng lập luận spec dòng 1670 dùng để
+            # neo hai bội số vào `R_eff` chứ không vào R tiền tệ).
+            trade.set_custom_data("zone_dinh", self._zone_dinh_tren(pair, current_time, trade.open_rate))
+        # TD-0189 chặng 2b — mục tiêu TP1 tự nó (khác danh sách ứng viên ở
+        # trên) PHẢI tính lại ở MỌI lần entry khớp, không chỉ tranche 1:
+        # `DR-D4-06` §3 ràng buộc 5 nói rõ "chỉ tính lại TP1 khi p_avg đổi,
+        # tức khi tranche 2/3 khớp" — `trade.open_rate` (p_avg THẬT, khác
+        # p_avg KẾ HOẠCH đóng băng trong `kh`) chỉ đổi ở đúng những lần này.
+        self._cap_nhat_chot_loi(trade, current_time)
+
+    def _cap_nhat_chot_loi(self, trade, current_time: datetime) -> None:
+        """TD-0189 chặng 2b — (re)tính `KeHoachChotLoi` (mục tiêu TP1) và ghi
+        vào `custom_data["chot_loi"]`.
+
+        Gọi ở MỌI lần entry khớp (tranche 1, 2, 3) — không chỉ tranche 1 —
+        theo đúng `DR-D4-06` §3 ràng buộc 5. Khác hẳn `zone_dinh` (danh sách
+        ỨNG VIÊN, đóng băng một lần ở tranche 1): ở đây `p_avg = trade.
+        open_rate` là giá trung bình THẬT, dịch chuyển khi tranche 2/3 khớp
+        (giá thấp hơn tranche 1 vì đây là DCA-xuống), nên mục tiêu TP1 phải
+        DÕI THEO nó — nhưng chỉ tại các mốc entry khớp, KHÔNG theo từng nến
+        (đó chính là điều `DR-D4-06` cấm: "Tính lại danh sách ở MỖI LẦN XÉT
+        TP làm mục tiêu nhảy cả hai chiều").
+
+        🔴 `r_eff_plan` (từ `kh`, tức `KeHoachTranche`) vẫn là số PLANNED —
+        `(p1+p2+p3)/3 − sl) / (p1+p2+p3)/3` — không đổi theo số tranche đã
+        khớp. `khoang_r_eff()` nhân số đó với `p_avg` THẬT truyền vào đây,
+        nên "R_eff" (khoảng giá) tự nó co giãn nhẹ theo p_avg thật — đúng ý
+        nghĩa "khoảng cách từ giá vào lệnh thật tới SL", không phải một
+        hằng số đông cứng từ lúc lập kế hoạch. Hai đại lượng khác nhau,
+        cùng tồn tại có chủ đích (không phải một lỗi trộn đơn vị kiểu
+        `L-Z48c` — `r_eff_plan` luôn là TỈ LỆ, `p_avg` luôn là GIÁ)."""
+        kh, _, _ = self._doc_ke_hoach(trade)
+        zone_dinh = trade.get_custom_data("zone_dinh") or []
+        tham_so = doc_tham_so_tp(self._cfg)
+        chot = chon_muc_tp1(
+            p_avg=trade.open_rate,
+            r_eff_plan=kh.r_eff_plan,
+            gia_cac_zone_doi_dien=zone_dinh,
+            tham_so=tham_so,
+        )
+        d = chot.to_dict()
+        # `DR-D4-06` §3 ràng buộc 1 — "Ghi `tp_zone_age_bars` vào Decision
+        # Log MỖI LỆNH". Tính NGAY tại đây (không để TD-0184 tự suy sau khi
+        # backtest xong): mốc `current_time` này CHÍNH LÀ mốc mà mục tiêu
+        # TP1 được (tái) chọn, đúng lúc `_tuoi_zone_dinh_nen` cần. Tra lại
+        # từ Decision Log ở một mốc khác sẽ ra tuổi khác — sai câu hỏi.
+        d["tp_zone_age_bars"] = (
+            self._tuoi_zone_dinh_nen(trade.pair, current_time, chot.zone_gia_goc)
+            if chot.tp_source == TP_SOURCE_ZONE else None
+        )
+        trade.set_custom_data("chot_loi", d)
 
     def custom_entry_price(self, pair, trade, current_time, proposed_rate, entry_tag, side, **kwargs):
         """Limit tại p1 / p2 / p3 — như Minimal (§3.5 post-only). Thiếu hàm
@@ -596,7 +660,26 @@ class ZoneAbsorption(IStrategy):
 
     def adjust_trade_position(self, trade, current_time, current_rate, current_profit, min_stake, max_stake,
                               current_entry_rate, current_exit_rate, current_entry_profit, current_exit_profit, **kwargs):
-        if trade.has_open_orders or trade.nr_of_successful_entries >= 3:
+        if trade.has_open_orders:
+            return None  # một lệnh đang chờ khớp — không chồng thêm lệnh nào
+        # TD-0189 chặng 2b — chốt CHỦ DỰ ÁN (09/09/2026, khi test backtest thật
+        # bắt được ca giá quay đầu sau TP1 chạm tới p2/p3): ĐÃ CHỐT TP1 thì
+        # KHÔNG DCA THÊM NỮA — tranche 2/3 tồn tại để bảo vệ một thesis CHƯA
+        # được xác nhận (hạ giá vào trung bình trong lúc giá còn đi ngược);
+        # TP1 xác nhận NGƯỢC LẠI — giá đã đi ĐÚNG hướng đủ để chốt lời — nên
+        # bơm thêm vốn theo kế hoạch DCA cũ lúc này mâu thuẫn với chính tín
+        # hiệu vừa nhận được. Phần vị thế còn lại chỉ được quản lý bằng TP2
+        # trail / SL / TIME_STOP / FUNDING_STOP kể từ đây. KHÔNG phải yêu
+        # cầu tường minh của spec — đây là DIỄN GIẢI, ghi ra để cãi lại được.
+        if trade.nr_of_successful_exits >= 1:
+            return None
+        # TD-0189 chặng 2b — TP1 (PHẦN 5 §5.1) phải được xét ở MỌI mức độ
+        # tranche đã khớp (kể cả đã đủ 3), khác hẳn nhánh thêm-tranche bên
+        # dưới vốn dừng ở 3.
+        tp1 = self._xet_tp1(trade, current_rate)
+        if tp1 is not None:
+            return tp1
+        if trade.nr_of_successful_entries >= 3:
             return None
         if cong_ap_dung(self._arm) == ():
             return None  # arm entry đơn — không bao giờ thêm tranche
@@ -648,6 +731,35 @@ class ZoneAbsorption(IStrategy):
         # Tag = CÙNG kế hoạch tranche 1 (mặt cắt L-Z49 quan sát từ ngoài).
         return stake_i, trade.enter_tag
 
+    def _xet_tp1(self, trade, current_rate: float) -> tuple[float, str] | None:
+        """TD-0189 chặng 2b — PHẦN 5 §5.1: chốt `ty_le_chot_tp1` (50%) vị thế
+        MỘT LẦN khi giá chạm mức TP1 (`chot_loi["tp1_gia"]`, zone hoặc nạng
+        — hai nguồn cùng đi qua một trường, xem `take_profit.chon_muc_tp1`).
+
+        Cơ chế thoát MỘT PHẦN của Freqtrade: `adjust_trade_position` trả về
+        `stake_amount` ÂM ⇒ `execute_trade_exit(..., ExitType.PARTIAL_EXIT,
+        sub_trade_amt=...)` (đọc mã nguồn `freqtradebot.py`/`backtesting.py`
+        trước khi viết dòng này — N7/rule 6, không đoán hành vi runtime).
+        `custom_exit` (trả về STRING) KHÔNG hỗ trợ thoát một phần — đó là lý
+        do TP1 nằm ở ĐÂY, còn TP2 (thoát TOÀN BỘ) nằm ở `custom_exit`.
+
+        🔴 Freqtrade backtest chỉ thấy GIÁ MỞ NẾN ở callback này (D6,
+        `docs/freqtrade-source-read.md` §3) — CÙNG hạn chế đã áp dụng cho
+        tranche 2/3: một nến vọt qua rồi đóng cửa dưới ngưỡng vẫn KHÔNG kích
+        hoạt; phải chờ một nến có giá MỞ đã vượt ngưỡng. Không phải lỗi
+        riêng của module này."""
+        chot = trade.get_custom_data("chot_loi")
+        if chot is None:
+            raise SizingError(
+                f"{trade.pair}: chưa có `chot_loi` trong custom_data lúc xét TP1 — "
+                "order_filled chưa chạy hoặc thứ tự callback đã hỏng"
+            )
+        if current_rate < float(chot["tp1_gia"]):
+            return None
+        ty_le = float(chot["ty_le_chot_tp1"])
+        giam = -ty_le * float(trade.stake_amount)
+        return giam, f"TP1_{chot['tp_source']}"
+
     # ── thoát ────────────────────────────────────────────────────────
 
     def custom_stoploss(self, pair, trade, current_time, current_rate, current_profit, **kwargs):
@@ -675,6 +787,18 @@ class ZoneAbsorption(IStrategy):
             threshold_frac=float(resolve(self._cfg, "tier_b.dg7_funding_frac")),
         ):
             return "FUNDING_STOP"
+        # TD-0189 chặng 2b — TP2 (PHẦN 5 §5.1): trail ATR(14,1H) trên PHẦN
+        # VỊ THẾ CÒN LẠI, chỉ có nghĩa SAU khi TP1 đã chốt. `nr_of_successful_
+        # exits >= 1` là tín hiệu đó — Freqtrade đếm lệnh thoát ĐÃ KHỚP, sẵn
+        # có, không cần cờ `custom_data` riêng (tránh hai nguồn sự thật cho
+        # cùng một câu hỏi). Đặt TRƯỚC nhánh DG6 (Z3b): một khi TP1 đã chốt,
+        # vị thế đang được quản lý bằng trail, không còn là ứng viên "huỷ bỏ
+        # sớm" của DG6 (thoát khỏi thua lỗ giả định — mà TP1 đã chứng minh
+        # giá đi ĐÚNG hướng).
+        if trade.nr_of_successful_exits >= 1:
+            tp2 = self._xet_tp2(pair, trade, current_rate)
+            if tp2 is not None:
+                return tp2
         if self._arm != "Z3b":
             return None  # DG6 chỉ ở Z3b — xem diễn giải trong docstring module
         hang = self._hang_hien_tai(pair)
@@ -688,6 +812,64 @@ class ZoneAbsorption(IStrategy):
             dong = df.loc[df["date"] > trade.open_date_utc, "close"].tolist()
             b = dieu_kien_b(dong, p1=kh.p1, so_nen_da_troi=len(dong), huong="long")
         return "DG6_EARLY_INVALIDATION" if dg6_dong_vi_the(a=a, b=b, c=False, d=False) else None
+
+    def _xet_tp2(self, pair: str, trade, current_rate: float) -> str | None:
+        """TD-0189 chặng 2b — TP2 §5.1: thoát TOÀN BỘ phần vị thế còn lại khi
+        giá lui xuống dưới `đỉnh kể từ TP1 − tp2_trail_atr × ATR(14,1H)`.
+
+        `custom_exit` trả STRING ⇒ THOÁT TOÀN PHẦN (không như TP1, đã thoát
+        50% qua `adjust_trade_position`) — đúng cơ chế của callback này.
+
+        Không đo được (thiếu mốc TP1 khớp, thiếu ATR) thì trả `None` — CHỜ
+        nến sau, không raise: exception từ `custom_exit` bị Freqtrade NUỐT
+        thành cảnh báo im lặng (MT-16 triệu chứng vii); trả `None` tường
+        minh còn LOG được lý do, ngoại lệ bị nuốt thì không."""
+        tu = self._moc_tp1_khop(trade)
+        if tu is None:
+            logger.warning(
+                "TP2_KHONG_TIM_DUOC_MOC %s trade=%s — nr_of_successful_exits>=1 "
+                "nhưng không tra được lệnh exit đã khớp, bỏ qua nến này",
+                pair, trade.id,
+            )
+            return None
+        dinh = self._dinh_gia_tu(pair, tu)
+        if dinh is None:
+            return None  # chưa có nến 1H nào SAU mốc TP1 khớp trong dataframe đã phân tích
+        hang = self._hang_hien_tai(pair)
+        atr_1h = float(hang["atr_1h"]) if hang is not None and not math.isnan(hang["atr_1h"]) else None
+        if atr_1h is None:
+            return None  # ATR chưa đọc được (vùng warmup) — không bịa số (N6)
+        tham_so = doc_tham_so_tp(self._cfg)
+        try:
+            muc_trail = tp2_muc_trail(gia_cao_nhat_sau_tp1=dinh, atr_1h=atr_1h, tp2_trail_atr=tham_so.tp2_trail_atr)
+        except TakeProfitError as exc:
+            logger.warning("TP2_KHONG_TINH_DUOC %s trade=%s: %s", pair, trade.id, exc)
+            return None
+        return "TP2_TRAIL" if current_rate <= muc_trail else None
+
+    def _moc_tp1_khop(self, trade) -> datetime | None:
+        """Mốc khớp của lệnh THOÁT đã khớp (TP1) — `None` nếu chưa tra được.
+
+        🔴 `trade.select_filled_orders(trade.exit_side)` chứ KHÔNG tự đếm
+        `trade.orders` bằng tay — hàm đó đã lọc đúng "đã khớp, không phải
+        đang mở" (`ft_is_open is False and filled and status trong
+        NON_OPEN_EXCHANGE_STATES`, đọc từ mã nguồn Freqtrade)."""
+        khop = trade.select_filled_orders(trade.exit_side)
+        if not khop or khop[0].order_filled_utc is None:
+            return None
+        return khop[0].order_filled_utc
+
+    def _dinh_gia_tu(self, pair: str, tu: datetime) -> float | None:
+        """Đỉnh HIGH của khung 1H, tính từ mốc `tu` (mốc TP1 khớp) tới hiện
+        tại — đi qua `get_analyzed_dataframe()`, KHÔNG phải `get_pair_
+        dataframe()`: chỉ hàm đầu bị CẮT đúng theo thời gian backtest (bài
+        học `TD-0170`/`_df_4h` — ở đây timeframe CƠ SỞ (1H) nên không cần
+        `_df_4h`, phép cắt của chính Freqtrade đã đủ)."""
+        df, _ = self.dp.get_analyzed_dataframe(pair=pair, timeframe=self.timeframe)
+        if df is None or df.empty:
+            return None
+        cao = df.loc[df["date"] >= tu, "high"]
+        return float(cao.max()) if not cao.empty else None
 
     # ── trợ giúp đọc dữ liệu (không tính toán nghiệp vụ) ─────────────
 

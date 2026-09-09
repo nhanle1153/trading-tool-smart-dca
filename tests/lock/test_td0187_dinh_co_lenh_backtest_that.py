@@ -183,7 +183,17 @@ def _bars_4h_co_trend() -> list[tuple[float, float, float, float, float]]:
         (96.0, 96.8, 95.2, 96.6, 1200.0),
         (96.6, 97.0, 96.2, 96.8, 1000.0),
         (96.8, 97.1, 96.4, 96.9, 1000.0),      # nến tín hiệu
-        (96.9, 97.0, 95.30, 95.40, 1000.0),    # chạm p1 → tranche 1
+        # TD-0189 chặng 2b — HIGH hạ 97,0 → 96,9 (= open, bỏ wick trên).
+        # 🔴 Lý do ĐO được, không phải nới tay: với `--timeframe-detail 5m`,
+        # `adjust_trade_position`/`custom_exit` nhìn giá ở độ phân giải 5
+        # phút cho vị thế ĐÃ MỞ (không chỉ open 1H — đọc mã nguồn
+        # `backtesting.py:backtest_loop`, nhánh `has_detail`), nên wick
+        # 97,0 của bản cũ CHẠM luôn ngưỡng TP1-nạng (`p_avg + 1,5×R_eff` ≈
+        # 96,53) gần như ngay sau khi tranche 1 khớp ở nến NÀY — TP1 chốt
+        # trước khi tranche 2/3 có cơ hội khớp, đúng hình dạng lỗi "fixture
+        # đúng hệ thống CŨ (chưa có TP), im lặng sai hệ thống MỚI (có TP)"
+        # đã gặp ở TD-0182/TD-0194. LOW=95,30 giữ nguyên (vẫn chạm p1).
+        (95.50, 95.50, 95.30, 95.40, 1000.0),  # chạm p1 → tranche 1
         (94.98, 95.10, 94.90, 94.95, 1000.0),  # mở ≤ p2 → tranche 2
         (94.60, 94.70, 94.40, 94.60, 1000.0),  # mở ≤ p3 → tranche 3
         (94.65, 95.20, 94.55, 95.10, 1000.0),
@@ -512,9 +522,16 @@ class TestD01TrenDuongSanXuat:
         assert cost[0] > 15.0
 
     def test_stake_la_ky_quy_bang_cost_chia_L(self, kq_san_xuat) -> None:
+        """🔴 TD-0189 chặng 2b — `t["stake_amount"]` KHÔNG còn dùng được làm
+        mẫu số: từ khi TP1 nối vào, đó là stake HIỆN TẠI (sau khi đã trừ
+        phần đã chốt lời), không phải tổng ba tranche lúc đỉnh. Dùng
+        `t["max_stake_amount"]` — đỉnh `stake_amount` trong suốt vòng đời
+        lệnh, đạt được ngay SAU khi tranche 3 khớp và TRƯỚC bất kỳ exit
+        nào — vẫn đúng `≈ 3 × stake tranche 1` vì ba tranche cost bằng
+        nhau (`TestTiTrongTrancheThat`)."""
         t = _lenh_du_ba_tranche(kq_san_xuat)
         o1 = _lenh_vao(t)[0]
-        stake1 = float(o1.get("stake_amount") or o1.get("ft_stake_amount") or 0.0) or float(t["stake_amount"]) / 3
+        stake1 = float(o1.get("stake_amount") or o1.get("ft_stake_amount") or 0.0) or float(t["max_stake_amount"]) / 3
         assert stake1 * float(t["leverage"]) == pytest.approx(float(o1["cost"]), rel=0.02)
 
 
