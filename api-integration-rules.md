@@ -53,19 +53,18 @@
 | Tham số | Giá trị | Biến ENV |
 |---------|---------|----------|
 | Rate limit (call/giây) | 0.5/giây tự áp (= 30/phút, `tier_c.api_calls_per_min`, §6.9.5) — thấp hơn nhiều trần thật 2400 weight/phút của Binance | *(không đọc từ ENV — Tầng C, cấm theo N4/0d.4)* |
-| N lỗi liên tiếp kích hoạt breaker | 5 (đề xuất — CHƯA có trong spec, cần xác nhận khi implement Risk Supervisor thật ở D1) | `TOOLD_BREAKER_THRESHOLD` (vận hành, không phải tham số tín hiệu) |
-| Backoff khởi điểm / tối đa (s) | 1s / 60s, nhân đôi mỗi lần (đề xuất — CHƯA có trong spec) | — |
+| N lỗi liên tiếp kích hoạt breaker | ✅ **5** — chủ dự án xác nhận 09/09/2026 (TD-0196) | `TOOLD_BREAKER_THRESHOLD` (vận hành, không phải tham số tín hiệu) |
+| Backoff khởi điểm / tối đa (s) | ✅ **1s / 60s, nhân đôi mỗi lần** (1→2→4→…→60, kẹp trần) — chủ dự án xác nhận 09/09/2026 (TD-0196) | `TOOLD_BREAKER_BACKOFF_MAX_S` (khởi điểm cố định 1s, không cần biến riêng) |
 | Timeout từng request (s) | 10 | — |
 | Timeout tổng vòng lặp (s) | 60 (một chu kỳ poll đầy đủ danh sách pool ~100 mã) | — |
 | Số vòng lặp tối đa | Không giới hạn cứng — bounded bởi `api_calls_per_min` × thời gian, không phải đếm vòng | — |
 | Hạn mức call/ngày + % cảnh báo | Không có hạn mức ngày (Binance tính theo phút, không theo ngày) — cảnh báo ở 80% trần phút tự áp (24/30) | — |
 | Kill switch | `dry_run: true` trong `config/freqtrade/config.json` (đã có, TD-0026) — tắt hoàn toàn mọi lệnh gọi ĐẶT LỆNH mà không cần đổi code | `FREQTRADE__DRY_RUN` (biến vận hành chuẩn của Freqtrade, không phải tham số Tool D) |
 
-> ⚠️ Hai tham số đánh dấu "đề xuất — CHƯA có trong spec" (N lỗi liên tiếp kích hoạt breaker, backoff)
-> là chi tiết triển khai R3 (Circuit breaker) — thuộc loại "chi tiết kỹ thuật nhỏ không ảnh hưởng hành
-> vi hệ thống" theo Nguyên tắc 9, KHÔNG phải tham số tín hiệu chiến lược, nên không cần chốt bằng DR
-> và không tính vào N_ĐĂNG_KÝ — nhưng vẫn cần chủ dự án xác nhận trước khi implement Risk Supervisor
-> thật (D1), ghi vào Open Questions nếu muốn chốt sớm hơn.
+> ⚠️ Hai tham số N lỗi liên tiếp kích hoạt breaker và backoff là chi tiết triển khai R3 (Circuit
+> breaker) — thuộc loại "chi tiết kỹ thuật nhỏ không ảnh hưởng hành vi hệ thống" theo Nguyên tắc 9,
+> KHÔNG phải tham số tín hiệu chiến lược, nên không cần chốt bằng DR và không tính vào N_ĐĂNG_KÝ.
+> ✅ **Đã xác nhận 09/09/2026** (OQ-09, TD-0196) — dùng đúng đề xuất ban đầu, không đổi số.
 
 ## 5. Bảng nghiệm thu — CHƯA chạy ở D0-PRE
 
@@ -79,3 +78,4 @@ pool) thực sự gọi mạng lần đầu.
 | Phiên bản | Ngày | Thay đổi |
 |-----------|------|----------|
 | 1.0 | 06/09/2026 | Khởi tạo (TD-0079). Điền Mục 4.1-4.4 cho Binance USDⓈ-M Futures — cả nhóm đọc dữ liệu (D0-PRE) và nhóm đặt lệnh (D3.5+, điền sẵn vì là quyết định nền tảng một lần). Hai ngưỡng breaker/backoff đánh dấu "đề xuất", chưa chốt bằng DR |
+| 1.1 | 09/09/2026 | OQ-09 xác nhận (TD-0196): ngưỡng breaker 5 lỗi liên tiếp, backoff 1s→2s→4s→…→60s — giữ đúng số đề xuất ban đầu. Bắt đầu implement `src/tool_d/risk_supervisor.py` (khung THUẦN — phân loại lỗi theo Mục 4.3, state machine circuit breaker, khai lại có chủ đích §6.6(2)). Chưa có tiến trình chạy thật (dry-run/live) — Mục 5 (bảng nghiệm thu) vẫn CHƯA chạy |
