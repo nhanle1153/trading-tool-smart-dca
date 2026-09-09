@@ -127,14 +127,7 @@ from tool_d.time_stop import is_time_stop_triggered
 from tool_d.trade_plan import KeHoachTranche, tinh_ke_hoach
 from tool_d.trend_context import trend_dir_tai, tuoi_trend_nen
 from tool_d.zone_detection import K_XAC_NHAN, la_diem_swing, zone_da_bi_huy
-from tool_d.zone_strength import (
-    NGUONG_TUOI_ZONE_TOI_DA,
-    compression,
-    touch_count,
-    volume_ratio,
-    zone_hop_le,
-    zss,
-)
+from tool_d.zone_strength import compression, touch_count, volume_ratio, zone_hop_le, zss
 
 logger = logging.getLogger(__name__)
 
@@ -495,6 +488,18 @@ class ZoneAbsorption(IStrategy):
         trade.set_custom_data("co_lenh", cho["co_lenh"])
         trade.set_custom_data("ke_hoach", kh)
         trade.set_custom_data("tag", cho["tag"])
+        # 🔒 `DR-D4-06` §2 ràng buộc 5 — ĐÓNG BĂNG danh sách zone đỉnh tại
+        # lúc vào lệnh, cùng kỷ luật `N_full` / `sl` bất biến (L-Z49).
+        #
+        # 🔴 Vì sao bắt buộc, và vì sao nó ĐỘC LẬP với việc có lọc tuổi hay
+        # không: TP1 theo zone nằm trong khoảng `(0 … 3,2 × R_eff]` còn nạng
+        # là ĐÚNG `1,5 × R_eff`. Tính lại danh sách ở mỗi lần xét TP làm mục
+        # tiêu nhảy CẢ HAI CHIỀU giữa lúc lệnh đang mở — và chiều XUỐNG
+        # (3,2 → 1,5) có thể thoát lệnh gần như tức thì, ở một mức không ai
+        # quyết định. Một mục tiêu thoát không được phép trôi (cùng lập luận
+        # spec dòng 1670 dùng để neo hai bội số vào `R_eff` chứ không vào R
+        # tiền tệ). Tính lại CHỈ khi `p_avg` đổi, tức khi có tranche mới.
+        trade.set_custom_data("zone_dinh", self._zone_dinh_tren(pair, current_time, trade.open_rate))
 
     def custom_entry_price(self, pair, trade, current_time, proposed_rate, entry_tag, side, **kwargs):
         """Limit tại p1 / p2 / p3 — như Minimal (§3.5 post-only). Thiếu hàm
@@ -648,34 +653,67 @@ class ZoneAbsorption(IStrategy):
         một zone đỉnh của TƯƠNG LAI làm TP1 "biết" giá sắp tới, và loại
         lookahead đó chỉ làm số TỐT LÊN nên không phép kiểm nào báo đỏ.
 
-        🔴 **HẠN DÙNG §1.3 phải áp Ở ĐÂY, không ở `zone_hop_le`** (phiên
-        `-94` bắt, 09/09/2026 — lỗi thật trong bản đầu của tôi). Cả ba chỗ
-        gọi `zone_hop_le()` trong repo đều truyền `tuoi_nen=K_XAC_NHAN`,
-        tức hằng **3**, trong khi `NGUONG_TUOI_ZONE_TOI_DA = 40`: vế
-        `3 <= 40` **không bao giờ trả False**. Với zone ĐÁY điều đó vô
-        hại — zone được tiêu thụ NGAY tại nến xác nhận nên tuổi thật đúng
-        bằng 3. Với zone ĐỈNH thì không: nó được tiêu thụ **bất kỳ lúc
-        nào về sau**, nên bản đầu nhận cả một đỉnh xác nhận 300 nến trước
-        (~50 ngày) làm TP1 hợp lệ.
+        🔴 **KHÔNG lọc theo tuổi — `DR-D4-06` §2.1, chủ dự án chốt
+        09/09/2026.** Vế `tuoi_nen ≤ 40` của §1.3 **không áp** cho zone
+        đối diện, và đó là một quyết định được khai, không phải một sơ
+        suất. Đường đi tới nó đáng ghi lại đủ:
+
+        Bản đầu của hàm này không lọc tuổi vì một lỗ hổng thật (`-94`
+        bắt): cả ba chỗ gọi `zone_hop_le()` trong repo đều truyền
+        `tuoi_nen=K_XAC_NHAN` — hằng **3** — trong khi
+        `NGUONG_TUOI_ZONE_TOI_DA = 40`, nên vế `3 <= 40` KHÔNG BAO GIỜ
+        trả `False`. Với zone ĐÁY vô hại (tiêu thụ NGAY tại nến xác nhận
+        nên tuổi thật đúng bằng 3); với zone ĐỈNH thì không, vì nó được
+        tiêu thụ **bất kỳ lúc nào về sau**.
 
         🔑 **Cùng một dòng `zone_hop_le` ĐÚNG ở bên đáy và RỖNG ở bên
-        đỉnh** — chốt có mặt, nằm đúng trên đường sản xuất, và cấu trúc
-        không cho phép nó đỏ. Phép đối xứng gãy ở chỗ *"khi nào zone
-        được tiêu thụ"*, không ở chỗ *"zone được nhận thế nào"*.
+        đỉnh.** Phép đối xứng gãy ở *"khi nào zone được TIÊU THỤ"*,
+        không ở *"zone được NHẬN thế nào"* — chép nguyên vòng lặp là
+        thừa hưởng luôn một giả định ngầm mà bản gốc không hề sai.
 
-        ⚠️ Chiều sai số của bản đầu là chiều XẤU: nhận nhiều zone hơn ⇒
-        **hạ** tỉ lệ nạng H-4 ⇒ chốt *"vượt 40% ⇒ L2"* (spec dòng 1684)
-        trông khoẻ hơn thực tế, đúng lúc nó là thứ DUY NHẤT canh tiền đề
-        *"luôn tìm được zone đối diện trong khoảng cách hợp lý"*.
+        Nhưng vá nó lại làm lộ ra thứ lớn hơn: đo trên EXPLORE, zone
+        đỉnh gần nhất **quá hạn ở 73–75% số ca** (tuổi trung vị **169
+        nến ≈ 28 ngày**), nên áp hạn dùng đẩy tỉ lệ nạng lên **79–87%**.
+        Spec dòng 1684 chốt *nạng > 40% ⇒ L2*, tức **L2 thành kết luận
+        biết trước**. Và nạng chính là `p_avg + 1,5 × R_eff` — một bội
+        số R cố định, đúng thứ §5.1 dòng 1653 viết ra để **bác bỏ**.
+        ⇒ §1.3 và §5.1 không thể cùng đúng trên dữ liệu thật (**MT-20**).
+
+        🔑 **Phân biệt làm quyết định này hợp lệ còn hiện trạng cũ thì
+        không:** *một luật không áp dụng vì có người QUYẾT ĐỊNH thế thì
+        không phải chốt rỗng — chốt rỗng là luật trông như đang áp mà
+        cấu trúc không cho nó đỏ.* Trước: luật trông như đang áp, không
+        ai biết nó không thể đỏ. Nay: khai là không áp, có lý do, có ba
+        điều kiện xét lại viết TRƯỚC (`DR-D4-06` §5), và tuổi zone được
+        ghi ra để chính quyết định này xét lại được bằng số.
 
         Lọc `notna()` tường minh — xem cảnh báo mặt nạ ở `_quet_zone_dinh`.
         """
         df = self._df_4h(pair, current_time)
         if "zone_dinh_gia" not in df.columns:
             return []
-        han = current_time - pd.Timedelta(hours=4 * NGUONG_TUOI_ZONE_TOI_DA)
-        con_han = df.loc[df["zone_dinh_gia"].notna() & (df["date"] >= han), "zone_dinh_gia"]
-        return [float(g) for g in con_han if float(g) > p_avg]
+        gia = df.loc[df["zone_dinh_gia"].notna(), "zone_dinh_gia"]
+        return [float(g) for g in gia if float(g) > p_avg]
+
+    def _tuoi_zone_dinh_nen(self, pair: str, current_time: datetime, gia_zone: float) -> int | None:
+        """Tuổi (nến 4H) của zone đỉnh mang giá `gia_zone` tại `current_time`.
+
+        `DR-D4-06` §2.3 — con số này PHẢI vào Decision Log cho mọi lệnh
+        dùng TP-theo-zone. Không có nó thì quyết định §2.1 (bỏ hạn dùng)
+        không xét lại được bằng gì ngoài cảm tính, và điều kiện mở lại số
+        2 của DR (*"TP trên zone cũ có tệ hơn nạng không?"*) không đo được.
+
+        Trả `None` khi không tìm thấy — bên gọi ghi `pending`, KHÔNG bịa 0
+        (N6): tuổi 0 nghĩa *"zone vừa xác nhận nến này"*, một sự thật khác
+        hẳn *"không tra được tuổi"*.
+        """
+        df = self._df_4h(pair, current_time)
+        if "zone_dinh_gia" not in df.columns or df.empty:
+            return None
+        khop = df.loc[df["zone_dinh_gia"] == gia_zone, "date"]
+        if khop.empty:
+            return None
+        return int((current_time - khop.iloc[-1]).total_seconds() // (4 * 3600))
 
     def _zss_hien_tai(self, pair: str, tag: dict, current_time: datetime) -> float:
         """ZSS tính LẠI cho cùng zone tại nến 4H ĐÃ ĐÓNG gần nhất (DG5)."""

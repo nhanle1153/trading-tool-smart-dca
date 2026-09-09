@@ -23,7 +23,7 @@ from tool_d.take_profit import (
     khoang_r_eff,
     tp1_tu_zone,
     tp2_muc_trail,
-    ty_le_dung_nang,
+    chi_so_h4,
 )
 
 # Bộ tham số dùng chung: đúng bốn con số của spec §5.1.
@@ -210,27 +210,55 @@ class TestTP2Trail:
 
 
 class TestChiSoH4:
+    """`DR-D4-06` ràng buộc 2 — H-4 tách làm HAI số."""
+
     def test_danh_sach_RONG_thi_RAISE_khong_tra_0(self) -> None:
         """🔴 N6: *chưa đo* KHÁC *đo được 0*. Và 0.0 lại đúng là con số
         ĐẠT đẹp nhất có thể cho H-4 — im lặng ở đây là im lặng có lợi."""
         with pytest.raises(TakeProfitError, match="pending"):
-            ty_le_dung_nang([])
+            chi_so_h4([], [])
 
-    def test_tinh_dung_ti_le(self) -> None:
-        nguon = [TP_SOURCE_ZONE, TP_SOURCE_NANG, TP_SOURCE_ZONE, TP_SOURCE_NANG]
-        assert ty_le_dung_nang(nguon) == pytest.approx(0.5)
+    def test_nguong_40_CHI_ap_cho_ve_khong_co_zone(self) -> None:
+        """🔴 Vế cốt lõi của DR-D4-06. Tiền đề H-4 canh là *"tìm được zone
+        trong KHOẢNG CÁCH hợp lý"* — nạng vì zone QUÁ HẠN không nói gì về
+        khoảng cách, nên không được đẩy phán quyết L2."""
+        # 2 lệnh không có zone, 8 lệnh có zone nhưng ĐỀU quá hạn
+        nguon = [TP_SOURCE_NANG] * 2 + [TP_SOURCE_ZONE] * 8
+        tuoi = [None] * 2 + [200] * 8
+        h4 = chi_so_h4(nguon, tuoi)
+        assert h4.ty_le_khong_co_zone == pytest.approx(0.2)
+        assert h4.ty_le_zone_qua_han == pytest.approx(0.8)
+        assert h4.ty_le_nang_tong == pytest.approx(1.0)
+        # Con số GỘP vượt xa 0,40 — nhưng phán quyết L2 KHÔNG nổ.
+        assert not h4.vuot_nguong_l2
 
-    def test_toan_zone_thi_bang_khong(self) -> None:
-        assert ty_le_dung_nang([TP_SOURCE_ZONE] * 3) == 0.0
+    def test_vuot_nguong_khi_that_su_thieu_zone(self) -> None:
+        nguon = [TP_SOURCE_NANG] * 5 + [TP_SOURCE_ZONE] * 5
+        h4 = chi_so_h4(nguon, [None] * 5 + [3] * 5)
+        assert h4.ty_le_khong_co_zone == pytest.approx(0.5)
+        assert h4.vuot_nguong_l2
+
+    def test_zone_CON_HAN_khong_tinh_vao_ve_qua_han(self) -> None:
+        h4 = chi_so_h4([TP_SOURCE_ZONE] * 4, [3, 39, 40, 10])
+        assert h4.ty_le_zone_qua_han == 0.0  # 40 là ĐÚNG hạn, chưa quá
+
+    def test_lenh_dung_zone_ma_THIEU_TUOI_thi_RAISE(self) -> None:
+        """🔴 DR-D4-06 ràng buộc 1 đòi ghi tuổi cho MỌI lệnh TP-theo-zone.
+        Đếm thầm một lệnh thiếu tuổi về vế nào cũng làm hỏng đúng phép TỰ
+        BÁC BỎ mà quyết định này dựng ra để có đường quay về phương án A."""
+        with pytest.raises(TakeProfitError, match="thiếu tuổi"):
+            chi_so_h4([TP_SOURCE_ZONE, TP_SOURCE_ZONE], [5, None])
+
+    def test_lech_do_dai_thi_RAISE(self) -> None:
+        with pytest.raises(TakeProfitError, match="lệch độ dài"):
+            chi_so_h4([TP_SOURCE_ZONE], [1, 2])
 
     def test_nguon_la_thi_RAISE(self) -> None:
         with pytest.raises(TakeProfitError, match="lạ"):
-            ty_le_dung_nang([TP_SOURCE_ZONE, "tp_bang_tay"])
+            chi_so_h4([TP_SOURCE_ZONE, "tp_bang_tay"], [1, None])
 
-    def test_nguong_H4_cua_spec_la_0_40(self) -> None:
-        """Ghim quan hệ: 41% dùng nạng thì vượt ngưỡng L2 của §5.1."""
-        nguon = [TP_SOURCE_NANG] * 41 + [TP_SOURCE_ZONE] * 59
-        assert ty_le_dung_nang(nguon) > 0.40
+    def test_so_lenh_ghi_lai_mau_so(self) -> None:
+        assert chi_so_h4([TP_SOURCE_NANG] * 7, [None] * 7).so_lenh == 7
 
 
 class TestKhongCoNaNLotQua:

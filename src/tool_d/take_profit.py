@@ -86,8 +86,9 @@ liệu có vùng warmup thật, không phải fixture tổng hợp sạch NaN.
 KHÔNG phải nguồn edge — *"nếu phải tune nó để hệ thống có lãi, nghĩa là
 TP CHÍNH đang hỏng — đó là L2, xử bằng ablation arm mới, KHÔNG bằng
 cách tune ngưỡng của nạng"*. Vòng khép kín ba mảnh: đóng băng nạng →
-đo tần suất dùng nạng (`ty_le_dung_nang()`, chỉ số H-4) → vượt 40% thì
-xét lại CẤU TRÚC. Test khoá TD-0189 ghim cả hai khoá **không được**
+đo tần suất dùng nạng (`chi_so_h4()`) → vượt 40% thì xét lại CẤU TRÚC.
+🔴 `DR-D4-06` tách H-4 làm HAI số và ngưỡng 40% chỉ áp cho vế *"không
+có zone"* — xem docstring `ChiSoH4`. Test khoá TD-0189 ghim cả hai khoá **không được**
 nằm trong `tier_b`: dời sang đó là quyết định N 114 → 126, +12 trial,
 rào DSR 3,0777 → 3,1101 — phải là một DR có ý thức, không phải một
 dòng sửa lặng lẽ.
@@ -308,19 +309,95 @@ def tp2_muc_trail(
     return muc
 
 
-def ty_le_dung_nang(tp_sources: Sequence[str]) -> float:
-    """Chỉ số H-4 (§11b.2) — tỉ lệ lệnh dùng nạng. Vượt 0,40 ⇒ phân loại L2.
+NGUONG_H4_L2 = 0.40  # spec dòng 1684 — ngưỡng phân loại L2, KHÔNG phải tham số
+TUOI_ZONE_QUA_HAN_NEN = 40  # §1.3 `NGUONG_TUOI_ZONE_TOI_DA` — ở đây CHỈ để ĐẾM
 
-    🔴 Danh sách RỖNG thì RAISE, không trả 0.0. "Chưa có lệnh nào" và
-    "có lệnh nhưng không lệnh nào dùng nạng" là hai sự thật khác hẳn, và
-    0.0 là con số ĐẠT đẹp nhất có thể — đúng thứ N6 cấm.
+
+@dataclass(frozen=True)
+class ChiSoH4:
+    """Chỉ số H-4 (§11b.2) tách làm HAI số — `DR-D4-06` ràng buộc 2.
+
+    🔑 **Vì sao tách, căn cứ nằm trong chính câu spec viết ra H-4** (dòng
+    1684): tiền đề nó canh là *"luôn tìm được zone đối diện trong
+    **KHOẢNG CÁCH** hợp lý"* — về **khoảng cách**, KHÔNG về **tuổi**.
+    Gộp hai lý do vào một con số là **đổi ý nghĩa phép đo mà giữ nguyên
+    ngưỡng viết cho ý nghĩa cũ**: phán quyết L2 sẽ nổ vì một lựa chọn
+    cấu hình của chính ta, không vì thị trường. Đúng họ lỗi dự án sợ
+    nhất — phép kiểm trả lời câu KHÁC câu người đọc tưởng, ở đây theo
+    chiều báo động giả.
+
+    🔴 **Ngưỡng 0,40 ⇒ L2 CHỈ áp cho `ty_le_khong_co_zone`.**
+
+    ⚠️ `ty_le_zone_qua_han` là **PHẢN THỰC**, không phải một nhánh hành
+    vi: `DR-D4-06` bỏ hẳn phép lọc tuổi nên hệ thống KHÔNG BAO GIỜ rơi
+    vào nạng vì lý do quá hạn. Con số này trả lời *"nếu ta ĐÃ lọc thì
+    bao nhiêu lệnh phải dùng nạng?"* — tức đo cái giá của phương án A,
+    trên chính dữ liệu D4, **0 trial**. Nó là nửa còn lại của phép TỰ
+    BÁC BỎ mà `DR-D4-06` dựng ra để có đường quay về A.
+    """
+
+    ty_le_khong_co_zone: float
+    ty_le_zone_qua_han: float
+    so_lenh: int
+
+    @property
+    def ty_le_nang_tong(self) -> float:
+        """Con số H-4 CŨ (gộp). Giữ để đối chiếu lịch sử — **KHÔNG** đem
+        so với ngưỡng 0,40; xem docstring lớp."""
+        return self.ty_le_khong_co_zone + self.ty_le_zone_qua_han
+
+    @property
+    def vuot_nguong_l2(self) -> bool:
+        return self.ty_le_khong_co_zone > NGUONG_H4_L2
+
+
+def chi_so_h4(
+    tp_sources: Sequence[str], tuoi_zone_nen: Sequence[int | None]
+) -> ChiSoH4:
+    """Đếm H-4 theo hai lý do riêng biệt (`DR-D4-06` ràng buộc 2).
+
+    `tuoi_zone_nen[i]` là tuổi (nến 4H) của zone dùng cho lệnh `i`, hoặc
+    `None` khi lệnh đó dùng nạng / không tra được tuổi.
+
+    🔴 Danh sách RỖNG thì RAISE, không trả 0.0. *"Chưa có lệnh nào"* và
+    *"có lệnh nhưng không lệnh nào dùng nạng"* là hai sự thật khác hẳn,
+    và 0.0 là con số ĐẠT đẹp nhất có thể — đúng thứ N6 cấm.
+
+    🔴 Lệnh dùng zone mà **thiếu tuổi** thì RAISE, không đếm thầm về vế
+    nào: `DR-D4-06` ràng buộc 1 đòi ghi tuổi cho MỌI lệnh TP-theo-zone,
+    và một lệnh thiếu tuổi làm cả `ty_le_zone_qua_han` mất nghĩa — im
+    lặng ở đây là làm hỏng đúng phép tự bác bỏ của quyết định.
     """
     if not tp_sources:
         raise TakeProfitError(
             "chưa có lệnh nào để tính H-4 — trạng thái là `pending`, "
             "KHÔNG phải 0.0 (N6)"
         )
+    if len(tp_sources) != len(tuoi_zone_nen):
+        raise TakeProfitError(
+            f"lệch độ dài: {len(tp_sources)} nguồn vs {len(tuoi_zone_nen)} tuổi"
+        )
     la = set(tp_sources) - {TP_SOURCE_ZONE, TP_SOURCE_NANG}
     if la:
         raise TakeProfitError(f"tp_source lạ: {sorted(la)}")
-    return sum(1 for s in tp_sources if s == TP_SOURCE_NANG) / len(tp_sources)
+
+    thieu_tuoi = [
+        i for i, (s, t) in enumerate(zip(tp_sources, tuoi_zone_nen))
+        if s == TP_SOURCE_ZONE and t is None
+    ]
+    if thieu_tuoi:
+        raise TakeProfitError(
+            f"lệnh dùng zone nhưng thiếu tuổi zone: {thieu_tuoi[:5]} — "
+            "DR-D4-06 ràng buộc 1 đòi ghi tuổi cho MỌI lệnh TP-theo-zone"
+        )
+
+    n = len(tp_sources)
+    return ChiSoH4(
+        ty_le_khong_co_zone=sum(1 for s in tp_sources if s == TP_SOURCE_NANG) / n,
+        ty_le_zone_qua_han=sum(
+            1
+            for s, t in zip(tp_sources, tuoi_zone_nen)
+            if s == TP_SOURCE_ZONE and t is not None and t > TUOI_ZONE_QUA_HAN_NEN
+        ) / n,
+        so_lenh=n,
+    )
