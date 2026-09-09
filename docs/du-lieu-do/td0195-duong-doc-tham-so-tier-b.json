@@ -1,0 +1,137 @@
+{
+  "cau_hoi": "mỗi tham số tier_b có đường đọc từ tool_d_config.yaml vào đường chạy sản xuất không",
+  "pham_vi_quet": [
+    "src",
+    "user_data/strategies",
+    "entrypoints"
+  ],
+  "so_tham_so_tier_b": 12,
+  "so_khong_co_duong_doc": 7,
+  "khong_co_duong_doc": [
+    "zss_threshold",
+    "buf_sl_atr",
+    "wick_close_upper_frac",
+    "v_min",
+    "funding_rate_pct",
+    "dg6d_retrace_frac",
+    "dg6a_atr_ratio"
+  ],
+  "chi_tiet": {
+    "zss_threshold": {
+      "gia_tri_yaml": "0.5",
+      "duong_doc": [],
+      "co_duong_doc": false,
+      "ban_sao_hardcode": {
+        "vi_tri": "src/tool_d/zone_strength.py:20",
+        "ten_hang": "NGUONG_ZSS",
+        "gia_tri_hang": 0.5,
+        "khop_yaml": true,
+        "ham_dong_cung": [
+          "zone_hop_le"
+        ]
+      }
+    },
+    "buf_sl_atr": {
+      "gia_tri_yaml": "0.4",
+      "duong_doc": [],
+      "co_duong_doc": false,
+      "ban_sao_hardcode": {
+        "vi_tri": "src/tool_d/trade_plan.py:20",
+        "ten_hang": "BUF_SL_HE_SO",
+        "gia_tri_hang": 0.4,
+        "khop_yaml": true,
+        "ham_dong_cung": [
+          "tinh_ke_hoach"
+        ]
+      }
+    },
+    "wick_close_upper_frac": {
+      "gia_tri_yaml": "0.5",
+      "duong_doc": [],
+      "co_duong_doc": false
+    },
+    "v_min": {
+      "gia_tri_yaml": "1.0",
+      "duong_doc": [],
+      "co_duong_doc": false
+    },
+    "funding_rate_pct": {
+      "gia_tri_yaml": "-0.05",
+      "duong_doc": [],
+      "co_duong_doc": false,
+      "ban_sao_hardcode": {
+        "vi_tri": "src/tool_d/dg6_early_invalidation.py:25",
+        "ten_hang": "NGUONG_FUNDING_D",
+        "gia_tri_hang": -0.0005,
+        "khop_yaml": false,
+        "ham_dong_cung": [
+          "dieu_kien_d"
+        ]
+      }
+    },
+    "dg6d_retrace_frac": {
+      "gia_tri_yaml": "0.5",
+      "duong_doc": [],
+      "co_duong_doc": false,
+      "ban_sao_hardcode": {
+        "vi_tri": "src/tool_d/dg6_early_invalidation.py:26",
+        "ten_hang": "NGUONG_HOI_GIA_D",
+        "gia_tri_hang": 0.5,
+        "khop_yaml": true,
+        "ham_dong_cung": [
+          "dieu_kien_d"
+        ]
+      }
+    },
+    "dg4_bars_1h": {
+      "gia_tri_yaml": "8",
+      "duong_doc": [
+        "user_data/strategies/ZoneAbsorption.py:718"
+      ],
+      "co_duong_doc": true
+    },
+    "dg6a_atr_ratio": {
+      "gia_tri_yaml": "1.8",
+      "duong_doc": [],
+      "co_duong_doc": false,
+      "ban_sao_hardcode": {
+        "vi_tri": "src/tool_d/dg6_early_invalidation.py:22",
+        "ten_hang": "NGUONG_ATR_RATIO_A",
+        "gia_tri_hang": 1.8,
+        "khop_yaml": true,
+        "ham_dong_cung": [
+          "dieu_kien_a"
+        ]
+      }
+    },
+    "tp1_haircut_pct": {
+      "gia_tri_yaml": "20",
+      "duong_doc": [
+        "src/tool_d/take_profit.py:141"
+      ],
+      "co_duong_doc": true
+    },
+    "mult_corr_thresholds": {
+      "gia_tri_yaml": "[0.60, 0.85]",
+      "duong_doc": [
+        "user_data/strategies/ZoneAbsorption.py:467"
+      ],
+      "co_duong_doc": true
+    },
+    "max_hold_bars_4h": {
+      "gia_tri_yaml": "24",
+      "duong_doc": [
+        "user_data/strategies/ZoneAbsorption.py:782"
+      ],
+      "co_duong_doc": true
+    },
+    "dg7_funding_frac": {
+      "gia_tri_yaml": "0.3",
+      "duong_doc": [
+        "user_data/strategies/ZoneAbsorption.py:787"
+      ],
+      "co_duong_doc": true
+    }
+  },
+  "gioi_han": "Đo TĨNH trên mã nguồn. 'Có đường đọc' nghĩa là có literal 'tier_b.<khoá>' ở vị trí giá trị — KHÔNG chứng minh giá trị đọc được thật sự chảy tới phép tính cuối (một biến đọc rồi bỏ đó vẫn tính là có). Chiều NGƯỢC LẠI thì chắc chắn: không có literal nào ⇒ resolve() không thể được gọi cho khoá đó ⇒ không có đường đọc."
+}
