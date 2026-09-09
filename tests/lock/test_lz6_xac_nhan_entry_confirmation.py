@@ -17,7 +17,7 @@ làm, và là cách một quyết định biến mất mà không ai ghi.
 
 Hoá ra không phải. Vì §10.1b định nghĩa arm **`Z0-V1` đúng bằng "tắt
 (c)"**, tức `(a) HOẶC (b)` — **chính là công thức năm ca dưới đây vẫn
-luôn mô tả**. Nên chúng chỉ cần khai tường minh `bat_dieu_kien_c=False`
+luôn mô tả**. Nên chúng chỉ cần khai tường minh `bat_dieu_kien_c=False, wick_frac=0.5`
 và **trở thành bộ test khoá cho `Z0-V1`**. Không ca nào bị xoá, không
 khẳng định nào bị nới. Thứ trông như phá một test khoá hoá ra là **đổi
 nhãn nó về đúng arm mà nó vẫn luôn mô tả** (tiền lệ TD-0150).
@@ -43,20 +43,66 @@ from tool_d.entry_confirmation import (
 class TestLaNenRejectionDay:
     def test_bong_duoi_du_50pt_va_dong_cua_nua_tren_la_rejection(self) -> None:
         # range=10 (100-90), bong_duoi=min(96,99)-90=6 (>=5), dong=99 nam nua tren (>=95)
-        assert la_nen_rejection(96, 100, 90, 99, loai="day") is True
+        assert la_nen_rejection(96, 100, 90, 99, loai="day", wick_frac=0.5) is True
 
     def test_bong_duoi_khong_du_50pt_thi_khong_phai(self) -> None:
         # bong_duoi = min(94,95)-90=4 (<5)
-        assert la_nen_rejection(94, 100, 90, 95, loai="day") is False
+        assert la_nen_rejection(94, 100, 90, 95, loai="day", wick_frac=0.5) is False
 
     def test_dong_cua_nua_duoi_thi_khong_phai_du_bong_du(self) -> None:
         # bong_duoi=8 (du) nhung dong=93 nam nua duoi (<95)
-        assert la_nen_rejection(98, 100, 90, 93, loai="day") is False
+        assert la_nen_rejection(98, 100, 90, 93, loai="day", wick_frac=0.5) is False
 
 
 class TestLaNenRejectionDinh:
     def test_bong_tren_du_va_dong_cua_nua_duoi_la_rejection(self) -> None:
-        assert la_nen_rejection(94, 100, 90, 91, loai="dinh") is True
+        assert la_nen_rejection(94, 100, 90, 91, loai="dinh", wick_frac=0.5) is True
+
+
+class TestWickFracLaThamSoTierB:
+    """DR-D4-08 §3 #1 — `tier_b.wick_close_upper_frac` điều khiển CẢ HAI vế
+    của (a) bằng MỘT số, và là tham số BẮT BUỘC (TD-0195/MT-23: bản trước
+    là hai số ma `0.5`, không có đường đọc nào từ YAML)."""
+
+    def test_wick_frac_bat_buoc_o_ca_hai_ham(self) -> None:
+        import inspect
+
+        for ham in (la_nen_rejection, tim_xac_nhan_entry):
+            assert inspect.signature(ham).parameters["wick_frac"].default is inspect.Parameter.empty, ham.__name__
+
+    def test_wick_frac_dieu_khien_ve_BONG(self) -> None:
+        # bóng dưới = 6/10 range: đủ với 0,5, KHÔNG đủ với 0,7 (đóng cửa 99 vẫn thoả vế đóng)
+        assert la_nen_rejection(96, 100, 90, 99, loai="day", wick_frac=0.5) is True
+        assert la_nen_rejection(96, 100, 90, 99, loai="day", wick_frac=0.7) is False
+
+    def test_wick_frac_dieu_khien_ve_DONG_CUA(self) -> None:
+        # bóng 9/10 (dư với mọi ngưỡng); đóng cửa 96 = 60% range: đủ với 0,5, KHÔNG đủ với 0,7
+        assert la_nen_rejection(99, 100, 90, 96, loai="day", wick_frac=0.5) is True
+        assert la_nen_rejection(99, 100, 90, 96, loai="day", wick_frac=0.7) is False
+
+    def test_wick_frac_ngoai_khoang_thi_RAISE(self) -> None:
+        for xau in (0.0, 1.0, -0.1, float("nan")):
+            with pytest.raises(ValueError):
+                la_nen_rejection(96, 100, 90, 99, loai="day", wick_frac=xau)
+
+
+class TestCongTacDieuKienCTheoArm:
+    """§10.1b: `Z0-V1` = tắt (c); mọi arm khác bật. Bảng tường minh, arm lạ ⇒ raise."""
+
+    def test_Z0_V1_tat_moi_arm_khac_bat(self) -> None:
+        from tool_d.arm_switches import ARM_HOP_LE
+        from tool_d.entry_confirmation import bat_dieu_kien_c_cua_arm
+
+        assert bat_dieu_kien_c_cua_arm("Z0-V1") is False
+        assert all(bat_dieu_kien_c_cua_arm(a) is True for a in ARM_HOP_LE if a != "Z0-V1")
+
+    def test_arm_la_thi_RAISE_khong_mac_dinh_ve_Z0(self) -> None:
+        from tool_d.arm_switches import ArmSwitchError
+        from tool_d.entry_confirmation import bat_dieu_kien_c_cua_arm
+
+        for la in ("Z0-T2", "", "Z9"):
+            with pytest.raises(ArmSwitchError):
+                bat_dieu_kien_c_cua_arm(la)
 
 
 class TestPhanKyMomentum:
@@ -77,7 +123,7 @@ class TestTimXacNhanEntry:
         thap = [90, 0, 0]
         dong = [99, 0, 0]
         rsi = [50, 0, 0]
-        assert tim_xac_nhan_entry(mo, cao, thap, dong, rsi, i_cham=0, loai="day", bat_dieu_kien_c=False) == 0
+        assert tim_xac_nhan_entry(mo, cao, thap, dong, rsi, i_cham=0, loai="day", bat_dieu_kien_c=False, wick_frac=0.5) == 0
 
     def test_tim_thay_o_nen_thu_hai_qua_phan_ky(self) -> None:
         # nen 0: khong rejection, khong du du lieu lan cham truoc -> bo qua
@@ -89,7 +135,7 @@ class TestTimXacNhanEntry:
         rsi = [20, 35]
         lan_cham_truoc = (94.0, 28.0)  # (gia, rsi) lan cham truoc: gia=94, rsi=28
         assert (
-            tim_xac_nhan_entry(mo, cao, thap, dong, rsi, i_cham=0, loai="day", bat_dieu_kien_c=False, lan_cham_truoc=lan_cham_truoc)
+            tim_xac_nhan_entry(mo, cao, thap, dong, rsi, i_cham=0, loai="day", bat_dieu_kien_c=False, wick_frac=0.5, lan_cham_truoc=lan_cham_truoc)
             == 1
         )
 
@@ -99,7 +145,7 @@ class TestTimXacNhanEntry:
         thap = [90, 90, 90]
         dong = [92, 92, 92]  # khong rejection nen nao
         rsi = [50, 50, 50]  # khong phan ky (khong co lan_cham_truoc)
-        assert tim_xac_nhan_entry(mo, cao, thap, dong, rsi, i_cham=0, loai="day", bat_dieu_kien_c=False) is None
+        assert tim_xac_nhan_entry(mo, cao, thap, dong, rsi, i_cham=0, loai="day", bat_dieu_kien_c=False, wick_frac=0.5) is None
 
     def test_khong_mo_rong_cua_so_qua_3_nen(self) -> None:
         # xac nhan chi xuat hien o nen thu 4 (index 3) - PHAI bo lo, khong tim tiep
@@ -108,7 +154,7 @@ class TestTimXacNhanEntry:
         thap = [90, 90, 90, 90]
         dong = [92, 92, 92, 99]  # nen index3 la rejection ro rang
         rsi = [50, 50, 50, 50]
-        assert tim_xac_nhan_entry(mo, cao, thap, dong, rsi, i_cham=0, loai="day", bat_dieu_kien_c=False, so_nen_cho_toi_da=3) is None
+        assert tim_xac_nhan_entry(mo, cao, thap, dong, rsi, i_cham=0, loai="day", bat_dieu_kien_c=False, wick_frac=0.5, so_nen_cho_toi_da=3) is None
 
     def test_khong_co_lan_cham_truoc_thi_chi_xet_rejection(self) -> None:
         mo = [95, 95]
@@ -116,7 +162,7 @@ class TestTimXacNhanEntry:
         thap = [90, 90]
         dong = [92, 92]
         rsi = [20, 90]  # neu co lan_cham_truoc se phan ky, nhung khong co -> None
-        assert tim_xac_nhan_entry(mo, cao, thap, dong, rsi, i_cham=0, loai="day", bat_dieu_kien_c=False, lan_cham_truoc=None) is None
+        assert tim_xac_nhan_entry(mo, cao, thap, dong, rsi, i_cham=0, loai="day", bat_dieu_kien_c=False, wick_frac=0.5, lan_cham_truoc=None) is None
 
 
 class TestDieuKienC:
@@ -154,7 +200,7 @@ class TestCongThucKetHop:
         assert (
             tim_xac_nhan_entry(
                 self.MO, self.CAO, self.THAP, self.DONG, self.RSI, i_cham=0,
-                loai="day", bat_dieu_kien_c=True,
+                loai="day", bat_dieu_kien_c=True, wick_frac=0.5,
                 volume=[150.0], volume_ma=[100.0], v_min=1.0,
             )
             == 0
@@ -166,7 +212,7 @@ class TestCongThucKetHop:
         assert (
             tim_xac_nhan_entry(
                 self.MO, self.CAO, self.THAP, self.DONG, self.RSI, i_cham=0,
-                loai="day", bat_dieu_kien_c=True,
+                loai="day", bat_dieu_kien_c=True, wick_frac=0.5,
                 volume=[50.0], volume_ma=[100.0], v_min=1.0,
             )
             is None
@@ -180,7 +226,7 @@ class TestCongThucKetHop:
         assert (
             tim_xac_nhan_entry(
                 self.MO, self.CAO, self.THAP, self.DONG, self.RSI, i_cham=0,
-                loai="day", bat_dieu_kien_c=False,
+                loai="day", bat_dieu_kien_c=False, wick_frac=0.5,
             )
             == 0
         )
@@ -191,7 +237,7 @@ class TestCongThucKetHop:
         assert (
             tim_xac_nhan_entry(
                 [95], [100], [90], [92], [50], i_cham=0,  # đóng cửa nửa dưới
-                loai="day", bat_dieu_kien_c=True,
+                loai="day", bat_dieu_kien_c=True, wick_frac=0.5,
                 volume=[999.0], volume_ma=[100.0], v_min=1.0,
             )
             is None
@@ -205,7 +251,7 @@ class TestCongThucKetHop:
         loại sẽ trượt ca này."""
         got = tim_xac_nhan_entry(
             [96], [100], [90], [99], [35], i_cham=0,
-            loai="day", bat_dieu_kien_c=True,
+            loai="day", bat_dieu_kien_c=True, wick_frac=0.5,
             volume=[10.0], volume_ma=[100.0], v_min=1.0,  # (c) loại
             lan_cham_truoc=(94.0, 28.0),  # nhưng (b) đúng: rsi 35>28, giá 90<=94
         )
@@ -220,7 +266,7 @@ class TestCongThucKetHop:
             with pytest.raises(ThieuDuLieuVolumeError, match="Z0-V1"):
                 tim_xac_nhan_entry(
                     self.MO, self.CAO, self.THAP, self.DONG, self.RSI, i_cham=0,
-                    loai="day", bat_dieu_kien_c=True, **kw,
+                    loai="day", bat_dieu_kien_c=True, wick_frac=0.5, **kw,
                 )
 
     def test_bat_dieu_kien_c_la_tham_so_BAT_BUOC(self) -> None:

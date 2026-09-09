@@ -97,11 +97,11 @@ def main() -> int:
 
             def thu(t_cham, lct):
                 return tim_xac_nhan_entry(mo1, cao1, thap1, dong1, rsi1, t_cham,
-                    loai="day", bat_dieu_kien_c=True, volume=vol1, volume_ma=vma1,
+                    loai="day", bat_dieu_kien_c=True, wick_frac=0.5, volume=vol1, volume_ma=vma1,
                     v_min=V_MIN, lan_cham_truoc=lct, so_nen_cho_toi_da=SO_NEN_CHO)
 
             def qua_ac(c):
-                return (la_nen_rejection(mo1[c], cao1[c], thap1[c], dong1[c], loai="day")
+                return (la_nen_rejection(mo1[c], cao1[c], thap1[c], dong1[c], loai="day", wick_frac=0.5)
                         and hap_thu_co_volume(vol1[c], vma1[c], V_MIN))
 
             # A — chỉ lần chạm đầu tiên

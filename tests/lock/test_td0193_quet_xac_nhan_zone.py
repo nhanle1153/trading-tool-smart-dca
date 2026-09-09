@@ -81,7 +81,7 @@ def _phang() -> dict:
     d = dict(mo=mo, cao=cao, thap=thap, dong=dong, rsi=rsi, volume=vol, volume_ma=vma)
     for t in range(N):
         assert tim_xac_nhan_entry(
-            mo, cao, thap, dong, rsi, t, loai="day", bat_dieu_kien_c=True,
+            mo, cao, thap, dong, rsi, t, loai="day", bat_dieu_kien_c=True, wick_frac=0.5,
             volume=vol, volume_ma=vma, v_min=V_MIN, lan_cham_truoc=None,
         ) is None, f"nến nền KHÔNG trung tính tại t={t} — fixture hỏng, không phải test hỏng"
     return d
@@ -108,11 +108,11 @@ def _dung_rejection(d: dict, t: int, *, gia_thap: float = 92.0) -> None:
     d["vol"] = d.get("vol")
 
 
-def _goi(d: dict, *, tu: int, den: int, lct=None) -> KetQuaQuetXacNhanZone:
+def _goi(d: dict, *, tu: int, den: int, lct=None, bat_c: bool = True) -> KetQuaQuetXacNhanZone:
     return quet_xac_nhan_zone(
         d["mo"], d["cao"], d["thap"], d["dong"], d["rsi"], d["volume"], d["volume_ma"],
         zone_low=ZL, zone_high=ZH, tu=tu, den=den, v_min=V_MIN, loai="day",
-        lan_cham_truoc_khi_xac_nhan=lct,
+        lan_cham_truoc_khi_xac_nhan=lct, bat_dieu_kien_c=bat_c, wick_frac=0.5,
     )
 
 
@@ -343,6 +343,60 @@ class TestMocLaDayThatCuaCum_KhongPhaiNenDau:
         )
 
 
+class TestZ0V1QuaVongQuet:
+    """DR-D4-08 — bản chặng 1 ghi cứng `bat_dieu_kien_c=True` nên `Z0-V1`
+    KHÔNG biểu diễn được qua `quet_xac_nhan_zone`; nối như thế là tái diễn
+    MT-15. Ca này: cùng dữ liệu, volume YẾU — `Z0` bỏ lượt, `Z0-V1` xác nhận."""
+
+    def test_cung_du_lieu_volume_yeu_Z0_khong_Z0_V1_co(self) -> None:
+        d = _phang()
+        _dung_cham(d, 5)
+        _dung_rejection(d, 5)
+        d["volume"][5], d["volume_ma"][5] = 5.0, 10.0  # v_r = 0.5 < v_min ⇒ (c) loại
+        kq_z0 = _goi(d, tu=0, den=N, bat_c=True)
+        kq_v1 = _goi(d, tu=0, den=N, bat_c=False)
+        assert kq_z0.nen_xac_nhan_that is None
+        assert kq_v1.nen_xac_nhan_that == 5
+        assert kq_v1.loai_xac_nhan_that == "ac"
+
+    def test_bat_dieu_kien_c_va_wick_frac_bat_buoc(self) -> None:
+        import inspect
+
+        sig = inspect.signature(quet_xac_nhan_zone)
+        for ten in ("bat_dieu_kien_c", "wick_frac"):
+            assert sig.parameters[ten].default is inspect.Parameter.empty, ten
+
+
+class TestKetQuaMangNenChamDauVaLoaiXacNhan:
+    """Decision Log §8 đòi `entry_confirmation: {type, wait_bars}` (L-Z6) —
+    hai trường này phải đến từ chính vòng quét, không suy lại ở tầng gọi."""
+
+    def test_wait_bars_va_loai_ac(self) -> None:
+        d = _phang()
+        _dung_cham(d, 5)                  # chạm, không xác nhận
+        _dung_rejection(d, 7)             # xác nhận ở nến thứ 3 của cửa sổ
+        d["thap"][6] = 95.5               # vẫn trong zone (cùng cụm)
+        d["cao"][6], d["mo"][6], d["dong"][6] = 96.5, 95.6, 95.6
+        d["volume"][7], d["volume_ma"][7] = 20.0, 10.0
+        kq = _goi(d, tu=0, den=N)
+        assert kq.nen_cham_dau_that == 5
+        assert kq.nen_xac_nhan_that == 7
+        assert kq.loai_xac_nhan_that == "ac"
+
+    def test_loai_b_khi_xac_nhan_qua_phan_ky(self) -> None:
+        d = _phang()
+        d["thap"][3], d["cao"][3] = 94.0, 98.0
+        d["mo"][3], d["dong"][3] = 94.2, 94.4
+        d["rsi"][3] = 40.0
+        kq = _goi(d, tu=0, den=N, lct=(95.0, 30.0))
+        assert kq.nen_xac_nhan_that == 3
+        assert kq.loai_xac_nhan_that == "b"
+
+    def test_khong_cham_thi_ca_hai_None(self) -> None:
+        kq = _goi(_phang(), tu=0, den=N)
+        assert kq.nen_cham_dau_that is None and kq.loai_xac_nhan_that is None
+
+
 class TestNenNenTuChungMinh:
     """Đề nghị của `-f4`: trung tính là tính chất ĐO ĐƯỢC, không phải cái
     tên — xem docstring `_phang()`."""
@@ -364,6 +418,6 @@ class TestNenNenTuChungMinh:
         d["volume"][0], d["volume_ma"][0] = 20.0, 10.0
         assert tim_xac_nhan_entry(
             d["mo"], d["cao"], d["thap"], d["dong"], d["rsi"], 0,
-            loai="day", bat_dieu_kien_c=True,
+            loai="day", bat_dieu_kien_c=True, wick_frac=0.5,
             volume=d["volume"], volume_ma=d["volume_ma"], v_min=V_MIN,
         ) == 0
