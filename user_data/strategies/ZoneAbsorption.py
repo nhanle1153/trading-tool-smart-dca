@@ -110,6 +110,7 @@ from tool_d.arm_switches import (
     CHE_DO_CO_LENH_THEO_ARM,
     cong_ap_dung,
     duoc_them_tranche,
+    ke_hoach_theo_arm,
 )
 from tool_d.config.loader import load_tool_d_config, resolve
 from tool_d.dg1_dg5_tranche_gates import danh_gia_tat_ca
@@ -130,7 +131,7 @@ from tool_d.sizing import (
 )
 from tool_d.arms import du_dieu_kien_trend_theo_tang, tang_cua_arm
 from tool_d.time_stop import is_time_stop_triggered
-from tool_d.trade_plan import KeHoachTranche, tinh_ke_hoach
+from tool_d.trade_plan import KeHoachTranche
 from tool_d.trend_context import trend_dir_tai, tuoi_trend_nen
 from tool_d.zone_detection import K_XAC_NHAN, la_diem_swing, zone_da_bi_huy
 from tool_d.zone_strength import compression, touch_count, volume_ratio, zone_hop_le, zss
@@ -299,7 +300,16 @@ class ZoneAbsorption(IStrategy):
             diem = zss(touch=tc, ty_le_volume=v_r, do_nen=comp)
             if not zone_hop_le(zss_value=diem, so_touch=tc, tuoi_nen=K_XAC_NHAN) or math.isnan(atr[j]):
                 continue
-            kh = tinh_ke_hoach(zone_low=zone_low, zone_high=zone_high, gia_dong_cua=dong[j], atr_4h=atr[j], atr_1h_tai_tranche1=0.0)
+            # TD-0192 — `ke_hoach_theo_arm()` là NƠI DUY NHẤT phân nhánh SL
+            # theo arm (`CHE_DO_SL_THEO_ARM`). Gọi thẳng `tinh_ke_hoach()`
+            # ở đây (bản trước TD-0192) khiến MỌI arm — kể cả Z1, arm được
+            # định nghĩa CHÍNH BẰNG một công thức SL khác — đều nhận SL
+            # kiểu ZONE. `arm_switches.py` có công thức, có test khoá, có
+            # docstring cảnh báo "r_eff_plan tính LẠI" — nhưng KHÔNG ai gọi
+            # nó trên đường sản xuất: 83/83 lệnh Z1 trùng khít Z0 trên
+            # EXPLORE (MT-21). Đúng hình dạng TD-0188 đã dạy: canh đúng
+            # chỗ, đường chạy không bao giờ đi qua.
+            kh = ke_hoach_theo_arm(arm=self._arm, zone_low=zone_low, zone_high=zone_high, gia_dong_cua=dong[j], atr_4h=atr[j], atr_1h_tai_tranche1=0.0)
             zone_valid[j] = True
             tag_col[j] = _ma_hoa(kh, zss_value=diem, trend_4h=trend[j], swing_ts_ms=int(ts_ms[i]))
 
