@@ -135,7 +135,7 @@ from tool_d.sizing import (
     mult_regime,
     mult_zss,
 )
-from tool_d.arms import du_dieu_kien_trend_theo_tang, tang_cua_arm
+from tool_d.arms import co_loc_adx_1d, du_dieu_kien_trend_theo_tang, tang_cua_arm
 from tool_d.take_profit import (
     TP_SOURCE_ZONE,
     KeHoachChotLoi,
@@ -271,6 +271,12 @@ class ZoneAbsorption(IStrategy):
         self._l_exchange = float(resolve(self._cfg, "tier_a.L_exchange"))
         self._adx_threshold = float(resolve(self._cfg, "tier_frozen.adx_threshold.value"))
         self._tang_loc_trend = tang_cua_arm(self._arm)  # TD-0182 — công tắc Phần 2 theo arm
+        # TD-0198 — arm này có thi hành §2.5 (ADX(1D) ≥ ngưỡng) làm cổng vào
+        # lệnh không. `mult_regime` cần biết để phân biệt "tầng trên hỏng"
+        # (DAY_DU ⇒ raise) với "arm cố ý tắt bộ lọc" (Z0-T0/Z0-T1 ⇒ weak).
+        # Suy TỪ ARM, không phải một cờ khai tay — hai nguồn sự thật cho cùng
+        # một thứ là cách `Z0-T1` chạy dưới nhãn `Z0` mà không ai thấy.
+        self._da_loc_adx = co_loc_adx_1d(self._tang_loc_trend)
         self._cho: dict[str, dict] = {}   # pair → kế hoạch cỡ lệnh chờ order_filled
         self._halt: set[str] = set()      # pair đang bị HALT tại lúc định cỡ
         self._dinh_equity: float | None = None
@@ -648,6 +654,7 @@ class ZoneAbsorption(IStrategy):
                 weak=float(resolve(self._cfg, "tier_frozen.mult_regime.value.weak")),
                 adx_split=float(resolve(self._cfg, "tier_frozen.mult_regime.value.adx_split")),
                 adx_threshold=self._adx_threshold,
+                da_loc_adx=self._da_loc_adx,  # TD-0198 — xem `arms.co_loc_adx_1d`
             ),
             zss=mult_zss(float(d["zs"])),
             corr=mult_corr(corr_pool=self._corr_pool(pair), nguong=tuple(resolve(self._cfg, "tier_b.mult_corr_thresholds"))),

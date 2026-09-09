@@ -79,14 +79,39 @@ class SizingError(ValueError):
 
 # ── Sáu hệ số §6.2 — mỗi hàm một hệ số, nhận số đã tính sẵn ──────────
 
-def mult_regime(*, adx_1d: float, strong: float, weak: float, adx_split: float, adx_threshold: float) -> float:
-    """§6.2 hệ số 1. `ADX ≥ adx_split` → `strong`; `adx_threshold ≤ ADX <
-    adx_split` → `weak`. **KHÔNG có nhánh thứ ba**: `ADX < adx_threshold`
-    đã bị §2.5 chặn không vào lệnh — tới được đây với ADX như thế là
-    tầng trên đã hỏng, raise chứ không bịa `0.0`."""
+def mult_regime(
+    *, adx_1d: float, strong: float, weak: float, adx_split: float, adx_threshold: float,
+    da_loc_adx: bool,
+) -> float:
+    """§6.2 hệ số 1. `ADX ≥ adx_split` → `strong`; dưới đó → `weak`.
+
+    `da_loc_adx` **BẮT BUỘC, không mặc định** (TD-0198) — khai tầng lọc
+    trend của arm đang chạy có thi hành §2.5 (`ADX(1D) ≥ ngưỡng`) làm cổng
+    vào lệnh hay không; suy từ arm bằng `arms.co_loc_adx_1d()`, không đoán.
+
+      • `True`  (arm `DAY_DU`) — `ADX < adx_threshold` là KHÔNG THỂ XẢY RA:
+        §2.5 đã chặn từ trước. Tới được đây tức tầng trên hỏng ⇒ **raise**,
+        không bịa `0.0`. Chốt fail-closed nguyên vẹn như trước TD-0198.
+      • `False` (`Z0-T0` bỏ hết Phần 2, `Z0-T1` bỏ tầng 1D) — `ADX <
+        adx_threshold` là **hành vi ĐÚNG THEO THIẾT KẾ** của arm, không
+        phải lỗi. Trả `weak`.
+
+    🔴 **Vì sao `weak` chứ không phải một bậc thứ ba — DIỄN GIẢI, ghi ra để
+    cãi lại được.** §6.2 định nghĩa ĐÚNG HAI bậc, chia tại `adx_split`;
+    `adx_threshold` là ngưỡng **VÀO LỆNH** của §2.5, không phải ranh giới
+    của hệ số này. Vùng `ADX < adx_threshold` vì thế nằm trọn trong nửa
+    "trend yếu" ⇒ `weak` là phần mở rộng tự nhiên, KHÔNG thêm một con số
+    nào vào kiểm kê DOF. Đặt một bậc thứ ba (vd `weak/2`) sẽ là bịa một
+    tham số mới không ai đăng ký — đúng lỗi `DR-D4-02` sinh ra để chặn. Và
+    `weak < strong` nên nó chỉ HẠ cỡ lệnh, đúng ràng buộc bao trùm §6.2
+    (*"mọi `mult_* ≤ 1.0`; tín hiệu tốt không được cược to hơn"*).
+
+    Vì sao KHÔNG bỏ hẳn chốt raise: với `DAY_DU` nó vẫn là lớp canh duy
+    nhất bắt được "bộ lọc trend chết" — thứ MT-21 đã xảy ra thật một lần.
+    """
     if adx_1d != adx_1d:  # NaN
         raise SizingError("ADX(1D) là NaN — không định cỡ trên số chưa tính được")
-    if adx_1d < adx_threshold:
+    if da_loc_adx and adx_1d < adx_threshold:
         raise SizingError(
             f"ADX(1D) = {adx_1d} < ngưỡng vào lệnh {adx_threshold} — §2.5 đáng lẽ đã "
             "chặn từ trước; tới được tầng định cỡ nghĩa là bộ lọc trend không chạy"

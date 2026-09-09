@@ -173,7 +173,10 @@ class TestKeHoachRoundTrip:
 # ── 5. Từng hệ số ──────────────────────────────────────────────────────
 
 class TestMultRegime:
-    K = dict(strong=1.0, weak=0.7, adx_split=25.0, adx_threshold=20.0)
+    # TD-0198: `da_loc_adx=True` = arm DAY_DU (§2.5 có chạy) — đúng ngữ cảnh
+    # mà cả bốn khẳng định dưới đây vẫn luôn mô tả. Không nới một ca nào;
+    # chỉ khai tường minh ngữ cảnh trước nay là ngầm định.
+    K = dict(strong=1.0, weak=0.7, adx_split=25.0, adx_threshold=20.0, da_loc_adx=True)
 
     def test_manh_yeu(self) -> None:
         assert mult_regime(adx_1d=25.0, **self.K) == 1.0
@@ -181,7 +184,9 @@ class TestMultRegime:
         assert mult_regime(adx_1d=20.0, **self.K) == 0.7
 
     def test_ADX_duoi_nguong_vao_lenh_la_LOI_tang_tren_khong_phai_0(self) -> None:
-        """Spec: 'KHÔNG có nhánh thứ ba: ADX < 20 đã bị §2.5 chặn'."""
+        """Spec: 'KHÔNG có nhánh thứ ba: ADX < 20 đã bị §2.5 chặn'.
+
+        Chỉ đúng khi arm THỰC SỰ chạy §2.5 — xem `test_td0198_*` cho arm tắt."""
         with pytest.raises(SizingError, match="§2.5"):
             mult_regime(adx_1d=19.9, **self.K)
 

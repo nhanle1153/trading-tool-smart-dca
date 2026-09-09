@@ -98,6 +98,31 @@ def tang_cua_arm(ten_arm: str) -> TangLocTrend:
     return TANG_THEO_ARM[ten_arm]
 
 
+def co_loc_adx_1d(tang: TangLocTrend) -> bool:
+    """Tầng này có thi hành §2.5 (`ADX(1D) ≥ ngưỡng`) làm cổng VÀO LỆNH không?
+
+    Chỉ `DAY_DU`. `CHI_4H` (arm `Z0-T1`) bỏ **toàn bộ tầng 1D** — mà ADX(1D)
+    thuộc tầng đó; `KHONG` (arm `Z0-T0`) bỏ hết Phần 2.
+
+    🔴 **Vì sao hàm này tồn tại — TD-0198.** `sizing.mult_regime()` raise
+    `SizingError` khi `ADX(1D) < ngưỡng`, với lý do *"§2.5 đáng lẽ đã chặn
+    từ trước; tới được tầng định cỡ nghĩa là bộ lọc trend không chạy"*. Giả
+    định đó ĐÚNG cho `DAY_DU` và **SAI THEO ĐỊNH NGHĨA** cho hai arm trên —
+    "bộ lọc trend không chạy" chính là thứ chúng được dựng ra để đo. Đo được
+    trên 88 mã EXPLORE (commit `70542cb`): **588 lệnh của `Z0-T0` và 123 của
+    `Z0-T1` biến mất im lặng** (Freqtrade nuốt exception callback, MT-16 vii),
+    và chúng KHÔNG ngẫu nhiên — đúng tập `ADX(1D) < 20`, tức chính tập lệnh
+    làm nên khác biệt của hai arm đó.
+
+    Nặng hơn MT-15 một bậc: MT-15 là hai arm TRÙNG nhau (một suất trial mua
+    **thông tin bằng 0**); ở đây arm chạy một cấu hình **KHÁC** thứ nó khai
+    (mua **thông tin sai**) — mà bảng kết quả vẫn trông bình thường.
+    """
+    if tang not in TANG_HOP_LE:
+        raise ArmKhongHopLeError(f"Tầng không rõ: {tang!r}. Danh sách đóng: {TANG_HOP_LE}.")
+    return tang == "DAY_DU"
+
+
 def du_dieu_kien_trend_theo_tang(
     *,
     tang: TangLocTrend,
@@ -142,6 +167,7 @@ __all__ = [
     "TANG_THEO_ARM",
     "ArmKhongHopLeError",
     "TangLocTrend",
+    "co_loc_adx_1d",
     "du_dieu_kien_trend_theo_tang",
     "tang_cua_arm",
 ]
