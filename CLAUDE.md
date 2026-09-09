@@ -238,15 +238,81 @@ với dòng phiên kia đang gõ dở cùng lúc — đã gây ít nhất 3 lầ
    theo **hình dạng hậu quả** thay vì kiểm **cơ chế** thì giả thuyết vẫn khớp hiện tượng mà vẫn sai
    — chi tiết trong `docs/research-log.md`.
 
+6. 🔴 **Quy ước MỚI (09/09/2026, sự cố "hai `DR-D4-06`"): trước khi bắt đầu soạn một tài liệu
+   quyết định mới (`docs/decisions/DR-*.md`, một mục `MT-*` mới), NHẮN phiên kia tên/mã dự kiến —
+   cùng hạng với quy ước "nhắn trước khi chạy full suite".**
+
+   Mục 1-5 ở trên chặn được việc **nuốt file** của phiên khác qua index dùng chung. Chúng **không**
+   chặn được việc hai phiên **độc lập viết hai file khác tên cho cùng một quyết định**: hai phiên
+   cùng phát hiện mâu thuẫn §1.3/§5.1 của TD-0189, cùng lúc, mỗi phiên tự đặt tên `DR-D4-06` cho
+   file của mình. Cả hai commit đều **sạch** theo đúng nghĩa mục 1-5 (không file nào bị nuốt) —
+   nhưng kết quả vẫn là **hai nguồn sự thật cho một quyết định**, đúng thứ N1/MT-03 (dự án Tool D)
+   sinh ra để cấm. Sáu tháng nữa ai đó sửa một file, file kia vẫn nói bản cũ, không ai biết.
+
+   🔑 **Vì sao đây là khoảng hở riêng, không phải một biến thể của sự cố cũ:** `4ec0fd3` là chuyện
+   *một file, hai phiên cùng ghi* — index dùng chung là cơ chế, pathspec là thuốc. Sự cố này là
+   chuyện *một Ý, hai file* — không có index nào nhìn thấy hai file khác tên đang mô tả cùng một
+   thứ. **Giấy tờ quyết định không có cơ chế khoá nào tương đương 🔒 của `TASKS.md`.** Cả hai phiên
+   trong sự cố đều hành xử ĐÚNG theo quy tắc 11 (thấy mâu thuẫn thì ghi, không tự chọn bên) — không
+   ai sai, cơ chế thiếu.
+
+   Phát hiện trùng SAU khi cả hai đã viết thì giải bằng tiêu chí đã dùng ở va chạm mã việc
+   TD-0119/TD-0120 của project Tool D: **phía nào có ĐỊNH DANH MÁY ĐỌC được (đường dẫn file bằng
+   chứng, tên hàm/biến code đã trỏ tới) thì phía đó không đổi** — phía kia gộp nội dung vào rồi
+   xoá, không giữ cả hai.
+
 ---
 
 ## TRẠNG THÁI HIỆN TẠI
 
-**Cập nhật lần cuối: 06/09/2026**
+**Cập nhật lần cuối: 09/09/2026**
 
-> ⚠️ **Hai phiên Claude Code cùng làm việc song song trên repo này** (chủ dự án xác nhận).
+> ⚠️ **Hai (nay ba) phiên Claude Code cùng làm việc song song trên repo này** (chủ dự án xác nhận).
 > Mục này có thể lệch nhịp vài phút so với phiên kia — luôn `git log --oneline` +
 > đọc lại `TASKS.md` (cột 🔓/🔒/✅) trước khi chọn việc tiếp theo, đừng chỉ tin mục này.
+
+**Đang ở (cập nhật 09/09/2026, phiên `-2f`, TD-0189 chốt lời):** 🔒 **TD-0189 chặng 1 + 2a ĐÓNG,
+chặng 2b CHỜ.** Chặng 1 (`f9e9132`+`7db6d44`+`dd790c4`) dựng `src/tool_d/take_profit.py` — hàm THUẦN
+TP1/TP2/nạng, đơn vị đi qua đúng một hàm `khoang_r_eff()` (`r_eff_plan` là TỈ LỆ, `R_eff` của §5.1 là
+KHOẢNG GIÁ — cùng lớp lỗi `L-Z48c` sinh ra để chặn). Chặng 2a (`5e70781`) dựng vòng quét zone ĐỈNH
+(`_quet_zone_dinh`) — chiến lược trước đó **chỉ** quét zone đáy, TP1 "zone đối diện" không có nguồn
+dữ liệu nào để đọc.
+
+🔴 **PHÁT HIỆN LỚN NHẤT ĐỢT NÀY — §1.3 và §5.1 không thể cùng đúng trên dữ liệu thật (MT-20).**
+Bản đầu vòng quét đỉnh mang lỗi thật (phiên `-94` bắt): hạn dùng 40 nến §1.3 không có hiệu lực với
+zone đỉnh vì mọi lời gọi `zone_hop_le()` trong repo truyền `tuoi_nen=K_XAC_NHAN` (hằng 3), nên vế
+`3 <= 40` không bao giờ `False`. **Cùng một dòng `zone_hop_le` ĐÚNG ở bên đáy và RỖNG ở bên đỉnh** —
+phép đối xứng gãy ở *"khi nào zone được TIÊU THỤ"*, không ở *"zone được NHẬN thế nào"*. Vá xong lại
+lộ ra thứ lớn hơn: đo trên EXPLORE (100 mã, 213.839 nến, 0 trial), zone đỉnh gần nhất **quá hạn ở
+73–75%** số ca (tuổi trung vị **169 nến ≈ 28 ngày**) — áp hạn dùng đẩy tỉ lệ nạng lên **79–87%**,
+biến phân loại L2 (spec dòng 1684, ngưỡng 40%) thành **kết luận biết trước**. Và nạng chính là một
+bội số R cố định — đúng thứ §5.1 viết ra để bác bỏ.
+
+✅ **`DR-D4-06` đã chốt và thi hành** (`0d56d01`+`5392ccf`+`bc1d487`, thi hành `773251f`): §1.3
+**KHÔNG áp** cho zone đối diện — quyết định được KHAI, không phải chốt rỗng. H-4 tách làm **HAI
+số** (căn cứ trong chính câu spec dòng 1684: tiền đề về **khoảng cách**, không về **tuổi**) —
+`ty_le_khong_co_zone` chịu ngưỡng 40%, `ty_le_zone_qua_han` là **PHẢN THỰC** (đo giá của phương án
+cũ trên chính dữ liệu D4, 0 trial). Tuổi zone ghi Decision Log mọi lệnh TP-theo-zone; zone đóng
+băng tại lúc vào lệnh (`order_filled`) cùng kỷ luật `N_full`/`sl` bất biến — TP1 nằm trong
+`(0…3,2R]`, nạng là đúng `1,5R`, tính lại giữa chừng làm mục tiêu nhảy cả hai chiều.
+
+🔑 **Sự cố phụ, đã sinh ra quy ước mới (N12 mục 6):** hai phiên (`-2f`, `-94`) độc lập viết **hai
+file `DR-D4-06`** cho cùng quyết định, cùng lúc — cả hai commit đều sạch theo N12 mục 1-5 (không ai
+nuốt file ai), nhưng vẫn ra **hai nguồn sự thật**. Giải bằng tiêu chí đã dùng ở va chạm TD-0119/
+TD-0120 (định danh máy đọc thắng — bản `-94` mang đường dẫn script bằng chứng). Từ nay: **nhắn
+trước khi mở một tài liệu quyết định mới**, cùng hạng với "nhắn trước khi chạy full suite".
+
+⏳ **Chặng 2b (nối `custom_exit`) CHỜ** — fixture `test_td0187` hiện cho **ĐÚNG 0 zone đỉnh** (chuỗi
+kết thúc bằng đuôi tăng đơn điệu, không sinh đỉnh swing nào có chạm lại trong 3 nến). Phiên `-f4`
+nhận dựng thêm dữ liệu (biết chỗ nối an toàn, vừa neo mốc ở đuôi). `-94` đang nối `san_tool_d()`
+(`DR-D4-05`) vào `ZoneAbsorption.py` — file đã trả tự do, không ai giữ.
+
+📊 **Hai phát hiện khác của phiên `-94`, chưa xử, ghi nợ để trình sau:** `zss_threshold` (tier_b)
+nay điều khiển HAI cơ chế (chất lượng entry *và* mức sẵn có TP) mà kiểm kê DOF vẫn đếm một; và một
+**vách ở TP1** — zone cách đúng `4.0 × R_eff` cho TP1 = 3,2R, không zone thì nạng = 1,5R, mục tiêu
+nhảy 2,1 lần chỉ vì một zone xuất hiện hay không (cùng hình dạng vách 7,5 USDT của TD-0171).
+
+*(Đoạn "Đang ở" cũ bên dưới giữ nguyên làm lịch sử.)*
 
 **Đang ở (cập nhật 09/09/2026, phiên `-f4`):** ✅ **TD-0182 ĐÓNG** — `7c06a8d` (code) +
 `88eaf5f` (TASKS) + `10cb8f2` (research-log). Full suite **1400 passed, 0 failed**.
