@@ -297,11 +297,13 @@ mã EXPLORE**; **chưa ai đo** con số cho pool 102 mã.
 để ràng buộc *"EXPLORE không rò vào pool"* nằm ở **tầng thư mục** chứ không ở kỷ luật con người.
 Tải không tiêu trial (DR-014 chỉ tính *đánh giá cấu hình*); đã cắt và kiểm nằm trọn [T0,T2].
 
-⏳ **Còn treo:** ghi **MT mới** vào `back-end-note.md` mục 7 — khoảng hở giữa *"đo mô tả được phép
-trên CALIB"* (N2) và *"`CTRL_OUTPUT_ALLOWED` chỉ nhận 3 trường của DR-015"* (`registry.py:33`):
-hai quyết định đã chốt va nhau, quy tắc 11 buộc ghi nhận. Phân loại 🟡 — không chặn việc vừa rồi
-(đã đi đường EXPLORE) nhưng **sẽ chặn ca đo mô tả tiếp theo trên dữ liệu pool**. Chờ lệnh
-"chuẩn hóa và lưu" (N9).
+✅ **MT-19 đã ghi** (`d53943d`, lệnh "chuẩn hóa và lưu" 09/09/2026): khoảng hở giữa *"đo mô tả
+được phép trên CALIB"* (N2/MT-02) và *"`CTRL_OUTPUT_ALLOWED` chỉ nhận 3 trường của DR-015"*
+(`registry.py:33`) — hai quyết định đã chốt va nhau, ghi nhận theo quy tắc 11, **không tự chọn
+bên**. Phân loại 🟡 vì ca vừa rồi đi được đường vòng hợp lệ (EXPLORE, 0 trial), **nhưng ca đo mô
+tả tiếp theo cần chính 102 mã pool sẽ CHẶN CỨNG** — khi đó phải chọn: mở rộng
+`CTRL_OUTPUT_ALLOWED` bằng một DR, hay tiêu 1 suất trial trong 114. 🔴 **Không tự nới** — đó là
+danh sách CHO PHÉP, nới một lần là mất luôn tính fail-closed.
 
 *(Đoạn "Đang ở" cũ bên dưới giữ nguyên làm lịch sử.)*
 
