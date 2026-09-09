@@ -66,12 +66,32 @@
 > KHÔNG phải tham số tín hiệu chiến lược, nên không cần chốt bằng DR và không tính vào N_ĐĂNG_KÝ.
 > ✅ **Đã xác nhận 09/09/2026** (OQ-09, TD-0196) — dùng đúng đề xuất ban đầu, không đổi số.
 
-## 5. Bảng nghiệm thu — CHƯA chạy ở D0-PRE
+## 5. Bảng nghiệm thu — TD-0197, 09/09/2026
 
-Bảng nghiệm thu Mục 5 (R1-R12, `template/api-integration-rules.md`) chỉ chạy được sau khi có code
-gọi mạng thật — D0-PRE chưa viết `api_client`/lớp adapter Binance nào (đúng N2: cấm chạm dữ liệu
-trước khi cổng D0-PRE đóng). Sẽ chạy nghiệm thu này ở Khối 8 khi TD-0080 (verify OI) và TD-0083 (chốt
-pool) thực sự gọi mạng lần đầu.
+Chạy lần đầu sau khi TD-0197 nối R2/R3 vào `src/tool_d/api_client/binance_public.py` (đã có gọi
+mạng thật từ TD-0080/82/83/84/116/162). Reviewer chạy trong **context sạch** (subagent riêng, chỉ
+đọc code + Mục 4, không đọc lịch sử chat/thiết kế — đúng rule 18). Sau khi reviewer trả 2 FAIL 🔴
+(R5, R10), builder vá tại chỗ — hai dòng đó đánh dấu **PASS (đã vá sau khi nghiệm thu, CHƯA qua
+nghiệm thu clean-context lần hai)**, phân biệt với các dòng PASS nguyên bản của reviewer.
+
+| Mã | Kiểm | Mức | Kết quả | Bằng chứng |
+|----|------|-----|---------|------------|
+| R1 | Số file gọi HTTP trực tiếp = 1 | 🔴 | PASS | Grep toàn `src/`+`entrypoints/` chỉ khớp `src/tool_d/api_client/binance_public.py` |
+| R2 | Có limiter + vượt trần thì CHỜ (không skip) | 🔴 | PASS | `_tran_goi_theo_phut()` đọc `tier_c.api_calls_per_min` qua `resolve()` (`binance_public.py:81-88`); `_cho_nhip_goi()` (dòng 107-114) `time.sleep()` rồi VẪN gọi tiếp, không skip |
+| R3 | Có ngưỡng N + backoff tăng dần + max | 🔴 | PASS | `risk_supervisor.py`: `NGUONG_BREAKER_MAC_DINH=5`, `BACKOFF_KHOI_DIEM_S=1.0`/`BACKOFF_TOI_DA_S=60.0` (dòng 47-49), `_backoff_ke_tiep()` nhân đôi kẹp trần (dòng 152-154), nối qua `_kiem_tra_breaker()` (`binance_public.py:91-104`) |
+| R4 | Bảng mã lỗi ≥ 3 nhóm, xử lý tách nhánh | 🔴 | PASS | `phan_loai_ma_loi()` trả 4 nhãn (`risk_supervisor.py:98-121`), `ghi_nhan_ket_qua()` xử khác nhau từng nhóm (dòng 178-198) |
+| R5 | Mọi vòng lặp có max vòng + timeout tổng | 🔴 | **PASS (đã vá)** | Reviewer FAIL ban đầu: `latency_samples_ms()` không trần `n`, không hạn chót tổng. Vá: `MAX_MAU_LATENCY=200` (`binance_public.py:59`) + `han_chot_s = time.monotonic() + n*timeout`, kiểm mỗi vòng, raise nếu vượt — không trả kết quả một phần (dòng 267-268, 286-291). Test: `test_n_vuot_tran_thi_raise_khong_goi_mang`, `test_vuot_han_chot_tong_thi_dung_khong_tra_ket_qua_mot_phan` |
+| R6 | Có ENV kill switch | 🟡 | FAIL | `binance_public.py`/`risk_supervisor.py` không tự kiểm ENV kill switch nào trước khi gọi mạng đọc dữ liệu công khai (`dry_run` là của engine đặt lệnh Freqtrade, khác phạm vi) — ghi tech-debt, xem `TASKS.md` TD-0197 |
+| R7 | Có 3 môi trường, mặc định MOCK | 🔴 | N/A (giai đoạn hiện tại) | Chỉ endpoint đọc công khai, không có sandbox cho market data (docstring dòng 12-20). Endpoint đặt lệnh chưa có code — **phải nghiệm thu lại từ đầu ở D3.5** khi viết code thật, không coi N/A hôm nay là còn hiệu lực |
+| R8 | Log gộp lỗi lặp + summary định kỳ | 🟡 | FAIL | Không có `logging`/`print` nào trong `binance_public.py`/`risk_supervisor.py` — ghi tech-debt |
+| R9 | Cờ idempotent; non-idempotent có khoá chống trùng | 🔴 | PASS (phạm vi hiện tại) | Mục 4.2 đủ cờ; 5 endpoint GET đã có code đều idempotent; 3 endpoint đặt/sửa/huỷ lệnh chưa có code — **nghiệm thu lại ở D3.5** |
+| R10 | Không secret trong source, .gitignore đúng, không log secret | 🔴 | **PASS (đã vá)** | Reviewer FAIL ban đầu: thiếu `.env.example` dù `.env.binance` (giá trị thật, đã gitignore đúng) tồn tại ở gốc repo. Vá: tạo `.env.example` (chỉ tên biến `BINANCE_API_KEY`/`BINANCE_API_SECRET`, `.gitignore:22` đã có `!.env.example`) |
+| R11 | Timeout tường minh từng request | 🔴 | PASS | `DEFAULT_TIMEOUT_S=10.0`, mọi hàm truyền `timeout=` tường minh vào `urlopen`/`HTTPSConnection` |
+| R12 | Bộ đếm call + ngưỡng cảnh báo | 🟡 | FAIL | Mục 4.4 khai "cảnh báo ở 80% trần" nhưng không có bộ đếm/cảnh báo nào trong code — ghi tech-debt |
+
+**Kết luận:** 0 dòng FAIL ở mức 🔴 (điều kiện qua gate, template Mục 5) — **QUA GATE**. Ba dòng 🟡 FAIL
+(R6/R8/R12) ghi `tech-debt` vào `TASKS.md` (TD-0197), không chặn. R7/R9 giữ N/A/PASS **có điều kiện**,
+bắt buộc nghiệm thu lại trong context sạch riêng khi D3.5 viết code đặt lệnh thật.
 
 ## 6. Lịch sử thay đổi
 
@@ -79,3 +99,4 @@ pool) thực sự gọi mạng lần đầu.
 |-----------|------|----------|
 | 1.0 | 06/09/2026 | Khởi tạo (TD-0079). Điền Mục 4.1-4.4 cho Binance USDⓈ-M Futures — cả nhóm đọc dữ liệu (D0-PRE) và nhóm đặt lệnh (D3.5+, điền sẵn vì là quyết định nền tảng một lần). Hai ngưỡng breaker/backoff đánh dấu "đề xuất", chưa chốt bằng DR |
 | 1.1 | 09/09/2026 | OQ-09 xác nhận (TD-0196): ngưỡng breaker 5 lỗi liên tiếp, backoff 1s→2s→4s→…→60s — giữ đúng số đề xuất ban đầu. Bắt đầu implement `src/tool_d/risk_supervisor.py` (khung THUẦN — phân loại lỗi theo Mục 4.3, state machine circuit breaker, khai lại có chủ đích §6.6(2)). Chưa có tiến trình chạy thật (dry-run/live) — Mục 5 (bảng nghiệm thu) vẫn CHƯA chạy |
+| 1.2 | 09/09/2026 | TD-0197: nối R2 (rate limit) + R3 (circuit breaker) vào `binance_public.py`. Chạy Bảng nghiệm thu Mục 5 lần đầu (reviewer context sạch) — 2 FAIL 🔴 (R5, R10) đã vá; 3 FAIL 🟡 (R6, R8, R12) ghi tech-debt vào `TASKS.md`, không chặn gate. R7/R9 N/A/PASS có điều kiện, chờ nghiệm thu lại ở D3.5 |

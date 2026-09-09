@@ -9,18 +9,30 @@ là "đạt" cho phát hiện thật).
 from __future__ import annotations
 
 import json
+from datetime import date
 from unittest.mock import MagicMock, patch
+from urllib.error import HTTPError
 
 import pytest
 
 from tool_d.api_client.binance_public import (
     BASE_URL,
+    AggTradesNotFoundError,
+    BinanceBreakerMoError,
     BinancePrivateApiError,
     BinancePublicApiError,
     _sign,
+    _tran_goi_theo_phut,
+    dat_lai_trang_thai_mang_cho_kiem,
+    get_exchange_info,
     get_open_interest_hist,
     latency_samples_ms,
+    tai_dump_agg_trades,
 )
+
+
+def _http_error(ma_http: int) -> HTTPError:
+    return HTTPError(url="https://fapi.binance.com/x", code=ma_http, msg="mô phỏng", hdrs=None, fp=None)
 
 
 def _fake_response(payload: list[dict]) -> MagicMock:
@@ -216,3 +228,160 @@ class TestLatencySamplesMs:
     def test_n_khong_hop_le_thi_raise(self) -> None:
         with pytest.raises(ValueError):
             latency_samples_ms(n=0, signed=False, reuse_connection=True)
+
+    def test_n_vuot_tran_thi_raise_khong_goi_mang(self) -> None:
+        with patch("http.client.HTTPSConnection") as mock_conn:
+            with pytest.raises(ValueError, match="MAX_MAU_LATENCY|<="):
+                latency_samples_ms(n=201, signed=False, reuse_connection=True)
+        mock_conn.assert_not_called()
+
+    def test_vuot_han_chot_tong_thi_dung_khong_tra_ket_qua_mot_phan(self) -> None:
+        # Chuỗi monotonic(): [han_chot=0+50] [check vòng 1: 0<=50 qua]
+        # [t0 vòng 1] [elapsed vòng 1] [check vòng 2: vượt 50 -> raise].
+        # Mẫu đầu vẫn lấy được, nhưng hàm phải RAISE — không trả về 1 mẫu
+        # như thể đó là câu trả lời đủ (N6, cấm kết quả một phần âm thầm).
+        with patch(
+            "http.client.HTTPSConnection", return_value=_fake_conn()
+        ), patch(
+            "time.monotonic", side_effect=[0.0, 0.0, 1.0, 2.0, 1_000_000.0]
+        ):
+            with pytest.raises(BinancePrivateApiError, match="vượt timeout tổng"):
+                latency_samples_ms(n=5, signed=False, reuse_connection=True, timeout=10.0)
+
+
+class TestGuardMangTD0197:
+    """R2 (rate limit theo `tier_c.api_calls_per_min`) + R3 (circuit
+    breaker) nối vào `_goi_json_cong_khai` — điểm nghẽn chung của 5 hàm
+    GET/JSON. `tests/conftest.py` reset trạng thái TRƯỚC MỖI test."""
+
+    def test_tran_doc_tu_config_khong_hardcode(self) -> None:
+        # config/tool_d_config.yaml thật ghi 30 (§6.6(3), LD-23) — đo
+        # trực tiếp, không giả lập, đúng tinh thần "đo rẻ hơn đoán".
+        assert _tran_goi_theo_phut() == 30.0
+
+    def test_lan_goi_dau_khong_cho(self) -> None:
+        with patch("time.sleep") as mock_sleep, patch(
+            "tool_d.api_client.binance_public.urllib.request.urlopen"
+        ) as mock_urlopen:
+            mock_urlopen.return_value = _fake_response({"ok": True})
+            get_exchange_info()
+        mock_sleep.assert_not_called()
+
+    def test_lan_goi_thu_hai_giu_dung_khoang_cach_toi_thieu(self) -> None:
+        with (
+            patch("tool_d.api_client.binance_public._tran_goi_theo_phut", return_value=30.0),
+            patch("time.monotonic", side_effect=[0.0, 0.5, 0.5]),
+            patch("time.sleep") as mock_sleep,
+            patch("tool_d.api_client.binance_public.urllib.request.urlopen") as mock_urlopen,
+        ):
+            mock_urlopen.return_value = _fake_response({"ok": True})
+            get_exchange_info()
+            get_exchange_info()
+        mock_sleep.assert_called_once()
+        assert mock_sleep.call_args[0][0] == pytest.approx(1.5, abs=1e-6)  # 60/30 - 0.5
+
+    def test_breaker_mo_sau_du_nguong_loi_429_lien_tiep(self) -> None:
+        with patch("time.sleep"), patch(
+            "tool_d.api_client.binance_public.urllib.request.urlopen"
+        ) as mock_urlopen:
+            mock_urlopen.side_effect = _http_error(429)
+            for _ in range(5):  # NGUONG_BREAKER_MAC_DINH = 5, không có env override trong test
+                with pytest.raises(BinancePublicApiError):
+                    get_exchange_info()
+            mock_urlopen.reset_mock(side_effect=True)
+            with pytest.raises(BinanceBreakerMoError):
+                get_exchange_info()
+        # Breaker chặn TRƯỚC khi gọi mạng — gọi tiếp trong lúc bị cấm chỉ
+        # kéo dài án phạt (bài học Tool A).
+        mock_urlopen.assert_not_called()
+
+    def test_thanh_cong_reset_bo_dem_loi(self) -> None:
+        with patch("time.sleep"), patch(
+            "tool_d.api_client.binance_public.urllib.request.urlopen"
+        ) as mock_urlopen:
+            mock_urlopen.side_effect = _http_error(429)
+            for _ in range(4):  # dưới ngưỡng 5
+                with pytest.raises(BinancePublicApiError):
+                    get_exchange_info()
+            mock_urlopen.side_effect = None
+            mock_urlopen.return_value = _fake_response({"ok": True})
+            get_exchange_info()  # thành công — phải reset bộ đếm về 0
+            mock_urlopen.side_effect = _http_error(429)
+            for _ in range(4):  # lại dưới ngưỡng — nếu bộ đếm KHÔNG reset thì vòng này mở breaker
+                with pytest.raises(BinancePublicApiError):
+                    get_exchange_info()
+            mock_urlopen.side_effect = None
+            mock_urlopen.return_value = _fake_response({"ok": True})
+            get_exchange_info()  # nếu breaker lỡ mở thì dòng này raise BinanceBreakerMoError
+
+    def test_418_chan_vinh_vien_khong_tu_go(self) -> None:
+        with patch("tool_d.api_client.binance_public.urllib.request.urlopen") as mock_urlopen:
+            mock_urlopen.side_effect = _http_error(418)
+            with pytest.raises(BinancePublicApiError):
+                get_exchange_info()
+        with pytest.raises(BinanceBreakerMoError):
+            get_exchange_info()
+
+    def test_loi_khong_co_http_status_khong_dung_breaker(self) -> None:
+        # URLError/TimeoutError không có mã HTTP — không phân loại được
+        # (đúng chữ `phan_loai_ma_loi()`), nên KHÔNG cộng vào bộ đếm breaker.
+        with patch("time.sleep"), patch(
+            "tool_d.api_client.binance_public.urllib.request.urlopen"
+        ) as mock_urlopen:
+            mock_urlopen.side_effect = TimeoutError("mô phỏng timeout")
+            for _ in range(10):  # nhiều hơn ngưỡng 5, nhưng không có http_status
+                with pytest.raises(BinancePublicApiError):
+                    get_exchange_info()
+            mock_urlopen.side_effect = None
+            mock_urlopen.return_value = _fake_response({"ok": True})
+            get_exchange_info()  # breaker KHÔNG mở — nếu mở sẽ raise ở đây
+
+    def test_dat_lai_trang_thai_cho_kiem_xoa_sach_breaker(self) -> None:
+        with patch("tool_d.api_client.binance_public.urllib.request.urlopen") as mock_urlopen:
+            mock_urlopen.side_effect = _http_error(418)
+            with pytest.raises(BinancePublicApiError):
+                get_exchange_info()
+        dat_lai_trang_thai_mang_cho_kiem()
+        with patch("tool_d.api_client.binance_public.urllib.request.urlopen") as mock_urlopen:
+            mock_urlopen.return_value = _fake_response({"ok": True})
+            get_exchange_info()  # không raise — breaker đã sạch
+
+
+class TestTaiDumpAggTradesBreaker:
+    """`tai_dump_agg_trades()` (host phụ `data.binance.vision`) dùng
+    CHUNG breaker với `_goi_json_cong_khai`, nhưng KHÔNG nhận giãn nhịp
+    `tier_c.api_calls_per_min` (trần đó chỉ công bố cho `fapi.binance.com`,
+    không có trần tương đương công bố cho host phụ này)."""
+
+    def test_cache_hit_khong_dung_toi_breaker(self, tmp_path) -> None:
+        dich = tmp_path / "BTCUSDT-aggTrades-2024-06-01.zip"
+        dich.write_bytes(b"noi dung gia")
+        with patch("http.client.HTTPSConnection") as mock_conn:
+            ket_qua = tai_dump_agg_trades(
+                symbol="BTCUSDT", ngay=date(2024, 6, 1), thu_muc_cache=tmp_path
+            )
+        assert ket_qua == dich
+        mock_conn.assert_not_called()
+
+    def test_breaker_dang_mo_thi_khong_mo_ket_noi_moi(self, tmp_path) -> None:
+        with patch("tool_d.api_client.binance_public.urllib.request.urlopen") as mock_urlopen:
+            mock_urlopen.side_effect = _http_error(418)
+            with pytest.raises(BinancePublicApiError):
+                get_exchange_info()  # mở breaker DUNG_HAN qua đường fapi
+        with patch("http.client.HTTPSConnection") as mock_conn:
+            with pytest.raises(BinanceBreakerMoError):
+                tai_dump_agg_trades(symbol="BTCUSDT", ngay=date(2024, 6, 1), thu_muc_cache=tmp_path)
+        mock_conn.assert_not_called()
+
+    def test_404_khong_dung_breaker(self, tmp_path) -> None:
+        conn_404 = _fake_conn(status=404, body=b"not found")
+        with patch("http.client.HTTPSConnection", return_value=conn_404):
+            with pytest.raises(AggTradesNotFoundError):
+                tai_dump_agg_trades(symbol="BTCUSDT", ngay=date(2024, 6, 1), thu_muc_cache=tmp_path)
+        # 404 là DỮ KIỆN (không có dump), không phải lỗi mạng — breaker còn sạch:
+        conn_200 = _fake_conn(status=200, body=b"noi dung that")
+        with patch("http.client.HTTPSConnection", return_value=conn_200):
+            ket_qua = tai_dump_agg_trades(
+                symbol="ETHUSDT", ngay=date(2024, 6, 2), thu_muc_cache=tmp_path
+            )
+        assert ket_qua.exists()
