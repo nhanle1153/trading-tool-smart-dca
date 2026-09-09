@@ -108,7 +108,7 @@ class TestBaKetCuc:
 
 class TestSoPaired:
     def test_paired_thang_khi_hieu_on_dinh(self) -> None:
-        """B hơn A đúng 0,30 R ở MỌI lệnh ⇒ std(d) = 0 ⇒ thuế = 0."""
+        """B hơn A đúng 0,30 R_realized ở MỌI lệnh ⇒ std(d) = 0 ⇒ thuế = 0."""
         a = [0.1, -1.0, 0.5, 2.0, -1.0, 0.3]
         b = [x + 0.30 for x in a]
         r = so_paired(r_a=a, r_b=b, n_a=len(a), n_b=len(b), ty_le_vuot=0.20)

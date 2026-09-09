@@ -9,8 +9,8 @@ Gate hiện gộp cả hai thành *"KHÔNG VÀO LIVE"*. Hậu quả cụ thể, 
 định: nếu Nhánh 2 trả *"Z3 không vượt Z0 ≥ 20%"* và bị đọc thành FAIL thì
 hệ quả là **bỏ DCA vĩnh viễn** — dựa trên một phép đo mà chính công thức
 của dự án chứng minh là không có khả năng phát hiện mức hiệu ứng đang hỏi
-(`DR-D4-09` §4: ở `n = 40`, phát hiện được "vượt 20% của 0,10 R" cần
-`n ≈ 7.400`).
+(`DR-D4-09` §4: ở `n = 40`, phát hiện được "vượt 20% của 0,10 R_realized"
+cần `n ≈ 7.400`).
 
 ════ "Thuế nhiễu" — một tên gọi, không phải một công thức mới ════
 
@@ -182,7 +182,7 @@ def so_paired(
 
     d = [float(b) - float(a) for a, b in zip(r_a, r_b)]
     if any(x != x for x in d):
-        raise KetCucError("có NaN trong R — 'chưa đo' KHÁC 'đo được' (N6)")
+        raise KetCucError("có NaN trong R_realized — 'chưa đo' KHÁC 'đo được' (N6)")
     mean_d = sum(d) / n
     var_d = sum((x - mean_d) ** 2 for x in d) / (n - 1)
     std_d = math.sqrt(var_d)
