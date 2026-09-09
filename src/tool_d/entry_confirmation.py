@@ -36,10 +36,60 @@ nhập làm một.
 `v_min` = `tier_b.v_min`, hiện **FROZEN ở 1.0** (DR-D4-03) — mốc trung
 tính của tỉ lệ so với chính trung bình 20 kỳ của nó, **chỗ giữ CHƯA
 CALIBRATE**. Đọc kèm mọi kết quả có `Z0` tham gia.
+
+════ TD-0193 — `quet_xac_nhan_zone()`: chuỗi lần chạm trong vòng đời zone ════
+
+`tim_xac_nhan_entry()` ở trên trả lời cho MỘT lần chạm. §3.3b/MT-22 còn
+cần câu hỏi rộng hơn: một zone có thể bị chạm NHIỀU lần trong vòng đời —
+mỗi lần là một cơ hội xác nhận riêng, với cửa sổ chờ 3 nến riêng.
+
+🔴 **MT-22 (09/09/2026, chủ dự án chốt) — Phương án A: cửa sổ chờ xác
+nhận mở ĐÚNG MỘT LẦN, ở lần chạm đầu tiên.** Trượt ở lần đó thì BỎ LƯỢT
+zone này VĨNH VIỄN cho giao dịch thật — không quay lại tìm ở lần chạm
+xa hơn. Lý do chọn A thay vì "mở lại mỗi lần chạm" (B): đo trên 4.944
+zone thật (EXPLORE, `docs/du-lieu-do/do_mt22_a_vs_b.py`) A cho 43,1% zone
+vào lệnh, B cho 81,2% — B mua thêm gần gấp đôi số lần thử trên CÙNG một
+zone, và hướng sai của B (vào lệnh nhờ thử nhiều lần) nguy hiểm hơn
+hướng sai của A (bỏ lỡ).
+
+**Ghi PHẢN THỰC cho B — CHỈ để đếm, KHÔNG BAO GIỜ phát tín hiệu thật.**
+Điều kiện mở lại BẤT ĐỐI XỨNG (chốt cùng MT-22, sau khi `-f4` bác bản đầu
+"0 trial cho cả hai chiều"): *loại B ra* — làm được, 0 trial, chỉ cần
+ĐẾM (phần B thêm quá ít, hoặc dồn vào lần chạm muộn khi zone gần hết
+hạn). *Nhận B vào* — KHÔNG có đường tắt, phải trả một suất trial B1
+đăng ký trước; con số phản thực là CẬN TRÊN của B (chạy trên đường A nên
+không có các vị thế mà B đã mở, bỏ qua cổng kết nạp danh mục §6.8f và
+ảnh hưởng lên `mult_corr`/`mult_deploy` của lệnh sau), không phải bằng
+chứng expectancy.
+
+════ Diễn giải, ghi ra để cãi lại được ════
+
+1. **Mốc cho (b) ở lượt sau = (giá, RSI) TẠI NẾN CHẠM** của lượt trước
+   (bar bắt đầu lượt, `t`), KHÔNG phải tại nến nào trong cửa sổ xác nhận
+   của lượt đó. (b) đo hình dạng giá GIỮA HAI LẦN CHẠM — quan hệ đó
+   không đổi theo việc lượt trước có tìm được xác nhận hay không (đúng
+   khuôn "bất kỳ", không phải "đã xác nhận").
+2. **"Chạm"** = một CỤM nến liên tiếp nằm trong `[zone_low, zone_high]`,
+   kết thúc khi giá RA khỏi khoảng đó — cùng khái niệm cụm của
+   `touch_count()`, nhưng dùng lại VỊ TỪ trần (`zone_low <= gia <=
+   zone_high`), KHÔNG dùng lại hàm đó: `touch_count()` cần biết điểm
+   BẬT RA để đếm cụm ĐÃ HOÀN TẤT — tức đọc nến SAU — sai ngữ cảnh câu
+   "tại `t` có phải điểm BẮT ĐẦU một lượt chạm không" mà hàm này cần trả
+   lời ngay tại `t`, không nhìn về sau.
+3. **`den`** (biên cứng của cửa sổ quét) do TẦNG GỌI truyền, hàm này
+   không tự suy ra. Khuyến nghị dùng đúng `NGUONG_TUOI_ZONE_TOI_DA`
+   (`zone_strength.py`, §1.3, 40 nến 4H) quy đổi sang 1H — vì
+   `zone_hop_le()` hiện gọi với `tuoi_nen=K_XAC_NHAN` (hằng 3), cùng
+   tautology mà `MT-19`/`TD-0189` bắt được ở zone TP (`3 <= 40` luôn
+   đúng, không kiểm được tuổi thật). Khác với zone TP (nơi §1.3 áp dụng
+   có tranh cãi, thành `MT-20`/`DR-D4-06`), với zone ENTRY thì §1.3 là
+   đúng đối tượng nó viết ra để áp — không cần diễn giải riêng.
 """
 
 from __future__ import annotations
 
+import math
+from dataclasses import dataclass
 from typing import Literal, Sequence
 
 SO_NEN_CHO_MAC_DINH = 3
@@ -150,3 +200,101 @@ def tim_xac_nhan_entry(
             ):
                 return j
     return None
+
+
+@dataclass(frozen=True)
+class KetQuaQuetXacNhanZone:
+    """Kết quả `quet_xac_nhan_zone()` — xem docstring module (TD-0193)."""
+
+    nen_xac_nhan_that: int | None
+    """Nến xác nhận theo Phương án A (MT-22, đang thi hành). `None` =
+    lần chạm đầu tiên KHÔNG xác nhận trong cửa sổ chờ ⇒ BỎ LƯỢT, zone
+    không giao dịch nữa dù giá có quay lại chạm sau đó."""
+
+    nen_xac_nhan_phan_thuc: int | None
+    """Nến xác nhận NẾU chạy Phương án B (mọi lượt chạm, tới khi thành
+    công). CHỈ để ghi sổ — KHÔNG BAO GIỜ dùng để phát tín hiệu thật.
+    `None` = không lượt chạm nào trong toàn vòng đời zone xác nhận
+    được."""
+
+    lan_cham_phan_thuc: int
+    """Lượt chạm thứ mấy (1-based) mà phản thực xác nhận. `0` nếu
+    `nen_xac_nhan_phan_thuc is None`. `== 1` nghĩa là B trùng A (không
+    mua thêm gì); `> 1` nghĩa là B mua thêm nhờ được thử lại — đây là
+    con số đáng đếm cho điều kiện mở lại BẤT ĐỐI XỨNG của MT-22."""
+
+
+def quet_xac_nhan_zone(
+    mo: Sequence[float],
+    cao: Sequence[float],
+    thap: Sequence[float],
+    dong: Sequence[float],
+    rsi: Sequence[float],
+    volume: Sequence[float],
+    volume_ma: Sequence[float],
+    *,
+    zone_low: float,
+    zone_high: float,
+    tu: int,
+    den: int,
+    v_min: float,
+    loai: Literal["day", "dinh"],
+    lan_cham_truoc_khi_xac_nhan: tuple[float, float] | None,
+    so_nen_cho_toi_da: int = SO_NEN_CHO_MAC_DINH,
+) -> KetQuaQuetXacNhanZone:
+    """Quét TOÀN BỘ vòng đời chờ xác nhận của MỘT zone trên `[tu, den)`.
+
+    §3.3b/MT-22 Phương án A: chỉ lần chạm ĐẦU TIÊN quyết định
+    `nen_xac_nhan_that`. Vòng lặp vẫn tiếp tục sau đó — không vì mục
+    đích giao dịch thật, mà để ghi `nen_xac_nhan_phan_thuc` (Phương án
+    B). `nen_xac_nhan_that` được gán ĐÚNG MỘT LẦN, ở lượt đầu, và không
+    đổi dù hàm quét xa tới đâu sau đó (bất biến — có test ghim).
+
+    `zone_low <= gia_bien_muc[t] <= zone_high` là vị từ CHẠM — xem diễn
+    giải #2 trong docstring module về vì sao không dùng `touch_count()`.
+    """
+    gia_bien_muc = thap if loai == "day" else cao
+    lan_cham_truoc = lan_cham_truoc_khi_xac_nhan
+    lan = 0
+    nen_xac_nhan_that: int | None = None
+    nen_xac_nhan_phan_thuc: int | None = None
+    lan_cham_phan_thuc = 0
+
+    t = tu
+    while t < den:
+        if not (zone_low <= gia_bien_muc[t] <= zone_high):
+            t += 1
+            continue
+
+        # `t` là điểm BẮT ĐẦU một lượt chạm mới.
+        lan += 1
+        c = tim_xac_nhan_entry(
+            mo, cao, thap, dong, rsi, t,
+            loai=loai, bat_dieu_kien_c=True,
+            volume=volume, volume_ma=volume_ma, v_min=v_min,
+            lan_cham_truoc=lan_cham_truoc, so_nen_cho_toi_da=so_nen_cho_toi_da,
+        )
+        if lan == 1:
+            nen_xac_nhan_that = c  # Phương án A: gán MỘT LẦN, không đổi nữa.
+        if c is not None:
+            nen_xac_nhan_phan_thuc = c
+            lan_cham_phan_thuc = lan
+            break
+
+        # Mốc cho lượt sau — TẠI NẾN CHẠM `t` (diễn giải #1). NaN thì
+        # KHÔNG raise (quét lịch sử dài, một nến hỏng giữa chừng không
+        # được làm hỏng toàn vòng quét) — chỉ đơn giản không cập nhật
+        # được mốc, lượt sau thiếu mốc cho (b).
+        if rsi[t] == rsi[t]:  # not NaN
+            lan_cham_truoc = (gia_bien_muc[t], rsi[t])
+
+        # Nhảy qua HẾT lượt chạm hiện tại (tới khi giá RA khỏi zone)
+        # trước khi tìm lượt kế — một cụm liên tiếp chỉ là MỘT lượt.
+        while t < den and (zone_low <= gia_bien_muc[t] <= zone_high):
+            t += 1
+
+    return KetQuaQuetXacNhanZone(
+        nen_xac_nhan_that=nen_xac_nhan_that,
+        nen_xac_nhan_phan_thuc=nen_xac_nhan_phan_thuc,
+        lan_cham_phan_thuc=lan_cham_phan_thuc,
+    )
