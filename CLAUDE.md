@@ -314,6 +314,68 @@ nhảy 2,1 lần chỉ vì một zone xuất hiện hay không (cùng hình dạ
 
 *(Đoạn "Đang ở" cũ bên dưới giữ nguyên làm lịch sử.)*
 
+**Đang ở (cập nhật 09/09/2026 tối, phiên `-f4`):** 🔴 **TD-0184 BỊ CHẶN — 3/9 arm không đo được
+gì, và hai trong ba là LỖI NỐI.** Quét cả 9 arm trên 48 mã EXPLORE (0 trial,
+`docs/du-lieu-do/dg2-explore-quet-arm.json`):
+
+🔴 **`Z0` = `Z1` = `Z0-V1`, TRÙNG KHÍT TỪNG LỆNH** (83/83, so theo mã + giờ mở + số tranche + giờ
+đóng, **0 lệch**) — vì **công tắc của chúng chưa bao giờ được nối vào chiến lược**. Đếm trong
+`ZoneAbsorption.py`: `entry_confirmation`/`tim_xac_nhan_entry`/`bat_dieu_kien_c`/`sl_neo_atr`/
+`CHE_DO_SL_THEO_ARM` = **0 lần**; đối chứng `danh_gia_tat_ca` 3 · `cong_ap_dung` 2 ·
+`duoc_them_tranche` 3. ⇒ **MT-21**, và `TD-0192` (nối Z1, `-2f` giữ) + `TD-0193` (nối §3.3b,
+`-94` giữ).
+
+🔑 **PHẢI phân biệt HAI loại "arm trùng nhau" — cách xử trái ngược:** `Z1`/`Z0-V1` ≡ `Z0` là **LỖI
+CÀI ĐẶT** (sửa được); `Z2` ≡ `Z3` là **PHÁT HIỆN VỀ DỮ LIỆU** (DG5 có nối nhưng không ràng buộc
+lần nào — không có gì để sửa). 🔴 Cơ chế tôi đoán đầu (*"`v_min = 1.0` trung tính"*) **SAI** — `-94`
+đọc mã và bác: `v_min` **chưa từng được đọc** trên đường chạy. Hai giả thuyết dẫn tới hai hành động
+khác nhau: nếu "trung tính" thì siết `v_min` tách được arm; nếu "không hề gọi" thì đổi `v_min`
+**không làm gì cả**.
+
+✅ **TD-0191 / DR-D4-07 (`9599d24` → `a7c5248` → `ebc5089`)** — gỡ được 1 trong 3 chỗ:
+`notional_co_dinh_usdt` (đang `null` ⇒ `Z0-S1` sinh **0 lệnh**) thay bằng `notional_ref_r_eff:
+0.03`, notional thành **đại lượng dẫn xuất** `rho_pct/100 × E_D / ref`. **Z0-S1: 0 → 83 lệnh.**
+Full suite **1437 passed**. `N` giữ **114**, rào DSR **3,0777**, **0 trial** (khoá thuộc `tier_c`,
+chưa từng được đếm — tiền lệ DR-D4-02).
+
+🔴 **DẢI `R_eff` "0,9–3,0%" DÙNG KHẮP CÁC BẢNG PHÂN TÍCH LÀ SỐ VIẾT LÚC THIẾT KẾ, KHÔNG PHẢI ĐO.**
+Đo 83 lệnh Z0: min **1,303%** · P10 **2,073%** · **median 3,028%** · HM **2,868%**. **Zone 0,9%
+không xuất hiện lần nào** ⇒ cột lạc quan nhất của `min-notional-check.md` mô tả một chế độ **không
+tồn tại** (`-94` đã sửa, `c549522`). Vì thế `R_ref` chọn theo trung bình **ĐIỀU HOÀ** (N tỉ lệ
+`1/R_eff`), không phải "giữa dải" — đề xuất đầu 1,5% của tôi **bị chính phép đo bác**, nó cho
+`Z0-S1` vào lệnh gấp đôi `Z0`.
+
+🔑 **HẠNG PASS RỖNG THỨ BA — do CHỌN SAI BẤT BIẾN.** Phá `TD-0191` về hằng số cứng 300 USDT → 4 ca
+đỏ, **nhưng ca *"không phụ thuộc `R_eff`"* của TD-0183 VẪN XANH** (một hằng số dĩ nhiên thoả bất
+biến ấy). Bất biến **đúng**; nó chỉ không phân biệt được thứ cần phân biệt. Khác *lớp canh cùn* và
+khác *chĩa nhầm hướng*. Kèm **"ảnh trong gương của PASS RỖNG"** (`-94` đặt tên): chặn nhầm im lặng
+theo chiều **an toàn**, hậu quả duy nhất là **một phép đo không bao giờ chạy** — không để lại dấu
+vết nào để nghi ngờ, và không ai đi kiểm một chốt vì nó quá nghiêm.
+
+🔴 **SÁU LẦN TÔI PHÁT BIỂU VƯỢT QUÁ PHẠM VI ĐÃ ĐO, TRONG MỘT BUỔI** — đòn bẩy · *"0 SizingError"*
+thiếu nhãn sàn nào · áp MT-19 nhầm câu hỏi · log-level · *"p2/p3/sl/R_eff đều phụ thuộc p1"* (chỉ
+`r_eff_plan`) · *"trạng thái đã ghi đủ trong CLAUDE.md"* (không có dòng nào). **Không cái nào sai ở
+phép đo — tất cả sai ở NHÃN dán lên phép đo**, và **không lớp canh nào của dự án nhìn thấy loại
+này**; cả sáu đều do phiên khác (hoặc một lần tự kiểm) bắt. Ngược lại: mỗi khi ĐO thay vì SUY, kết
+quả đứng vững **kể cả khi nó bác chính đề xuất của tôi**. Chi tiết `docs/research-log.md` 09/09.
+
+⏳ **HAI CÂU CHẶN, CHỜ CHỦ DỰ ÁN:**
+1. **MT-22** — spec dòng 1075 nói cửa sổ xác nhận entry mở khi giá chạm **LẦN ĐẦU**, nhưng điều
+   kiện (b) dòng 1082 so với *"lần chạm gần nhất **trước đó**"* ⇒ ở lần chạm đầu **không có mốc
+   so** ⇒ **(b) là code chết**, entry rút về `(a VÀ c)`. Hai phiên đọc độc lập ra cùng chỗ. Cả hai
+   nghiêng *"mỗi lần chạm"* nhưng **từ chối tự chọn** (trái chữ spec, quy tắc 11). 🔴 Đã chốt
+   **KHÔNG code hai chiều sau một cờ**: làm thế biến một **DIỄN GIẢI** thành một **THAM SỐ**, rồi
+   ai đó thử cả hai và chọn cái đẹp hơn — dò cấu hình **trốn sổ trial**.
+2. **MT-19** — đo phân bố `R_eff` trên pool 102 mã (điều kiện mở lại DR-D4-07 §9) cần mở rộng
+   `CTRL_OUTPUT_ALLOWED` bằng một DR, **hoặc** tiêu 1 suất trial.
+
+**Chia việc lúc dừng:** `-2f` giữ TD-0189 + TD-0192 (đã nối `ke_hoach_theo_arm` ở
+`ZoneAbsorption.py:312`); `-94` giữ TD-0193 (chặn bởi MT-22); `-f4` (phiên này) **trống việc**.
+📌 Hai lời nhận TD-0192 gửi gần như đồng thời — **trọng tài là commit trên đĩa** (`0bb9821`), không
+phải ai nhắn trước. Quy tắc 14 (khoá + commit riêng TRƯỚC khi code) đã làm đúng việc nó sinh ra.
+
+*(Đoạn "Đang ở" cũ bên dưới giữ nguyên làm lịch sử.)*
+
 **Đang ở (cập nhật 09/09/2026, phiên `-f4`):** ✅ **TD-0182 ĐÓNG** — `7c06a8d` (code) +
 `88eaf5f` (TASKS) + `10cb8f2` (research-log). Full suite **1400 passed, 0 failed**.
 
