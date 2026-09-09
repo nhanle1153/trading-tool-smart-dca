@@ -239,6 +239,20 @@ def do_backtest(ma: list[str], arm: str) -> dict:
     files = sorted((tmp / "user_data" / "backtest_results").glob("backtest-result-*.zip"))
     kq = load_backtest_stats(files[-1])["strategy"]["ZoneAbsorption"]
     trades = kq["trades"]
+    # Góp ý `-46`: cổng kết nạp §6.8f là biến gây nhiễu CÓ HƯỚNG với arm nhiều tín
+    # hiệu (lọc theo THỜI ĐIỂM danh mục còn chỗ, không theo chất lượng). Đếm từ
+    # dấu vết `KET_NAP` mà `confirm_trade_entry` ghi trên đường chạy thật:
+    # số lần kết nạp / số lần từ chối theo ràng buộc siết / phân bố lệnh theo tháng.
+    ket_nap = Counter()
+    for ln in log.splitlines():
+        if "KET_NAP" not in ln:
+            continue
+        if "TỪ CHỐI" in ln:
+            ly = ln.split("TỪ CHỐI (", 1)[1].split(")", 1)[0] if "TỪ CHỐI (" in ln else "?"
+            ket_nap[f"tu_choi_{ly}"] += 1
+        elif "KẾT NẠP" in ln:
+            ket_nap["ket_nap"] += 1
+    theo_thang = Counter(str(t["open_date"])[:7] for t in trades)
     n_tranche = Counter(len([o for o in t["orders"] if o.get("ft_is_entry")]) for t in trades)
     ly_do = Counter(t["exit_reason"] for t in trades)
     tp1 = Counter(
@@ -253,6 +267,8 @@ def do_backtest(ma: list[str], arm: str) -> dict:
         "phan_bo_tranche": {str(k): v for k, v in sorted(n_tranche.items())},
         "exit_reason": dict(ly_do),
         "tp1_theo_nguon": dict(tp1),
+        "cong_ket_nap": dict(ket_nap),
+        "lenh_theo_thang": dict(sorted(theo_thang.items())),
         "exception_bi_nuot": len(nuot),
         "giay": round(time.time() - t0, 1),
         "ghi_chu": "KHÔNG --timeframe-detail (EXPLORE không có 5m); chỉ đếm, không PnL",
