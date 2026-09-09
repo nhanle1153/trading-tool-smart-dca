@@ -68,11 +68,15 @@ phải làm đúng trước D11 (dry-run có API equity), không phải chỗ đ
 
 ════ Phạm vi CHƯA phủ trong file này, nói thẳng ════
 
-  - **Phần 2 (trend filter) và §3.3b (xác nhận entry) CHƯA nối vào tín
-    hiệu vào lệnh** — TD-0182. Duy nhất điều kiện `ADX(1D) ≥ adx_threshold`
-    của §2.5 được nối ở đây, vì `mult_regime` không có nhánh cho ADX < 20
-    (spec: *"§2.5 đã chặn"*) — nối một mẩu §2.5 để tầng định cỡ nhất quán,
-    KHÔNG phải để thay TD-0182.
+  - **§3.3b (xác nhận entry) CHƯA nối vào tín hiệu vào lệnh** — MT-15.
+    📌 Vế *"Phần 2 (trend filter) chưa nối"* đứng ở đây tới 09/09/2026 là
+    **SAI**: TD-0182 (`7c06a8d`) đã nối, `populate_entry_trend` chạy qua
+    `du_dieu_kien_trend_theo_tang()` với đủ bốn điều kiện §2.1/§2.2/§2.5/
+    §2.3. Chính phiên viết commit đó phát hiện và báo sang (`-f4`) — đúng
+    bài học đã ghi: **một dòng mô tả cũng là LỜI KHAI, không phải bằng
+    chứng**, và mục "CHƯA phủ" là chỗ lời khai cũ sống lâu nhất vì không
+    có cột trạng thái nào để mà nghi ngờ (cùng hạng câu "chặn thêm bởi
+    TD-0041" đã lừa hai phiên).
   - **Kết nạp danh mục §6.8f B2** (Σ risk / Σ margin) — TD-0188; móc ở
     `confirm_trade_entry()`.
   - **Chốt lời PHẦN 5** — TD-0189; `minimal_roi` vẫn tắt, `stoploss` chỉ là
@@ -123,7 +127,14 @@ from tool_d.time_stop import is_time_stop_triggered
 from tool_d.trade_plan import KeHoachTranche, tinh_ke_hoach
 from tool_d.trend_context import trend_dir_tai, tuoi_trend_nen
 from tool_d.zone_detection import K_XAC_NHAN, la_diem_swing, zone_da_bi_huy
-from tool_d.zone_strength import compression, touch_count, volume_ratio, zone_hop_le, zss
+from tool_d.zone_strength import (
+    NGUONG_TUOI_ZONE_TOI_DA,
+    compression,
+    touch_count,
+    volume_ratio,
+    zone_hop_le,
+    zss,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -282,7 +293,66 @@ class ZoneAbsorption(IStrategy):
         inf["zone_valid"] = zone_valid
         inf["ke_hoach_json"] = tag_col
         inf["trend_dir_4h"] = trend
+        inf["zone_dinh_gia"] = self._quet_zone_dinh(cao, thap, dong, volume, atr)
         return inf
+
+    @staticmethod
+    def _quet_zone_dinh(cao, thap, dong, volume, atr) -> list[float]:
+        """TD-0189 — quét zone ĐỈNH (`loai="dinh"`) cho TP1 §5.1.
+
+        🔴 Trước bản này chiến lược **chỉ** quét zone đáy. `_tinh_zone_4h`
+        gọi `la_diem_swing(..., loai="day")` và không có dòng nào cho
+        `"dinh"` — nên *"TP1 = zone đối diện gần nhất"* (§5.1) không có
+        nguồn dữ liệu nào để đọc. Đây không phải thiếu một dòng nối mà
+        thiếu cả một tầng quét ĐỐI XỨNG; chủ dự án chốt dựng đủ
+        (09/09/2026) thay vì để TP luôn rơi vào nạng — 100% nạng thì chỉ
+        số H-4 mất hết tác dụng và D4 sẽ đo một hệ thống KHÁC hệ thống
+        spec mô tả (đúng hình dạng MT-16/MT-17).
+
+        Dùng LẠI nguyên các hàm thuần của Phần 1 với `loai="dinh"` — không
+        viết lại phép tính nào. Đối xứng từng bước với vòng quét zone đáy
+        ngay trên: swing → chưa bị huỷ → volume/nén đọc được → touch →
+        `zone_hop_le`. Điều kiện giống hệt, chỉ đảo `thap` ↔ `cao`.
+
+        Trả về giá **MÉP DƯỚI** của zone đỉnh (`cao[i] × (1 − buf)`), ghi
+        tại nến xác nhận `j`. 🔑 **Diễn giải, ghi ra để cãi lại được:** giá
+        đi LÊN chạm mép dưới TRƯỚC, nên đó là điểm chạm thật đầu tiên;
+        spec nói *"đóng một phần TRƯỚC KHI chạm"*. Lấy tâm hay mép trên sẽ
+        đặt TP1 vào vùng zone đã bắt đầu phản ứng — đúng thứ trừ hao
+        `tp1_haircut_pct` sinh ra để tránh, tức trừ hao hai lần cùng một
+        rủi ro ở hai chỗ khác nhau.
+
+        ⚠️ `NaN` ở đây nghĩa *"nến này không xác nhận zone đỉnh nào"* —
+        một quan sát thật, không phải giá trị lính canh (N6). **KHÔNG BAO
+        GIỜ dùng cột này làm mặt nạ boolean**: pandas từ chối mảng có
+        `NaN` làm mặt nạ và backtest CRASH thẳng (lỗi `-f4` gặp thật ở
+        `zone_valid_4h`, TD-0182). Bên đọc lọc bằng `notna()` tường minh.
+        """
+        n = len(cao)
+        ra = [float("nan")] * n
+        for i in range(K_XAC_NHAN, n):
+            if not la_diem_swing(cao, i, loai="dinh"):
+                continue
+            if math.isnan(atr[i]) or dong[i] == 0:
+                continue
+            buf = BUF_ZONE * atr[i] / dong[i]
+            zone_low, zone_high = cao[i] * (1 - buf), cao[i] * (1 + buf)
+            j = i + K_XAC_NHAN
+            if j >= n or zone_da_bi_huy(cao, i, j, loai="dinh"):
+                continue
+            v_r = volume_ratio(volume, i_swing=i)
+            comp = compression(cao, thap, dong, i_hinh_thanh=i, i_hien_tai=j)
+            if v_r is None or comp is None:
+                continue
+            tc = touch_count(cao, dong, zone_low, zone_high, i_swing=i, t=j, loai="dinh")
+            if not zone_hop_le(
+                zss_value=zss(touch=tc, ty_le_volume=v_r, do_nen=comp),
+                so_touch=tc,
+                tuoi_nen=K_XAC_NHAN,
+            ):
+                continue
+            ra[j] = zone_low
+        return ra
 
     def populate_entry_trend(self, dataframe: pd.DataFrame, metadata: dict) -> pd.DataFrame:
         """TD-0182 — Phần 2 (bộ lọc trend) nối qua công tắc theo arm.
@@ -569,6 +639,43 @@ class ZoneAbsorption(IStrategy):
             return "FLAT"  # chưa đủ lịch sử = chưa có bằng chứng trend (fail-closed, như trend_context)
         ema_f, ema_s = talib.EMA(dong, timeperiod=EMA_NHANH), talib.EMA(dong, timeperiod=EMA_CHAM)
         return trend_dir_tai(ema_f, ema_s, len(dong) - 1)
+
+    def _zone_dinh_tren(self, pair: str, current_time: datetime, p_avg: float) -> list[float]:
+        """Giá các zone ĐỈNH đã xác nhận, nằm TRÊN `p_avg` (TD-0189).
+
+        🔴 Đi qua `_df_4h()` — cùng lát cắt `date + 4h ≤ now` mà TD-0170
+        dựng và có test khoá canh. Không đọc `get_pair_dataframe()` thẳng:
+        một zone đỉnh của TƯƠNG LAI làm TP1 "biết" giá sắp tới, và loại
+        lookahead đó chỉ làm số TỐT LÊN nên không phép kiểm nào báo đỏ.
+
+        🔴 **HẠN DÙNG §1.3 phải áp Ở ĐÂY, không ở `zone_hop_le`** (phiên
+        `-94` bắt, 09/09/2026 — lỗi thật trong bản đầu của tôi). Cả ba chỗ
+        gọi `zone_hop_le()` trong repo đều truyền `tuoi_nen=K_XAC_NHAN`,
+        tức hằng **3**, trong khi `NGUONG_TUOI_ZONE_TOI_DA = 40`: vế
+        `3 <= 40` **không bao giờ trả False**. Với zone ĐÁY điều đó vô
+        hại — zone được tiêu thụ NGAY tại nến xác nhận nên tuổi thật đúng
+        bằng 3. Với zone ĐỈNH thì không: nó được tiêu thụ **bất kỳ lúc
+        nào về sau**, nên bản đầu nhận cả một đỉnh xác nhận 300 nến trước
+        (~50 ngày) làm TP1 hợp lệ.
+
+        🔑 **Cùng một dòng `zone_hop_le` ĐÚNG ở bên đáy và RỖNG ở bên
+        đỉnh** — chốt có mặt, nằm đúng trên đường sản xuất, và cấu trúc
+        không cho phép nó đỏ. Phép đối xứng gãy ở chỗ *"khi nào zone
+        được tiêu thụ"*, không ở chỗ *"zone được nhận thế nào"*.
+
+        ⚠️ Chiều sai số của bản đầu là chiều XẤU: nhận nhiều zone hơn ⇒
+        **hạ** tỉ lệ nạng H-4 ⇒ chốt *"vượt 40% ⇒ L2"* (spec dòng 1684)
+        trông khoẻ hơn thực tế, đúng lúc nó là thứ DUY NHẤT canh tiền đề
+        *"luôn tìm được zone đối diện trong khoảng cách hợp lý"*.
+
+        Lọc `notna()` tường minh — xem cảnh báo mặt nạ ở `_quet_zone_dinh`.
+        """
+        df = self._df_4h(pair, current_time)
+        if "zone_dinh_gia" not in df.columns:
+            return []
+        han = current_time - pd.Timedelta(hours=4 * NGUONG_TUOI_ZONE_TOI_DA)
+        con_han = df.loc[df["zone_dinh_gia"].notna() & (df["date"] >= han), "zone_dinh_gia"]
+        return [float(g) for g in con_han if float(g) > p_avg]
 
     def _zss_hien_tai(self, pair: str, tag: dict, current_time: datetime) -> float:
         """ZSS tính LẠI cho cùng zone tại nến 4H ĐÃ ĐÓNG gần nhất (DG5)."""
