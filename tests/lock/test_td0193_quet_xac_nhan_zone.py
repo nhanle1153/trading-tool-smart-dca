@@ -37,6 +37,7 @@ import pytest
 from tool_d.entry_confirmation import (
     KetQuaQuetXacNhanZone,
     quet_xac_nhan_zone,
+    tim_xac_nhan_entry,
 )
 
 # Cấu hình chung: 20 nến 1H, RSI/volume đơn giản để dựng tay các ca.
@@ -47,6 +48,23 @@ ZL, ZH = 90.0, 100.0  # zone đáy
 
 def _phang() -> dict:
     """Nền cho mọi ca: nến DOJI TUYỆT ĐỐI (range=0) NGOÀI zone ở giá 80.0.
+
+    🔴 **Đề nghị của `-f4` (09/09/2026): trung tính là TÍNH CHẤT ĐO ĐƯỢC,
+    không phải một cái TÊN.** Helper này từng "trung tính theo tên" ba
+    lần liền mà vẫn sai — sửa bằng cách CHUẨN HOÁ hình dạng nến không đủ,
+    vì khi §3.3b sau này thêm điều kiện thứ tư, một mẫu "trung tính" cho
+    ba điều kiện cũ có thể im lặng thôi trung tính với điều kiện mới, và
+    không lộ ra cho tới khi ai đó truy ngược từ một ca xanh khó hiểu —
+    đúng thứ `-f4` tự dính cùng ngày ở fixture `test_td0187` (đuôi nến
+    `low` hằng số vô tình tạo 26 swing giả, vì `la_diem_swing` so
+    `gia[i] == min(cửa_sổ)`).
+
+    Nên nền này TỰ KHẲNG ĐỊNH tính trung tính bằng cách gọi THẲNG
+    `tim_xac_nhan_entry()` — hàm SẢN XUẤT đang được kiểm — trên mọi điểm
+    bắt đầu, đòi `None` ở tất cả. Gọi hàm sản xuất từ chính fixture của
+    nó có một bẫy: nếu hàm đó hỏng kiểu "luôn trả `None`", fixture vẫn
+    xanh vô nghĩa — chặn bằng ca đối chứng DƯƠNG TÍNH riêng
+    (`TestNenNenTuChungMinh.test_doi_chung_duong_tinh...`).
 
     Range=0 khiến `la_nen_rejection` trả `False` NGAY (guard `bien_do <=
     0`) tại MỌI nến nền — tránh đúng lỗi bản đầu của helper này, nơi nến
@@ -60,7 +78,13 @@ def _phang() -> dict:
     rsi = [50.0] * N
     vol = [10.0] * N
     vma = [10.0] * N
-    return dict(mo=mo, cao=cao, thap=thap, dong=dong, rsi=rsi, volume=vol, volume_ma=vma)
+    d = dict(mo=mo, cao=cao, thap=thap, dong=dong, rsi=rsi, volume=vol, volume_ma=vma)
+    for t in range(N):
+        assert tim_xac_nhan_entry(
+            mo, cao, thap, dong, rsi, t, loai="day", bat_dieu_kien_c=True,
+            volume=vol, volume_ma=vma, v_min=V_MIN, lan_cham_truoc=None,
+        ) is None, f"nến nền KHÔNG trung tính tại t={t} — fixture hỏng, không phải test hỏng"
+    return d
 
 
 def _dung_cham(d: dict, t: int, *, gia: float = 95.0) -> None:
@@ -317,3 +341,29 @@ class TestMocLaDayThatCuaCum_KhongPhaiNenDau:
             "mốc phải là ĐÁY THẬT của cụm (93), không phải nến đầu cụm "
             "(96) -- dùng nến đầu sẽ xác nhận NHẦM ở lượt 2"
         )
+
+
+class TestNenNenTuChungMinh:
+    """Đề nghị của `-f4`: trung tính là tính chất ĐO ĐƯỢC, không phải cái
+    tên — xem docstring `_phang()`."""
+
+    def test_nen_nen_tu_kiem_qua_khong_raise(self) -> None:
+        """`_phang()` tự assert trung tính ngay trong thân hàm — gọi được
+        không raise TỨC LÀ đã qua. Ca này chỉ để có một dòng tường minh
+        trong báo cáo test, không phải phép kiểm bổ sung."""
+        _phang()
+
+    def test_doi_chung_duong_tinh_chan_bay_luon_tra_None(self) -> None:
+        """Chặn bẫy tự thân của cách làm trên: nếu `tim_xac_nhan_entry`
+        hỏng kiểu "luôn trả `None`" thì self-check của `_phang()` vẫn
+        xanh VÔ NGHĨA. Ca này đòi một nến rejection THẬT phải làm hàm đó
+        trả khác `None` — cả hai chiều (âm/dương) đều bị canh."""
+        d = _phang()
+        _dung_cham(d, 0)
+        _dung_rejection(d, 0)
+        d["volume"][0], d["volume_ma"][0] = 20.0, 10.0
+        assert tim_xac_nhan_entry(
+            d["mo"], d["cao"], d["thap"], d["dong"], d["rsi"], 0,
+            loai="day", bat_dieu_kien_c=True,
+            volume=d["volume"], volume_ma=d["volume_ma"], v_min=V_MIN,
+        ) == 0
