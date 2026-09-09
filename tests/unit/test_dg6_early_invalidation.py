@@ -5,7 +5,6 @@ from __future__ import annotations
 import pytest
 
 from tool_d.dg6_early_invalidation import (
-    NGUONG_ATR_RATIO_A,
     NGUONG_DECAY_C,
     NGUONG_FUNDING_D,
     NGUONG_HOI_GIA_D,
@@ -20,19 +19,25 @@ from tool_d.dg6_early_invalidation import (
 )
 
 
+# Ngưỡng THỬ — `NGUONG_ATR_RATIO_A` đã bị xoá (TD-0195); giá trị thật đọc
+# từ `tier_b.dg6a_atr_ratio` ở tầng chiến lược.
+ATR_RATIO_THU = 1.8
+
+
 class TestDieuKienA:
     def test_atr_gian_va_gia_bat_loi_long_thi_true(self) -> None:
-        assert dieu_kien_a(2.0, 95, p_avg=100, huong="long") is True
+        assert dieu_kien_a(2.0, 95, p_avg=100, huong="long", nguong_atr_ratio=ATR_RATIO_THU) is True
 
     def test_atr_gian_nhung_gia_thuan_loi_thi_false(self) -> None:
-        assert dieu_kien_a(2.0, 105, p_avg=100, huong="long") is False
+        assert dieu_kien_a(2.0, 105, p_avg=100, huong="long", nguong_atr_ratio=ATR_RATIO_THU) is False
 
     def test_atr_chua_du_nguong_thi_false(self) -> None:
-        assert dieu_kien_a(NGUONG_ATR_RATIO_A - 0.01, 95, p_avg=100, huong="long") is False
+        assert dieu_kien_a(ATR_RATIO_THU - 0.01, 95, p_avg=100, huong="long",
+                           nguong_atr_ratio=ATR_RATIO_THU) is False
 
     def test_short_dao_dau(self) -> None:
-        assert dieu_kien_a(2.0, 105, p_avg=100, huong="short") is True
-        assert dieu_kien_a(2.0, 95, p_avg=100, huong="short") is False
+        assert dieu_kien_a(2.0, 105, p_avg=100, huong="short", nguong_atr_ratio=ATR_RATIO_THU) is True
+        assert dieu_kien_a(2.0, 95, p_avg=100, huong="short", nguong_atr_ratio=ATR_RATIO_THU) is False
 
 
 class TestDieuKienB:

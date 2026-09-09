@@ -233,6 +233,16 @@ class ZoneAbsorption(IStrategy):
             if CHE_DO_CO_LENH_THEO_ARM[self._arm] == "NOTIONAL_CO_DINH"
             else None
         )
+        # 🔴 TD-0195 — ba tham số `tier_b` này TỪNG là hằng số cứng trong
+        # `zone_strength.py` / `trade_plan.py` / `dg6_early_invalidation.py`.
+        # Chúng nằm trong kiểm kê DOF và tính vào N = 114, nhưng đường chạy
+        # đọc hằng chứ không đọc YAML — nên một trial B3 calibrate chúng sẽ
+        # tiêu một suất thật để đo một thay đổi KHÔNG XẢY RA, và không lớp
+        # canh nào báo vì hai con số đang bằng nhau. Đọc ở ĐÂY, một lần,
+        # rồi truyền xuống các hàm thuần (khuôn `time_stop`/`dg4`).
+        self._nguong_zss = float(resolve(self._cfg, "tier_b.zss_threshold"))
+        self._buf_sl_he_so = float(resolve(self._cfg, "tier_b.buf_sl_atr"))
+        self._dg6a_atr_ratio = float(resolve(self._cfg, "tier_b.dg6a_atr_ratio"))
         self._l_exchange = float(resolve(self._cfg, "tier_a.L_exchange"))
         self._adx_threshold = float(resolve(self._cfg, "tier_frozen.adx_threshold.value"))
         self._tang_loc_trend = tang_cua_arm(self._arm)  # TD-0182 — công tắc Phần 2 theo arm
@@ -311,7 +321,9 @@ class ZoneAbsorption(IStrategy):
                 continue
             tc = touch_count(thap, dong, zone_low, zone_high, i_swing=i, t=j, loai="day")
             diem = zss(touch=tc, ty_le_volume=v_r, do_nen=comp)
-            if not zone_hop_le(zss_value=diem, so_touch=tc, tuoi_nen=K_XAC_NHAN) or math.isnan(atr[j]):
+            if not zone_hop_le(
+                zss_value=diem, so_touch=tc, tuoi_nen=K_XAC_NHAN, nguong_zss=self._nguong_zss
+            ) or math.isnan(atr[j]):
                 continue
             # TD-0192 — `ke_hoach_theo_arm()` là NƠI DUY NHẤT phân nhánh SL
             # theo arm (`CHE_DO_SL_THEO_ARM`). Gọi thẳng `tinh_ke_hoach()`
@@ -322,18 +334,18 @@ class ZoneAbsorption(IStrategy):
             # nó trên đường sản xuất: 83/83 lệnh Z1 trùng khít Z0 trên
             # EXPLORE (MT-21). Đúng hình dạng TD-0188 đã dạy: canh đúng
             # chỗ, đường chạy không bao giờ đi qua.
-            kh = ke_hoach_theo_arm(arm=self._arm, zone_low=zone_low, zone_high=zone_high, gia_dong_cua=dong[j], atr_4h=atr[j], atr_1h_tai_tranche1=0.0)
+            kh = ke_hoach_theo_arm(arm=self._arm, zone_low=zone_low, zone_high=zone_high, gia_dong_cua=dong[j], atr_4h=atr[j], atr_1h_tai_tranche1=0.0, buf_sl_he_so=self._buf_sl_he_so)
             zone_valid[j] = True
             tag_col[j] = _ma_hoa(kh, zss_value=diem, trend_4h=trend[j], swing_ts_ms=int(ts_ms[i]))
 
         inf["zone_valid"] = zone_valid
         inf["ke_hoach_json"] = tag_col
         inf["trend_dir_4h"] = trend
-        inf["zone_dinh_gia"] = self._quet_zone_dinh(cao, thap, dong, volume, atr)
+        inf["zone_dinh_gia"] = self._quet_zone_dinh(cao, thap, dong, volume, atr, self._nguong_zss)
         return inf
 
     @staticmethod
-    def _quet_zone_dinh(cao, thap, dong, volume, atr) -> list[float]:
+    def _quet_zone_dinh(cao, thap, dong, volume, atr, nguong_zss: float) -> list[float]:
         """TD-0189 — quét zone ĐỈNH (`loai="dinh"`) cho TP1 §5.1.
 
         🔴 Trước bản này chiến lược **chỉ** quét zone đáy. `_tinh_zone_4h`
@@ -385,6 +397,7 @@ class ZoneAbsorption(IStrategy):
                 zss_value=zss(touch=tc, ty_le_volume=v_r, do_nen=comp),
                 so_touch=tc,
                 tuoi_nen=K_XAC_NHAN,
+                nguong_zss=nguong_zss,
             ):
                 continue
             ra[j] = zone_low
@@ -805,7 +818,13 @@ class ZoneAbsorption(IStrategy):
         atr_now = float(hang["atr_1h"]) if hang is not None and not math.isnan(hang["atr_1h"]) else None
         a = False
         if atr_now is not None and kh.atr_1h_tai_tranche1 > 0:
-            a = dieu_kien_a(atr_now / kh.atr_1h_tai_tranche1, current_rate, p_avg=trade.open_rate, huong="long")
+            a = dieu_kien_a(
+                atr_now / kh.atr_1h_tai_tranche1,
+                current_rate,
+                p_avg=trade.open_rate,
+                huong="long",
+                nguong_atr_ratio=self._dg6a_atr_ratio,
+            )
         b = False
         df, _ = self.dp.get_analyzed_dataframe(pair=pair, timeframe=self.timeframe)
         if df is not None:

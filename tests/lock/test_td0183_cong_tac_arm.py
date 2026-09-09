@@ -40,7 +40,10 @@ from tool_d.config.dof import ARM_B2_COUNT
 from tool_d.notional import tranche1_notional
 from tool_d.trade_plan import tinh_ke_hoach
 
-ZONE = dict(zone_low=90.0, zone_high=100.0, gia_dong_cua=95.0, atr_1h_tai_tranche1=1.0)
+# `buf_sl_he_so` giá trị THỬ (TD-0195) — mọi ca dưới kiểm quan hệ giữa các
+# arm, không ca nào ghim con số sản xuất.
+ZONE = dict(zone_low=90.0, zone_high=100.0, gia_dong_cua=95.0, atr_1h_tai_tranche1=1.0,
+            buf_sl_he_so=0.4)
 CO_LENH = dict(e_d=500.0, rho_pct=0.375, n_tranches=3)
 
 

@@ -17,8 +17,14 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 
-BUF_SL_HE_SO = 0.4  # §3.1 — buf_sl = 0.4 × ATR(14,4H)/price, [CẦN CALIBRATE]
 TRONG_SO_TRANCHE = 1 / 3  # §3.1 — w = [1/3,1/3,1/3], ĐÓNG BĂNG
+
+# 🔴 TD-0195 — `BUF_SL_HE_SO = 0.4` ĐÃ BỊ XOÁ: bản sao cứng của
+# `tier_b.buf_sl_atr` (tunable #2). Xem chú thích cùng loại ở
+# `zone_strength.py`. Hệ số nay là đối số BẮT BUỘC của `tinh_ke_hoach()`.
+# Lưu ý `TRONG_SO_TRANCHE` KHÔNG cùng loại: nó ĐÓNG BĂNG ở
+# `tier_frozen.w_tranche` và `sizing.py` đã đọc qua `resolve()` — hằng số
+# ở đây chỉ còn là tài liệu của công thức p_avg, không phải ngưỡng tune.
 
 
 @dataclass(frozen=True)
@@ -41,7 +47,13 @@ class KeHoachTranche:
 
 
 def tinh_ke_hoach(
-    *, zone_low: float, zone_high: float, gia_dong_cua: float, atr_4h: float, atr_1h_tai_tranche1: float
+    *,
+    zone_low: float,
+    zone_high: float,
+    gia_dong_cua: float,
+    atr_4h: float,
+    atr_1h_tai_tranche1: float,
+    buf_sl_he_so: float,
 ) -> KeHoachTranche:
     """§3.1 (case LONG, zone đáy) + §3.5 (p1_order).
 
@@ -49,11 +61,14 @@ def tinh_ke_hoach(
     `atr_1h_tai_tranche1` chỉ được LƯU LẠI ở đây, dùng cho DG6 điều
     kiện A sau này (`dg6_early_invalidation.dieu_kien_a`) — không tính
     gì với nó ở hàm này.
+
+    `buf_sl_he_so` = `tier_b.buf_sl_atr` (tunable #2), đọc từ
+    `config/tool_d_config.yaml`; bắt buộc, không mặc định (TD-0195).
     """
     p1 = min(zone_high, gia_dong_cua)
     p2 = (zone_high + zone_low) / 2
     p3 = zone_low
-    buf_sl = BUF_SL_HE_SO * atr_4h / zone_low
+    buf_sl = buf_sl_he_so * atr_4h / zone_low
     sl = zone_low * (1 - buf_sl)
     p_avg = (p1 + p2 + p3) / 3  # TRONG_SO_TRANCHE bằng nhau cả ba
     r_eff_plan = (p_avg - sl) / p_avg

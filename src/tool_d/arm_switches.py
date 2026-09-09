@@ -115,6 +115,7 @@ def ke_hoach_theo_arm(
     gia_dong_cua: float,
     atr_4h: float,
     atr_1h_tai_tranche1: float,
+    buf_sl_he_so: float,
 ) -> KeHoachTranche:
     """`tinh_ke_hoach()` nguyên vẹn, chỉ thay `sl` khi arm đòi chế độ khác.
 
@@ -133,6 +134,7 @@ def ke_hoach_theo_arm(
         gia_dong_cua=gia_dong_cua,
         atr_4h=atr_4h,
         atr_1h_tai_tranche1=atr_1h_tai_tranche1,
+        buf_sl_he_so=buf_sl_he_so,
     )
     if CHE_DO_SL_THEO_ARM[arm] == "ZONE":
         return goc

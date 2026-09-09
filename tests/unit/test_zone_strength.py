@@ -6,7 +6,6 @@ import pytest
 
 from tool_d.zone_strength import (
     NGUONG_TUOI_ZONE_TOI_DA,
-    NGUONG_ZSS,
     TRONG_SO_ZSS,
     compression,
     touch_count,
@@ -148,15 +147,24 @@ class TestZss:
         assert a == pytest.approx(b)
 
 
+# Ngưỡng THỬ — `NGUONG_ZSS` đã bị xoá khỏi `zone_strength` (TD-0195); giá
+# trị thật đọc từ `tier_b.zss_threshold` ở tầng chiến lược. Các ca dưới
+# kiểm QUAN HỆ với ngưỡng được truyền vào, nên độc lập giá trị sản xuất.
+NGUONG_THU = 0.5
+
+
 class TestZoneHopLe:
     def test_dat_ca_ba_dieu_kien_thi_hop_le(self) -> None:
-        assert zone_hop_le(zss_value=NGUONG_ZSS, so_touch=1, tuoi_nen=NGUONG_TUOI_ZONE_TOI_DA) is True
+        assert zone_hop_le(zss_value=NGUONG_THU, so_touch=1, tuoi_nen=NGUONG_TUOI_ZONE_TOI_DA,
+                           nguong_zss=NGUONG_THU) is True
 
     def test_zss_duoi_nguong_thi_khong_hop_le(self) -> None:
-        assert zone_hop_le(zss_value=NGUONG_ZSS - 0.01, so_touch=5, tuoi_nen=1) is False
+        assert zone_hop_le(zss_value=NGUONG_THU - 0.01, so_touch=5, tuoi_nen=1,
+                           nguong_zss=NGUONG_THU) is False
 
     def test_chua_co_touch_nao_thi_khong_hop_le(self) -> None:
-        assert zone_hop_le(zss_value=1.0, so_touch=0, tuoi_nen=1) is False
+        assert zone_hop_le(zss_value=1.0, so_touch=0, tuoi_nen=1, nguong_zss=NGUONG_THU) is False
 
     def test_qua_tuoi_toi_da_thi_khong_hop_le(self) -> None:
-        assert zone_hop_le(zss_value=1.0, so_touch=5, tuoi_nen=NGUONG_TUOI_ZONE_TOI_DA + 1) is False
+        assert zone_hop_le(zss_value=1.0, so_touch=5, tuoi_nen=NGUONG_TUOI_ZONE_TOI_DA + 1,
+                           nguong_zss=NGUONG_THU) is False

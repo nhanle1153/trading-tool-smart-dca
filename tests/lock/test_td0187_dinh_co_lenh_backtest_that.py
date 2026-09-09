@@ -239,8 +239,14 @@ def _dem_zone(rows4, loai: str) -> int:
     `"dinh"`), dùng lại các hàm thuần, không chép phép tính."""
     import numpy as np
     import talib
+    from tool_d.config.loader import load_tool_d_config, resolve
     from tool_d.zone_detection import K_XAC_NHAN, la_diem_swing, zone_da_bi_huy
     from tool_d.zone_strength import compression, touch_count, volume_ratio, zone_hop_le, zss
+
+    # TD-0195 — đọc ngưỡng từ ĐÚNG nguồn chiến lược đọc. Ghim một số ở đây
+    # sẽ làm phép đếm này lệch khỏi chiến lược ngay lần calibrate đầu tiên,
+    # mà lệch theo kiểu vẫn XANH (nó chỉ đếm, không so với chiến lược).
+    nguong_zss = float(resolve(load_tool_d_config(), "tier_b.zss_threshold"))
 
     cao = [b[1] for b in rows4]; thap = [b[2] for b in rows4]
     dong = [b[3] for b in rows4]; vol = [b[4] for b in rows4]
@@ -261,7 +267,7 @@ def _dem_zone(rows4, loai: str) -> int:
             continue
         tc = touch_count(gia, dong, min(zl, zh), max(zl, zh), i_swing=i, t=j, loai=loai)
         if zone_hop_le(zss_value=zss(touch=tc, ty_le_volume=v_r, do_nen=comp),
-                       so_touch=tc, tuoi_nen=K_XAC_NHAN):
+                       so_touch=tc, tuoi_nen=K_XAC_NHAN, nguong_zss=nguong_zss):
             dem += 1
     return dem
 

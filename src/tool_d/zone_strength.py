@@ -17,8 +17,18 @@ from __future__ import annotations
 from typing import Literal, Sequence
 
 TRONG_SO_ZSS = 1 / 3  # w_a = w_b = w_c — ĐÓNG BĂNG (§1.2), không tune
-NGUONG_ZSS = 0.5  # §1.3 — [CẦN CALIBRATE] theo spec, chưa có số liệu thay thế
 NGUONG_TUOI_ZONE_TOI_DA = 40  # §1.3 — 40 nến 4H ~ 6.7 ngày
+
+# 🔴 TD-0195 — `NGUONG_ZSS = 0.5` ĐÃ BỊ XOÁ khỏi đây, KHÔNG phải đổi tên.
+# Nó là bản sao cứng của `tier_b.zss_threshold` (tunable #1, tính vào
+# N = 114). Hai nguồn sự thật cho một con số, và vì hai giá trị đang
+# BẰNG NHAU nên không phép kiểm nào báo đỏ — trong khi mọi trial B3
+# calibrate khoá đó sẽ tiêu một suất thật để đo một thay đổi KHÔNG XẢY
+# RA (`zone_hop_le` đọc hằng, không đọc YAML). Ngưỡng nay là đối số
+# BẮT BUỘC; người gọi đọc `resolve(cfg, "tier_b.zss_threshold")`.
+# KHÔNG đặt lại một mặc định ở đây: mặc định là chỗ để một đường gọi
+# quên khai mà vẫn lặng lẽ chạy — đúng lý do `bat_dieu_kien_c` của
+# `entry_confirmation` cũng không có mặc định.
 
 
 def touch_count(
@@ -129,6 +139,19 @@ def _kep(x: float, thap: float, cao: float) -> float:
     return max(thap, min(cao, x))
 
 
-def zone_hop_le(*, zss_value: float, so_touch: int, tuoi_nen: int) -> bool:
-    """§1.3 — ba điều kiện nhận zone, TẤT CẢ phải đạt."""
-    return zss_value >= NGUONG_ZSS and so_touch >= 1 and tuoi_nen <= NGUONG_TUOI_ZONE_TOI_DA
+def zone_hop_le(*, zss_value: float, so_touch: int, tuoi_nen: int, nguong_zss: float) -> bool:
+    """§1.3 — ba điều kiện nhận zone, TẤT CẢ phải đạt.
+
+    `nguong_zss` = `tier_b.zss_threshold` (tunable #1), đọc từ
+    `config/tool_d_config.yaml` — N4 cấm hardcode. Tham số **bắt buộc,
+    không mặc định** (TD-0195): xem chú thích ở đầu module.
+
+    `NGUONG_TUOI_ZONE_TOI_DA` thì KHÁC — nó không nằm trong `tier_b`,
+    không phải bậc tự do nào trong kiểm kê DOF, nên giữ là hằng số ở đây
+    là đúng chỗ. Phân biệt: *"khoá này có trong `tier_b` không?"* —
+    cùng câu hỏi đã dùng để phân biệt DG5 với `v_min` (DR-D4-02 vs
+    DR-D4-03).
+    """
+    if nguong_zss != nguong_zss:  # NaN
+        raise ValueError("nguong_zss là NaN — 'không đọc được' KHÁC 'zone không hợp lệ'")
+    return zss_value >= nguong_zss and so_touch >= 1 and tuoi_nen <= NGUONG_TUOI_ZONE_TOI_DA

@@ -23,7 +23,8 @@ import talib
 from freqtrade.strategy import IStrategy, merge_informative_pair
 
 from tool_d.zone_detection import K_XAC_NHAN, confirm_ratio, la_diem_swing, zone_da_bi_huy
-from tool_d.zone_strength import NGUONG_ZSS, compression, touch_count, volume_ratio, zone_hop_le, zss
+from tool_d.config.loader import load_tool_d_config, resolve
+from tool_d.zone_strength import compression, touch_count, volume_ratio, zone_hop_le, zss
 
 BUF_HE_SO = 0.3  # §1.1 — buf = 0.3 × ATR(14,4H) / price, KHÔNG phải tham số mới
 
@@ -39,6 +40,12 @@ class ZoneDetectionProbe(IStrategy):
     # tới §6.8e (định cỡ rủi ro thật thuộc phần khác, chưa xây ở D1).
     minimal_roi = {"0": 0.02}
     stoploss = -0.05
+
+    def __init__(self, config: dict) -> None:
+        super().__init__(config)
+        # TD-0195 — ngưỡng ZSS đọc từ `tier_b.zss_threshold`, không phải
+        # hằng số import từ `zone_strength` (hằng đó đã bị xoá).
+        self._nguong_zss = float(resolve(load_tool_d_config(), "tier_b.zss_threshold"))
 
     def informative_pairs(self):
         pairs = self.dp.current_whitelist()
@@ -92,12 +99,13 @@ class ZoneDetectionProbe(IStrategy):
             # `zone_confirmed`: MỌI swing đã xác nhận (bất kể ZSS) — dùng
             # làm tín hiệu entry cho probe, vì mục tiêu TD-0106 là soi
             # LOOKAHEAD ở cơ chế xác nhận swing (§7), không phải đánh giá
-            # chất lượng zone. Cổng `zone_hop_le` (§1.3, NGUONG_ZSS=0.5,
-            # "CẦN CALIBRATE") vẫn tính riêng và phơi ra như một indicator
+            # chất lượng zone. Cổng `zone_hop_le` (§1.3, ngưỡng đọc từ
+            # `tier_b.zss_threshold`) vẫn tính riêng và phơi ra như một indicator
             # để lookahead-analysis kiểm luôn cả ZSS, không chỉ swing.
             zone_confirmed_col[j] = True
             mult_zss_col[j] = diem * ty_le
-            if zone_hop_le(zss_value=diem, so_touch=tc, tuoi_nen=K_XAC_NHAN):
+            if zone_hop_le(zss_value=diem, so_touch=tc, tuoi_nen=K_XAC_NHAN,
+                           nguong_zss=self._nguong_zss):
                 zone_hop_le_col[j] = True
 
         inf["zone_confirmed"] = zone_confirmed_col

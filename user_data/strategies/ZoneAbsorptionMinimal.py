@@ -64,6 +64,7 @@ import pandas as pd
 import talib
 from freqtrade.strategy import IStrategy, merge_informative_pair
 
+from tool_d.config.loader import load_tool_d_config, resolve
 from tool_d.dg6_early_invalidation import dg6_dong_vi_the, dieu_kien_a, dieu_kien_b
 from tool_d.funding_stop import funding_paid_cumulative, is_funding_stop_triggered
 from tool_d.time_stop import is_time_stop_triggered
@@ -128,6 +129,17 @@ class ZoneAbsorptionMinimal(IStrategy):
     minimal_roi = {"0": 10}
     stoploss = -0.9
 
+    def __init__(self, config: dict) -> None:
+        super().__init__(config)
+        # TD-0195 — ba tham số `tier_b` trước đây là hằng số cứng trong các
+        # module thuần. Fixture `L-Z49` cũng phải đọc YAML: nếu nó giữ một
+        # bản sao riêng thì nó thôi làm chứng cho hệ thống THẬT, và cái nó
+        # chứng minh chạy được sẽ là một cấu hình không ai chạy.
+        self._cfg = load_tool_d_config()
+        self._nguong_zss = float(resolve(self._cfg, "tier_b.zss_threshold"))
+        self._buf_sl_he_so = float(resolve(self._cfg, "tier_b.buf_sl_atr"))
+        self._dg6a_atr_ratio = float(resolve(self._cfg, "tier_b.dg6a_atr_ratio"))
+
     def informative_pairs(self):
         pairs = self.dp.current_whitelist()
         return [(p, self.informative_timeframe) for p in pairs]
@@ -168,11 +180,14 @@ class ZoneAbsorptionMinimal(IStrategy):
                 continue
             tc = touch_count(thap, dong, zone_low, zone_high, i_swing=i, t=j, loai="day")
             diem = zss(touch=tc, ty_le_volume=v_r, do_nen=comp)
-            if not zone_hop_le(zss_value=diem, so_touch=tc, tuoi_nen=K_XAC_NHAN):
+            if not zone_hop_le(
+                zss_value=diem, so_touch=tc, tuoi_nen=K_XAC_NHAN, nguong_zss=self._nguong_zss
+            ):
                 continue
             if math.isnan(atr[j]):
                 continue
-            kh = tinh_ke_hoach(zone_low=zone_low, zone_high=zone_high, gia_dong_cua=dong[j], atr_4h=atr[j], atr_1h_tai_tranche1=0.0)
+            kh = tinh_ke_hoach(zone_low=zone_low, zone_high=zone_high, gia_dong_cua=dong[j],
+                               atr_4h=atr[j], atr_1h_tai_tranche1=0.0, buf_sl_he_so=self._buf_sl_he_so)
             zone_valid[j] = True
             ke_hoach_json_col[j] = _ma_hoa_ke_hoach(kh)
 
@@ -276,7 +291,8 @@ class ZoneAbsorptionMinimal(IStrategy):
         a = False
         if atr_1h_hien_tai is not None and kh.atr_1h_tai_tranche1 > 0:
             ty_le = atr_1h_hien_tai / kh.atr_1h_tai_tranche1
-            a = dieu_kien_a(ty_le, current_rate, p_avg=trade.open_rate, huong="long")
+            a = dieu_kien_a(ty_le, current_rate, p_avg=trade.open_rate, huong="long",
+                            nguong_atr_ratio=self._dg6a_atr_ratio)
 
         b = False
         if hang is not None:

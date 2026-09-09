@@ -26,7 +26,7 @@ from tool_d.trade_plan import tinh_ke_hoach  # noqa: E402
 
 class TestMaHoaGiaiMaKeHoach:
     def test_roundtrip_giu_nguyen_gia_tri(self) -> None:
-        kh = tinh_ke_hoach(zone_low=90, zone_high=100, gia_dong_cua=95, atr_4h=2.0, atr_1h_tai_tranche1=0.0)
+        kh = tinh_ke_hoach(zone_low=90, zone_high=100, gia_dong_cua=95, atr_4h=2.0, atr_1h_tai_tranche1=0.0, buf_sl_he_so=0.4)
         tag = _ma_hoa_ke_hoach(kh)
         kh2 = _giai_ma_ke_hoach(tag, atr_1h_tai_tranche1=1.5)
         assert kh2 is not None
@@ -53,6 +53,6 @@ class TestMaHoaGiaiMaKeHoach:
         assert _giai_ma_ke_hoach('{"zl": 90}', atr_1h_tai_tranche1=0.0) is None
 
     def test_tag_gon_trong_gioi_han_255_ky_tu_cua_freqtrade(self) -> None:
-        kh = tinh_ke_hoach(zone_low=0.0123456789, zone_high=0.0198765432, gia_dong_cua=0.015, atr_4h=0.0005, atr_1h_tai_tranche1=0.0)
+        kh = tinh_ke_hoach(zone_low=0.0123456789, zone_high=0.0198765432, gia_dong_cua=0.015, atr_4h=0.0005, atr_1h_tai_tranche1=0.0, buf_sl_he_so=0.4)
         tag = _ma_hoa_ke_hoach(kh)
         assert len(tag.encode("utf-8")) <= 255

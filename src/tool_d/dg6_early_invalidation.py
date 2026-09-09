@@ -19,18 +19,37 @@ from typing import Literal, Sequence
 
 Huong = Literal["long", "short"]
 
-NGUONG_ATR_RATIO_A = 1.8  # [CẦN CALIBRATE]
+# 🔴 TD-0195 — `NGUONG_ATR_RATIO_A = 1.8` ĐÃ BỊ XOÁ: bản sao cứng của
+# `tier_b.dg6a_atr_ratio` (tunable #8). `dieu_kien_a()` nhận ngưỡng qua
+# đối số bắt buộc; người gọi đọc YAML. Xem chú thích cùng loại ở
+# `zone_strength.py`.
+#
+# ⏳ CHƯA xử trong đợt này, ghi nợ tại chỗ để không ai tưởng đã xong:
+# `NGUONG_FUNDING_D` / `NGUONG_HOI_GIA_D` cũng là bản sao cứng
+# (`tier_b.funding_rate_pct` #5 và `tier_b.dg6d_retrace_frac` #6) —
+# nhưng `dieu_kien_d()` CHƯA có người gọi trên đường chạy sản xuất
+# (`ZoneAbsorption.py` truyền `d=False` cứng), nên vá bây giờ là vá một
+# đường không ai đi. 🔴 Và nó có một câu phải chốt trước: YAML ghi
+# `funding_rate_pct: -0.05` (PHẦN TRĂM) còn hằng số ở đây là `-0.0005`
+# (TỈ LỆ) — cùng một số vật lý, khác ĐƠN VỊ. Nối mà quên ÷100 thì ngưỡng
+# sai 100 lần, đúng lớp lỗi `L-Z48c` sinh ra để chặn.
 SO_NEN_TOI_THIEU_B = 8  # 🔒 = DG4, đóng băng
 NGUONG_DECAY_C = 0.7
 NGUONG_FUNDING_D = -0.0005  # -0.05%, [CẦN CALIBRATE]
 NGUONG_HOI_GIA_D = 0.5
 
 
-def dieu_kien_a(atr_ty_le: float, gia_hien_tai: float, *, p_avg: float, huong: Huong) -> bool:
-    """Momentum đảo ngược: ATR giãn ≥1.8× kể từ tranche 1 KHỚP, VÀ giá
-    đang ở phía bất lợi so với `p_avg` hiện tại."""
+def dieu_kien_a(
+    atr_ty_le: float, gia_hien_tai: float, *, p_avg: float, huong: Huong, nguong_atr_ratio: float
+) -> bool:
+    """Momentum đảo ngược: ATR giãn ≥ ngưỡng kể từ tranche 1 KHỚP, VÀ giá
+    đang ở phía bất lợi so với `p_avg` hiện tại.
+
+    `nguong_atr_ratio` = `tier_b.dg6a_atr_ratio` (tunable #8), đọc từ
+    `config/tool_d_config.yaml`; bắt buộc, không mặc định (TD-0195).
+    """
     bat_loi = gia_hien_tai < p_avg if huong == "long" else gia_hien_tai > p_avg
-    return atr_ty_le >= NGUONG_ATR_RATIO_A and bat_loi
+    return atr_ty_le >= nguong_atr_ratio and bat_loi
 
 
 def dieu_kien_b(dong_tu_tranche1: Sequence[float], *, p1: float, so_nen_da_troi: int, huong: Huong) -> bool:

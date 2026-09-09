@@ -6,7 +6,11 @@ import pytest
 
 from tool_d.trade_plan import KeHoachTranche, tinh_ke_hoach
 
-KWARGS_MAC_DINH = dict(atr_4h=2.0, atr_1h_tai_tranche1=1.0)
+# `buf_sl_he_so` là giá trị THỬ, không phải giá trị sản xuất: các ca dưới
+# kiểm QUAN HỆ (p1/p2/p3/sl suy ra từ đầu vào), không ghim quyết định nào.
+# Giá trị thật đọc từ `tier_b.buf_sl_atr` ở tầng chiến lược (TD-0195).
+BUF_SL_THU = 0.4
+KWARGS_MAC_DINH = dict(atr_4h=2.0, atr_1h_tai_tranche1=1.0, buf_sl_he_so=BUF_SL_THU)
 
 
 class TestTinhKeHoach:
@@ -27,7 +31,7 @@ class TestTinhKeHoach:
     def test_sl_ngoai_zone_theo_buf(self) -> None:
         # zone_low=100, atr_4h=5 -> gia tai i la dong_cua=100 (dung lam mau so ti le ATR)
         # buf_sl = 0.4 * 5/100 = 0.02 -> sl = 100*(1-0.02) = 98
-        kh = tinh_ke_hoach(zone_low=100, zone_high=110, gia_dong_cua=100, atr_4h=5.0, atr_1h_tai_tranche1=1.0)
+        kh = tinh_ke_hoach(zone_low=100, zone_high=110, gia_dong_cua=100, atr_4h=5.0, atr_1h_tai_tranche1=1.0, buf_sl_he_so=BUF_SL_THU)
         assert kh.sl == pytest.approx(98.0)
 
     def test_r_eff_plan_duong_va_hop_ly(self) -> None:
@@ -35,7 +39,7 @@ class TestTinhKeHoach:
         assert 0 < kh.r_eff_plan < 1
 
     def test_luu_dung_atr_1h_tai_tranche1_de_dg6_a_dung_sau(self) -> None:
-        kh = tinh_ke_hoach(zone_low=90, zone_high=100, gia_dong_cua=95, atr_4h=2.0, atr_1h_tai_tranche1=1.23)
+        kh = tinh_ke_hoach(zone_low=90, zone_high=100, gia_dong_cua=95, atr_4h=2.0, atr_1h_tai_tranche1=1.23, buf_sl_he_so=BUF_SL_THU)
         assert kh.atr_1h_tai_tranche1 == 1.23
 
 
