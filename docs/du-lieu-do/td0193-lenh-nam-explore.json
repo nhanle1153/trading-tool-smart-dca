@@ -1,0 +1,104 @@
+{
+  "nguon": "phiên be, 09/09/2026 — TD-0193/DR-D4-08 §6, tập EXPLORE, 0 trial",
+  "ranh_gioi": "CHỈ đếm zone/xác nhận/tín hiệu/lệnh và phân bố. KHÔNG expectancy, KHÔNG PnL theo arm (DR-D0PRE-05 §4).",
+  "timerange": "20240409-20260129",
+  "san_nhanh_1": 150,
+  "pheu_tin_hieu": {
+    "Z3": {
+      "so_ma": 88,
+      "ma_nam": 99.4,
+      "zone": 4918,
+      "A_xac_nhan": 2103,
+      "B_phan_thuc": 3318,
+      "tin_hieu_sau_trend": 96,
+      "ty_le_A_tren_zone": 0.4276,
+      "ty_le_B_tren_zone": 0.6747,
+      "tin_hieu_moi_ma_nam": 0.966,
+      "tin_hieu_quy_doi_pool_102_moi_nam": 98.5,
+      "phan_bo_wait_bars": {
+        "0": 1140,
+        "1": 599,
+        "2": 364
+      },
+      "phan_bo_nhanh_xac_nhan": {
+        "b": 972,
+        "ac": 1131
+      },
+      "phan_bo_luot_cham_phan_thuc_B": {
+        "1": 2103
+      },
+      "giay": 12.6
+    },
+    "Z0": {
+      "so_ma": 88,
+      "ma_nam": 99.4,
+      "zone": 4918,
+      "A_xac_nhan": 2103,
+      "B_phan_thuc": 3318,
+      "tin_hieu_sau_trend": 96,
+      "ty_le_A_tren_zone": 0.4276,
+      "ty_le_B_tren_zone": 0.6747,
+      "tin_hieu_moi_ma_nam": 0.966,
+      "tin_hieu_quy_doi_pool_102_moi_nam": 98.5,
+      "phan_bo_wait_bars": {
+        "0": 1140,
+        "1": 599,
+        "2": 364
+      },
+      "phan_bo_nhanh_xac_nhan": {
+        "b": 972,
+        "ac": 1131
+      },
+      "phan_bo_luot_cham_phan_thuc_B": {
+        "1": 2103
+      },
+      "giay": 12.7
+    }
+  },
+  "lenh_that": {
+    "Z3": {
+      "so_ma": 88,
+      "ma_nam": 99.4,
+      "so_lenh": 62,
+      "lenh_moi_ma_nam": 0.624,
+      "lenh_quy_doi_pool_102_moi_nam": 63.6,
+      "phan_bo_tranche": {
+        "1": 32,
+        "2": 20,
+        "3": 10
+      },
+      "exit_reason": {
+        "TP2_TRAIL": 16,
+        "trailing_stop_loss": 23,
+        "FUNDING_STOP": 23
+      },
+      "tp1_theo_nguon": {
+        "TP1_fallback_r_multiple": 21
+      },
+      "exception_bi_nuot": 0,
+      "giay": 41.0,
+      "ghi_chu": "KHÔNG --timeframe-detail (EXPLORE không có 5m); chỉ đếm, không PnL"
+    },
+    "Z0": {
+      "so_ma": 88,
+      "ma_nam": 99.4,
+      "so_lenh": 62,
+      "lenh_moi_ma_nam": 0.624,
+      "lenh_quy_doi_pool_102_moi_nam": 63.6,
+      "phan_bo_tranche": {
+        "1": 62
+      },
+      "exit_reason": {
+        "TP2_TRAIL": 21,
+        "trailing_stop_loss": 25,
+        "FUNDING_STOP": 16
+      },
+      "tp1_theo_nguon": {
+        "TP1_fallback_r_multiple": 22
+      },
+      "exception_bi_nuot": 0,
+      "giay": 40.8,
+      "ghi_chu": "KHÔNG --timeframe-detail (EXPLORE không có 5m); chỉ đếm, không PnL"
+    }
+  }
+}
