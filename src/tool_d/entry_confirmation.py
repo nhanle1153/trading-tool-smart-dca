@@ -64,26 +64,42 @@ chứng expectancy.
 
 ════ Diễn giải, ghi ra để cãi lại được ════
 
-1. **Mốc cho (b) ở lượt sau = (giá, RSI) TẠI NẾN CHẠM** của lượt trước
-   (bar bắt đầu lượt, `t`), KHÔNG phải tại nến nào trong cửa sổ xác nhận
-   của lượt đó. (b) đo hình dạng giá GIỮA HAI LẦN CHẠM — quan hệ đó
-   không đổi theo việc lượt trước có tìm được xác nhận hay không (đúng
-   khuôn "bất kỳ", không phải "đã xác nhận").
+1. **Mốc cho (b) ở lượt sau = (giá, RSI) TẠI ĐIỂM THẤP NHẤT (đáy thật)
+   của CẢ CỤM** chạm trước, KHÔNG phải tại nến ĐẦU TIÊN chạm vào zone.
+   🔴 **Sửa 09/09/2026 (bắt bởi `-f4`):** bản đầu dùng giá/RSI tại nến
+   *đầu* cụm — nông hơn đáy thật của cụm, nên (b) ("giá tạo đáy THẤP HƠN
+   HOẶC BẰNG", đúng chữ dòng 1081-1082) dễ thoả hơn thiết kế, lệch về
+   chiều NHIỀU LỆNH HƠN (lạc quan). Cửa sổ chờ xác nhận vẫn bắt đầu từ
+   NẾN ĐẦU cụm (đúng chữ "chạm zone lần đầu... CHỜ", dòng 1075) — chỉ
+   MỐC dùng cho lượt sau đổi sang đáy thật. RSI lấy TẠI ĐÚNG nến đáy đó
+   (không phải RSI thấp nhất độc lập với giá): phân kỳ momentum so RSI
+   và giá CÙNG một mốc thời gian, đúng định nghĩa "phân kỳ" trong TA.
 2. **"Chạm"** = một CỤM nến liên tiếp nằm trong `[zone_low, zone_high]`,
    kết thúc khi giá RA khỏi khoảng đó — cùng khái niệm cụm của
    `touch_count()`, nhưng dùng lại VỊ TỪ trần (`zone_low <= gia <=
    zone_high`), KHÔNG dùng lại hàm đó: `touch_count()` cần biết điểm
    BẬT RA để đếm cụm ĐÃ HOÀN TẤT — tức đọc nến SAU — sai ngữ cảnh câu
    "tại `t` có phải điểm BẮT ĐẦU một lượt chạm không" mà hàm này cần trả
-   lời ngay tại `t`, không nhìn về sau.
-3. **`den`** (biên cứng của cửa sổ quét) do TẦNG GỌI truyền, hàm này
-   không tự suy ra. Khuyến nghị dùng đúng `NGUONG_TUOI_ZONE_TOI_DA`
-   (`zone_strength.py`, §1.3, 40 nến 4H) quy đổi sang 1H — vì
-   `zone_hop_le()` hiện gọi với `tuoi_nen=K_XAC_NHAN` (hằng 3), cùng
-   tautology mà `MT-19`/`TD-0189` bắt được ở zone TP (`3 <= 40` luôn
-   đúng, không kiểm được tuổi thật). Khác với zone TP (nơi §1.3 áp dụng
-   có tranh cãi, thành `MT-20`/`DR-D4-06`), với zone ENTRY thì §1.3 là
-   đúng đối tượng nó viết ra để áp — không cần diễn giải riêng.
+   lời ngay tại `t`, không nhìn về sau. `NaN` ở giá thì
+   `zone_low <= NaN <= zone_high` luôn `False` — nến đó lặng lẽ bị coi
+   là *"không chạm"* (không phải *"không biết có chạm"*). An toàn theo
+   đúng chiều: nó chỉ làm BỎ LỠ một điểm dữ liệu, không bao giờ tạo ra
+   một xác nhận giả — khác các vi phạm N6 khác trong dự án, nơi chiều
+   im lặng thường đẩy về phía "đã qua chốt".
+3. **`den`** (biên cứng của cửa sổ quét) do TẦNG GỌI truyền, khuyến nghị
+   dùng đúng `NGUONG_TUOI_ZONE_TOI_DA` (`zone_strength.py`, §1.3, 40 nến
+   4H) quy đổi sang 1H — vì `zone_hop_le()` hiện gọi với
+   `tuoi_nen=K_XAC_NHAN` (hằng 3), cùng tautology mà `MT-19`/`TD-0189`
+   bắt được ở zone TP (`3 <= 40` luôn đúng, không kiểm được tuổi thật).
+   Khác với zone TP (nơi §1.3 áp dụng có tranh cãi, thành `MT-20`/
+   `DR-D4-06`), với zone ENTRY thì §1.3 là đúng đối tượng nó viết ra để
+   áp — không cần diễn giải riêng.
+   🔴 **Sửa 09/09/2026 (bắt bởi `-f4`):** `tim_xac_nhan_entry()` tự nó
+   chỉ chặn cửa sổ theo `len(dong)`, KHÔNG theo `den` — một lượt chạm
+   bắt đầu gần `den` có cửa sổ xác nhận LẤN QUA khỏi `den`, đọc dữ liệu
+   của một zone (theo `den`) đã hết hạn. Hàm đó không sai (nó không biết
+   `den` là gì); trách nhiệm kẹp cửa sổ thuộc về TẦNG NÀY — `so_nen_hieu_dung
+   = min(so_nen_cho_toi_da, den - t)` cho mỗi lượt, xem thân hàm.
 """
 
 from __future__ import annotations
@@ -266,13 +282,30 @@ def quet_xac_nhan_zone(
             t += 1
             continue
 
-        # `t` là điểm BẮT ĐẦU một lượt chạm mới.
+        # `t` là điểm BẮT ĐẦU một lượt chạm mới. Quét luôn hết CẢ CỤM
+        # (tới khi giá RA khỏi zone) để tìm đáy THẬT (diễn giải #1) —
+        # an toàn: đây chỉ dựng MỐC cho lượt SAU, dùng khi đánh giá một
+        # sự kiện xảy ra sau khi cụm này đã kết thúc, không phải quyết
+        # định TẠI `t`.
         lan += 1
+        t_day = t
+        gia_day = gia_bien_muc[t]
+        c_cum = t
+        while c_cum < den and (zone_low <= gia_bien_muc[c_cum] <= zone_high):
+            if gia_bien_muc[c_cum] < gia_day:
+                gia_day, t_day = gia_bien_muc[c_cum], c_cum
+            c_cum += 1
+
+        # Cửa sổ xác nhận bắt đầu từ NẾN ĐẦU cụm `t` (chạm zone lần đầu —
+        # dòng 1075), nhưng bị KẸP để không bao giờ đọc qua khỏi `den`
+        # (sửa 09/09/2026, bắt bởi -f4): `tim_xac_nhan_entry` tự nó chỉ
+        # chặn theo độ dài mảng, không biết `den` là gì.
+        so_nen_hieu_dung = min(so_nen_cho_toi_da, den - t)
         c = tim_xac_nhan_entry(
             mo, cao, thap, dong, rsi, t,
             loai=loai, bat_dieu_kien_c=True,
             volume=volume, volume_ma=volume_ma, v_min=v_min,
-            lan_cham_truoc=lan_cham_truoc, so_nen_cho_toi_da=so_nen_cho_toi_da,
+            lan_cham_truoc=lan_cham_truoc, so_nen_cho_toi_da=so_nen_hieu_dung,
         )
         if lan == 1:
             nen_xac_nhan_that = c  # Phương án A: gán MỘT LẦN, không đổi nữa.
@@ -281,17 +314,14 @@ def quet_xac_nhan_zone(
             lan_cham_phan_thuc = lan
             break
 
-        # Mốc cho lượt sau — TẠI NẾN CHẠM `t` (diễn giải #1). NaN thì
-        # KHÔNG raise (quét lịch sử dài, một nến hỏng giữa chừng không
-        # được làm hỏng toàn vòng quét) — chỉ đơn giản không cập nhật
-        # được mốc, lượt sau thiếu mốc cho (b).
-        if rsi[t] == rsi[t]:  # not NaN
-            lan_cham_truoc = (gia_bien_muc[t], rsi[t])
+        # Mốc cho lượt sau — TẠI ĐÁY THẬT của cụm (`t_day`, diễn giải
+        # #1), KHÔNG phải tại nến đầu `t`. NaN thì KHÔNG raise (quét
+        # lịch sử dài, một nến hỏng giữa chừng không được làm hỏng toàn
+        # vòng quét) — chỉ đơn giản không cập nhật được mốc.
+        if rsi[t_day] == rsi[t_day]:  # not NaN
+            lan_cham_truoc = (gia_day, rsi[t_day])
 
-        # Nhảy qua HẾT lượt chạm hiện tại (tới khi giá RA khỏi zone)
-        # trước khi tìm lượt kế — một cụm liên tiếp chỉ là MỘT lượt.
-        while t < den and (zone_low <= gia_bien_muc[t] <= zone_high):
-            t += 1
+        t = c_cum  # đã ở ngay sau cụm hiện tại — tìm lượt kế từ đây.
 
     return KetQuaQuetXacNhanZone(
         nen_xac_nhan_that=nen_xac_nhan_that,

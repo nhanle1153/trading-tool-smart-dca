@@ -252,3 +252,68 @@ class TestDauVaoHong:
         assert kq.nen_xac_nhan_that is None
         # lượt 2 không xác nhận được qua (b) vì thiếu mốc (không raise)
         assert kq.nen_xac_nhan_phan_thuc is None
+
+
+class TestCuaSoXacNhanKhongVuotDen:
+    """🔴 Bắt bởi `-f4`: `tim_xac_nhan_entry` tự nó chỉ chặn theo
+    `len(dong)`, KHÔNG theo `den` mà `quet_xac_nhan_zone` nhận. Một lượt
+    chạm bắt đầu gần `den` có thể có cửa sổ xác nhận LẤN QUA khỏi `den`
+    — đọc dữ liệu của một zone đã hết hạn (§1.3), và không ca nào trong
+    bộ test trước bắt được vì `den` trong các ca đó luôn đủ xa so với
+    `so_nen_cho_toi_da`."""
+
+    def test_luot_cham_bat_dau_sat_den_khong_duoc_doc_qua_den(self) -> None:
+        d = _phang()
+        # zone chỉ "sống" tới den=6. Lượt chạm bắt đầu ở t=5 (còn hợp lệ,
+        # 5 < 6), nhưng cửa sổ 3 nến mặc định sẽ là 5,6,7 — nến 6,7 NẰM
+        # NGOÀI `den`. Đặt xác nhận rejection thật ở nến 7 (ngoài den).
+        _dung_cham(d, 5)
+        _dung_rejection(d, 7)
+        d["volume"][7], d["volume_ma"][7] = 20.0, 10.0
+
+        kq = _goi(d, tu=0, den=6)
+        assert kq.nen_xac_nhan_that is None, (
+            "xác nhận ở nến 7 nằm NGOÀI den=6 — không được tính, dù "
+            "tim_xac_nhan_entry() một mình sẽ tìm thấy nó"
+        )
+        assert kq.nen_xac_nhan_phan_thuc is None
+
+
+class TestMocLaDayThatCuaCum_KhongPhaiNenDau:
+    """🔴 Bắt bởi `-f4`: spec dòng 1081-1082 nói (b) so với **"giá tạo
+    đáy"** của lần chạm trước — "đáy" tự nhiên là ĐIỂM THẤP NHẤT trong cả
+    cụm chạm, không phải giá tại nến ĐẦU TIÊN chạm vào. Lấy nến đầu (nông
+    hơn đáy thật) làm (b) DỄ kích hoạt hơn thiết kế — lệch về chiều NHIỀU
+    LỆNH HƠN, tức chiều lạc quan mà dự án luôn nghi ngờ trước.
+
+    RSI phải lấy TẠI ĐÚNG NẾN đáy đó — phân kỳ momentum so RSI và giá
+    CÙNG một mốc thời gian, không phải RSI thấp nhất độc lập với giá."""
+
+    def test_dung_diem_thap_nhat_cua_cum_khong_phai_nen_dau_cum(self) -> None:
+        d = _phang()
+        # Lượt 1: cụm chạm 3 nến liên tiếp (5,6,7), giá giảm dần rồi hồi:
+        # nến 5 (đầu cụm) = 96, nến 6 (ĐÁY THẬT của cụm) = 93, nến 7 = 95.
+        # Không nến nào xác nhận (a)/(c) -> chỉ để lại mốc cho lượt sau.
+        for t, gia, r in ((5, 96.0, 20.0), (6, 93.0, 20.0), (7, 95.0, 20.0)):
+            _dung_cham(d, t, gia=gia)
+            d["rsi"][t] = r
+        d["thap"][8] = 80.0  # ra khỏi zone hẳn
+
+        # Lượt 2, CẢ CỬA SỔ 3 nến (12,13,14) giống hệt nhau: giá 94 --
+        # THẤP HƠN đáy thật của cụm 1 (93)? KHÔNG (94 > 93) -- nếu mốc là
+        # ĐÁY THẬT (93) thì "giá thấp hơn hoặc bằng" SAI ở CẢ BA nến ->
+        # (b) KHÔNG xác nhận trong toàn cửa sổ. Nhưng nếu mốc SAI là nến
+        # ĐẦU cụm (96) thì 94 <= 96 -> (b) xác nhận NHẦM ngay nến đầu
+        # cửa sổ. Đặt GIỐNG HỆT ở cả ba nến để không dính lại đúng lỗi đã
+        # sửa hai lần trước trong file này: nến NỀN sau cụm 1 (rsi=50,
+        # gia=80) vô tình thoả (b) một cách không chủ ý.
+        for j in (12, 13, 14):
+            d["thap"][j], d["cao"][j] = 94.0, 98.0
+            d["mo"][j], d["dong"][j] = 94.2, 94.4
+            d["rsi"][j] = 25.0  # > 20 (mốc) -- đủ "RSI cao hơn"
+
+        kq = _goi(d, tu=0, den=N)
+        assert kq.nen_xac_nhan_phan_thuc is None, (
+            "mốc phải là ĐÁY THẬT của cụm (93), không phải nến đầu cụm "
+            "(96) -- dùng nến đầu sẽ xác nhận NHẦM ở lượt 2"
+        )
