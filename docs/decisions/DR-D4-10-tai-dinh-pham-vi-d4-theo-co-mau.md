@@ -18,11 +18,24 @@
 `DR-D4-09 §1.1` lập bảng `n` bằng **ngoại suy** từ `td0193` (cửa sổ `[T0,T2]`, 63,6 lệnh/năm × 0,63).
 TD-0205 sau đó đo **RIÊNG trong cửa sổ WFO** — chính cửa sổ ablation chạy — và ra thấp hơn:
 
-| Nhóm | Arm | `n` DR-D4-09 **ngoại suy** | `n` TD-0205 **đo** | Lệch |
+| Nhóm | Arm | `n` DR-D4-09 **ngoại suy** | `n` **ĐO, sau bản vá TD-0207** | Lệch |
 |---|---|---|---|---|
-| A | `Z0-T0` (tắt hết Phần 2) | ~804 | **959** | +19% |
+| A | `Z0-T0` (tắt hết Phần 2) | ~804 | **883** | +10% |
 | B | `Z0-T1` (chỉ 4H, bỏ 1D) | ~210 | **206** | −2% |
 | **C** | `Z0` `Z1` `Z2` `Z3` `Z3b` `Z0-V1` `Z0-S1` | ~40 | **28** | **−29%** |
+
+Nguồn: `td0205-lenh-nam-wfo-explore.json` (đo lần đầu) và `td0212-ba-arm-sau-va.json` (**đo lại
+sau bản vá TD-0207**, 88 mã, 0 trial). Cả ba cột `n` ở trên là số **sau vá**.
+
+⚠️ **Bản vá đổi số đếm của arm nhiều lệnh, KHÔNG đổi của arm ít lệnh** — và điều đó có cơ chế đọc
+được, không phải nhiễu: `Z0-T0` **746 → 686 lệnh** (−8%), trong khi `Z0-T1` **160 → 160** và `Z0`
+**22 → 22**. TP1 theo zone đối diện nằm xa hơn nạng `1,5R` (tới `3,2R`), nên lệnh **giữ chỗ lâu
+hơn**; ở arm ~700 lệnh thì các lệnh tranh nhau chỗ mở trên cùng một cặp và số đếm tụt, ở arm 22
+lệnh thì gần như không có cạnh tranh nên không thấy gì. Dấu vết đi kèm: `TIME_STOP` của `Z0-T0`
+tăng **5 → 8**.
+🔑 ⇒ Câu *"`Z0` 22 → 22 nên số đếm không phụ thuộc tầng chốt lời"* là một **QUAN SÁT trên một arm ít
+cạnh tranh, không phải một nguyên tắc**. Áp nó sang nhóm A thì `n` sai 8%. Ghi ra vì đây đúng lớp
+lỗi *"sai ở NHÃN dán lên phép đo"* — và lần này nó bị bắt bởi phép đo, không bởi lý lẽ.
 
 Cơ chế đã đo, không phải nhiễu: `1D = UP` chỉ **15,85%** trong WFO so với **19,02%** trên `[T0,T2]`
 (`z = −2,22`) — WFO là cửa sổ **nghịch chiều Long**. Độ phủ mã-năm của WFO còn **cao hơn** (90% vs
@@ -99,9 +112,16 @@ nằm ở `n`, không ở DOF. *(Phiên `c3` tính độc lập, cùng kết lu�
 
 ### 1.5 Nhánh 1 nay chỉ còn ĐÚNG MỘT tiêu chí hỏng
 
-Sau `TD-0207` (`61479b7`), `td0207-h4-sau-va.json` đo lại: `tp1_theo_nguon` lật **6 nạng/0 zone →
-7 zone/1 nạng** ⇒ **H-4 từ 100% xuống 18,2%**, dưới ngưỡng 40% của §10.2. **H-4 không còn là tiêu
-chí hỏng** — nó từng là một lỗi mã, không phải một tính chất của thị trường.
+Sau `TD-0207` (`61479b7`), H-4 đo lại trên **cả ba arm** (`td0212-ba-arm-sau-va.json`) — tất cả đều
+dưới ngưỡng 40% của §10.2:
+
+| Arm | `TP1_zone_doi_dien` | `TP1_fallback` | **H-4** |
+|---|---|---|---|
+| `Z0-T0` | 163 | 46 | **22,0%** |
+| `Z0-T1` | 58 | 4 | **6,5%** |
+| `Z0` | 7 | 1 | **12,5%** |
+
+**H-4 không còn là tiêu chí hỏng** — nó từng là một lỗi mã, không phải một tính chất của thị trường.
 
 ⇒ Trong toàn bộ Nhánh 1, tiêu chí duy nhất đang hỏng là **44,8 lệnh/năm < sàn 150**. Và cách đọc
 chính con số đó lại treo vào **`MT-29`** (§10.2 áp cho MỖI HƯỚNG hay cho TỔNG hệ thống — chưa chốt).
@@ -114,7 +134,7 @@ chính con số đó lại treo vào **`MT-29`** (§10.2 áp cho MỖI HƯỚNG 
 
 | Câu hỏi | Arm mang câu trả lời | `n` | Phán quyết được? |
 |---|---|---|---|
-| **Bộ lọc trend Phần 2 có đáng không?** | `Z0-T0` · `Z0-T1` · `Z0`(=`Z0-T2`) | 959 · 206 · 28 | ✅ **CÓ** cho A và B |
+| **Bộ lọc trend Phần 2 có đáng không?** | `Z0-T0` · `Z0-T1` · `Z0`(=`Z0-T2`) | 883 · 206 · 28 | ✅ **CÓ** cho A và B |
 | **DCA ba tranche có đáng không?** | `Z0` vs `Z3`/`Z3b` | 28 vs 28 | ❌ **KHÔNG**, và không bao giờ ở tần suất này |
 
 D4 từ nay **chỉ phán quyết câu thứ nhất**. Câu thứ hai chuyển sang đường ở §2.4.
@@ -191,9 +211,10 @@ Và nó chặt hơn ở ba chỗ:
   suất rồi tưởng mình đã hỏi được câu DCA. Cùng tinh thần `DR-D4-09 §4`.
 - **`std_R` vẫn CHƯA ĐO** (`MT-27`). Mọi bảng dùng dải 0,58–1,50 thay vì một số. Kết luận §1.2 đúng
   trên **toàn dải**, và §1.2 đã cho cận lật tường minh (`std_R < 0,173`).
-- **`Z0-T0` = 959 và `Z0-T1` = 206 là số TRƯỚC bản vá `TD-0207`.** Chỉ `Z0` đã đo lại (22 → 22 lệnh,
-  44,8 → 44,8/năm, `n = 28` **không đổi**). Phiên `c3` đang đo lại hai arm kia. Nếu lệch > 20% thì
-  §2.1 phải xét lại xem nhóm B còn phán quyết được không — nhóm A thì dư an toàn.
+- ~~`Z0-T0` và `Z0-T1` là số TRƯỚC bản vá `TD-0207`~~ ✅ **ĐÃ GIẢI** — `TD-0212` đo lại cả ba arm sau
+  vá (`td0212-ba-arm-sau-va.json`): `Z0-T0` 883 (−8%), `Z0-T1` 206 (không đổi), `Z0` 28 (không đổi).
+  **§7 điều kiện 3 đã kiểm và KHÔNG kích hoạt** (`Z0-T1` không rơi dưới 100) ⇒ §2.1 giữ nguyên.
+  Mọi con số `n` trong DR này nay là số **sau vá**, không còn trộn hai hệ thống.
 - **Kết luận này chỉ cho LONG.** `DR-D4-01 §2` đã ghi; Short mở ra một bộ arm thứ hai với `n` riêng
   chưa ai đo (`do_short_pheu_tin_hieu_explore.json` mới tới tầng tín hiệu, con số 237,8 lệnh/năm là
   **ƯỚC LƯỢNG**, không đo).
@@ -261,3 +282,4 @@ thật"* — đó là **xác nhận dự báo §2.2**, không phải thông tin 
 | 10/09/2026 | TD-0208 đối chiếu checklist ngoài; phép tính 0-trial cho thấy nhóm C **ngoài tầm với**, không phải thiếu mẫu |
 | 10/09/2026 | Phiên `c3` bác `×2` cho Short (spec dòng 4187 / 4973-4974) ⇒ trần 324 → **162**, kết luận mạnh hơn; và chặn ca nghi ngờ `MT-25` bằng cận `λ < 0,138` |
 | 10/09/2026 | Chủ dự án chốt **phương án A** — DR này |
+| 10/09/2026 | `TD-0212` đo lại ba arm SAU bản vá: `Z0-T0` 883 (−8%), `Z0-T1` 206, `Z0` 28. **§7 điều kiện 3 kiểm — KHÔNG kích hoạt**, §2.1 giữ nguyên. H-4 cả ba arm dưới 40%. Bản vá đổi số đếm của arm nhiều lệnh, không đổi arm ít lệnh — cơ chế tranh chỗ mở, §1.1 |
