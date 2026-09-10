@@ -59,6 +59,18 @@ TRUONG_KHOA: dict[str, tuple[str, ...]] = {
     "GATE_CHECK": ("trade_id", "candle_ts", "gate"),
 }
 
+# TD-0201 — §8.3 KHÔNG định nghĩa trường phân biệt NGUỒN bản ghi (backtest /
+# dry-run / live), nhưng module này CỐ Ý phục vụ cả ba (xem docstring đầu
+# file: "chiến lược chạy thật cũng ghi vào đây"). Thiếu trường này, một lần
+# đọc sổ để đếm/báo cáo không tách được lệnh backtest với lệnh dry-run/live
+# — đúng lỗi Tool A đã dính (đếm phóng đại vì gộp cả hai nguồn).
+#
+# KHÔNG tham gia `TRUONG_KHOA`/`dedup_key()`: cùng một sự kiện thật (cùng
+# `exchange_order_id`, v.v.) không đổi khoá chỉ vì đổi nguồn ghi — đó là hai
+# trục độc lập. `nguon` là một trường NỘI DUNG bắt buộc, không phải một
+# thành phần khoá.
+NGUON_HOP_LE = ("backtest", "dry_run", "live")
+
 
 class DecisionLogError(RuntimeError):
     """Bản ghi không dựng được khoá, hoặc vi phạm bất biến append-only.
@@ -72,6 +84,10 @@ def dedup_key(record: Mapping[str, Any]) -> str:
 
     TỪ CHỐI (không tự bịa khoá):
       • thiếu `loai`, hoặc `loai` không thuộc bốn loại của §8.3;
+      • thiếu `nguon`, hoặc `nguon` không thuộc {backtest, dry_run, live}
+        (TD-0201) — `nguon` KHÔNG tham gia khoá, nhưng bị kiểm ở ĐÂY vì
+        đây là điểm nghẽn DUY NHẤT mọi bản ghi đi qua trước khi chạm file
+        (bài học TD-0150: vá rải rác ở nhiều hàm để lọt qua điểm chưa vá);
       • thiếu bất kỳ trường dựng khoá nào;
       • trường dựng khoá rỗng/`None`. Đây KHÔNG phải bắt bẻ hình thức:
         khoá `":" * n` dựng từ các trường rỗng sẽ TRÙNG NHAU giữa những
@@ -83,6 +99,14 @@ def dedup_key(record: Mapping[str, Any]) -> str:
         raise DecisionLogError(
             f"`loai` = {loai!r} không thuộc {sorted(TRUONG_KHOA)} (§8.3). "
             "TỪ CHỐI dựng khoá — không đoán loại bản ghi."
+        )
+    nguon = record.get("nguon")
+    if nguon not in NGUON_HOP_LE:
+        raise DecisionLogError(
+            f"`nguon` = {nguon!r} không thuộc {NGUON_HOP_LE} (TD-0201). "
+            "TỪ CHỐI ghi — không mặc định 'chắc là backtest': một bản ghi "
+            "không khai nguồn là một bản ghi không thể tách khỏi các nguồn "
+            "khác khi đếm/báo cáo sau này, đúng lỗi Tool A đã dính."
         )
     phan: list[str] = []
     for ten in TRUONG_KHOA[loai]:

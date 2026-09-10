@@ -15,6 +15,8 @@
 
   "dry_run": true,
   "dry_run_wallet": 1000,
+  "db_url": "sqlite:////workspace/user_data/tradesv3_dryrun.sqlite",
+  "_comment_db_url": "TD-0201/TD-0202 (phát hiện khi soát dashboard front-end): trước khi có khoá này, Freqtrade dùng mặc định 'sqlite:///tradesv3.dryrun.sqlite' — đường TƯƠNG ĐỐI, rơi vào gốc /workspace vì working_dir của docker-compose, không tài liệu nào ghi rõ. Ghim tường minh vào user_data/ (4 gạch chéo = đường TUYỆT ĐỐI theo cú pháp SQLAlchemy sqlite) để mọi công cụ đọc DB sau này (dashboard, script) biết chắc chắn đường dẫn, không phải dò theo cwd lúc chạy. *.sqlite đã có trong .gitignore. Đường DB cho LIVE (D12) CHƯA ghim — N11: 'DB staging riêng, tách hẳn DB live'; quyết khi tới D10-D12, không bịa trước.",
   "tradable_balance_ratio": 0.75,
   "_comment_tradable_balance_ratio": "DR-D0PRE-06 (TD-0043): E_D = 750 USDT trên ví minh hoạ 1000 → 0.75 (✅ DR-D4-05 nâng từ 500/0.5) (spec §6.8 dòng 2026, §6.9.2 'tradable_balance_ratio phải khớp'). E_D KHÔNG phải số dư ví — phần còn lại (250 trên ví 1000) là đệm. Khi số dư sub-account thật khác 1000, chỉnh tỉ lệ này cho khớp E_D/số dư và commit (Tầng A, không cần DR mới).",
   "fiat_display_currency": "USD",

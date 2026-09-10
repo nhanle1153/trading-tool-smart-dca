@@ -29,11 +29,22 @@ from tool_d.ledger.decision_log import (
 
 
 def _lenh(order_id: str = "OID-1") -> dict:
-    return {"loai": "VAO_RA_LENH", "exchange_order_id": order_id, "pnl_abs": 12.5}
+    return {
+        "loai": "VAO_RA_LENH",
+        "nguon": "backtest",
+        "exchange_order_id": order_id,
+        "pnl_abs": 12.5,
+    }
 
 
 def _plan(pair: str = "BTC/USDT:USDT", ts: str = "2025-07-01T00:00:00Z") -> dict:
-    return {"loai": "PLAN", "pair": pair, "candle_ts": ts, "block": "block_zone_plan"}
+    return {
+        "loai": "PLAN",
+        "nguon": "backtest",
+        "pair": pair,
+        "candle_ts": ts,
+        "block": "block_zone_plan",
+    }
 
 
 class TestKhoaTheoTrancheKhongTheoTrade:
@@ -42,13 +53,17 @@ class TestKhoaTheoTrancheKhongTheoTrade:
         Khoá theo `trade_id` sẽ gộp ba tranche thành một — mất đúng thứ
         Tool D sinh ra để đo."""
         khoa = {
-            dedup_key({"loai": "VAO_RA_LENH", "exchange_order_id": oid, "trade_id": 7})
+            dedup_key(
+                {"loai": "VAO_RA_LENH", "nguon": "backtest", "exchange_order_id": oid, "trade_id": 7}
+            )
             for oid in ("OID-t1", "OID-t2", "OID-t3")
         }
         assert len(khoa) == 3
 
     def test_khoa_khong_chua_trade_id(self) -> None:
-        k = dedup_key({"loai": "VAO_RA_LENH", "exchange_order_id": "OID-t1", "trade_id": 7})
+        k = dedup_key(
+            {"loai": "VAO_RA_LENH", "nguon": "backtest", "exchange_order_id": "OID-t1", "trade_id": 7}
+        )
         assert k == "OID-t1" and "7" not in k
 
     def test_tat_dinh_goi_lai_ra_cung_khoa(self) -> None:
@@ -56,9 +71,19 @@ class TestKhoaTheoTrancheKhongTheoTrade:
 
     def test_du_bon_loai_cua_spec(self) -> None:
         assert set(TRUONG_KHOA) == {"VAO_RA_LENH", "DOI_SL", "PLAN", "GATE_CHECK"}
-        assert dedup_key({"loai": "DOI_SL", "sl_order_id_new": "SL-9"}) == "SL-9"
         assert (
-            dedup_key({"loai": "GATE_CHECK", "trade_id": 7, "candle_ts": "T", "gate": "DG6"})
+            dedup_key({"loai": "DOI_SL", "nguon": "backtest", "sl_order_id_new": "SL-9"}) == "SL-9"
+        )
+        assert (
+            dedup_key(
+                {
+                    "loai": "GATE_CHECK",
+                    "nguon": "backtest",
+                    "trade_id": 7,
+                    "candle_ts": "T",
+                    "gate": "DG6",
+                }
+            )
             == "7:T:DG6"
         )
 
@@ -74,7 +99,7 @@ class TestDungKhoaFailClosed:
 
     def test_thieu_truong_dung_khoa_thi_raise(self) -> None:
         with pytest.raises(DecisionLogError, match="candle_ts"):
-            dedup_key({"loai": "PLAN", "pair": "BTC/USDT:USDT", "block": "b"})
+            dedup_key({"loai": "PLAN", "nguon": "backtest", "pair": "BTC/USDT:USDT", "block": "b"})
 
     @pytest.mark.parametrize("rong", [None, "", "   "])
     def test_truong_dung_khoa_RONG_thi_raise(self, rong) -> None:
@@ -82,7 +107,9 @@ class TestDungKhoaFailClosed:
         cùng có trường rỗng sẽ ra CÙNG một khoá và nuốt lẫn nhau — hỏng
         nặng hơn hẳn ghi trùng."""
         with pytest.raises(DecisionLogError, match="rỗng"):
-            dedup_key({"loai": "PLAN", "pair": rong, "candle_ts": "T", "block": "b"})
+            dedup_key(
+                {"loai": "PLAN", "nguon": "backtest", "pair": rong, "candle_ts": "T", "block": "b"}
+            )
 
     def test_hai_ban_ghi_khac_nhau_cung_truong_rong_se_trung_khoa(self) -> None:
         # Chứng minh mối nguy là có thật, không phải giả định: nếu bỏ chốt
@@ -174,7 +201,10 @@ def _ghi_tu_tien_trinh_con(duong_dan: str, order_id: str, so_lan: int, rao=None)
     if rao is not None:
         rao.wait(timeout=30)
     for _ in range(so_lan):
-        ghi(Path(duong_dan), {"loai": "VAO_RA_LENH", "exchange_order_id": order_id})
+        ghi(
+            Path(duong_dan),
+            {"loai": "VAO_RA_LENH", "nguon": "backtest", "exchange_order_id": order_id},
+        )
 
 
 def _giu_khoa_roi_nha(duong_dan: str, da_giu, giu_giay: float) -> None:
