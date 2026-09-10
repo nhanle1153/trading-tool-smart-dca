@@ -299,23 +299,68 @@ def _so_tap_lenh(lenh_that: dict) -> dict:
     return ra
 
 
+NGUON_MAC_DINH = "phiên be, 09/09/2026 — TD-0193/DR-D4-08 §6, tập EXPLORE, 0 trial"
+# 🔴 MT-24 (10/09/2026): câu "(DR-D0PRE-05 §4)" trong chuỗi dưới đây là một TRÍCH DẪN
+# SAI — điều khoản đó không cấm PnL/expectancy. GIỮ NGUYÊN mặc định để artifact
+# `td0193-lenh-nam-explore.json` còn tái lập được đúng từng byte (kỷ luật xuất xứ);
+# lần chạy nào cần chữ đúng thì truyền `--ranh-gioi`. Đính chính ở `back-end-note.md`
+# mục 7, MT-24 — KHÔNG sửa tại chỗ, và KHÔNG sửa tay file JSON đã sinh.
+RANH_GIOI_MAC_DINH = (
+    "CHỈ đếm zone/xác nhận/tín hiệu/lệnh và phân bố. "
+    "KHÔNG expectancy, KHÔNG PnL theo arm (DR-D0PRE-05 §4)."
+)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--arms", default="Z3,Z0")
     ap.add_argument("--max-coins", type=int, default=0)
     ap.add_argument("--skip-backtest", action="store_true")
+    # Cửa sổ đo. Mặc định = [T0,T2] như lần chạy TD-0193 ⇒ đường chạy cũ KHÔNG đổi
+    # một byte. TD-0205 truyền [T1,T2] để đo phễu riêng trong cửa sổ mà ablation D4
+    # thật sự chạy (spec dòng 3287) thay vì ngoại suy từ cửa sổ dài hơn.
+    ap.add_argument("--tu", default=None, help="mốc bắt đầu YYYY-MM-DD (mặc định T0)")
+    ap.add_argument("--den", default=None, help="mốc kết thúc YYYY-MM-DD (mặc định T2)")
+    ap.add_argument("--ket-qua", default=None, help="đường ghi JSON (mặc định artifact TD-0193)")
+    ap.add_argument("--nguon", default=None)
+    ap.add_argument("--ranh-gioi", default=None)
     a = ap.parse_args()
     arms = a.arms.split(",")
+    # Gán vào biến module: mọi hàm bên dưới đọc T0/T2/TIMERANGE ở tầm module, nên
+    # đổi ở đây là đổi cho toàn bộ hai tầng đo (phễu và backtest) cùng một lúc —
+    # tránh đúng lỗi "hai tầng đếm trên hai cửa sổ khác nhau" mà `_du_du_lieu()` đã
+    # phải sinh ra để chặn.
+    global T0, T2, TIMERANGE, KET_QUA
+    if a.tu:
+        T0 = pd.Timestamp(a.tu, tz="UTC")
+    if a.den:
+        T2 = pd.Timestamp(a.den, tz="UTC")
+    TIMERANGE = f"{T0:%Y%m%d}-{T2:%Y%m%d}"
+    if a.ket_qua:
+        KET_QUA = Path(a.ket_qua)
+        if not KET_QUA.is_absolute():
+            KET_QUA = REPO / KET_QUA
+    if KET_QUA.exists() and (a.tu or a.den) and not a.ket_qua:
+        print("🛑 Đổi cửa sổ mà vẫn ghi đè artifact cũ — truyền --ket-qua", flush=True)
+        return 2
     ma = [m for m in _cac_ma() if _du_du_lieu(m)]
     if a.max_coins:
         ma = ma[: a.max_coins]
     print(f"EXPLORE: {len(ma)} mã đủ file · timerange {TIMERANGE} · arms {arms}", flush=True)
     kq = {
-        "nguon": "phiên be, 09/09/2026 — TD-0193/DR-D4-08 §6, tập EXPLORE, 0 trial",
-        "ranh_gioi": "CHỈ đếm zone/xác nhận/tín hiệu/lệnh và phân bố. KHÔNG expectancy, KHÔNG PnL theo arm (DR-D0PRE-05 §4).",
+        "nguon": a.nguon or NGUON_MAC_DINH,
+        "ranh_gioi": a.ranh_gioi or RANH_GIOI_MAC_DINH,
         "timerange": TIMERANGE, "san_nhanh_1": 150,
         "pheu_tin_hieu": do_pheu(ma, arms),
     }
+    if kq["ranh_gioi"] == RANH_GIOI_MAC_DINH:
+        # Cảnh báo, KHÔNG chặn (gợi ý phiên `be`): hậu quả của việc quên `--ranh-gioi`
+        # chỉ là một chuỗi MÔ TẢ sai trong metadata — không đại lượng nào bị đổi — nên
+        # nâng thành chặn cứng là dựng một chốt đắt hơn thứ nó bảo vệ. Người chạy tự
+        # quyết mình đang cố ý tái lập TD-0193 hay đang quên cờ.
+        print("⚠️  ranh_gioi đang ở giá trị MẶC ĐỊNH, mang trích dẫn SAI về "
+              "DR-D0PRE-05 §4 (xem MT-24). Đúng nếu bạn đang cố ý tái lập "
+              "artifact TD-0193; nếu không, truyền --ranh-gioi.", flush=True)
     kq["huong_lech_quy_doi"] = _huong_lech_quy_doi(kq["pheu_tin_hieu"])
     for v in kq["pheu_tin_hieu"].values():
         v.pop("_theo_ma", None)
