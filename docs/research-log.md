@@ -2310,3 +2310,61 @@ Vá thuộc **DR-012 Hạng 1** (mã không khớp spec) ⇒ 0 trial, không c�
 `notna()` trên `zone_dinh_gia_4h` cho **giá trị LẶP**, khác hẳn *"tập các zone đã xác nhận"* mà
 `_zone_dinh_tren` định lấy. Đổi tên cột mà không xử ffill là **đổi im lặng ý nghĩa của TP1** — đúng
 lớp `L-Z48c`. Và vá xong **đổi mọi con số D4 đã đo** ⇒ phải ghi như `DR-D4-08` §8.
+
+---
+
+## 10/09/2026 — Sự cố commit chéo thứ NĂM, và lần đầu ở chiều N12 đã tự khai là không chặn được
+
+**Sự việc.** Phiên `c0` sửa dòng `TD-0211` trong `TASKS.md` (mở rộng 1917 → 3774 ký tự: đổi 🔒→✅,
+gắn ô Xác nhận, đính chính một con số sai của chính mình). Trước khi `c0` kịp commit, phiên `c3`
+chèn dòng `TD-0212` vào cùng file rồi chạy `git commit -- TASKS.md`. Commit `2992482` mang nhãn
+*"khoá TD-0212"* nhưng chứa **cả hai** thay đổi. `c0` sau đó chạy `git commit` thì nhận
+*"nothing added to commit"*.
+
+**Thiệt hại: KHÔNG CÓ.** Nội dung `TD-0211` vào lịch sử nguyên vẹn (kiểm 8 chuỗi mốc: `✅`,
+`Xác nhận`, `ff87475`, `n ≈ 162`, `λ < 0,138`, `18,2%`, `MT-29`, `§2.4`). Chỉ **xuất xứ** sai: phần
+hoàn tất `TD-0211` nằm dưới nhãn commit của một việc khác. Không viết lại lịch sử — tiền lệ
+`4ec0fd3`: ghi nhận, gắn đính chính, giữ nguyên chữ cũ.
+
+**Cả hai phiên phát hiện độc lập, gần như đồng thời, và chẩn đoán trùng khớp.** Đã thoả thuận
+trước khi ghi: `c0` viết mục này, `c3` không viết — tránh tái diễn `DR-D4-06` (hai file cho một
+sự việc).
+
+### Ba điều mới so với bốn sự cố trước
+
+**1. Lần đầu ở chiều mà N12 mục 5 đã TỰ KHAI là không chặn được.** Bảng trong N12 ghi hai chiều:
+*"mình gây hại cho phiên khác"* → ✅ chặn được; *"mình bị phiên khác cuốn đi"* → ❌ không. Bốn sự cố
+trước (`4ec0fd3` và họ hàng) đều là chiều thứ nhất. Đây là chiều thứ hai — **ứng nghiệm đúng một
+dự đoán viết sẵn**. Một quy tắc dự báo đúng thất bại của chính nó thì phần dự báo đó **không cần
+sửa**; nó cần được ghi là đã xảy ra, để lần sau không ai coi đó là lý thuyết.
+
+**2. 🔑 Nhưng cơ chế là một đường THỨ BA mà N12 chưa mô tả — và nó thủng cả cái khoá N12 đề nghị.**
+N12 mô tả chiều thứ hai là *"file mình vừa `git add` bị họ cuốn đi"*, tức qua **index dùng chung**,
+và đề nghị đóng bằng `GIT_INDEX_FILE` riêng hoặc worktree riêng. Lần này **không ai `add` gì cả**:
+`c3` dùng pathspec, mà `git commit -- <path>` lấy thẳng **working tree** của path đó, bỏ qua index.
+⇒ Cơ chế là **working tree dùng chung**, không phải index dùng chung.
+🔴 Hệ quả thực tế: **`GIT_INDEX_FILE` riêng KHÔNG đóng được đường này.** Chỉ worktree riêng mới
+đóng. Chủ dự án đã cố ý chọn không dùng worktree, nên đây là rủi ro tồn dư **có ý thức** — ghi ra
+để không ai tưởng `GIT_INDEX_FILE` là đủ.
+
+**3. Nguyên nhân trực tiếp: cả hai phiên đều thay "đọc diff" bằng "đọc TÓM TẮT diff".**
+`c3` xem `--numstat`, thấy `2 1` (thêm 2 xoá 1, thay vì `1 0` như chủ định) và vẫn commit vì lệnh
+`diff` và `commit` gộp chung nên không kịp đọc. `c0` thì chạy `git diff -U0 -- TASKS.md | grep "^@@"`
+để xem **phạm vi hunk** — cũng là thống kê, không phải nội dung. N12 mục 1 đòi *"đọc lại TOÀN BỘ
+diff"*; cả hai đều đọc một đại lượng **dẫn xuất** từ diff rồi tưởng đã làm đúng. Cùng lớp lỗi với
+*"đo tính chất NGỮ NGHĨA bằng dấu hiệu CÚ PHÁP"* (08/09) và *"sai ở NHÃN dán lên phép đo"* (09/09).
+
+### Đề xuất — vì "đọc hết diff" là một chốt không thoả được
+
+`TASKS.md` dài hơn 400 dòng, mỗi dòng việc dài hàng nghìn ký tự. *"Đọc hết diff"* nghe đúng nhưng
+không ai làm thật — đúng dạng **chốt không bao giờ thoả được** mà cổng D3 đã trả giá, và chốt loại
+đó sớm muộn bị bỏ qua trong im lặng.
+
+Thay bằng một phép so **hẹp và máy kiểm được**: trước khi commit một file trạng thái dùng chung,
+lọc diff xuống **đúng những mã việc mình chủ định đụng** rồi đối chiếu danh sách đó —
+`git diff -- TASKS.md | grep -oE "^[-+]\| TD-[0-9]{4}" | sort -u`. Ra đúng tập mã mình định sửa
+thì commit; ra thêm mã lạ thì dừng. Rẻ, đọc được trong hai giây, và bắt được **cả hai** sự cố đã
+xảy ra (`4ec0fd3` nuốt file lạ, `2992482` nuốt dòng lạ).
+
+⚠️ Cách `c3` tự chốt (tách `diff` và `commit` thành hai lệnh) đúng hướng nhưng **không đủ**: cửa sổ
+giữa hai lệnh chính là chỗ phiên kia ghi vào. Nó thu hẹp, không đóng.
