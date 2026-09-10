@@ -2063,3 +2063,91 @@ tần suất đạt tới hàng nghìn lệnh/năm (bảng độ nhạy: ~950-15
 xuống mức khả thi ~0,16-0,23 ở `std_R`=1,25) — một bậc độ lớn khác hẳn câu hỏi "đạt sàn 150".
 Ghi cho chủ dự án quyết: mở rộng cửa sổ WFO, hay chấp nhận D4 khó kết luận bằng thống kê cổ điển ở
 quy mô dữ liệu hiện có, hay hướng khác — không tự chọn.
+
+---
+
+## 10/09/2026 — Ba chốt của TD-0184 là MỘT bất đẳng thức; và rào DSR bất biến theo thang đo
+
+**Bối cảnh.** Chủ dự án yêu cầu phân tích tổng thể ba thứ đang chặn TD-0184 (số mẫu 63,6 lệnh/năm <
+sàn 150; E3 không có đường chạy hợp lệ; `std(R_realized)` chưa ai đo) rồi đề xuất đường đi. Kết quả
+dưới đây thuần toán trên công thức đã có + số đã đo, **0 trial, không chạm dữ liệu nào**.
+
+### 1. Ba chốt không độc lập
+
+`DSR_adj = mean_R − h·std_R/√n ≥ 0,10 R` (`gates/dsr.py:52-69`, `h = √(2·ln 114) = 3,0777`), với
+`n = (lệnh/năm) × (số năm cửa sổ)`. "63,6 < 150" nói về **tử số của `n`**; "`std_R` chưa đo" nói về
+**`std_R`**; "E3 không chạy được" là **điều kiện quan sát** cả hai. Ba biến của cùng một bất đẳng
+thức — gỡ riêng một cái không kết luận được gì.
+
+### 2. 🔑 Kết quả trung tâm — sàn Sharpe mỗi lệnh, BẤT BIẾN theo thang đo
+
+Chia hai vế cho `std_R`, đặt `S = mean_R/std_R`:
+
+```
+S ≥ 0,10/std_R + h/√n
+                 ╰────╯  SÀN KHÔNG THỂ HẠ, độc lập hoàn toàn với std_R
+```
+
+| n | lệnh/năm (WFO 0,63 năm) | Sàn `S` = h/√n |
+|---|---|---|
+| **40 (hiện tại)** | **63,6** | **0,487** |
+| 95 | 150 (sàn §10.2) | 0,316 |
+| 191 | 301 (nếu mở Short) | 0,223 |
+| 545 | 301 + cửa sổ CALIB+WFO | 0,132 |
+
+Vì sao đáng ghi: nó khiến `std_R` — thứ cả dự án đang chờ — thành **thứ yếu** cho câu hỏi *"có nên
+tiêu 9 suất trial không"*. Dù `std_R` bằng bao nhiêu, ở n = 40 hệ thống phải đạt `S ≥ 0,487`.
+
+⚠️ **Phát biểu phải kèm điều kiện, đừng rút gọn** (phiên `be` bắt được chỗ này khi tôi viết trần):
+`S ≥ 0,10/std_R + h/√n` cho thấy `std_R` nhỏ làm `S` cần TĂNG — nhưng điều đó chỉ là một **cách sửa**
+chứ không phải một sự thật phổ quát, và nó chỉ có hiệu lực khi `std_R` nhỏ **vì đơn vị R bị co**
+(MT-25 vế i). Nếu `std_R` nhỏ vì phân tán thật sự chặt thì cách đọc cũ (giữ `mean_R` cố định) đúng.
+Cả hai đều là phép chia đúng của cùng một bất đẳng thức; **phép chia không tự chọn hộ giả định nào
+đúng** — cái chọn hộ là **cơ chế** (Z0 khớp 100% một tranche trong khi mẫu số dùng thang ba tranche).
+
+### 3. Sàn 150 và rào DSR không được hiệu chỉnh theo nhau
+
+Đạt đúng sàn 150 ⇒ n = 95 ⇒ thuế nhiễu `3,0777 × 1,25/√95 = 0,395 R` — **gấp 3,9 lần chính ngưỡng
+0,10 R** mà nó phải bảo vệ. Để thuế nhiễu chỉ bằng ngưỡng cần **n ≥ 1.480 ≈ 2.340 lệnh/năm**. Sàn
+150 vì thế không làm được việc mà chú thích của nó nói (*"ngưỡng tối thiểu để có đủ mẫu"*, spec dòng
+4275). **Ghi nhận, KHÔNG đề nghị sửa số** — sửa một chốt vì nó đang chặn là đúng thứ `CLAUDE.md` cấm.
+
+### 4. Nhánh 2 thiếu lực hơn Nhánh 1
+
+`so_paired()` (`ket_cuc.py:183-211`) ở n_giao = 40: cổng hỏi *"vượt ≥ 20%"* nhưng chỉ phân biệt được
+mức vượt **212% (ρ=0,95) → 405% (ρ=0,8)** khi `e_A = 0,10 R`. ⇒ **ở n = 40 CẢ HAI nhánh của GATE
+D0.9 đều không phán quyết được**, suy ra được TRƯỚC khi tiêu suất trial nào. Chạy 9 arm bây giờ là
+tiêu 7,9% ngân sách mua một kết cục đã biết.
+
+### 5. Đòn bẩy: chỉ `√n`, và `N` KHÔNG phải đòn bẩy
+
+Phễu đo được (TD-0193): bộ lọc trend một mình chiếm **×21,9** trong tổng ×79,3 lần thu hẹp từ zone
+xuống lệnh; bên trong nó chốt cắt là **§2.1 hướng 1D** (2.103 → 400, cắt 81%).
+
+Hạ `N` để nới rào **không dùng được**: `h = √(2·ln N)` quá trơ — N 114 → 30 chỉ hạ hurdle **15,3%**;
+phải xuống N = 5 mới hạ 41,7%. Và động vào nó là nới chuẩn của chính mình (tiền lệ OQ-06).
+
+### 6. Ưu thế Short 3,74× chủ yếu là chế độ thị trường — nhưng lý do ĐÚNG để mở Short là thứ khác
+
+Ưu thế tầng tín hiệu `368,4/98,5 = 3,740`; tỉ lệ cơ hội `DOWN/UP = 1339/400 = 3,348` ⇒ phần cấu trúc
+chỉ **×1,117**, trong sai số. Đọc *"Short tốt hơn Long"* là **sai**. Lý do đúng: Long-only treo `n`
+vào **19,0%** cơ hội, Long+Short đưa lên **82,7%** (×4,35) và làm `n` **bớt phụ thuộc chế độ thị
+trường** — lập luận về **độ vững của cỡ mẫu**, không phải về edge.
+
+### 7. 🔴 `n = 40` bản thân nó là NGOẠI SUY, chưa ai đo
+
+63,6 lệnh/năm đo trên **[T0,T2] = 1,81 năm** rồi nhân 0,632 năm để ra `n` trên **WFO [T1,T2]**. Cơ
+hội Long treo vào tỉ lệ 1D = UP, mà tỉ lệ đó trên [T0,T2] là 19,0% — một cửa sổ 7 tháng lệch xa được
+cả hai chiều. **Con số trung tâm chưa được đo trên chính cửa sổ nó sẽ được dùng**, và đo nó là việc
+rẻ nhất trong toàn bộ danh sách ⇒ làm trước.
+
+### 8. Ba mâu thuẫn đã ghi sổ
+
+`MT-24` (trích dẫn bịa về ranh giới EXPLORE) · `MT-25` (đơn vị R của Z0 bị co ⇒ `DR-D4-09` §7 điều 1
+không dùng được như đang viết) · `MT-26` (`DSR_adj` thiên lệch theo cỡ mẫu). Cả ba **chưa giải**,
+chờ chủ dự án — commit `e9c928f`.
+
+🔑 **Bài học phương pháp của phiên:** cả ba phát hiện đến từ việc **đọc lại nguồn được viện dẫn**
+thay vì tin câu trích, và từ việc **viết một đại lượng dưới dạng bất biến** (Sharpe) thay vì so hai
+số phụ thuộc thang. Cùng họ với bài học `TD-0082` đã ghi (*"một dòng mô tả việc cũng là lời khai,
+không phải bằng chứng"*) — lần này lời khai đi qua **bốn** tài liệu trước khi có ai mở nguồn ra đọc.
