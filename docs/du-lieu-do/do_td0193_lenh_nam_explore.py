@@ -251,7 +251,11 @@ def _chan_doan_tp(log: str) -> dict:
         tran.append(float(d["tran_r"]))
         if d["gan_nhat_r"] != "None":
             gan.append(float(d["gan_nhat_r"]))
-            if nv > 0 and d["nguon"] != "zone":
+            # TD-0207 — SỬA lỗi của chính bộ đếm này: bản đầu so `!= "zone"`,
+            # nhưng hằng `TP_SOURCE_ZONE` là `"zone_doi_dien"` ⇒ vế đó LUÔN đúng
+            # ⇒ đếm mọi ca có ứng viên, không phải ca "có ứng viên mà vẫn nạng".
+            # Con số 22/22 trong `td0207-h4-sau-va.json` (bản đầu) là số SAI.
+            if nv > 0 and d["nguon"] != "zone_doi_dien":
                 ca_co_ung_vien_ma_van_nang += 1
 
     def _tt(xs: list[float]) -> dict:
