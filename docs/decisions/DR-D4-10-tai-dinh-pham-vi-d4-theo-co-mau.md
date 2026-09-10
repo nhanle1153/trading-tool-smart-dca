@@ -22,7 +22,12 @@ TD-0205 sau đó đo **RIÊNG trong cửa sổ WFO** — chính cửa sổ ablat
 |---|---|---|---|---|
 | A | `Z0-T0` (tắt hết Phần 2) | ~804 | **883** | +10% |
 | B | `Z0-T1` (chỉ 4H, bỏ 1D) | ~210 | **206** | −2% |
-| **C** | `Z0` `Z1` `Z2` `Z3` `Z3b` `Z0-V1` `Z0-S1` | ~40 | **28** | **−29%** |
+| **C** | `Z0` `Z1` `Z2` `Z3` `Z3b` `Z0-V1` `Z0-S1` | ~40 (một số chung) | **8 → 40** (bảy số riêng) | xem §2.5 |
+
+🔴 **`DR-D4-09` gộp bảy arm nhóm C vào MỘT con số `n`, và `TD-0214` chứng minh phép gộp đó SAI.**
+`n` thật trải từ **7,7** (`Z1`) tới **39,9** (`Z0-V1`) — chênh **5,2 lần**. Bảng `n` phải tách theo
+arm; chi tiết ở §2.5. *(Đây là giả định kế thừa, không phải phát hiện mới của DR này — nhưng DR này
+là nơi nó bị bác, nên ghi ở đây.)*
 
 Nguồn: `td0205-lenh-nam-wfo-explore.json` (đo lần đầu) và `td0212-ba-arm-sau-va.json` (**đo lại
 sau bản vá TD-0207**, 88 mã, 0 trial). Cả ba cột `n` ở trên là số **sau vá**.
@@ -49,9 +54,13 @@ Cơ chế đã đo, không phải nhiễu: `1D = UP` chỉ **15,85%** trong WFO 
 `DR-D4-09 §2.2` định nghĩa: **INCONCLUSIVE ⇔ `thuế nhiễu > ngưỡng của chính tiêu chí đó`**.
 
 ```
-thuế nhiễu(nhóm C) = h/√n · std_R = 3,0777/√28,3 · std_R = 0,5784 · std_R
-ngưỡng Nhánh 1     = 0,10 R
-⇒ INCONCLUSIVE  ⇔  std_R > 0,1729
+thuế nhiễu(arm) = h/√n · std_R          h = 3,0777
+ngưỡng Nhánh 1  = 0,10 R
+⇒ INCONCLUSIVE ⇔ std_R > 0,10·√n / h
+
+  arm "khoẻ" nhất nhóm C — Z0-V1, n = 40 :  std_R > 0,205
+  arm điển hình         — Z0,   n = 28 :  std_R > 0,173
+  arm đuối nhất         — Z1,   n =  8 :  std_R > 0,090
 ```
 
 **Không cần chạy để biết.** Không có hệ thống giao dịch nào — có SL cứng tại `−1R` theo thiết kế và
@@ -135,7 +144,17 @@ chính con số đó lại treo vào **`MT-29`** (§10.2 áp cho MỖI HƯỚNG 
 | Câu hỏi | Arm mang câu trả lời | `n` | Phán quyết được? |
 |---|---|---|---|
 | **Bộ lọc trend Phần 2 có đáng không?** | `Z0-T0` · `Z0-T1` · `Z0`(=`Z0-T2`) | 883 · 206 · 28 | ✅ **CÓ** cho A và B |
-| **DCA ba tranche có đáng không?** | `Z0` vs `Z3`/`Z3b` | 28 vs 28 | ❌ **KHÔNG**, và không bao giờ ở tần suất này |
+| **DCA ba tranche có đáng không?** | `Z0` vs `Z3`/`Z3b` | 28 vs 28 vs 28 | ❌ **KHÔNG**, và không bao giờ ở tần suất này |
+
+`n` của **cả chín arm**, lần đầu đo trên cùng một hệ thống (sau vá `TD-0207`):
+
+| Arm | `Z1` | `Z0`=`Z3`=`Z3b`=`Z2` | `Z0-S1` | `Z0-V1` | `Z0-T1` | `Z0-T0` |
+|---|---|---|---|---|---|---|
+| **`n`** | **8** | 28 | 31 | 40 | **206** | **883** |
+| sàn `S` = `h/√n` | 1,109 | 0,578 | 0,555 | 0,487 | 0,214 | 0,104 |
+
+Vạch phân chia giữa *"phán quyết được"* và *"không"* nằm đúng giữa `Z0-V1` (40) và `Z0-T1` (206) —
+và nó trùng khít với ranh giới **có/không có tầng lọc trend 1D**, không phải một ngưỡng tuỳ ý.
 
 D4 từ nay **chỉ phán quyết câu thứ nhất**. Câu thứ hai chuyển sang đường ở §2.4.
 
@@ -144,8 +163,11 @@ D4 từ nay **chỉ phán quyết câu thứ nhất**. Câu thứ hai chuyển s
 Bảy arm nhóm C **được khai là INCONCLUSIVE ngay tại DR này**, kèm phép tính §1.2. Khi bộ chạy
 TD-0184 trả kết quả, việc nhóm C ra INCONCLUSIVE là **xác nhận một dự báo**, không phải một phát
 hiện. 🔴 **Nếu nhóm C ra bất cứ kết cục nào KHÁC INCONCLUSIVE ⇒ nghi ngờ BỘ ĐO trước, không mừng.**
-Cụ thể: ra FAIL nghĩa là `std_R` đo được < 0,173 ⇒ gần như chắc chắn thang `R_realized` sai
-(`MT-25`), không phải arm dở; ra PASS nghĩa là `mean_R ≥ 0,44 R` ⇒ gần như chắc chắn lookahead hoặc
+Cụ thể: ra FAIL nghĩa là `std_R` đo được thấp hơn **điểm lật của chính arm đó** — `0,090` (`Z1`) ·
+`0,173` (`Z0`/`Z3`/`Z3b`/`Z2`) · `0,180` (`Z0-S1`) · `0,205` (`Z0-V1`) — ⇒ gần như chắc chắn thang
+`R_realized` sai (`MT-25`), không phải arm dở; ra PASS nghĩa là `mean_R` vượt ngưỡng hiệu dụng của
+arm đó (thấp nhất là `0,383 R` ở `Z0-V1`, cao nhất `0,743 R` ở `Z1`, tính ở `std_R = 0,58`) ⇒ gần
+như chắc chắn lookahead hoặc
 lỗi kế toán. Cả hai đều là **cờ đỏ về tầng đo**, đúng câu hỏi chẩn đoán N10.
 
 ### 2.3 Chín trial vẫn tiêu như `DR-D4-01` đã chốt — nhưng đổi MỤC ĐÍCH của bảy suất
@@ -218,17 +240,31 @@ INCONCLUSIVE"*. Ba lý lẽ dưới đây là **lý do đề xuất**, không ph
 
 ### 2.5 Một hạng hỏng THỨ HAI, khác hẳn thiếu mẫu: **biến so sánh gần như không tồn tại**
 
-`TD-0213` (`td0213-arm-dca-sau-va.json`, 88 mã, WFO, **sau vá**, 0 trial) xác nhận `n = 28` giống
-hệt trên `Z3`/`Z3b`/`Z2` — đúng dự đoán ghi trước ở §4, nên §2.1/§2.3 **không phải tách bảng `n`**.
-Nhưng nó lộ ra một thứ khác, và thứ đó **không nằm trong lập luận §1.2**:
+`TD-0213` + `TD-0214` (`td0213-arm-dca-sau-va.json`, `td0214-ba-arm-cuoi-sau-va.json`; 88 mã, WFO,
+**sau vá**, 0 trial) là **lần đầu cả chín arm có số trên cùng một hệ thống**. Hai kết quả, ngược
+hướng nhau:
 
-| Phép so | Biến điều khiển | Trạng thái **sau vá** |
-|---|---|---|
-| `Z2` vs `Z3` | DG5 | 🔴 **0 lệnh khác nhau** — trùng khít cả `exit_reason` lẫn `tp1_theo_nguon` |
-| `Z3b` vs `Z3` | DG6 Early Invalidation | 🔴 **đúng 1/22 lệnh** (`DG6_EARLY_INVALIDATION` nổ 1 lần) |
-| `Z1` vs `Z0` | SL neo zone vs `2,2×ATR` | ⏳ **chưa đo sau vá** |
-| `Z0-V1` vs `Z0` | điều kiện (c) volume | ⏳ **chưa đo sau vá** |
-| `Z0-S1` vs `Z0` | notional cố định | ⏳ **chưa đo sau vá** |
+| Phép so | Biến điều khiển | `n` của arm | Trạng thái **sau vá** |
+|---|---|---|---|
+| `Z2` vs `Z3` | DG5 | 28 vs 28 | 🔴 **0 lệnh khác nhau** — trùng khít cả `exit_reason` lẫn `tp1_theo_nguon` |
+| `Z3b` vs `Z3` | DG6 Early Invalidation | 28 vs 28 | 🔴 **đúng 1/22 lệnh** (`DG6_EARLY_INVALIDATION` nổ 1 lần) |
+| `Z1` vs `Z0` | SL neo zone vs `2,2×ATR` | **8** vs 28 | ✅ **KHÁC RÕ** — 6 vs 22 lệnh, `n_giao = 6` |
+| `Z0-V1` vs `Z0` | điều kiện (c) volume | **40** vs 28 | ✅ **KHÁC RÕ** — 31 vs 22 lệnh |
+| `Z0-S1` vs `Z0` | notional cố định | **31** vs 28 | ✅ **KHÁC** — 24 vs 22 lệnh |
+
+🔴 **Ba dòng ⏳ trước đây nay đã có số, và chúng BÁC hai kết luận-trùng cũ — bằng phép đo, không
+bằng lập luận:** `MT-21` (*"`Z1` ≡ `Z0`"*) và `MT-15` (*"`Z0` trùng khít `Z0-V1`"*) **đều hết hiệu
+lực** sau `TD-0192`/`TD-0193`. Cả hai từng đúng vì arm **chưa được nối**; nối rồi thì chúng là arm
+thật, có tập lệnh riêng.
+
+⚠️ **Và cả hai chết theo hướng làm bài toán KHÓ HƠN, không dễ hơn:** chúng không phải arm thừa —
+chúng là arm thật với cỡ mẫu **riêng, phần lớn NHỎ hơn** `Z0`. `Z1` chỉ **6 lệnh** (`n = 8`, sàn
+`S = 1,109`) — **arm đuối nhất trong cả chín**, kém `Z0` gần gấp đôi về sàn.
+
+🔑 **Chênh lệch `n` trong nhóm C KHÔNG đến từ tranh chỗ mở — nó đến từ TẦNG ENTRY khác nhau.**
+`Z1` đổi SL ⇒ `r_eff_plan` đổi ⇒ cỡ lệnh đổi ⇒ cổng kết nạp §6.8f chặn khác; `Z0-V1` tắt điều kiện
+(c) volume ⇒ nhiều tín hiệu hơn. Tức tiền đề *"cả nhóm C chung tầng entry"* **sai ngay ở tiền đề**,
+không phải sai ở hệ quả — khác hẳn cơ chế tranh chỗ đã giải thích `Z0-T0` ở §1.1.
 
 🔑 **Vì sao đây là một hạng riêng, không phải một biến thể của §1.2.** Lập luận INCONCLUSIVE ở §1.2
 nói *"mẫu quá nhỏ so với nhiễu"* và cần một giả định về `std_R`. Hạng này nói *"**biến điều khiển
@@ -241,9 +277,13 @@ lệnh trùng khít với `Z3`**, và một suất nữa (`Z3b`) mua một tập
 dự án biết trước khi D4 chạy. 🔴 **DR này KHÔNG tự sửa kế toán 9 suất của `DR-D4-01`** — đó là
 quyết định của chủ dự án; đây chỉ là thông tin đầu vào nếu chủ dự án muốn mở lại nó.
 
-⚠️ **Không suy rộng ra ba dòng ⏳.** `MT-21` từng ghi *"`Z1` ≡ `Z0`"*, nhưng đó là phát hiện **trước**
-`TD-0192` (✅, đã nối `Z1`) và trước `TD-0193` (✅, đã nối §3.3b) — **lỗi thời, không dùng làm căn cứ
-hiện hành**. Ba phép so đó phải đo mới biết; không có phép đo thì không có phát biểu.
+📌 **Chỗ này là một ca đáng giữ về kỷ luật suy luận, vì cả hai chiều đều xảy ra trong một ngày.**
+Bản trước của §2.5 (viết khi mới có `TD-0213`) từ chối suy rộng kết quả của ba arm sang bảy, và ghi
+*"không có phép đo thì không có phát biểu"* cho ba dòng ⏳. `TD-0214` xác nhận sự thận trọng đó là
+đúng: bốn arm đo trước **thật sự** chung `n = 28`, nhưng ba arm còn lại **không**, và nếu suy rộng
+thì `Z1` đã bị gán `n = 28` trong khi thật ra là **8** — sai **3,5 lần**, đúng ở arm đuối nhất.
+Ngược lại, kết luận-trùng cũ (`MT-21`, `MT-15`) tồn tại được lâu **chính vì** ai đó từng suy rộng
+một quan sát qua một bản vá đã làm nó hết đúng.
 
 ## 3. Vì sao đây là làm CHẶT hơn, không phải nới
 
@@ -272,10 +312,9 @@ Và nó chặt hơn ở ba chỗ:
   vá (`td0212-ba-arm-sau-va.json`): `Z0-T0` 883 (−8%), `Z0-T1` 206 (không đổi), `Z0` 28 (không đổi).
   **§7 điều kiện 3 đã kiểm và KHÔNG kích hoạt** (`Z0-T1` không rơi dưới 100) ⇒ §2.1 giữ nguyên.
   Mọi con số `n` trong DR này nay là số **sau vá**, không còn trộn hai hệ thống.
-- 🔴 **Giả định *"cả nhóm C cùng `n = 28` vì chung tầng entry"* CHƯA ĐƯỢC KIỂM sau bản vá** — mọi
-  phép đo hiện có (`td0205`, `td0212`, `td0207-h4-sau-va`) chỉ chạy `Z0-T0`/`Z0-T1`/`Z0`. Có lý do
-  cụ thể để nghi: `Z3` bơm tới 3 tranche nên **giữ chỗ lâu hơn** `Z0` (chỉ 1 tranche), mà TD-0212
-  vừa chứng minh chiếm-chỗ là cơ chế thật (`Z0-T0` −8%). `TD-0213` đang đo `Z3`/`Z3b`/`Z2`.
+- ✅ ~~Giả định *"cả nhóm C cùng `n = 28` vì chung tầng entry"* chưa được kiểm~~ — **ĐÃ KIỂM VÀ ĐÃ
+  BÁC** (`TD-0213` + `TD-0214`): `n` trải **8 → 40**, giả định sai. Giữ nguyên đoạn ghi-trước dưới
+  đây vì nó là thứ giữ cho phép đo không bị đọc quá tay, và vì nó **đã ứng nghiệm đúng**.
 
   **Cách đọc kết quả đó ĐƯỢC VIẾT TRƯỚC KHI CÓ SỐ, đây:** `n` tới hạn để một arm nhóm C **thôi**
   là INCONCLUSIVE-theo-định-nghĩa (tức thuế nhiễu tụt xuống bằng ngưỡng 0,10 R) là
@@ -284,11 +323,15 @@ Và nó chặt hơn ở ba chỗ:
   |---|---|---|---|---|
   | `n` tới hạn | **319** | 947 | 1.480 | 2.131 |
 
-  ⇒ Ngay cả ở `std_R` rộng lượng nhất, một arm nhóm C phải có `n ≥ 319` — **gấp 11 lần** con số
-  hiện tại, và cơ chế tranh chỗ chỉ có thể làm `n` **giảm**, không làm tăng.
-  **Kết luận §1.2/§2.1/§2.2 vì thế BẤT BIẾN với mọi kết quả có thể có của `TD-0213`.** Thứ duy nhất
-  phải sửa nếu `Z3` lệch là **bảng `n` theo arm** ở §2.1/§2.3 — tách từng arm thay vì ghi chung 28.
+  ⇒ Ngay cả ở `std_R` rộng lượng nhất, một arm nhóm C phải có `n ≥ 319`.
+  **Kết luận §1.2/§2.1/§2.2 vì thế BẤT BIẾN với mọi kết quả có thể có.** Thứ duy nhất phải sửa nếu
+  các arm lệch nhau là **bảng `n` theo arm** ở §2.1/§2.3 — tách từng arm thay vì ghi chung 28.
   🔑 Ghi trước để phép đo sắp tới không thể được đọc thành *"đã gỡ được vấn đề"* dù nó ra số nào.
+
+  ✅ **ĐÃ ỨNG NGHIỆM, đúng cả hai vế** (`TD-0213` + `TD-0214`): `n` nhóm C hoá ra trải **8 → 40**
+  chứ không đồng nhất, nên **đã phải tách bảng** — đúng thứ duy nhất đoạn này nói sẽ phải sửa. Và
+  kết luận **không đổi**: arm cao nhất nhóm C là `Z0-V1` với `n = 40`, vẫn kém cận 319 **tám lần**;
+  arm thấp nhất `Z1` với `n = 8` kém **41 lần**. Biên rộng hơn trước khi đo, không hẹp lại.
 
 - **Kết luận này chỉ cho LONG.** `DR-D4-01 §2` đã ghi; Short mở ra một bộ arm thứ hai với `n` riêng
   chưa ai đo (`do_short_pheu_tin_hieu_explore.json` mới tới tầng tín hiệu, con số 237,8 lệnh/năm là
@@ -359,4 +402,5 @@ thật"* — đó là **xác nhận dự báo §2.2**, không phải thông tin 
 | 10/09/2026 | Phiên `c3` bác `×2` cho Short (spec dòng 4187 / 4973-4974) ⇒ trần 324 → **162**, kết luận mạnh hơn; và chặn ca nghi ngờ `MT-25` bằng cận `λ < 0,138` |
 | 10/09/2026 | Chủ dự án chốt **phương án A** — DR này |
 | 10/09/2026 | Phiên `c3` soi §2.4, bắt ba lỗi: (a) mặc-định-Z0 nằm TRONG Nhánh 2 mà spec 4295 khoá sau "Nhánh 1 đã PASS" ⇒ đây là quyết định MỚI, không phải dẫn chiếu; (b) `18,07%` là số 48 mã / `[T0,T2]` / trước cả hai bản vá ⇒ **rút khỏi DR**; (c) lý lẽ bất đối xứng là khẩu vị rủi ro, không suy từ đo ⇒ hạ hạng. Cả ba đã kiểm lại trên đĩa và **nhận** |
+| 10/09/2026 | `TD-0213` + `TD-0214`: **lần đầu cả chín arm có số trên cùng một hệ thống**. `n` nhóm C trải **8 → 40** (không đồng nhất như `DR-D4-09` gộp) ⇒ tách bảng theo arm, đúng thứ §4 ghi trước là sẽ phải sửa. `MT-21`/`MT-15` hết hiệu lực **bằng phép đo**. Kết luận không đổi, biên rộng hơn |
 | 10/09/2026 | `TD-0212` đo lại ba arm SAU bản vá: `Z0-T0` 883 (−8%), `Z0-T1` 206, `Z0` 28. **§7 điều kiện 3 kiểm — KHÔNG kích hoạt**, §2.1 giữ nguyên. H-4 cả ba arm dưới 40%. Bản vá đổi số đếm của arm nhiều lệnh, không đổi arm ít lệnh — cơ chế tranh chỗ mở, §1.1 |
