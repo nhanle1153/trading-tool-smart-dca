@@ -212,7 +212,77 @@ def _yaml_voi_arm(arm: str, dest: Path) -> None:
     y.write_text(src.replace(dong[0], f'    arm: "{arm}"'), encoding="utf-8")
 
 
-def do_backtest(ma: list[str], arm: str) -> dict:
+def _chan_doan_tp(log: str) -> dict:
+    """TD-0206 — vì sao 723/723 lần TP1 rơi nạng: đọc dấu vết ĐƯỜNG SẢN XUẤT.
+
+    Ba số phải tách được, vì chúng dẫn tới ba hành động khác nhau:
+      (a) `xac_nhan`   — tổng zone đỉnh đã xác nhận tính tới lúc vào lệnh.
+                         = 0 ở đa số ⇒ `_quet_zone_dinh` không sinh ứng viên ⇒ LỖI.
+      (b) `tren_p_avg` — còn lại sau bộ lọc `> p_avg`. (a) > 0 mà (b) = 0
+                         ⇒ zone đỉnh toàn nằm DƯỚI giá vào lệnh ⇒ lỗi ngữ nghĩa.
+      (c) `gan_nhat_r` — khoảng cách tới ứng viên gần nhất, quy theo `R_eff` của
+                         chính lệnh đó. (b) > 0 mà (c) > trần ⇒ CẤU TRÚC THỊ
+                         TRƯỜNG, H-4 = 100% là kết quả THẬT.
+
+    Không tái lập phép tính nào — chỉ đọc số mà chiến lược đã ghi ra.
+    """
+    cot = Counter()
+    cot_mau = ""
+    for ln in log.splitlines():
+        if "TP_ZONE_COT" in ln:
+            d = dict(kv.split("=", 1) for kv in ln.split() if "=" in kv)
+            cot[d["co_cot"]] += 1
+            cot_mau = cot_mau or d.get("cot", "")
+    ung = []
+    for ln in log.splitlines():
+        if "TP_ZONE_UNGVIEN" in ln:
+            d = dict(kv.split("=", 1) for kv in ln.split() if "=" in kv)
+            ung.append((int(d["xac_nhan"]), int(d["tren_p_avg"])))
+    nguon = Counter()
+    gan = []
+    tran = []
+    ca_co_ung_vien_ma_van_nang = 0
+    for ln in log.splitlines():
+        if "TP_CHON" not in ln:
+            continue
+        d = dict(kv.split("=", 1) for kv in ln.split() if "=" in kv)
+        nguon[d["nguon"]] += 1
+        nv = int(d["ung_vien"])
+        tran.append(float(d["tran_r"]))
+        if d["gan_nhat_r"] != "None":
+            gan.append(float(d["gan_nhat_r"]))
+            if nv > 0 and d["nguon"] != "zone":
+                ca_co_ung_vien_ma_van_nang += 1
+
+    def _tt(xs: list[float]) -> dict:
+        if not xs:
+            return {"n": 0}
+        xs = sorted(xs)
+        q = lambda f: xs[min(len(xs) - 1, int(f * len(xs)))]
+        return {"n": len(xs), "min": round(xs[0], 4), "p25": round(q(0.25), 4),
+                "median": round(q(0.5), 4), "p75": round(q(0.75), 4),
+                "max": round(xs[-1], 4)}
+
+    return {
+        "so_lan_goi_zone_dinh_tren": sum(cot.values()),
+        "co_cot_zone_dinh_gia": dict(cot),
+        "cot_thay_duoc_mau": cot_mau,
+        "so_lan_chon_tp": sum(nguon.values()),
+        "nguon_tp": dict(nguon),
+        "zone_da_xac_nhan": _tt([float(a) for a, _ in ung]),
+        "zone_tren_p_avg": _tt([float(b) for _, b in ung]),
+        "so_lan_0_zone_xac_nhan": sum(1 for a, _ in ung if a == 0),
+        "so_lan_co_zone_nhung_0_tren_p_avg": sum(1 for a, b in ung if a > 0 and b == 0),
+        "khoang_cach_gan_nhat_theo_R_eff": _tt(gan),
+        "tran_theo_R_eff": _tt(tran),
+        "ca_co_ung_vien_trong_tam_ma_van_nang": ca_co_ung_vien_ma_van_nang,
+        "_doc": "gan_nhat_r > tran_r => nang vi KHOANG CACH (cau truc thi truong). "
+                "zone_da_xac_nhan = 0 => LOI _quet_zone_dinh. "
+                "zone_da_xac_nhan > 0 nhung zone_tren_p_avg = 0 => loi ngu nghia bo loc.",
+    }
+
+
+def do_backtest(ma: list[str], arm: str, chan_doan_tp: bool = False) -> dict:
     tmp = Path(tempfile.mkdtemp(prefix=f"td0193_{arm}_"))
     _yaml_voi_arm(arm, tmp)
     (tmp / "user_data" / "strategies").mkdir(parents=True)
@@ -260,6 +330,7 @@ def do_backtest(ma: list[str], arm: str) -> dict:
         if not o.get("ft_is_entry") and str(o.get("ft_order_tag", "")).startswith("TP1_")
     )
     nam = sum(_nam_phu(pd.read_feather(THU_MUC / f"{m}-1h-futures.feather")) for m in ma)
+    chan_doan = _chan_doan_tp(log) if chan_doan_tp else None
     ra = {
         "so_ma": len(ma), "ma_nam": round(nam, 2), "so_lenh": len(trades),
         "lenh_moi_ma_nam": round(len(trades) / nam, 3) if nam else None,
@@ -277,6 +348,8 @@ def do_backtest(ma: list[str], arm: str) -> dict:
         "giay": round(time.time() - t0, 1),
         "ghi_chu": "KHÔNG --timeframe-detail (EXPLORE không có 5m); chỉ đếm, không PnL",
     }
+    if chan_doan is not None:
+        ra["chan_doan_tp"] = chan_doan
     print(f"[backtest] {arm}: {ra}", flush=True)
     shutil.rmtree(tmp, ignore_errors=True)
     return ra
@@ -324,6 +397,10 @@ def main() -> int:
     ap.add_argument("--ket-qua", default=None, help="đường ghi JSON (mặc định artifact TD-0193)")
     ap.add_argument("--nguon", default=None)
     ap.add_argument("--ranh-gioi", default=None)
+    # TD-0206. Mặc định TẮT: bật lên là thêm khoá `chan_doan_tp` vào đầu ra, tức
+    # artifact sẽ KHÁC bản đã commit. Giữ mặc định tắt để đường chạy cũ tái lập
+    # được đúng từng byte (cùng kỷ luật xuất xứ với `--ranh-gioi`).
+    ap.add_argument("--chan-doan-tp", action="store_true")
     a = ap.parse_args()
     arms = a.arms.split(",")
     # Gán vào biến module: mọi hàm bên dưới đọc T0/T2/TIMERANGE ở tầm module, nên
@@ -366,7 +443,7 @@ def main() -> int:
         v.pop("_theo_ma", None)
     print(f"[quy đổi] {kq['huong_lech_quy_doi']}", flush=True)
     if not a.skip_backtest:
-        kq["lenh_that"] = {arm: do_backtest(ma, arm) for arm in arms}
+        kq["lenh_that"] = {arm: do_backtest(ma, arm, chan_doan_tp=a.chan_doan_tp) for arm in arms}
         kq["so_tap_lenh"] = _so_tap_lenh(kq["lenh_that"])
         for v in kq["lenh_that"].values():
             v.pop("_tap_lenh", None)

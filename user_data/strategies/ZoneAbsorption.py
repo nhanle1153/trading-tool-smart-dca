@@ -819,6 +819,20 @@ class ZoneAbsorption(IStrategy):
             gia_cac_zone_doi_dien=zone_dinh,
             tham_so=tham_so,
         )
+        # TD-0206 — vì sao lệnh này rơi nạng: khoảng cách tới ứng viên gần nhất
+        # quy theo `R_eff` của CHÍNH lệnh đó, đặt cạnh trần `tp_fallback_dist_r`.
+        # Không có số này thì "nạng" chỉ nói ĐÃ xảy ra, không nói TẠI SAO — mà
+        # hai nguyên nhân (không có ứng viên / có nhưng quá xa) dẫn tới hai hành
+        # động trái ngược. `khoang` > 0 luôn đúng vì `khoang_r_eff()` đã fail-closed.
+        _tren = [z for z in zone_dinh if z > trade.open_rate]
+        _khoang = chot.khoang_r_eff_gia
+        _gan = min((z - trade.open_rate for z in _tren), default=None)
+        logger.info(
+            "TP_CHON %s trade=%s nguon=%s ung_vien=%d gan_nhat_r=%s tran_r=%.4f",
+            trade.pair, trade.id, chot.tp_source, len(_tren),
+            f"{_gan / _khoang:.4f}" if _gan is not None else "None",
+            chot.tran_tim_zone_gia / _khoang,
+        )
         d = chot.to_dict()
         # `DR-D4-06` §3 ràng buộc 1 — "Ghi `tp_zone_age_bars` vào Decision
         # Log MỖI LỆNH". Tính NGAY tại đây (không để TD-0184 tự suy sau khi
@@ -1144,10 +1158,29 @@ class ZoneAbsorption(IStrategy):
         Lọc `notna()` tường minh — xem cảnh báo mặt nạ ở `_quet_zone_dinh`.
         """
         df = self._df_4h(pair, current_time)
+        # TD-0206 — log TRƯỚC nhánh return sớm. Đặt sau nó thì đúng đường im lặng
+        # cần soi lại không để dấu vết nào: `return []` không phân biệt được với
+        # "quét được nhưng không có zone nào", và đó chính là chỗ H-4 = 100% sinh ra.
+        logger.info(
+            "TP_ZONE_COT %s co_cot=%s so_cot=%d cot=%s",
+            pair, "zone_dinh_gia" in df.columns, len(df.columns),
+            ",".join(list(df.columns)[:12]),
+        )
         if "zone_dinh_gia" not in df.columns:
             return []
         gia = df.loc[df["zone_dinh_gia"].notna(), "zone_dinh_gia"]
-        return [float(g) for g in gia if float(g) > p_avg]
+        tren = [float(g) for g in gia if float(g) > p_avg]
+        # TD-0206 — dấu vết trên ĐƯỜNG CHẠY THẬT, cùng khuôn `KET_NAP`/`SAN_TOOL_D`.
+        # Tách hai số mà bên ngoài KHÔNG suy ra được từ nhau: `xac_nhan` là tổng
+        # zone đỉnh đã xác nhận tính tới `current_time`, `tren_p_avg` là phần còn
+        # lại sau bộ lọc `> p_avg`. `len(zone_dinh) == 0` một mình KHÔNG phân biệt
+        # được "không có zone nào" với "có nhưng đều nằm dưới giá vào lệnh" — hai
+        # nguyên nhân dẫn tới hai hành động trái ngược (H-4 = 100%, TD-0206).
+        logger.info(
+            "TP_ZONE_UNGVIEN %s xac_nhan=%d tren_p_avg=%d p_avg=%.8f",
+            pair, len(gia), len(tren), p_avg,
+        )
+        return tren
 
     def _tuoi_zone_dinh_nen(self, pair: str, current_time: datetime, gia_zone: float) -> int | None:
         """Tuổi (nến 4H) của zone đỉnh mang giá `gia_zone` tại `current_time`.
