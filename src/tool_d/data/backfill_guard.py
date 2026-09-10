@@ -180,17 +180,118 @@ def verify_old_candles_preserved(
     return errors
 
 
+class BackupVerificationError(RuntimeError):
+    """TD-0203 — bản sao lưu vừa chép KHÔNG khớp nguồn. Bản sao lưu CŨ (nếu
+    có) chưa hề bị đụng tới khi lỗi này raise — xem thứ tự trong
+    `backup_data_dir()`."""
+
+
+def _file_digest(path: Path) -> str:
+    """SHA-256 theo BYTES thô của một file, đọc theo khối để không nạp cả
+    file (~vài trăm MB mỗi lần chạy TD-0200) vào bộ nhớ cùng lúc.
+
+    🔴 KHÔNG dùng `_digest_frame()`: hàm đó giả định nội dung là bảng nến
+    (`pandas`) — bản sao lưu là một THƯ MỤC BẤT KỲ, phải đúng cho mọi file,
+    kể cả file không phải `.feather`."""
+    h = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _verify_copy_matches_source(*, source_dir: Path, copied_dir: Path) -> None:
+    """So NGUỒN với bản vừa chép: cùng tập tên file tương đối, cùng kích
+    thước, cùng sha256 từng file. Raise `BackupVerificationError` ở vi
+    phạm ĐẦU TIÊN gặp phải (đủ để từ chối bản sao lưu; không cần liệt kê
+    hết — người gọi giữ nguyên bản CŨ khi hàm này raise).
+    """
+    src_files = sorted(p.relative_to(source_dir) for p in source_dir.rglob("*") if p.is_file())
+    dst_files = sorted(p.relative_to(copied_dir) for p in copied_dir.rglob("*") if p.is_file())
+    if src_files != dst_files:
+        thieu = set(src_files) - set(dst_files)
+        thua = set(dst_files) - set(src_files)
+        raise BackupVerificationError(
+            f"tập file lệch sau khi chép: thiếu {sorted(map(str, thieu))}, "
+            f"thừa {sorted(map(str, thua))}"
+        )
+    for rel in src_files:
+        src_f, dst_f = source_dir / rel, copied_dir / rel
+        src_size, dst_size = src_f.stat().st_size, dst_f.stat().st_size
+        if src_size != dst_size:
+            raise BackupVerificationError(
+                f"{rel}: kích thước lệch — nguồn {src_size} bytes, bản chép {dst_size} bytes"
+            )
+        if _file_digest(src_f) != _file_digest(dst_f):
+            raise BackupVerificationError(f"{rel}: sha256 lệch sau khi chép — nội dung khác nguồn")
+
+
 def backup_data_dir(*, source_dir: Path, dest_root: Path) -> Path:
     """(a) — sao lưu TRƯỚC khi tải. Ghi đè bản sao lưu cũ (bản sao lưu phản
     ánh trạng thái ngay trước lần tải này, không phải sổ append-only).
 
     Raise nếu `source_dir` không tồn tại — không tự tạo thư mục rỗng rồi coi
     như "đã sao lưu" (fail-closed).
+
+    🔴 TD-0203 — trước bản vá này, hàm chỉ có ba dòng (`rmtree` → `copytree`
+    → `return`), KHÔNG kiểm bản sao lưu có thật sự đáp xuống đích hay
+    không — người gọi in `✅ đã sao lưu` chỉ vì không có exception. Bằng
+    chứng thật: `--snapshot-before` chạy TD-0093 (07/09/2026) không để lại
+    một byte nào ở đích, mà lệnh vẫn báo thành công (`docs/research-log.md`
+    09-10/09/2026). Nay chép ra một thư mục TẠM cạnh đích, ĐỐI CHIẾU byte-
+    đối-byte với nguồn (`_verify_copy_matches_source`), rồi MỚI thay thế
+    bản cũ — theo đúng thứ tự dưới đây, không đảo:
+
+        chép -> dest.tmp
+        đối chiếu dest.tmp với source_dir  (lệch -> raise, dest.tmp bị xoá,
+                                             dest CŨ giữ nguyên, KHÔNG mất)
+        rmtree(dest) NẾU đối chiếu qua      (chỉ xoá cái cũ SAU KHI có cái
+                                             mới đã được xác nhận đúng)
+        dest.tmp.rename(dest)
+
+    Bản CŨ trước đây bị `rmtree` NGAY DÒNG ĐẦU, trước cả khi `copytree` bắt
+    đầu — copy hỏng giữa chừng (hết đĩa, container bị giết, …) từng khiến
+    MẤT CẢ HAI bản, đúng lúc cần bản sao lưu nhất.
+
+    🔑 Phép so là byte-đối-byte, KHÔNG phải ở mức nến như
+    `verify_old_candles_preserved()` — hàm đó phải khoan dung việc gộp
+    THÊM nến mới làm bytes đổi HỢP LỆ; sao lưu thì không gộp gì cả, một
+    byte lệch là một byte sai.
+
+    ⚠️ Điều bản vá này KHÔNG giải quyết được, nói thẳng: nếu `dest_root`
+    trỏ tới một nơi không bền (vd một thư mục không được mount ra ngoài
+    container, sẽ mất khi container bị `--rm`), phép đối chiếu TRONG CÙNG
+    một lần chạy vẫn PASS — file THẬT SỰ ở đó tại thời điểm kiểm, chỉ là
+    nó biến mất SAU KHI tiến trình kết thúc. Không có phép kiểm nào chạy
+    trong một tiến trình DUY NHẤT phát hiện được điều này (không thể biết
+    trước tương lai của chính filesystem mình đang ghi); đó là lý do
+    `entrypoints/backfill_data.py` đổi mặc định `--backup-root` sang một
+    đường dẫn NẰM TRONG cây làm việc (`runs/`, giống quy ước của
+    `--snapshot-out`) thay vì một heuristic đoán "đây có phải volume thật
+    không" — mọi heuristic kiểu đó (so `st_dev`, …) báo động giả trên host
+    (giả thuyết "route thứ ba" của phiên `-46`, TD-0200: hàm này là Python
+    thuần, chạy được cả trên host lẫn trong container).
     """
     if not source_dir.is_dir():
         raise FileNotFoundError(f"{source_dir} không tồn tại — không có gì để sao lưu")
+    resolved_source, resolved_root = source_dir.resolve(), dest_root.resolve()
+    if str(resolved_root) == resolved_root.anchor:
+        raise ValueError(f"dest_root ({dest_root}) là gốc hệ thống file — từ chối, quá nguy hiểm")
+    if resolved_root == resolved_source or resolved_root in resolved_source.parents:
+        raise ValueError(f"dest_root ({dest_root}) trùng hoặc chứa source_dir ({source_dir})")
+
     dest = dest_root / source_dir.name
+    tmp = dest_root / f".{source_dir.name}.tmp-backup"
+    if tmp.exists():
+        shutil.rmtree(tmp)
+    shutil.copytree(source_dir, tmp)
+    try:
+        _verify_copy_matches_source(source_dir=source_dir, copied_dir=tmp)
+    except BackupVerificationError:
+        shutil.rmtree(tmp, ignore_errors=True)
+        raise
+
     if dest.exists():
         shutil.rmtree(dest)
-    shutil.copytree(source_dir, dest)
+    tmp.rename(dest)
     return dest

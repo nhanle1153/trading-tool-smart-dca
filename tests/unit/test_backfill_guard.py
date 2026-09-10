@@ -13,7 +13,11 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+import shutil
+
+from tool_d.data import backfill_guard
 from tool_d.data.backfill_guard import (
+    BackupVerificationError,
     backup_data_dir,
     read_candles,
     snapshot_dir,
@@ -244,3 +248,118 @@ class TestSaoLuuTruoc:
         before = snapshot_dir(data)
         dest = backup_data_dir(source_dir=data, dest_root=tmp_path / "backup")
         assert verify_old_candles_preserved(before, dest) == []
+
+
+class TestSaoLuuXacThuc:
+    """TD-0203 — `backup_data_dir()` trước bản vá này chỉ có ba dòng
+    (`rmtree` -> `copytree` -> `return`), KHÔNG kiểm bản sao lưu có thật
+    sự đáp xuống đích. Bằng chứng thật: `C:\\tool-d-data-backup` KHÔNG
+    tồn tại dù TD-0093 đã chạy `--snapshot-before` trên 510 file hồi
+    07/09/2026 — lệnh vẫn in `✅ đã sao lưu`.
+    """
+
+    def test_ban_chep_thieu_file_bi_bat_KHONG_lam_mat_ban_cu(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        # 🔑 Kiểm có răng CHÍNH của bản vá: giả lập một `copytree` "thành
+        # công" (không raise) nhưng chép THIẾU file — đúng hình dạng lỗi
+        # thật (copy hỏng giữa chừng mà không có exception nào nổi lên).
+        data = tmp_path / "futures"
+        _write(data / "AAA-1h.feather", _frame("2026-01-01", 5))
+        backup_root = tmp_path / "backup"
+        # Có một bản sao lưu CŨ, hợp lệ, từ trước.
+        backup_data_dir(source_dir=data, dest_root=backup_root)
+        _write(data / "BBB-1h.feather", _frame("2026-01-01", 5))
+
+        real_copytree = shutil.copytree
+
+        def _copytree_thieu_file(src: str, dst: str, *a: object, **kw: object) -> str:
+            real_copytree(src, dst, *a, **kw)
+            # Xoá một file NGAY SAU KHI copytree "xong" — mô phỏng một bản
+            # chép mà thao tác chép báo thành công nhưng không đầy đủ.
+            (Path(dst) / "BBB-1h.feather").unlink()
+            return dst
+
+        monkeypatch.setattr(backfill_guard.shutil, "copytree", _copytree_thieu_file)
+
+        with pytest.raises(BackupVerificationError, match="BBB-1h.feather"):
+            backup_data_dir(source_dir=data, dest_root=backup_root)
+
+        # Bản CŨ (chỉ AAA) phải còn NGUYÊN — đây là điều bản vá bảo vệ.
+        dest = backup_root / "futures"
+        assert sorted(p.name for p in dest.glob("*.feather")) == ["AAA-1h.feather"]
+
+    def test_ban_chep_sai_noi_dung_bi_bat(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        data = tmp_path / "futures"
+        _write(data / "AAA-1h.feather", _frame("2026-01-01", 5))
+        backup_root = tmp_path / "backup"
+        real_copytree = shutil.copytree
+
+        def _copytree_sai_noi_dung(src: str, dst: str, *a: object, **kw: object) -> str:
+            real_copytree(src, dst, *a, **kw)
+            (Path(dst) / "AAA-1h.feather").write_bytes(b"khong phai feather that")
+            return dst
+
+        monkeypatch.setattr(backfill_guard.shutil, "copytree", _copytree_sai_noi_dung)
+
+        with pytest.raises(BackupVerificationError, match="AAA-1h.feather"):
+            backup_data_dir(source_dir=data, dest_root=backup_root)
+
+    def test_that_bai_khong_de_lai_thu_muc_tam(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        # Thư mục `.tmp-backup` là chi tiết triển khai — không được rò rỉ
+        # ra ngoài sau khi thất bại (dọn dẹp đúng, không rác trên đĩa).
+        data = tmp_path / "futures"
+        _write(data / "AAA-1h.feather", _frame("2026-01-01", 5))
+        backup_root = tmp_path / "backup"
+        real_copytree = shutil.copytree
+
+        def _copytree_hong(src: str, dst: str, *a: object, **kw: object) -> str:
+            real_copytree(src, dst, *a, **kw)
+            (Path(dst) / "AAA-1h.feather").unlink()
+            return dst
+
+        monkeypatch.setattr(backfill_guard.shutil, "copytree", _copytree_hong)
+
+        with pytest.raises(BackupVerificationError):
+            backup_data_dir(source_dir=data, dest_root=backup_root)
+
+        con_lai = list(backup_root.glob(".*tmp-backup*")) if backup_root.exists() else []
+        assert con_lai == []
+
+    def test_dest_root_la_goc_he_thong_bi_tu_choi(self, tmp_path: Path) -> None:
+        data = tmp_path / "futures"
+        _write(data / "AAA-1h.feather", _frame("2026-01-01", 5))
+        goc = Path(tmp_path.anchor)  # vd "/" trên POSIX, "C:\\" trên Windows
+        with pytest.raises(ValueError, match="gốc hệ thống file"):
+            backup_data_dir(source_dir=data, dest_root=goc)
+
+    def test_dest_root_chua_source_dir_bi_tu_choi(self, tmp_path: Path) -> None:
+        # dest_root là CHA của source_dir -> rmtree(dest) (khi chạy lại) sẽ
+        # xoá đúng dữ liệu đang được sao lưu. Chặn từ đầu, không đợi tới
+        # lượt chạy thứ hai mới lộ ra.
+        data = tmp_path / "vung_du_lieu" / "futures"
+        _write(data / "AAA-1h.feather", _frame("2026-01-01", 5))
+        with pytest.raises(ValueError, match="trùng hoặc chứa"):
+            backup_data_dir(source_dir=data, dest_root=tmp_path / "vung_du_lieu")
+
+    def test_dest_root_trung_source_dir_bi_tu_choi(self, tmp_path: Path) -> None:
+        data = tmp_path / "futures"
+        _write(data / "AAA-1h.feather", _frame("2026-01-01", 5))
+        with pytest.raises(ValueError, match="trùng hoặc chứa"):
+            backup_data_dir(source_dir=data, dest_root=data)
+
+    def test_chay_lai_sau_khi_that_bai_van_thanh_cong(self, tmp_path: Path) -> None:
+        # Một lần thất bại (do lỗi tạm thời) không được làm hỏng vĩnh viễn
+        # khả năng chạy lại — thư mục `.tmp-backup` sót lại (nếu có, từ một
+        # tiến trình bị giết giữa chừng ở bản build cũ hơn) phải được dọn.
+        data = tmp_path / "futures"
+        _write(data / "AAA-1h.feather", _frame("2026-01-01", 5))
+        backup_root = tmp_path / "backup"
+        backup_root.mkdir(parents=True)
+        (backup_root / ".futures.tmp-backup").mkdir()
+        (backup_root / ".futures.tmp-backup" / "rac_cu.txt").write_text("rác từ lần chạy trước")
+
+        dest = backup_data_dir(source_dir=data, dest_root=backup_root)
+        assert sorted(p.name for p in dest.glob("*.feather")) == ["AAA-1h.feather"]

@@ -8,7 +8,7 @@ không cần reserve() qua ledger, đi dòng CTRL tự nhiên.
 
 TD-0091 (H19, spec dòng 4350 + LD-27/28) — hai chế độ GÁC quanh lần tải:
 
-    --snapshot-before   (a) sao lưu thư mục dữ liệu ra NGOÀI repo
+    --snapshot-before   (a) sao lưu thư mục dữ liệu vào `--backup-root`
                         (c) chụp dấu vân tay từng file -> `runs/backfill_snapshot.json`
     --verify-after      (b)(c) so lại: mọi nến trong khoảng CŨ phải còn
                         nguyên từng trường. Vi phạm -> exit 97, kèm chỉ dẫn
@@ -18,8 +18,11 @@ Việc TẢI vẫn do `freqtrade download-data` làm (đã kiểm chứng ở TD
 E8 không tự tải — lớp gác không được phụ thuộc vào chính thứ nó giám sát.
 Quy trình đúng: `--snapshot-before` → chạy download-data → `--verify-after`.
 
-🔴 Phép so là ở mức NẾN, không phải bytes của file: gộp thêm nến mới làm
-bytes đổi một cách HỢP LỆ. Xem `src/tool_d/data/backfill_guard.py`.
+🔴 Phép so ở (b)/(c) (`--verify-after`) là ở mức NẾN, không phải bytes của
+file: gộp thêm nến mới làm bytes đổi một cách HỢP LỆ. Phép so của
+`--snapshot-before` (a) (`backup_data_dir()`, TD-0203) thì NGƯỢC LẠI —
+byte-đối-byte với nguồn, vì sao lưu không gộp gì cả. Xem
+`src/tool_d/data/backfill_guard.py`.
 """
 
 from __future__ import annotations
@@ -38,6 +41,7 @@ from tool_d.api_client.binance_public import (
     get_open_interest_hist,
 )
 from tool_d.data.backfill_guard import (
+    BackupVerificationError,
     RangeDigest,
     backup_data_dir,
     read_candles,
@@ -61,7 +65,25 @@ EXIT_BACKFILL_UNSAFE = 97  # H19: dữ liệu cũ bị đụng -> DỪNG, không
 # H19 — thư mục dữ liệu làm việc (CALIB/WFO). Lockbox có đường riêng, ĐÃ
 # niêm phong (TD-0084), không bao giờ backfill thêm vào đó.
 DEFAULT_DATA_DIR = Path("user_data/data/binance/futures")
-DEFAULT_BACKUP_ROOT = Path("../tool-d-data-backup")
+
+# TD-0203 — TRƯỚC đây `../tool-d-data-backup`: trong container, cwd là
+# `/workspace` (`working_dir` của compose) và CHỈ `..:/workspace` được
+# mount — `../tool-d-data-backup` resolve ra `/tool-d-data-backup`, KHÔNG
+# nằm trên volume nào, và biến mất khi container bị `--rm`. Bằng chứng
+# thật: `--snapshot-before` chạy TD-0093 (07/09/2026) không để lại một
+# byte nào ở đích (`docs/research-log.md` 09-10/09/2026), dù lệnh báo
+# thành công — `backup_data_dir()` (TD-0203) không có cách nào phát hiện
+# điều này TỪ BÊN TRONG một tiến trình duy nhất (file THẬT SỰ ở đó tại
+# lúc kiểm, chỉ mất SAU KHI tiến trình kết thúc).
+#
+# Đổi mặc định vào `runs/` — CÙNG quy ước với `--snapshot-out` bên dưới
+# (vốn đã mặc định `runs/backfill_snapshot.json`, đã an toàn từ đầu) —
+# vì `runs/` luôn nằm TRONG cây làm việc, tức luôn ở trên volume `..:
+# /workspace` dù chạy trong Docker hay (theo giả thuyết "route thứ ba"
+# của phiên `-46`, TD-0200) trực tiếp trên host. `runs/**` đã có trong
+# `.gitignore` — bản sao lưu (có thể hàng trăm MB dữ liệu nến) không bao
+# giờ lọt vào git.
+DEFAULT_BACKUP_ROOT = Path("runs/backfill_backup")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -95,7 +117,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--backup-root",
         default=str(DEFAULT_BACKUP_ROOT),
-        help=f"Nơi đặt bản sao lưu, NGOÀI repo (mặc định {DEFAULT_BACKUP_ROOT}).",
+        help=(
+            f"Nơi đặt bản sao lưu (mặc định {DEFAULT_BACKUP_ROOT}, trong cây làm việc — "
+            "TD-0203). Truyền tay một đường dẫn khác là tự chịu trách nhiệm rằng nó bền "
+            "vững (vd một volume đã mount thật) — backup_data_dir() không kiểm được điều đó."
+        ),
     )
     parser.add_argument(
         "--coverage",
@@ -129,7 +155,12 @@ def do_snapshot_before(*, data_dir: Path, backup_root: Path, out_path: Path) -> 
     if not data_dir.is_dir():
         print(f"🛑 {data_dir} chưa tồn tại — chưa có dữ liệu nào để gác. Lần tải ĐẦU TIÊN vào thư mục rỗng không cần H19 (không có gì để mất), nhưng phải chạy --snapshot-before NGAY SAU đó.")
         return EXIT_BACKFILL_UNSAFE
-    dest = backup_data_dir(source_dir=data_dir, dest_root=backup_root)
+    try:
+        dest = backup_data_dir(source_dir=data_dir, dest_root=backup_root)
+    except BackupVerificationError as exc:
+        print(f"🛑 H19 (a) FAIL — bản sao lưu vừa chép KHÔNG khớp nguồn: {exc}")
+        print(f"   Bản sao lưu CŨ ở {backup_root / data_dir.name} chưa hề bị đụng tới.")
+        return EXIT_BACKFILL_UNSAFE
     snap = snapshot_dir(data_dir)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(
