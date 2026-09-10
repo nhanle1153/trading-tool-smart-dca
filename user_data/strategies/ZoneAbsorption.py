@@ -1157,18 +1157,7 @@ class ZoneAbsorption(IStrategy):
 
         Lọc `notna()` tường minh — xem cảnh báo mặt nạ ở `_quet_zone_dinh`.
         """
-        df = self._df_4h(pair, current_time)
-        # TD-0206 — log TRƯỚC nhánh return sớm. Đặt sau nó thì đúng đường im lặng
-        # cần soi lại không để dấu vết nào: `return []` không phân biệt được với
-        # "quét được nhưng không có zone nào", và đó chính là chỗ H-4 = 100% sinh ra.
-        logger.info(
-            "TP_ZONE_COT %s co_cot=%s so_cot=%d cot=%s",
-            pair, "zone_dinh_gia" in df.columns, len(df.columns),
-            ",".join(list(df.columns)[:12]),
-        )
-        if "zone_dinh_gia" not in df.columns:
-            return []
-        gia = df.loc[df["zone_dinh_gia"].notna(), "zone_dinh_gia"]
+        gia = [g for _, g in self._zone_dinh_da_xac_nhan(pair, current_time)]
         tren = [float(g) for g in gia if float(g) > p_avg]
         # TD-0206 — dấu vết trên ĐƯỜNG CHẠY THẬT, cùng khuôn `KET_NAP`/`SAN_TOOL_D`.
         # Tách hai số mà bên ngoài KHÔNG suy ra được từ nhau: `xac_nhan` là tổng
@@ -1182,6 +1171,49 @@ class ZoneAbsorption(IStrategy):
         )
         return tren
 
+    def _zone_dinh_da_xac_nhan(self, pair: str, current_time: datetime) -> list[tuple]:
+        """(ngày xác nhận, giá) của MỌI zone đỉnh đã xác nhận tính tới `current_time`.
+
+        🔴 **TD-0207 — vá lỗi TD-0206 đo được.** Bản trước đọc cột
+        `zone_dinh_gia` từ `_df_4h()`, nhưng `_df_4h` gọi
+        `dp.get_pair_dataframe()` — trả **OHLCV thô, đúng 6 cột**. Cột chỉ
+        báo sinh trong `populate_indicators` không có mặt ở đó; sau
+        `merge_informative_pair` (dòng 301) tên thật của nó là
+        `zone_dinh_gia_4h` và nó sống trên khung 1H. Đo trên đường chạy
+        thật: cột vắng mặt **22/22 lần** ⇒ `_zone_dinh_tren` rơi
+        `return []` 100% ⇒ TP1 **luôn** dùng nạng ⇒ H-4 = 100% là defect,
+        không phải cấu trúc thị trường.
+
+        🔑 **Vì sao TÍNH LẠI chứ không đọc cột đã merge** — ba lý do, thứ
+        hai là thứ suýt gây một lỗi im lặng khác:
+          (i)  `merge_informative_pair(..., ffill=True)` **kéo dài** giá zone
+               gần nhất qua các nến sau, nên `notna()` cho **giá trị LẶP**.
+               Vô hại với `_zone_dinh_tren` (lấy tập), nhưng **chết người**
+               với `_tuoi_zone_dinh_nen`: nó lấy `khop.iloc[-1]`, trên một
+               dải kéo dài sẽ ra **tuổi ≈ 0 ở MỌI lệnh** — sai im lặng đúng
+               lớp `L-Z48c`, và `DR-D4-06` §2.3 lại dựa vào chính con số đó.
+          (ii) `merge_informative_pair` dịch mốc ngày (nến 4H đã đóng), nên
+               tuổi suy từ cột merge lệch so với nến xác nhận thật.
+          (iii) Tính lại trên khung **ĐÃ CẮT** là lookahead-safe *theo cấu
+               trúc*: zone chưa đủ `K_XAC_NHAN` nến sau swing thì tự động
+               chưa xác nhận, không cần ai nhớ cắt.
+
+        Dùng LẠI `_quet_zone_dinh` — **không** viết lại phép tính nào. Đây
+        KHÔNG phải nguồn sự thật thứ hai kiểu MT-03: cùng một hàm, khác đầu
+        vào (khung đã cắt), nên hai bên không thể trôi lệch nhau.
+        """
+        df = self._df_4h(pair, current_time)
+        if len(df) <= K_XAC_NHAN:
+            return []
+        thap, cao, dong, volume = (df[c].tolist() for c in ("low", "high", "close", "volume"))
+        atr = talib.ATR(
+            np.asarray(cao, dtype=float), np.asarray(thap, dtype=float),
+            np.asarray(dong, dtype=float), timeperiod=14,
+        )
+        gia = self._quet_zone_dinh(cao, thap, dong, volume, atr, self._nguong_zss)
+        ngay = df["date"].tolist()
+        return [(ngay[j], g) for j, g in enumerate(gia) if not math.isnan(g)]
+
     def _tuoi_zone_dinh_nen(self, pair: str, current_time: datetime, gia_zone: float) -> int | None:
         """Tuổi (nến 4H) của zone đỉnh mang giá `gia_zone` tại `current_time`.
 
@@ -1194,13 +1226,18 @@ class ZoneAbsorption(IStrategy):
         (N6): tuổi 0 nghĩa *"zone vừa xác nhận nến này"*, một sự thật khác
         hẳn *"không tra được tuổi"*.
         """
-        df = self._df_4h(pair, current_time)
-        if "zone_dinh_gia" not in df.columns or df.empty:
+        # TD-0207 — lấy lần xác nhận ĐẦU TIÊN. Một giá zone chỉ được ghi tại
+        # đúng nến xác nhận `j` của nó (`_quet_zone_dinh:582`), nên trên khung
+        # 4H thô "đầu tiên" và "cuối cùng" trùng nhau; viết `next(...)` thay vì
+        # `[-1]` để ý định là TUỔI TỪ LÚC XÁC NHẬN nằm ngay trong mã, không phụ
+        # thuộc một tính chất của dữ liệu mà người đọc sau phải tự suy ra.
+        khop = next(
+            (ngay for ngay, g in self._zone_dinh_da_xac_nhan(pair, current_time) if g == gia_zone),
+            None,
+        )
+        if khop is None:
             return None
-        khop = df.loc[df["zone_dinh_gia"] == gia_zone, "date"]
-        if khop.empty:
-            return None
-        return int((current_time - khop.iloc[-1]).total_seconds() // (4 * 3600))
+        return int((current_time - khop).total_seconds() // (4 * 3600))
 
     def _zss_hien_tai(self, pair: str, tag: dict, current_time: datetime) -> float:
         """ZSS tính LẠI cho cùng zone tại nến 4H ĐÃ ĐÓNG gần nhất (DG5)."""
