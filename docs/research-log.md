@@ -1976,3 +1976,44 @@ quy ước *"chạy entrypoint có cờ đường dẫn thì dùng PowerShell, k
 USDⓈ-M futures thật, tải 09/09/2026 qua service `freqtrade`. Sao lưu trước khi ghi:
 `C:\tool-d-data-backup\futures` (512 file, 93 MB) + vân tay `runs/backfill_snapshot_5m_truoc.json`
 (507 file — 5 file `TRIA*` rỗng nên `read_candles` trả `unreadable`, đúng N6, không phải bỏ sót).
+
+### Phụ lục TD-0200 (cùng ngày) — "route thứ ba" bị bác; và `mtime` sau copy là thuộc tính của NGUỒN
+
+Phiên `-46` đọc mục trên rồi đo lại độc lập và thấy khác: `C:\tool-d-data-backup\futures` **CÓ**
+512 file, mtime **07/09**, *không file nào* mtime sau 08/09 — kể cả sau khi TD-0200 vừa chạy. Từ đó
+nêu giả thuyết có **route thứ ba**: một lần chạy `backfill_data.py` TRỰC TIẾP trên host hồi 07/09
+(hàm `backup_data_dir()` là Python thuần `shutil`+`pathlib`, chạy được bằng Python 3.14 của host),
+khi đó `../tool-d-data-backup` resolve tự nhiên ra đúng chỗ ⇒ *"H19 chỉ nói dối KHI CHẠY QUA
+DOCKER"*, chứ không phải luôn luôn.
+
+**Đo lại, và giả thuyết bị bác:**
+
+| | |
+|---|---|
+| `CreationTime` thư mục `C:\tool-d-data-backup` | **2026-09-10 08:35:09** |
+| `LastWriteTime` file mẫu (`1000BONK-1d`) | 2026-09-07 01:43:44 |
+| `CreationTime` file mẫu | **2026-09-10 08:35:52** |
+| `LastWriteTime` file NGUỒN trong repo | 2026-09-07 01:43:44 — **trùng khít** |
+
+**Cơ chế:** `backup_data_dir()` gọi `shutil.copytree`, mặc định dùng `copy2`, mà `copy2` **giữ
+nguyên mtime của nguồn**. Nên `mtime = 07/09` là mtime của lần TD-0093 **TẢI DỮ LIỆU**, không phải
+của lần **SAO LƯU**. `CreationTime` của cả thư mục lẫn từng file đều là hôm nay, trong đúng lượt
+PowerShell đã in `✅ H19 (a) đã sao lưu -> /backup/futures`.
+
+Đối chứng thứ hai, độc lập với dấu vết trên đĩa: `Glob` trên `C:\tool-d-data-backup` chạy **TRƯỚC**
+lượt snapshot đầu tiên trả về *"Directory does not exist"* — đo trực tiếp vào đúng câu hỏi, thay vì
+suy từ vết để lại. (Chênh 93 vs 95 MB là MiB vs MB — 97,6 MB thập phân; chênh `01:43` vs `10:37` là
+múi giờ giữa Git Bash và PowerShell.)
+
+🔑 **Bài học, và nó là của `-46`: `mtime` sau một thao tác copy là thuộc tính của NGUỒN, không phải
+bằng chứng về thời điểm THAO TÁC.** Muốn hỏi *"thứ này có từ bao giờ"* thì hỏi `CreationTime`, hoặc
+tốt hơn: đo *"nó có tồn tại không"* NGAY TRƯỚC khi hành động, rồi dùng phép đo đó làm mốc. Cùng họ
+với bài học `4ec0fd3` (*chẩn đoán theo hình dạng hậu quả thay vì kiểm cơ chế*), nhưng ở đây dấu vết
+đủ thật để hai phiên suýt đọc sai theo **hai hướng ngược nhau** — một bên kết luận *"chưa bao giờ có
+bản sao lưu"*, một bên kết luận *"đã có từ 07/09"*, cả hai từ cùng một thư mục.
+
+📌 **Kết luận của mục chính GIỮ NGUYÊN, không nới:** vẫn chỉ có hai route, và không route nào tạo ra
+bản sao lưu ở đúng chỗ. Nhưng giả thuyết route-thứ-ba của `-46` đáng ghi lại vì nó **có thể đúng**
+cho một dự án khác: `backfill_data.py` thật sự chạy được trên host, và khi đó `--backup-root` mặc
+định thật sự trỏ đúng chỗ. Tức bản vá cho `E8` không được dựa vào giả định *"luôn chạy trong
+Docker"* — phép kiểm phải là *"file có đáp xuống đích không"*, hỏi trên chính hệ tệp đang chạy.
