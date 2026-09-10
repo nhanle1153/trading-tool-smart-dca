@@ -1,0 +1,435 @@
+{
+  "nguon": "TD-0212, 10/09/2026 — đo lại BA arm nhóm A/B/C SAU bản vá TD-0207 (61479b7). EXPLORE, WFO [T1,T2], 0 trial",
+  "ranh_gioi": "CHỈ đếm zone/tín hiệu/lệnh/nguồn TP. KHÔNG expectancy, KHÔNG PnL. Căn cứ 0 trial: DR-014 §2 (mọi lần chạy EXPLORE ngoài sổ ngân sách). Ranh giới nội dung: spec §9c.4b — (a) không dùng để VALIDATE, (b) mã EXPLORE không sang pool. Xem MT-24.",
+  "timerange": "20250612-20260129",
+  "san_nhanh_1": 150,
+  "pheu_tin_hieu": {
+    "Z0-T0": {
+      "so_ma": 88,
+      "ma_nam": 50.12,
+      "zone": 2621,
+      "A_xac_nhan": 1104,
+      "B_phan_thuc": 1734,
+      "tin_hieu_sau_trend": 1067,
+      "ty_le_A_tren_zone": 0.4212,
+      "ty_le_B_tren_zone": 0.6616,
+      "tin_hieu_moi_ma_nam": 21.287,
+      "tin_hieu_quy_doi_pool_102_moi_nam": 2171.3,
+      "phan_bo_wait_bars": {
+        "0": 610,
+        "1": 302,
+        "2": 192
+      },
+      "phan_bo_nhanh_xac_nhan": {
+        "b": 523,
+        "ac": 581
+      },
+      "phan_bo_luot_cham_phan_thuc_B": {
+        "1": 1104
+      },
+      "pheu_trend_tai_C": {
+        "C": 1104,
+        "nan_1d_hoac_adx": 37,
+        "tuoi_None_NaN": 247,
+        "1_huong_1d_UP": 175,
+        "2_4h_dong_huong": 59,
+        "3_adx_ge_20": 48,
+        "4_tuoi_ge_5": 32,
+        "chi_truot_tuoi": 16,
+        "huong_1d_FLAT": 142,
+        "huong_1d_DOWN": 787,
+        "tuoi_ge_5_bat_ke_dk_khac": 803
+      },
+      "tin_hieu_moi_ma_nam_theo_ma": {
+        "n": 88,
+        "min": 0.0,
+        "P25": 15.812,
+        "median": 19.239,
+        "P75": 23.718,
+        "max": 49.016,
+        "mean": 20.782
+      },
+      "giay": 12.0
+    },
+    "Z0-T1": {
+      "so_ma": 88,
+      "ma_nam": 50.12,
+      "zone": 2621,
+      "A_xac_nhan": 1104,
+      "B_phan_thuc": 1734,
+      "tin_hieu_sau_trend": 230,
+      "ty_le_A_tren_zone": 0.4212,
+      "ty_le_B_tren_zone": 0.6616,
+      "tin_hieu_moi_ma_nam": 4.589,
+      "tin_hieu_quy_doi_pool_102_moi_nam": 468.0,
+      "phan_bo_wait_bars": {
+        "0": 610,
+        "1": 302,
+        "2": 192
+      },
+      "phan_bo_nhanh_xac_nhan": {
+        "b": 523,
+        "ac": 581
+      },
+      "phan_bo_luot_cham_phan_thuc_B": {
+        "1": 1104
+      },
+      "pheu_trend_tai_C": {
+        "C": 1104,
+        "nan_1d_hoac_adx": 37,
+        "tuoi_None_NaN": 247,
+        "1_huong_1d_UP": 175,
+        "2_4h_dong_huong": 59,
+        "3_adx_ge_20": 48,
+        "4_tuoi_ge_5": 32,
+        "chi_truot_tuoi": 16,
+        "huong_1d_FLAT": 142,
+        "huong_1d_DOWN": 787,
+        "tuoi_ge_5_bat_ke_dk_khac": 803
+      },
+      "tin_hieu_moi_ma_nam_theo_ma": {
+        "n": 88,
+        "min": 0.0,
+        "P25": 1.621,
+        "median": 3.615,
+        "P75": 6.325,
+        "max": 13.003,
+        "mean": 4.487
+      },
+      "giay": 12.2
+    },
+    "Z0": {
+      "so_ma": 88,
+      "ma_nam": 50.12,
+      "zone": 2621,
+      "A_xac_nhan": 1104,
+      "B_phan_thuc": 1734,
+      "tin_hieu_sau_trend": 32,
+      "ty_le_A_tren_zone": 0.4212,
+      "ty_le_B_tren_zone": 0.6616,
+      "tin_hieu_moi_ma_nam": 0.638,
+      "tin_hieu_quy_doi_pool_102_moi_nam": 65.1,
+      "phan_bo_wait_bars": {
+        "0": 610,
+        "1": 302,
+        "2": 192
+      },
+      "phan_bo_nhanh_xac_nhan": {
+        "b": 523,
+        "ac": 581
+      },
+      "phan_bo_luot_cham_phan_thuc_B": {
+        "1": 1104
+      },
+      "pheu_trend_tai_C": {
+        "C": 1104,
+        "nan_1d_hoac_adx": 37,
+        "tuoi_None_NaN": 247,
+        "1_huong_1d_UP": 175,
+        "2_4h_dong_huong": 59,
+        "3_adx_ge_20": 48,
+        "4_tuoi_ge_5": 32,
+        "chi_truot_tuoi": 16,
+        "huong_1d_FLAT": 142,
+        "huong_1d_DOWN": 787,
+        "tuoi_ge_5_bat_ke_dk_khac": 803
+      },
+      "tin_hieu_moi_ma_nam_theo_ma": {
+        "n": 88,
+        "min": 0.0,
+        "P25": 0.0,
+        "median": 0.0,
+        "P75": 0.0,
+        "max": 4.744,
+        "mean": 0.604
+      },
+      "giay": 12.1
+    }
+  },
+  "huong_lech_quy_doi": {
+    "explore_trong_pool": {
+      "so_ma": 0,
+      "tin_hieu": 0,
+      "ma_nam": 0,
+      "tin_hieu_moi_ma_nam": null
+    },
+    "explore_ngoai_pool": {
+      "so_ma": 88,
+      "tin_hieu": 1067,
+      "ma_nam": 50.12,
+      "tin_hieu_moi_ma_nam": 21.287
+    }
+  },
+  "lenh_that": {
+    "Z0-T0": {
+      "so_ma": 88,
+      "ma_nam": 50.12,
+      "so_lenh": 686,
+      "lenh_moi_ma_nam": 13.686,
+      "lenh_quy_doi_pool_102_moi_nam": 1396.0,
+      "phan_bo_tranche": {
+        "1": 686
+      },
+      "exit_reason": {
+        "trailing_stop_loss": 387,
+        "TP2_TRAIL": 185,
+        "TIME_STOP": 8,
+        "FUNDING_STOP": 102,
+        "force_exit": 4
+      },
+      "tp1_theo_nguon": {
+        "TP1_zone_doi_dien": 163,
+        "TP1_fallback_r_multiple": 46
+      },
+      "cong_ket_nap": {
+        "ket_nap": 870
+      },
+      "lenh_theo_thang": {
+        "2025-06": 68,
+        "2025-07": 81,
+        "2025-08": 95,
+        "2025-09": 86,
+        "2025-10": 73,
+        "2025-11": 110,
+        "2025-12": 100,
+        "2026-01": 73
+      },
+      "exception_bi_nuot": 2,
+      "giay": 90.4,
+      "ghi_chu": "KHÔNG --timeframe-detail (EXPLORE không có 5m); chỉ đếm, không PnL",
+      "chan_doan_tp": {
+        "so_lan_goi_zone_dinh_tren": 0,
+        "co_cot_zone_dinh_gia": {},
+        "cot_thay_duoc_mau": "",
+        "so_lan_chon_tp": 686,
+        "nguon_tp": {
+          "zone_doi_dien": 489,
+          "fallback_r_multiple": 197
+        },
+        "zone_da_xac_nhan": {
+          "n": 686,
+          "min": 2.0,
+          "p25": 20.0,
+          "median": 29.0,
+          "p75": 39.0,
+          "max": 79.0
+        },
+        "zone_tren_p_avg": {
+          "n": 686,
+          "min": 0.0,
+          "p25": 15.0,
+          "median": 24.0,
+          "p75": 37.0,
+          "max": 78.0
+        },
+        "so_lan_0_zone_xac_nhan": 0,
+        "so_lan_co_zone_nhung_0_tren_p_avg": 2,
+        "khoang_cach_gan_nhat_theo_R_eff": {
+          "n": 684,
+          "min": 0.0045,
+          "p25": 0.8315,
+          "median": 2.1284,
+          "p75": 4.4537,
+          "max": 60.8174
+        },
+        "tran_theo_R_eff": {
+          "n": 686,
+          "min": 4.0,
+          "p25": 4.0,
+          "median": 4.0,
+          "p75": 4.0,
+          "max": 4.0
+        },
+        "ca_co_ung_vien_trong_tam_ma_van_nang": 195,
+        "_doc": "gan_nhat_r > tran_r => nang vi KHOANG CACH (cau truc thi truong). zone_da_xac_nhan = 0 => LOI _quet_zone_dinh. zone_da_xac_nhan > 0 nhung zone_tren_p_avg = 0 => loi ngu nghia bo loc."
+      }
+    },
+    "Z0-T1": {
+      "so_ma": 88,
+      "ma_nam": 50.12,
+      "so_lenh": 160,
+      "lenh_moi_ma_nam": 3.192,
+      "lenh_quy_doi_pool_102_moi_nam": 325.6,
+      "phan_bo_tranche": {
+        "1": 160
+      },
+      "exit_reason": {
+        "trailing_stop_loss": 75,
+        "TP2_TRAIL": 54,
+        "FUNDING_STOP": 31
+      },
+      "tp1_theo_nguon": {
+        "TP1_zone_doi_dien": 58,
+        "TP1_fallback_r_multiple": 4
+      },
+      "cong_ket_nap": {
+        "ket_nap": 200
+      },
+      "lenh_theo_thang": {
+        "2025-06": 4,
+        "2025-07": 41,
+        "2025-08": 21,
+        "2025-09": 15,
+        "2025-10": 16,
+        "2025-11": 13,
+        "2025-12": 21,
+        "2026-01": 29
+      },
+      "exception_bi_nuot": 2,
+      "giay": 37.9,
+      "ghi_chu": "KHÔNG --timeframe-detail (EXPLORE không có 5m); chỉ đếm, không PnL",
+      "chan_doan_tp": {
+        "so_lan_goi_zone_dinh_tren": 0,
+        "co_cot_zone_dinh_gia": {},
+        "cot_thay_duoc_mau": "",
+        "so_lan_chon_tp": 160,
+        "nguon_tp": {
+          "zone_doi_dien": 134,
+          "fallback_r_multiple": 26
+        },
+        "zone_da_xac_nhan": {
+          "n": 160,
+          "min": 4.0,
+          "p25": 21.0,
+          "median": 29.0,
+          "p75": 41.0,
+          "max": 65.0
+        },
+        "zone_tren_p_avg": {
+          "n": 160,
+          "min": 1.0,
+          "p25": 12.0,
+          "median": 19.0,
+          "p75": 33.0,
+          "max": 64.0
+        },
+        "so_lan_0_zone_xac_nhan": 0,
+        "so_lan_co_zone_nhung_0_tren_p_avg": 0,
+        "khoang_cach_gan_nhat_theo_R_eff": {
+          "n": 160,
+          "min": 0.0143,
+          "p25": 0.4982,
+          "median": 1.2817,
+          "p75": 2.5831,
+          "max": 28.0432
+        },
+        "tran_theo_R_eff": {
+          "n": 160,
+          "min": 4.0,
+          "p25": 4.0,
+          "median": 4.0,
+          "p75": 4.0,
+          "max": 4.0
+        },
+        "ca_co_ung_vien_trong_tam_ma_van_nang": 26,
+        "_doc": "gan_nhat_r > tran_r => nang vi KHOANG CACH (cau truc thi truong). zone_da_xac_nhan = 0 => LOI _quet_zone_dinh. zone_da_xac_nhan > 0 nhung zone_tren_p_avg = 0 => loi ngu nghia bo loc."
+      }
+    },
+    "Z0": {
+      "so_ma": 88,
+      "ma_nam": 50.12,
+      "so_lenh": 22,
+      "lenh_moi_ma_nam": 0.439,
+      "lenh_quy_doi_pool_102_moi_nam": 44.8,
+      "phan_bo_tranche": {
+        "1": 22
+      },
+      "exit_reason": {
+        "trailing_stop_loss": 8,
+        "FUNDING_STOP": 6,
+        "TP2_TRAIL": 8
+      },
+      "tp1_theo_nguon": {
+        "TP1_zone_doi_dien": 7,
+        "TP1_fallback_r_multiple": 1
+      },
+      "cong_ket_nap": {
+        "ket_nap": 25
+      },
+      "lenh_theo_thang": {
+        "2025-07": 5,
+        "2025-08": 8,
+        "2025-09": 4,
+        "2025-10": 2,
+        "2025-11": 1,
+        "2025-12": 1,
+        "2026-01": 1
+      },
+      "exception_bi_nuot": 0,
+      "giay": 28.5,
+      "ghi_chu": "KHÔNG --timeframe-detail (EXPLORE không có 5m); chỉ đếm, không PnL",
+      "chan_doan_tp": {
+        "so_lan_goi_zone_dinh_tren": 0,
+        "co_cot_zone_dinh_gia": {},
+        "cot_thay_duoc_mau": "",
+        "so_lan_chon_tp": 22,
+        "nguon_tp": {
+          "zone_doi_dien": 18,
+          "fallback_r_multiple": 4
+        },
+        "zone_da_xac_nhan": {
+          "n": 22,
+          "min": 9.0,
+          "p25": 21.0,
+          "median": 32.0,
+          "p75": 40.0,
+          "max": 55.0
+        },
+        "zone_tren_p_avg": {
+          "n": 22,
+          "min": 1.0,
+          "p25": 2.0,
+          "median": 10.0,
+          "p75": 12.0,
+          "max": 29.0
+        },
+        "so_lan_0_zone_xac_nhan": 0,
+        "so_lan_co_zone_nhung_0_tren_p_avg": 0,
+        "khoang_cach_gan_nhat_theo_R_eff": {
+          "n": 22,
+          "min": 0.0751,
+          "p25": 0.3485,
+          "median": 1.0993,
+          "p75": 2.7005,
+          "max": 20.6301
+        },
+        "tran_theo_R_eff": {
+          "n": 22,
+          "min": 4.0,
+          "p25": 4.0,
+          "median": 4.0,
+          "p75": 4.0,
+          "max": 4.0
+        },
+        "ca_co_ung_vien_trong_tam_ma_van_nang": 4,
+        "_doc": "gan_nhat_r > tran_r => nang vi KHOANG CACH (cau truc thi truong). zone_da_xac_nhan = 0 => LOI _quet_zone_dinh. zone_da_xac_nhan > 0 nhung zone_tren_p_avg = 0 => loi ngu nghia bo loc."
+      }
+    }
+  },
+  "so_tap_lenh": {
+    "Z0-T0 vs Z0-T1": {
+      "n_A": 686,
+      "n_B": 160,
+      "n_giao": 140,
+      "chi_co_o_A": 546,
+      "chi_co_o_B": 20,
+      "trung_khop_hoan_toan": false
+    },
+    "Z0-T0 vs Z0": {
+      "n_A": 686,
+      "n_B": 22,
+      "n_giao": 21,
+      "chi_co_o_A": 665,
+      "chi_co_o_B": 1,
+      "trung_khop_hoan_toan": false
+    },
+    "Z0-T1 vs Z0": {
+      "n_A": 160,
+      "n_B": 22,
+      "n_giao": 22,
+      "chi_co_o_A": 138,
+      "chi_co_o_B": 0,
+      "trung_khop_hoan_toan": false
+    }
+  }
+}
