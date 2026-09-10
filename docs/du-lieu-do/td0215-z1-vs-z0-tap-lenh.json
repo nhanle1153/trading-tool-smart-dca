@@ -1,0 +1,283 @@
+{
+  "nguon": "TD-0215, 10/09/2026 — Z0 và Z1 trong CÙNG một lượt để so tập lệnh. EXPLORE 88 mã, WFO, 0 trial",
+  "ranh_gioi": "CHỈ đếm zone/tín hiệu/lệnh/tập lệnh. KHÔNG expectancy, KHÔNG PnL. Căn cứ 0 trial: DR-014 §2. Ranh giới nội dung: spec §9c.4b. Xem MT-24.",
+  "timerange": "20250612-20260129",
+  "san_nhanh_1": 150,
+  "pheu_tin_hieu": {
+    "Z0": {
+      "so_ma": 88,
+      "ma_nam": 50.12,
+      "zone": 2621,
+      "A_xac_nhan": 1104,
+      "B_phan_thuc": 1734,
+      "tin_hieu_sau_trend": 32,
+      "ty_le_A_tren_zone": 0.4212,
+      "ty_le_B_tren_zone": 0.6616,
+      "tin_hieu_moi_ma_nam": 0.638,
+      "tin_hieu_quy_doi_pool_102_moi_nam": 65.1,
+      "phan_bo_wait_bars": {
+        "0": 610,
+        "1": 302,
+        "2": 192
+      },
+      "phan_bo_nhanh_xac_nhan": {
+        "b": 523,
+        "ac": 581
+      },
+      "phan_bo_luot_cham_phan_thuc_B": {
+        "1": 1104
+      },
+      "pheu_trend_tai_C": {
+        "C": 1104,
+        "nan_1d_hoac_adx": 37,
+        "tuoi_None_NaN": 247,
+        "1_huong_1d_UP": 175,
+        "2_4h_dong_huong": 59,
+        "3_adx_ge_20": 48,
+        "4_tuoi_ge_5": 32,
+        "chi_truot_tuoi": 16,
+        "huong_1d_FLAT": 142,
+        "huong_1d_DOWN": 787,
+        "tuoi_ge_5_bat_ke_dk_khac": 803
+      },
+      "tin_hieu_moi_ma_nam_theo_ma": {
+        "n": 88,
+        "min": 0.0,
+        "P25": 0.0,
+        "median": 0.0,
+        "P75": 0.0,
+        "max": 4.744,
+        "mean": 0.604
+      },
+      "giay": 11.9
+    },
+    "Z1": {
+      "so_ma": 88,
+      "ma_nam": 50.12,
+      "zone": 2621,
+      "A_xac_nhan": 1104,
+      "B_phan_thuc": 1734,
+      "tin_hieu_sau_trend": 32,
+      "ty_le_A_tren_zone": 0.4212,
+      "ty_le_B_tren_zone": 0.6616,
+      "tin_hieu_moi_ma_nam": 0.638,
+      "tin_hieu_quy_doi_pool_102_moi_nam": 65.1,
+      "phan_bo_wait_bars": {
+        "0": 610,
+        "1": 302,
+        "2": 192
+      },
+      "phan_bo_nhanh_xac_nhan": {
+        "b": 523,
+        "ac": 581
+      },
+      "phan_bo_luot_cham_phan_thuc_B": {
+        "1": 1104
+      },
+      "pheu_trend_tai_C": {
+        "C": 1104,
+        "nan_1d_hoac_adx": 37,
+        "tuoi_None_NaN": 247,
+        "1_huong_1d_UP": 175,
+        "2_4h_dong_huong": 59,
+        "3_adx_ge_20": 48,
+        "4_tuoi_ge_5": 32,
+        "chi_truot_tuoi": 16,
+        "huong_1d_FLAT": 142,
+        "huong_1d_DOWN": 787,
+        "tuoi_ge_5_bat_ke_dk_khac": 803
+      },
+      "tin_hieu_moi_ma_nam_theo_ma": {
+        "n": 88,
+        "min": 0.0,
+        "P25": 0.0,
+        "median": 0.0,
+        "P75": 0.0,
+        "max": 4.744,
+        "mean": 0.604
+      },
+      "giay": 11.8
+    }
+  },
+  "huong_lech_quy_doi": {
+    "explore_trong_pool": {
+      "so_ma": 0,
+      "tin_hieu": 0,
+      "ma_nam": 0,
+      "tin_hieu_moi_ma_nam": null
+    },
+    "explore_ngoai_pool": {
+      "so_ma": 88,
+      "tin_hieu": 32,
+      "ma_nam": 50.12,
+      "tin_hieu_moi_ma_nam": 0.638
+    }
+  },
+  "lenh_that": {
+    "Z0": {
+      "so_ma": 88,
+      "ma_nam": 50.12,
+      "so_lenh": 22,
+      "lenh_moi_ma_nam": 0.439,
+      "lenh_quy_doi_pool_102_moi_nam": 44.8,
+      "phan_bo_tranche": {
+        "1": 22
+      },
+      "exit_reason": {
+        "trailing_stop_loss": 8,
+        "FUNDING_STOP": 6,
+        "TP2_TRAIL": 8
+      },
+      "tp1_theo_nguon": {
+        "TP1_zone_doi_dien": 7,
+        "TP1_fallback_r_multiple": 1
+      },
+      "cong_ket_nap": {
+        "ket_nap": 25
+      },
+      "lenh_theo_thang": {
+        "2025-07": 5,
+        "2025-08": 8,
+        "2025-09": 4,
+        "2025-10": 2,
+        "2025-11": 1,
+        "2025-12": 1,
+        "2026-01": 1
+      },
+      "exception_bi_nuot": 0,
+      "giay": 27.0,
+      "ghi_chu": "KHÔNG --timeframe-detail (EXPLORE không có 5m); chỉ đếm, không PnL",
+      "chan_doan_tp": {
+        "so_lan_goi_zone_dinh_tren": 0,
+        "co_cot_zone_dinh_gia": {},
+        "cot_thay_duoc_mau": "",
+        "so_lan_chon_tp": 22,
+        "nguon_tp": {
+          "zone_doi_dien": 18,
+          "fallback_r_multiple": 4
+        },
+        "zone_da_xac_nhan": {
+          "n": 22,
+          "min": 9.0,
+          "p25": 21.0,
+          "median": 32.0,
+          "p75": 40.0,
+          "max": 55.0
+        },
+        "zone_tren_p_avg": {
+          "n": 22,
+          "min": 1.0,
+          "p25": 2.0,
+          "median": 10.0,
+          "p75": 12.0,
+          "max": 29.0
+        },
+        "so_lan_0_zone_xac_nhan": 0,
+        "so_lan_co_zone_nhung_0_tren_p_avg": 0,
+        "khoang_cach_gan_nhat_theo_R_eff": {
+          "n": 22,
+          "min": 0.0751,
+          "p25": 0.3485,
+          "median": 1.0993,
+          "p75": 2.7005,
+          "max": 20.6301
+        },
+        "tran_theo_R_eff": {
+          "n": 22,
+          "min": 4.0,
+          "p25": 4.0,
+          "median": 4.0,
+          "p75": 4.0,
+          "max": 4.0
+        },
+        "ca_co_ung_vien_trong_tam_ma_van_nang": 4,
+        "_doc": "gan_nhat_r > tran_r => nang vi KHOANG CACH (cau truc thi truong). zone_da_xac_nhan = 0 => LOI _quet_zone_dinh. zone_da_xac_nhan > 0 nhung zone_tren_p_avg = 0 => loi ngu nghia bo loc."
+      }
+    },
+    "Z1": {
+      "so_ma": 88,
+      "ma_nam": 50.12,
+      "so_lenh": 6,
+      "lenh_moi_ma_nam": 0.12,
+      "lenh_quy_doi_pool_102_moi_nam": 12.2,
+      "phan_bo_tranche": {
+        "1": 6
+      },
+      "exit_reason": {
+        "TP2_TRAIL": 1,
+        "trailing_stop_loss": 2,
+        "FUNDING_STOP": 1,
+        "TIME_STOP": 2
+      },
+      "tp1_theo_nguon": {
+        "TP1_zone_doi_dien": 1
+      },
+      "cong_ket_nap": {
+        "ket_nap": 6
+      },
+      "lenh_theo_thang": {
+        "2025-07": 2,
+        "2025-08": 2,
+        "2025-09": 2
+      },
+      "exception_bi_nuot": 0,
+      "giay": 26.3,
+      "ghi_chu": "KHÔNG --timeframe-detail (EXPLORE không có 5m); chỉ đếm, không PnL",
+      "chan_doan_tp": {
+        "so_lan_goi_zone_dinh_tren": 0,
+        "co_cot_zone_dinh_gia": {},
+        "cot_thay_duoc_mau": "",
+        "so_lan_chon_tp": 6,
+        "nguon_tp": {
+          "zone_doi_dien": 6
+        },
+        "zone_da_xac_nhan": {
+          "n": 6,
+          "min": 10.0,
+          "p25": 29.0,
+          "median": 40.0,
+          "p75": 41.0,
+          "max": 48.0
+        },
+        "zone_tren_p_avg": {
+          "n": 6,
+          "min": 2.0,
+          "p25": 10.0,
+          "median": 13.0,
+          "p75": 20.0,
+          "max": 29.0
+        },
+        "so_lan_0_zone_xac_nhan": 0,
+        "so_lan_co_zone_nhung_0_tren_p_avg": 0,
+        "khoang_cach_gan_nhat_theo_R_eff": {
+          "n": 6,
+          "min": 0.131,
+          "p25": 0.2215,
+          "median": 0.4219,
+          "p75": 0.6891,
+          "max": 0.8819
+        },
+        "tran_theo_R_eff": {
+          "n": 6,
+          "min": 4.0,
+          "p25": 4.0,
+          "median": 4.0,
+          "p75": 4.0,
+          "max": 4.0
+        },
+        "ca_co_ung_vien_trong_tam_ma_van_nang": 0,
+        "_doc": "gan_nhat_r > tran_r => nang vi KHOANG CACH (cau truc thi truong). zone_da_xac_nhan = 0 => LOI _quet_zone_dinh. zone_da_xac_nhan > 0 nhung zone_tren_p_avg = 0 => loi ngu nghia bo loc."
+      }
+    }
+  },
+  "so_tap_lenh": {
+    "Z0 vs Z1": {
+      "n_A": 22,
+      "n_B": 6,
+      "n_giao": 6,
+      "chi_co_o_A": 16,
+      "chi_co_o_B": 0,
+      "trung_khop_hoan_toan": false
+    }
+  }
+}
