@@ -185,7 +185,8 @@ ablation đã đăng ký là việc phải qua DR.
    còn `src/tool_d/gates/thresholds.py:24` có `DSR_ADJ_EXPECTANCY_MIN = 0.10` theo `DR-D0PRE-03`
    (blocker B6 đã gỡ). **Code đi trước spec.** N1 nói spec thắng khi mâu thuẫn — nhưng ở đây spec
    là **ô trống**, không phải một giá trị khác, nên đây là trôi lệch tài liệu chứ không phải xung
-   đột giá trị. Không tự sửa spec (quy tắc 5). Đề xuất ghi thành một mục MT.
+   đột giá trị. Không tự sửa spec (quy tắc 5). ✅ **Đã ghi thành `MT-28`** (`f82d88e`, lệnh
+   "chuẩn hóa và lưu" 10/09/2026) — chờ chủ dự án quyết cách vá.
    *(Ghi nhận kèm: `thresholds.py:30` giữ `BEST_KNOWN_DSR_ADJ_EXPECTANCY = -inf` — đúng N6, vì
    chưa có lần đánh giá nào.)*
 
@@ -193,7 +194,8 @@ ablation đã đăng ký là việc phải qua DR.
    chờ chủ dự án"* trong khi `DR-D4-03` đã chốt và thi hành; MT-18 vỡ format bảng nên dễ đọc nhầm.
    Đề xuất sửa dòng trạng thái, chờ duyệt (Phụ lục B) — không tự sửa file đặc tả.
 
-3. **Mâu thuẫn thật giữa checklist và DR-014, đề xuất ghi thành MT (chờ lệnh "chuẩn hóa và lưu").**
+3. **Mâu thuẫn thật giữa checklist và DR-014** — ✅ **đã ghi thành `MT-27`** (`f82d88e`, lệnh
+   "chuẩn hóa và lưu" 10/09/2026), 🟡, **chờ chủ dự án**.
    Checklist GĐ1 đòi expectancy dương ở **backtest thô, chưa tối ưu gì**, và cho phép vòng lặp
    *đo → sửa logic → đo lại*. `DR-014 §2` định nghĩa **mọi lần đánh giá cấu hình** trên
    CALIB/WFO/LOCKBOX = **1 trial**; N6 cấm điền `0.0` thay cho "chưa đo"; và `CTRL_OUTPUT_ALLOWED`
