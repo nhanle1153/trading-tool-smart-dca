@@ -170,18 +170,46 @@ Câu *"DCA ba tranche có đáng không"* rời khỏi cổng thống kê và đ
 vận hành**, quyết tại **D11 (dry-run)** với ba đầu vào, tất cả đã hoặc sẽ có mà không tốn trial thêm:
 
 1. `mean_R` thô + CI của `Z0` vs `Z3`/`Z3b` từ §2.3 — **mô tả, không phán quyết**;
-2. phân bố tranche thực tế (đã đo: chỉ **18,07%** lệnh bơm đủ 3 tranche, `dg2-explore-quet-arm.json`);
+2. phân bố tranche thực tế — ⏳ **CHƯA CÓ SỐ DÙNG ĐƯỢC**, xem cảnh báo ngay dưới;
 3. hành vi tranche 2/3 quan sát ở dry-run.
 
-🔴 **Mặc định khi cả ba không cho kết luận rõ: `Z0` single-entry.** Lý do — và đây là phần cần chủ
-dự án xác nhận tường minh, không phải phần tôi tự chốt:
+🔴 **Cảnh báo về đầu vào (2) — con số `18,07%` đã bị RÚT khỏi DR này.** Bản đầu dẫn *"chỉ 18,07%
+lệnh bơm đủ 3 tranche"* từ `dg2-explore-quet-arm.json`. Kiểm header file đó: **48 mã alt**, cửa sổ
+**`[T0,T2]`**, đo **09/09/2026** — tức trước cả `19dfabc` (nối §3.3b) lẫn `61479b7` (vá TP). Ba
+điểm lệch cùng lúc: sai số mã (48 vs 88), sai cửa sổ (không phải WFO — cửa sổ ablation thật), và
+`DR-D4-08 §8` đã ghi sẵn bằng chữ rằng bảng arm đo trước `19dfabc` **không so trực tiếp được** với
+sau.
+🔑 **Nặng hơn cả lỗi thời: dùng con số đó làm bằng chứng là VÒNG TRÒN.** Sau bản vá, TP1 nổ theo
+zone ở 18/22 lệnh `Z0`; cộng với chốt *"đã chốt TP1 thì KHÔNG DCA thêm"* (09/09/2026), một tỉ lệ
+"đủ 3 tranche" thấp phần lớn phản ánh **chính luật thoát của ta**, không phản ánh việc DCA có giá
+trị hay không. Lấy nó để kết luận *"DCA ít khi tham gia nên bỏ cũng được"* là dùng hệ quả của một
+quyết định của mình làm bằng chứng cho một quyết định khác của mình.
+⏳ `Z3`/`Z2` **chưa từng được đo lại sau bản vá** (kiểm: `td0205`, `td0212`, `td0207-h4-sau-va` đều
+chỉ có `Z0-T0`/`Z0-T1`/`Z0`). Phải đo lại trước khi đầu vào (2) được dùng — **0 trial**, EXPLORE,
+chỉ đếm.
 
-- §10.1 đã viết sẵn *"Z0 ≥ Z3/Z3b → bỏ DCA, Tool D thành single-entry — **kết quả TỐT, không phải
-  thất bại**"*;
-- một cơ chế **không chứng minh được là đáng** thì không nên lên tiền thật — cùng logic fail-closed
-  mà N6 áp cho gate (*"gate không thể vô tình PASS"*);
-- tranche 2/3 **bơm thêm tiền khi giá đi ngược**, tức hướng sai của nó đắt hơn hướng sai của việc
-  bỏ qua — cùng tiêu chí bất đối xứng đã dùng để chốt `MT-22` phương án A.
+🔴 **Mặc định đề xuất khi cả ba đầu vào không cho kết luận rõ: `Z0` single-entry.**
+
+⚠️ **ĐÂY LÀ MỘT QUYẾT ĐỊNH MỚI, KHÔNG PHẢI MỘT DẪN CHIẾU.** Bản đầu của DR này trình nó như thứ
+§10.1 đã ngụ ý — **sai**. Kiểm spec: dòng **4295** ghi *"NHÁNH 2 … **CHỈ chạy nếu Nhánh 1 đã
+PASS**"*, và mọi điều khoản mặc-định-Z0 (nhánh "KHÔNG" ở dòng 4310, và `DR-015 §5.1` dẫn ở dòng
+4302) đều nằm **bên trong Nhánh 2**. Nhóm C là **INCONCLUSIVE**, không phải PASS ⇒ **không điều
+khoản nào trong số đó kích hoạt**. ⇒ Spec **không có** mặc định cho trạng thái *"Nhánh 1
+INCONCLUSIVE"*. Ba lý lẽ dưới đây là **lý do đề xuất**, không phải căn cứ văn bản.
+
+- 🟢 **Có tiền lệ nguyên tắc, ở mức TƯƠNG TỰ chứ không phải dẫn chiếu:** dòng 4302 lập nguyên tắc
+  *"backtest không đủ tư cách phân xử ⇒ rơi vào nhánh KHÔNG (mặc định Z0) — dự án TIẾP TỤC bình
+  thường, đây không phải kết cục xấu"*. Nguyên tắc đó chỉ đúng hướng với ta; nhưng nó viết cho một
+  chế độ hỏng **khác** (người thắng đổi giữa hai chiều hiệu chỉnh Δ_R), không phải cho thiếu mẫu.
+  Dùng được như **loại suy**, không dùng được như trích dẫn.
+- 🟢 **Fail-closed:** một cơ chế **không chứng minh được là đáng** thì không nên lên tiền thật —
+  cùng logic N6 áp cho gate (*"gate không thể vô tình PASS"*). Đây là lý lẽ mạnh nhất trong ba cái,
+  vì nó không cần một phép đo nào.
+- 🟡 **Khẩu vị rủi ro, ĐÃ KHAI — không suy ra từ phép đo nào:** tranche 2/3 bơm thêm tiền khi giá đi
+  ngược, nên hướng sai của nó đắt hơn hướng sai của việc bỏ qua. ⚠️ Nhưng "bơm thêm khi giá đi
+  ngược" **chính là thiết kế** của DCA, không phải khuyết tật của nó; câu này chỉ thành lý lẽ nếu
+  kèm giả định *"xác suất thesis sai đủ lớn"*, mà xác suất đó **chưa đo**. Tiền lệ `MT-22` có phép
+  đo kèm (A 43,1% vs B 81,2%); ở đây **không có**. Vì thế nó đứng ở hạng thấp hơn hai cái trên.
 
 ⏳ **Chờ chủ dự án xác nhận mặc định này.** Nếu không xác nhận, câu DCA ở lại trạng thái mở và
 **không được ngầm hiểu theo hướng nào**.
@@ -268,6 +296,7 @@ thật"* — đó là **xác nhận dự báo §2.2**, không phải thông tin 
 | b | Gate `L-Z57`: bộ kết quả giả lập trong đó một arm nhóm C mang `DSR_adj` vượt ngưỡng mà cờ là `mo_ta` ⇒ gate **KHÔNG** được trả PASS ⇒ test ĐỎ nếu trả |
 | c | Test khoá: dự báo §2.2 được ghim thành hằng — arm nhóm C mà kết cục ≠ INCONCLUSIVE ⇒ báo đỏ kèm thông báo trỏ về §2.2 (cờ đỏ tầng đo, không phải kết quả) |
 | d | `d4_han_che` khi đóng cổng D4: ghi rõ D4 **không** phán quyết câu DCA, kèm §2.4 |
+| e | ⏳ **Đo lại `Z3`/`Z2` sau bản vá `TD-0207`** (0 trial, EXPLORE, chỉ đếm) — điều kiện để đầu vào (2) của §2.4 được dùng. Chưa có số thì §2.4 chạy trên hai đầu vào, không phải ba |
 
 ---
 
@@ -282,4 +311,5 @@ thật"* — đó là **xác nhận dự báo §2.2**, không phải thông tin 
 | 10/09/2026 | TD-0208 đối chiếu checklist ngoài; phép tính 0-trial cho thấy nhóm C **ngoài tầm với**, không phải thiếu mẫu |
 | 10/09/2026 | Phiên `c3` bác `×2` cho Short (spec dòng 4187 / 4973-4974) ⇒ trần 324 → **162**, kết luận mạnh hơn; và chặn ca nghi ngờ `MT-25` bằng cận `λ < 0,138` |
 | 10/09/2026 | Chủ dự án chốt **phương án A** — DR này |
+| 10/09/2026 | Phiên `c3` soi §2.4, bắt ba lỗi: (a) mặc-định-Z0 nằm TRONG Nhánh 2 mà spec 4295 khoá sau "Nhánh 1 đã PASS" ⇒ đây là quyết định MỚI, không phải dẫn chiếu; (b) `18,07%` là số 48 mã / `[T0,T2]` / trước cả hai bản vá ⇒ **rút khỏi DR**; (c) lý lẽ bất đối xứng là khẩu vị rủi ro, không suy từ đo ⇒ hạ hạng. Cả ba đã kiểm lại trên đĩa và **nhận** |
 | 10/09/2026 | `TD-0212` đo lại ba arm SAU bản vá: `Z0-T0` 883 (−8%), `Z0-T1` 206, `Z0` 28. **§7 điều kiện 3 kiểm — KHÔNG kích hoạt**, §2.1 giữ nguyên. H-4 cả ba arm dưới 40%. Bản vá đổi số đếm của arm nhiều lệnh, không đổi arm ít lệnh — cơ chế tranh chỗ mở, §1.1 |
