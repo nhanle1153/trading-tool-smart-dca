@@ -1886,3 +1886,93 @@ với DR-D4-06 (79-87% nạng khi áp hạn tuổi) — không phải dấu hi�
 xét TP — không suy ra đáng tin từ một phép đo không điều kiện như trên. Đợi TD-0184 (bộ chạy E3,
 Decision Log thật) sinh dữ liệu đúng hạt, đo lại từ đó — tránh dựng một đường đo song song rồi có
 hai con số cho cùng một câu hỏi (đúng bài học N1/MT-03).
+
+## 09/09/2026 — TD-0200: tải 5m cho 102 mã pool trên WFO; và H19 (a) sao lưu là một ✅ RỖNG
+
+**Vì sao dừng lại thay vì chạy ablation:** pool có 5m cho đúng **2/102 mã**, mà cả hai phủ
+`[2024-06-01, 2025-05-31]` — **kết thúc TRƯỚC T1 (2025-06-12)** ⇒ số mã dùng được cho WFO là **0/102**.
+Không có 5m thì `--timeframe-detail 5m` vô hiệu, và spec gọi đó là *"backtest thiên vị có lợi một
+cách hệ thống"* (D5, dòng 2923) / *"rủi ro số một của toàn bộ kết quả Tool D"* (D6, dòng 2924) /
+*"🔴 Bắt buộc P0"* (H5, dòng 4342). 🔴 **Chiều thiên vị không trung tính:** mọi arm DCA có ba lần
+khớp so với một của Z0 (spec dòng 1215) ⇒ thiếu 5m ưu ái arm DCA **đúng chiều** Nhánh 2 §10.2 đang
+phán quyết. Chủ dự án chốt **phương án A** (tải trước) thay vì chạy rồi ghi hạn chế.
+
+**Kết quả (0 trial — DR-014 §2 chỉ tính *đánh giá cấu hình*):** 102/102 mã tải xong trong 6 phút 08;
+**101 mã có 5m dùng được** (TRIA rỗng — niêm yết 06/02/2026, sau T2, đúng như 5 file `TRIA*` khác);
+**5.887.071 nến**, phạm vi `2025-06-12 00:00` → `2026-01-28 23:55`. Độ phủ đo bằng chính hàm
+`_load_bt_data_detail()` gọi (`history.load_data(..., startup_candles=0)`), không phải bằng đếm file
+trên đĩa: **101 mã nạp được 1h, 101 mã nạp được 5m, 0 mã có 1h mà thiếu 5m.**
+
+🔑 **Vì sao mẫu số là "mã có 1h" chứ không phải "/102":** mã niêm yết sau T1 chỉ có 5m từ ngày niêm
+yết; lấy /102 làm một chốt **không bao giờ thoả được** vì một lý do không phải khuyết tật — đúng bài
+học *"chốt không bao giờ thoả thì tệ hơn không có chốt"* của cổng D3. (Phiên `-dc` đã đổi mẫu số của
+dải cảnh báo dashboard theo đó, `de66235`.)
+
+🔴 **Đọc trước khi ai đó tin một lượt backtest pool:** `backtesting.py:1739` có `and pair in
+self.detail_data`. Mã **thiếu 5m KHÔNG làm backtest đỏ** — nó lặng lẽ chạy ở 1H trong khi mã khác
+chạy 5m, và bảng kết quả trộn hai độ phân giải mà không cột nào nói ra. Vì thế *"có 5m"* phải KIỂM
+ĐỘ PHỦ, không suy từ *"lệnh tải exit 0"*. TD-0184 phải ghi độ phủ 5m vào bản ghi kết quả.
+
+### Bốn phát hiện, ba trong đó bác chính chẩn đoán đầu của tôi
+
+**1. Bẫy TD-0093 còn sống, và KHÔNG ĐỀU GIỮA CÁC KHUNG.** Tải thử 1 mã (ADA) cho ra 5m **đúng phạm
+vi tuyệt đối** (66.528 nến, không dư một nến), trong khi CÙNG lượt đó `mark` lấn tới `2026-02-16` và
+`funding_rate` lấn tới `2026-09-10` — 7 tháng vào LOCKBOX. Rồi trên 102 mã thì **4 mã** (`NOM`,
+`PROM`, `STRK`, `VIRTUAL`) lấn đúng 24 nến 5m qua T2. ⇒ *"khung này tải đúng phạm vi"* **không suy ra
+được** cho khung khác, và *"mã này đúng"* không suy ra được cho 102 mã. Đã cắt; đã verify seal
+lockbox PASS (service `lockbox`, service duy nhất thấy `lockbox/data/`).
+
+**2. 🔴 Lệnh tải KHÔNG được cho chạm thư mục pool.** `download-data -t 5m` ở chế độ futures **luôn
+kéo thêm** `1h-mark` + `1h-funding_rate` — tức nó sẽ ghi đè hai loại file đã cắt đúng ≤ T2 từ
+TD-0093, rồi lại lấn ra. Nên tải vào thư mục **nháp** rồi chỉ chép `*-5m-futures.feather`. Đây là
+chọn có ý thức, không phải cẩn thận thừa: 204 file lẽ ra không có lý do gì bị đụng.
+
+**3. 🔴 H19 `--verify-after` bắt được một hư hại THẬT do chính lần nhập này gây ra — lớp gác đúng,
+người sai.** `shutil.copy2` cho cả 101 mã: với 99 mã chưa có file 5m thì copy = tạo mới; với
+`1000BONK`/`1000PEPE` thì đã có file 5m cũ của TD-0115 và copy = **GHI ĐÈ**, mất 105.120 nến mỗi
+file. H19 in đúng: *"khoảng cũ có 105120 nến, sau khi tải còn 0 — dữ liệu cũ bị ghi đè/cắt bớt,
+KHÔNG phải gộp"*. Đã gộp lại từ bản sao lưu (`105.120 + 66.528 = 171.648`, không trùng một nến —
+hai đoạn rời nhau, còn hở `01→11/06/2025` nằm ngoài cả hai vùng cần), verify lại **PASS 507 file**.
+📌 Ghi ra để không ai đọc nhầm thành *"H19 báo động giả"*: đây đúng cái bẫy LD-27 mà H19 sinh ra để
+chặn, và nó chặn được ngay lần đầu có người đi vào.
+
+**4. 🔴 `E8 --snapshot-before` in `✅ H19 (a) đã sao lưu` mà KHÔNG có bản sao lưu nào — hai đường
+độc lập cùng dẫn tới đó.** Bằng chứng lạnh: `C:\tool-d-data-backup` **không tồn tại** trước hôm nay,
+dù TD-0093 đã chạy `--snapshot-before` trên 510 file hồi 07/09.
+
+- **Đường A (mọi shell, tham số mặc định):** `--backup-root` mặc định là `../tool-d-data-backup`;
+  trong container cwd là `/workspace` và `docker-compose.yml` chỉ mount `..:/workspace`, nên đích là
+  `/tool-d-data-backup` — **không nằm trên volume nào**, bốc hơi khi `--rm`.
+- **Đường B (Git Bash):** truyền tay `--backup-root /backup` thì MSYS đổi thành
+  `C:/Program Files/Git/backup` TRƯỚC khi tới container. Chuỗi đó **không bắt đầu bằng `/`** nên
+  Linux hiểu là đường dẫn **TƯƠNG ĐỐI so với `/workspace`** ⇒ 93 MB ghi thẳng vào **gốc repo**, dưới
+  thư mục tên `C` + **U+F03A** — **lần thứ BA** hình dạng này xuất hiện trong dự án (hai lần trước:
+  `backup_lockbox(dest_dir=...)` suýt bị xoá nhầm, ghi trong CLAUDE.md).
+
+🔑 **Chẩn đoán đầu của tôi SAI, và sai theo hướng dễ chịu:** tôi kết luận *"bản sao lưu bốc hơi trong
+container"* và nói với cả chủ dự án lẫn phiên `-dc` như vậy. Nó không bốc hơi — nó **rơi vào trong
+repo**. Chỉ phát hiện vì `git status` hiện một dòng `??` lạ. Cùng bài học `4ec0fd3`: **chẩn đoán theo
+HÌNH DẠNG HẬU QUẢ (*"không thấy bản sao lưu ở chỗ mong đợi"*) thay vì kiểm CƠ CHẾ (*"nó đi đâu?"*)
+thì giả thuyết vẫn khớp hiện tượng mà vẫn sai.** Đã đối chiếu tên + kích thước + 8 mẫu sha256 (khớp
+hết) với bản ngoài repo rồi mới xoá — đúng tiền lệ 07/09 khi thư mục `C` + U+F03A hoá ra chứa bản
+backup lockbox thật.
+
+🔑 **Câu đáng giữ, rộng hơn ca này:** *một thao tác GHI từ trong container ra ngoài `/workspace` là
+ghi vào hư không, và không có gì báo.* Vế `(c)` chụp vân tay của cùng hàm đó sống sót **chỉ vì** nó
+ghi vào `runs/` — tức trong `/workspace`. **Cùng một hàm, hai vế, một vế thật một vế ảo, cùng in ✅.**
+Phạm vi đã ĐO (không suy rộng): grep 8 file `entrypoints/` cho ra **đúng 4 cờ nhận đường dẫn, tất cả
+trong `backfill_data.py`** (`--data-dir`, `--backup-root`, `--snapshot-out`, `--verify-after`);
+`--with-params-file` có ở 8/8 file nhưng là cờ **bool**, tên nó lừa mắt khi grep.
+
+⏳ **Chưa sửa, đã trình chủ dự án (quy tắc 2):** `E8` nên KIỂM FILE TRÊN HOST sau khi chép rồi mới in
+✅ — mã thoát 0 không chứng minh gì về **vị trí** ghi. Khuôn đúng đã có sẵn ở repo front-end
+(`scripts/thu-thap-du-lieu.mjs` → `chayLockTestsQuaDocker()`: `existsSync()` trên đường tuyệt đối,
+không thấy file thì trả `coDuLieu: false` kèm lý do thay vì in dấu thành công). Cùng lúc, đề xuất ghi
+quy ước *"chạy entrypoint có cờ đường dẫn thì dùng PowerShell, không dùng Git Bash"* vào `CLAUDE.md`
+— không tự ghi, đó là file trạng thái dùng chung (N12).
+
+**Provenance (§0d.5):** `freqtrade download-data --pairs-file runs/pool_pairs.json -t 5m
+--timerange 20250612-20260129 --datadir scratch_dl/tai-5m --data-format-ohlcv feather`, Binance
+USDⓈ-M futures thật, tải 09/09/2026 qua service `freqtrade`. Sao lưu trước khi ghi:
+`C:\tool-d-data-backup\futures` (512 file, 93 MB) + vân tay `runs/backfill_snapshot_5m_truoc.json`
+(507 file — 5 file `TRIA*` rỗng nên `read_candles` trả `unreadable`, đúng N6, không phải bỏ sót).
