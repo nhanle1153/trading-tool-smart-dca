@@ -2222,3 +2222,91 @@ lọc trend** thắng — và cửa sổ WFO nghịch chiều Long làm điều 
 - 📌 **Lỗi tự bắt, ghi để không lặp:** lượt chạy đầu dùng `2>&1 | tail -40` — đúng bẫy đã ghi sổ
   ngày 08/09 (*"giữ TRỌN output rồi mới lọc"*). Dừng sau ~1 phút, chạy lại ghi trọn ra file. Biết
   luật mà vẫn dính, vì nó nằm trong thói quen gõ lệnh chứ không nằm trong bước suy nghĩ.
+
+---
+
+## 10/09/2026 (tiếp) — TD-0206: H-4 = 100% là LỖI MÃ. Và một hình dạng lỗi MỚI: kiểm BÊN SINH không kiểm được ĐƯỜNG ĐI
+
+**Câu hỏi.** `td0193`/`td0205` đo được **723/723 lần TP1 rơi nạng**, 0 lần chốt theo zone đối diện —
+trong khi ngưỡng Nhánh 1 §10.2 là ≤ 40% và spec dòng 4285-4286 ghi *"> 40% → tiền đề TP sai (L2) →
+KHÔNG vào live"*. Cấu trúc thị trường hay lỗi? Hai câu trả lời dẫn tới hai hành động trái ngược.
+
+### Kết quả: LỖI MÃ, kiểm ở tầng CƠ CHẾ
+
+Đo trên **đường sản xuất thật** (thêm log vào chính chiến lược, parse như khuôn `KET_NAP` — KHÔNG
+tái lập logic, đúng bài học TD-0168). 88 mã EXPLORE, WFO, 22 lệnh, **0 trial**:
+
+```
+so_lan_goi_zone_dinh_tren    22            <- CÓ được gọi, 22/22
+co_cot_zone_dinh_gia         {'False': 22} <- cột VẮNG MẶT 22/22
+cot_thay_duoc_mau            date,open,high,low,close,volume
+nguon_tp                     {'fallback_r_multiple': 22}
+```
+
+**Cơ chế:** `_df_4h()` gọi `dp.get_pair_dataframe()` → trả **OHLCV thô, đúng 6 cột**. Nhưng
+`zone_dinh_gia` được tính ở `ZoneAbsorption.py:382` trên khung 4H rồi **merge vào 1H với hậu tố
+`_4h`** (dòng 301) ⇒ tên thật là `zone_dinh_gia_4h` trên dataframe **đã phân tích**. Nên
+`_zone_dinh_tren` rơi vào `return []` **100% số lần**, TP1 **luôn** dùng nạng.
+
+**Bán kính — đúng hai hàm, và cả hai là đường TP-theo-zone:**
+
+| hàm | đọc gì | trạng thái |
+|---|---|---|
+| `_close_4h_ke_tu` · `_trend_4h_hien_tai` · `_zss_hien_tai` | `close`/`high`/`low`/`volume`, tự tính lại | ✅ sống |
+| `_zone_dinh_tren` | `zone_dinh_gia` | ❌ luôn trả `[]` |
+| `_tuoi_zone_dinh_nen` | `zone_dinh_gia` | ❌ `tp_zone_age_bars` luôn `None` |
+
+Mẫu hình nhất quán: hàm nào **tự tính lại từ OHLCV thô** thì sống; đúng hai hàm cố **đọc một cột do
+`populate_indicators` sinh ra** thì chết.
+
+### 🔑 HÌNH DẠNG LỖI THỨ NĂM — kiểm BÊN SINH không kiểm được ĐƯỜNG ĐI
+
+Bốn cái đã ghi: *lớp canh cùn* · *chĩa nhầm hướng* · *người bị canh tự chọn phạm vi* · *bộ sinh dữ
+liệu lỗi thời*. Cái mới khác cả bốn.
+
+`td0189-diem-thoi-gian-zone-dinh-explore.py` kết luận (dòng 20-21) ***"`_quet_zone_dinh` HOẠT ĐỘNG
+ĐÚNG — 4775 zone đỉnh confirmed"***. **Câu đó ĐÚNG.** `_quet_zone_dinh` thật sự chạy đúng và sinh ra
+4.775 zone. Nhưng bên ĐỌC không nhìn thấy đầu ra của nó. **Kiểm bên SINH rồi kết luận cả đường đi
+lành — đó là chỗ hở.** Một phép kiểm sắc, chĩa đúng hướng, chạy trên dữ liệu thật, và vẫn bỏ lọt,
+vì nó dừng lại ở nửa đường ống.
+
+Cùng họ với TD-0168 (*"thứ được canh không nằm trên đường chạy"*) nhưng ở chiều ngược: ở đây thứ
+được canh **có** nằm trên đường chạy — chỉ là **khúc sau của đường ống thì không**.
+
+### 🔑 Và một lập luận VÒNG TRÒN, do phiên `be` bắt
+
+Cùng docstring, dòng 24-27: *"21/21 lệnh THẬT rơi nạng… là kết quả PLAUSIBLE, **không phải dấu hiệu
+bug** — cùng chiều với DR-D4-06"*. Tức lấy **chính con số 100% quan sát trong sản xuất** làm bằng
+chứng CỦNG CỐ rằng không có bug. Nay biết con số đó là **hệ quả cơ khí của bug** (`_zone_dinh_tren`
+trả `[]` bất kể zone thật có sống hay không) ⇒ **dùng triệu chứng của bug làm bằng chứng bug không
+tồn tại**. Phải đính chính: giữ 17,6%/35,9% (tự đo được, vẫn đúng), rút lại câu suy từ 21/21.
+
+### ✅ `MT-20` và `DR-D4-06` KHÔNG bị lung lay — đã kiểm, không suy đoán
+
+Lo ngại đầu của tôi là tiền đề của MT-20 (*"§1.3 và §5.1 không thể cùng đúng"*) dựa trên tỉ lệ nạng
+sinh từ đường chết. **Sai.** `be` tra, tôi kiểm lại độc lập: `do_tuoi_zone_dinh_explore.py` và
+`td0189-diem-thoi-gian-zone-dinh-explore.py` chỉ `import tool_d.zone_detection`/`zone_strength`
+(hàm THUẦN) và `pd.read_feather()` trực tiếp — **không** import `ZoneAbsorption`, **không** gọi
+`_df_4h`/`get_pair_dataframe`. Chúng **chép tay** vòng quét (dòng 39 tự khai). ⇒ con số 73-87% độc
+lập với bug, **tiền đề của MT-20/DR-D4-06 đứng vững**.
+
+📌 Trớ trêu đáng ghi: chính việc **chép tay logic** — thứ MT-03 cấm vì "hai bản sẽ trôi lệch" — lại
+là lý do hai phép đo đó sống sót qua bug này. Không phải lý lẽ để nới MT-03; chỉ là ghi nhận rằng
+độc lập-đường-đo có giá trị riêng của nó, khác với độc lập-nguồn-sự-thật.
+
+### Ba hệ quả
+
+1. **Nhánh 1 KHÔNG thật sự fail ở H-4.** 100% là defect, không phải bằng chứng chống. Suýt đọc thành
+   phán quyết L2 *"không vào live"* trên một lỗi mã.
+2. **Mọi arm đo tới giờ đo một hệ thống KHÔNG có tầng chốt lời theo zone** (`td0193`, `td0205`,
+   `dg2-explore-quet-arm`). Chạy D4 lúc này là tiêu 9 suất mua số của một cỗ máy khác.
+3. **`DR-D4-06` ràng buộc 1** (*"ghi `tp_zone_age_bars` mỗi lệnh"*) **chưa bao giờ thoả được** — một
+   ràng buộc đã khai mà cấu trúc không cho phép đúng.
+
+### Bản vá — CHƯA làm, có một câu ngữ nghĩa phải quyết trước
+
+Vá thuộc **DR-012 Hạng 1** (mã không khớp spec) ⇒ 0 trial, không cần DR mới. Nhưng
+`merge_informative_pair(..., ffill=True)` **kéo dài** giá zone gần nhất qua các nến sau, nên
+`notna()` trên `zone_dinh_gia_4h` cho **giá trị LẶP**, khác hẳn *"tập các zone đã xác nhận"* mà
+`_zone_dinh_tren` định lấy. Đổi tên cột mà không xử ffill là **đổi im lặng ý nghĩa của TP1** — đúng
+lớp `L-Z48c`. Và vá xong **đổi mọi con số D4 đã đo** ⇒ phải ghi như `DR-D4-08` §8.
