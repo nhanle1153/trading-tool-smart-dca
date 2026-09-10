@@ -2151,3 +2151,74 @@ chờ chủ dự án — commit `e9c928f`.
 thay vì tin câu trích, và từ việc **viết một đại lượng dưới dạng bất biến** (Sharpe) thay vì so hai
 số phụ thuộc thang. Cùng họ với bài học `TD-0082` đã ghi (*"một dòng mô tả việc cũng là lời khai,
 không phải bằng chứng"*) — lần này lời khai đi qua **bốn** tài liệu trước khi có ai mở nguồn ra đọc.
+
+---
+
+## 10/09/2026 (tiếp) — TD-0205: `n` thật trên WFO là **28**, không phải 40. Bước 1a tự nó đóng câu hỏi.
+
+**Việc.** `n = 40` là ngoại suy: 63,6 lệnh/năm đo trên [T0,T2] = 1,81 năm rồi nhân 0,632 năm.
+Đo lại phễu + backtest **riêng trong cửa sổ WFO [T1,T2]** — cửa sổ ablation D4 thật sự chạy.
+88 mã EXPLORE, **0 trial**, `docs/du-lieu-do/td0205-lenh-nam-wfo-explore.json`.
+
+### Kết quả — thấp hơn ngoại suy 30%
+
+| arm | lệnh/năm [T0,T2] | **lệnh/năm WFO** | tỉ lệ | **n trên WFO** | sàn `S` = h/√n |
+|---|---|---|---|---|---|
+| `Z0-T0` | 1.276,5 | **1.518,1** | ×1,19 | 960 | 0,099 |
+| `Z0-T1` | 333,5 | **325,6** | ×0,98 | 206 | 0,214 |
+| **`Z0`** | 63,6 | **44,8** | **×0,70** | **28** | **0,578** |
+
+Z0 chỉ có **22 lệnh thật** trên toàn bộ 88 mã EXPLORE trong 7,6 tháng WFO.
+Sàn Sharpe mỗi lệnh tăng từ 0,487 lên **0,578**.
+
+### 🔑 Ba arm dịch chuyển KHÁC HƯỚNG — đó là bằng chứng CƠ CHẾ, không phải tương quan
+
+`Z0-T0` (không lọc trend) **tăng** ×1,19; `Z0-T1` (chỉ lọc 4H) **đứng yên** ×0,98; `Z0` (đủ bộ lọc,
+gồm §2.1 hướng 1D) **giảm** ×0,70. Đúng thứ tự phụ thuộc vào tầng 1D. Nguyên nhân đo được ở phễu
+trend tại nến C:
+
+| | WFO [T1,T2] | [T0,T2] |
+|---|---|---|
+| 1D = UP | **175 / 1.104 = 15,85%** | 400 / 2.103 = 19,02% |
+| 1D = DOWN | 787 = 71,3% | 1.339 = 63,7% |
+
+`z = −2,22` ⇒ **phân biệt được ở mức 95%**. WFO là một cửa sổ **nghịch chiều Long** hơn mức trung
+bình — đúng thứ F4/MT ghi là rủi ro: Long-only treo `n` vào tỉ lệ UP.
+
+⚠️ **Không phải hiện tượng thiếu dữ liệu, đã kiểm ngược:** độ phủ mã-năm của WFO là **90%**
+(50,12 / 88 × 0,632) trong khi [T0,T2] chỉ **63%** (99,40 / 88 × 1,807). Độ phủ **cao hơn** mà số
+lệnh/năm vẫn thấp hơn ⇒ sụt giảm là tính chất của cửa sổ, không phải của phép đo.
+
+### Bất định — và vì sao kết luận vẫn vững
+
+22 lệnh là số nhỏ, phải khai: CI95 Poisson cho `k = 22` là [12,8 · 31,2] lệnh ⇒ lệnh/năm
+[26,1 · 63,5] ⇒ `n` ∈ [16 · 40] ⇒ sàn `S` ∈ [**0,486** · 0,758].
+
+🔑 **Đầu LẠC QUAN NHẤT của khoảng tin cậy cho sàn `S` = 0,486 — đúng bằng con số ngoại suy cũ.**
+Tức phép đo này **không thể** làm tình hình tốt hơn giả định cũ, chỉ có thể xấu đi. Kết luận
+*"ở cỡ mẫu này GATE D0.9 không phán quyết được"* **vững trên toàn bộ khoảng**, không phụ thuộc
+điểm ước lượng — và không phụ thuộc `std_R` (§2 của mục 10/09 trước: sàn `h/√n` bất biến theo thang).
+
+⇒ **Bước 1a tự nó đóng câu hỏi. Không cần đo `std_R` để quyết "có tiêu 9 suất trial không".**
+Câu trả lời là **KHÔNG**, và nó tốn 0 trial để có.
+
+### MT-26 nặng thêm một bậc
+
+Khoảng cách cỡ mẫu `Z0-T0 / Z0` là **34×** (đo trên [T0,T2] trước đây là 20×). Khi so `DSR_adj`
+với cùng `mean_R` và `std_R = 1,25`, `Z0-T0` được cộng không **+0,599 R = 6,0 lần** chính ngưỡng
+0,10 R (trước: +0,473 R = 4,7 lần). Xếp hạng arm theo `DSR_adj` thô càng chắc chắn cho arm **bỏ bộ
+lọc trend** thắng — và cửa sổ WFO nghịch chiều Long làm điều đó tệ hơn chứ không nhẹ đi.
+
+### Ghi chú kỷ luật
+
+- Đường chạy cũ **không đổi một byte**: `--tu/--den/--ket-qua/--nguon/--ranh-gioi` đều mặc định
+  giữ nguyên; verify trong Docker rằng `nguon`/`ranh_gioi`/`timerange` mặc định khớp đúng artifact
+  `td0193-*.json` đã commit. Có chốt **từ chối chạy** nếu đổi cửa sổ mà quên `--ket-qua`.
+- `ranh_gioi` mặc định **giữ nguyên chữ cũ** (mang trích dẫn sai của MT-24) để artifact TD-0193 còn
+  tái lập được — sửa mặc định là tạo ra một lần *"không tự sinh lại được cái mình đã công bố"*.
+  Thêm chú thích trỏ MT-24 + một dòng **cảnh báo không chặn** khi chạy với mặc định (gợi ý phiên
+  `be`): hậu quả quên cờ chỉ là chuỗi mô tả sai, không đại lượng nào đổi, nên chặn cứng sẽ là chốt
+  đắt hơn thứ nó bảo vệ.
+- 📌 **Lỗi tự bắt, ghi để không lặp:** lượt chạy đầu dùng `2>&1 | tail -40` — đúng bẫy đã ghi sổ
+  ngày 08/09 (*"giữ TRỌN output rồi mới lọc"*). Dừng sau ~1 phút, chạy lại ghi trọn ra file. Biết
+  luật mà vẫn dính, vì nó nằm trong thói quen gõ lệnh chứ không nằm trong bước suy nghĩ.
