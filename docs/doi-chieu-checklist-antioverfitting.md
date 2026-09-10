@@ -22,13 +22,28 @@ Giai đoạn 4 là *FreqAI*. Cả hai **bị cấm tuyệt đối** trong Tool D
 `trial_registry` mất hiệu lực, phải khai lại N từ đầu**. Đây không phải "bước tiếp theo tạm bỏ
 qua" — nó là một hành động không hoàn tác được.
 
-⚠️ **Hạn dùng của phần số liệu.** Mọi con số lệnh trích ở §2 và §3 đo **TRƯỚC** bản vá TD-0207
-(`61479b7`), bản vá làm `_zone_dinh_tren` / `_tuoi_zone_dinh_nen` đọc đúng nguồn zone đỉnh.
-`TASKS.md` (dòng TD-0206/TD-0207) đã ghi trước rằng vá xong **đổi mọi con số D4 đã đo**. Vì TP1
-quyết định lúc lệnh đóng, nó ảnh hưởng gián tiếp cả **số** lệnh (lệnh đóng sớm giải phóng chỗ cho
-lệnh sau) — **không được giả định số lệnh bất biến qua bản vá**. Bảng dưới vẫn dùng được cho câu
-hỏi *"đã đạt chưa"* vì khoảng cách hiện tại quá lớn để một bản vá lật ngược, nhưng con số cụ thể
-phải đo lại.
+⚠️ **Hạn dùng của phần số liệu — đã đo lại, không còn là phỏng đoán.**
+Bản vá TD-0207 (`61479b7`) làm `_zone_dinh_tren` / `_tuoi_zone_dinh_nen` đọc đúng nguồn zone đỉnh;
+`TASKS.md` (dòng TD-0206/TD-0207) đã ghi trước rằng vá xong **đổi mọi con số D4 đã đo**. Bản nháp
+đầu của tài liệu này cảnh báo rằng **số lệnh** cũng có thể đổi — lập luận cơ chế: TP1 quyết định
+lúc lệnh đóng, mà một lệnh đóng sớm thì giải phóng chỗ cho lệnh sau trên cùng cặp. Lập luận đó
+**không sai về cơ chế nhưng đã bị một phép đo vượt qua**:
+
+| Arm | Trước vá (`td0205-...json`) | Sau vá (`td0207-h4-sau-va.json`) |
+|---|---|---|
+| `Z0` | 22 lệnh · 44,8/năm · TP1 = 6 nạng, 0 zone | **22 lệnh · 44,8/năm** · TP1 = **7 zone, 1 nạng** |
+| `Z0-T0` | 746 lệnh · 1.518,1/năm | ⚠️ **chưa đo lại** |
+| `Z0-T1` | 160 lệnh · 325,6/năm | ⚠️ **chưa đo lại** |
+
+⇒ **Con số trung tâm của §2 và §3 (`Z0`: 22 lệnh, 44,8/năm, `n ≈ 28`) đứng vững qua bản vá — bằng
+phép đo, không bằng lập luận.** Phễu tín hiệu cũng trùng khít (2.621 zone → 1.104 → 32).
+Hai con số `Z0-T0` = 746 và `Z0-T1` = 160 dùng ở **§2 (mục 1.1) và §3** vẫn là số **trước vá** và
+chưa ai đo lại — chúng chỉ dùng làm đối chứng về **bậc độ lớn** (34 lần), không dùng làm phán quyết.
+
+🔑 **Ranh giới phải giữ:** bản vá đổi **tầng chốt lời**, nên mọi con số **PnL / expectancy / R** đo
+trước `61479b7` là của một hệ thống **không có TP theo zone** và không dùng lại được. Con số
+**đếm lệnh** thì đã kiểm và không đổi (với `Z0`). Tài liệu này không trích một con số PnL nào —
+vì trên đĩa **không có con số nào để trích** (xem GĐ1.4).
 
 ---
 
@@ -133,7 +148,7 @@ lệch nhau 100 lần và cả hai đều đọc xuôi. Ghi để người nối
 
 **Tài liệu này KHÔNG chọn.** Quyết định thuộc chủ dự án và đang treo ở `DR-D4-08 §6`.
 
-**Con số chặn** (đo trên EXPLORE, 0 trial, đo TRƯỚC bản vá TD-0207):
+**Con số chặn** (đo trên EXPLORE, 0 trial; đã kiểm lại **sau** bản vá TD-0207 — xem bảng ở §0):
 
 | Đại lượng | Đo được | Yêu cầu | Thiếu |
 |---|---|---|---|
