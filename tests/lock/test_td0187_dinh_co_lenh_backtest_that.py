@@ -208,9 +208,30 @@ def _bars_4h_co_trend() -> list[tuple[float, float, float, float, float]]:
     # ngoài ý muốn, làm `_lenh_du_ba_tranche()` chọn nhầm swing (đã xảy ra
     # — hàm chọn `found[-1]` tưởng là tín hiệu thật, hoá ra là swing giả
     # cuối đuôi). Sửa: `low` TĂNG ĐƠN ĐIỆU nghiêm ngặt, không còn hoà.
+    # 🔴 TD-0210 — ĐỘ DỐC 0.01 → 0.03. Fixture LỖI THỜI LẦN THỨ TƯ, cùng hình
+    # dạng đã đặt tên: *bộ sinh lỗi thời so với hệ thống nó nuôi*. TD-0207 vá
+    # `_zone_dinh_tren()` (trước đó LUÔN trả `[]`), nên TP1 chuyển từ nạng sang
+    # zone đối diện — và zone được phép nằm XA HƠN nạng (thiết kế: tới `3,2R`
+    # so với nạng `1,5R`, chính là "vách 2,1 lần"). Đuôi cũ đỉnh 96.48 trong
+    # cửa sổ giữ lệnh, TP1 mới ≈ 96.70 ⇒ không bao giờ chạm ⇒ `TIME_STOP` ⇒
+    # 5 ca của `test_td0189` đỏ. Không ca nào trong 5 ca khẳng định MỨC GIÁ
+    # TP1 — cả năm chỉ đòi HÌNH DẠNG `[buy×3, TP1, TP2]`, nên đây là dữ liệu
+    # sai chứ không phải khẳng định sai. KHÔNG sửa một dòng `assert` nào.
+    #
+    # 🔑 Vì sao 0.03 chứ không phải 0.025 (giá trị "đầu tiên đủ"): sweep ĐO
+    # được `0.02` vẫn TIME_STOP · `0.025` đạt nhưng đỉnh 96.75 chỉ hơn TP1
+    # **0.034** ≈ 4% của một `R_eff` · `0.03` đạt với lề 0.124. TP1 tính ĐỘNG
+    # từ ATR và `p_avg` thật, nên một lề 4% là "chốt thoả bằng đẳng thức chính
+    # xác" — đúng thứ `DR-D4-05` đã bác khi chọn `E_D` 750 thay vì 720, và nó
+    # sẽ lật IM LẶNG khi bất cứ thứ gì phía trên đổi. Ngoại lệ CÓ LÝ DO của
+    # kỷ luật "chọn giá trị đầu tiên đủ", không phải quên nó.
+    #
+    # ⚠️ Bốn bất biến đã ĐO lại sau khi đổi: `_dem_zone(b,"dinh") == 2` ·
+    # `_i_cham_p1(b) == 874` · `low` vẫn TĂNG ĐƠN ĐIỆU nghiêm ngặt (xem bug 26
+    # swing giả ngay trên) · chỉ số nến 848/861 của TD-0194 KHÔNG dịch.
     for k in range(30):
-        low = 95.5 + k * 0.01
-        b.append((95.9, 96.3 + k * 0.01, low, 95.9 + (0.1 if k % 2 else -0.1) + k * 0.01, 1000.0))
+        low = 95.5 + k * 0.03
+        b.append((95.9, 96.3 + k * 0.03, low, 95.9 + (0.1 if k % 2 else -0.1) + k * 0.03, 1000.0))
     return b
 
 
@@ -234,6 +255,10 @@ def _moc_bat_dau(so_nen_1h: int) -> pd.Timestamp:
 
 
 def _dem_zone(rows4, loai: str) -> int:
+    return len(_gia_zone(rows4, loai))
+
+
+def _gia_zone(rows4, loai: str) -> list:
     """Đếm zone HỢP LỆ của một loại trên chuỗi 4H — mô phỏng đúng vòng quét
     của chiến lược (`_tinh_zone_4h` cho `"day"`, `_quet_zone_dinh` cho
     `"dinh"`), dùng lại các hàm thuần, không chép phép tính."""
@@ -252,7 +277,7 @@ def _dem_zone(rows4, loai: str) -> int:
     dong = [b[3] for b in rows4]; vol = [b[4] for b in rows4]
     atr = talib.ATR(np.asarray(cao, float), np.asarray(thap, float), np.asarray(dong, float), 14)
     gia = cao if loai == "dinh" else thap
-    dem = 0
+    ra = []
     for i in range(K_XAC_NHAN, len(rows4)):
         j = i + K_XAC_NHAN
         if j >= len(rows4) or not la_diem_swing(gia, i, loai=loai):
@@ -268,8 +293,10 @@ def _dem_zone(rows4, loai: str) -> int:
         tc = touch_count(gia, dong, min(zl, zh), max(zl, zh), i_swing=i, t=j, loai=loai)
         if zone_hop_le(zss_value=zss(touch=tc, ty_le_volume=v_r, do_nen=comp),
                        so_touch=tc, tuoi_nen=K_XAC_NHAN, nguong_zss=nguong_zss):
-            dem += 1
-    return dem
+            # `_quet_zone_dinh` trả MÉP DƯỚI của zone đỉnh (`cao[i]×(1−buf)`),
+            # đúng giá trị mà `_zone_dinh_tren` đưa vào `chon_muc_tp1`.
+            ra.append(zl if loai == "dinh" else min(zl, zh))
+    return ra
 
 
 BUF_ZONE_TEST = 0.3  # = BUF_ZONE của chiến lược (§1.1)
@@ -413,8 +440,71 @@ def _khang_dinh_bo_sinh_du_hai_loai_zone() -> None:
         )
 
 
+def _khang_dinh_duong_gia_voi_toi_tp1() -> None:
+    """🔴 ĐỐI CHỨNG THƯỜNG TRỰC THỨ BA (TD-0210) — chạy MỌI lần bộ sinh được dùng.
+
+    **Vì sao cần cái thứ ba:** hai đối chứng trên canh *"có tồn tại zone"* và
+    *"có nến xác nhận §3.3b"* — tức canh phần ĐẦU đường ống (có tín hiệu, có
+    lệnh). **Không cái nào canh phần ĐUÔI: lệnh mở rồi thì đường giá có với tới
+    mục tiêu chốt lời không.** Lần thứ TƯ bộ sinh lỗi thời rơi đúng khoảng hở
+    đó: TD-0207 vá `_zone_dinh_tren()` ⇒ TP1 chuyển từ nạng (`1,5R`) sang zone
+    đối diện (tới `3,2R`) ⇒ TP1 dịch RA XA, đuôi dựng tay đỉnh 96.48 không còn
+    với tới ⇒ `TIME_STOP` ⇒ 5 ca của `test_td0189` đỏ, ở một chỗ cách nguyên
+    nhân rất xa.
+
+    🔑 **Neo vào zone CÓ THẬT trong bộ sinh, không vào trần lý thuyết.** Bản
+    đầu của chính hàm này đòi đỉnh giá vượt TP1 xa nhất VỀ LÝ THUYẾT (zone nằm
+    đúng trần `4,0×R_eff`) — fixture không có zone ở đó nên điều kiện ấy không
+    bao giờ đúng dù TP1 THẬT vẫn nổ. Đó là *"chốt không bao giờ thoả được"*,
+    bài học cổng D3, và nó suýt lọt vào đây.
+
+    ⚠️ Giới hạn tự khai: dùng `p_avg` KẾ HOẠCH `(p1+p2+p3)/3` thay cho `p_avg`
+    THẬT (chỉ biết sau backtest). Hai số gần nhau (95.00 vs 94.97 đo được) và
+    lệch theo hướng làm ngưỡng CAO hơn ⇒ bảo thủ. Nó KHÔNG thay thế việc chạy
+    backtest, chỉ biến lần thứ NĂM thành báo đỏ ngay tại bộ sinh, trong ~1 giây.
+    """
+    import numpy as np
+    import talib
+    from tool_d.config.loader import load_tool_d_config, resolve
+    from tool_d.trade_plan import tinh_ke_hoach
+
+    rows4 = _bars_4h_co_trend()
+    i = _i_cham_p1(rows4)
+    cfg = load_tool_d_config()
+    hold = int(resolve(cfg, "tier_b.max_hold_bars_4h"))
+    tran_r = float(resolve(cfg, "tier_frozen.diag_thresholds.value.tp_fallback_dist_r"))
+    nang_r = float(resolve(cfg, "tier_frozen.diag_thresholds.value.tp_fallback_target_r"))
+    haircut = float(resolve(cfg, "tier_b.tp1_haircut_pct")) / 100.0
+    dinh = max(r[1] for r in rows4[i : i + hold + 1])
+
+    cao = [b[1] for b in rows4]; thap = [b[2] for b in rows4]; dong = [b[3] for b in rows4]
+    atr = talib.ATR(np.asarray(cao, float), np.asarray(thap, float), np.asarray(dong, float), 14)
+    i_swing = i - 4  # nến swing đáy sinh ra zone vào lệnh (j = i_swing + K_XAC_NHAN)
+    buf = BUF_ZONE_TEST * atr[i_swing] / dong[i_swing]
+    kh = tinh_ke_hoach(
+        zone_low=thap[i_swing] * (1 - buf), zone_high=thap[i_swing] * (1 + buf),
+        gia_dong_cua=dong[i_swing + 3], atr_4h=float(atr[i_swing + 3]),
+        atr_1h_tai_tranche1=0.0,
+        buf_sl_he_so=float(resolve(cfg, "tier_b.buf_sl_atr")),
+    )
+    # 🔴 `R_eff` neo vào `p_avg`, KHÔNG phải `p1` — bản đầu dùng `p1 − sl` và
+    # lệch 43% (1.136 vs 0.797). Đúng lớp lỗi `L-Z48c` sinh ra để chặn.
+    p_avg = (kh.p1 + kh.p2 + kh.p3) / 3.0
+    r_eff = p_avg - kh.sl
+    ung_vien = [z for z in _gia_zone(rows4, "dinh") if z > p_avg and z - p_avg <= tran_r * r_eff]
+    gan_nhat = min(ung_vien, default=None)
+    tp1 = (p_avg + (1.0 - haircut) * (gan_nhat - p_avg)) if gan_nhat is not None else (p_avg + nang_r * r_eff)
+    assert dinh > tp1, (
+        f"đỉnh giá trong cửa sổ giữ lệnh ({dinh}) KHÔNG vượt TP1 mà bộ sinh này "
+        f"thực sự tạo ra ({tp1:.4f}; zone đối diện gần nhất = {gan_nhat}) — lệnh "
+        "sẽ thoát bằng TIME_STOP và mọi khẳng định về TP1/TP2 thành XANH-VÔ-NGHĨA "
+        "hoặc ĐỎ ở một chỗ cách xa nguyên nhân. Xem docstring hàm này (TD-0210)."
+    )
+
+
 def _sinh_du_lieu(datadir: Path) -> None:
     _khang_dinh_bo_sinh_du_hai_loai_zone()
+    _khang_dinh_duong_gia_voi_toi_tp1()
     rows4 = _bars_4h_co_trend()
     rows1 = _rows1_tu_rows4(rows4)
     _khang_dinh_bo_sinh_co_nen_xac_nhan_3_3b(rows4, rows1)
