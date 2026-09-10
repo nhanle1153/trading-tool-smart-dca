@@ -1,0 +1,39 @@
+{
+  "nguon": "TD-0184 Phương án A Bước 1 — phễu TÍN HIỆU (không PnL) phía SHORT trên EXPLORE, 0 trial",
+  "ranh_gioi": "CHỈ đếm tín hiệu (zone đỉnh → xác nhận §3.3b(dinh) → trend DOWN). KHÔNG chạy backtest/PnL — Short không có tầng thực thi. KHÔNG tự mở khoá chạy Short thật cho D4 (vẫn cần đủ DR-D4-01 §2b). Short≠Long đảo dấu (§3.3d) — con số này là CẬN TRÊN của khả năng có tín hiệu hình học.",
+  "timerange": "20240409-20260129",
+  "san_nhanh_1": 150,
+  "pheu_tin_hieu_short": {
+    "so_ma": 88,
+    "ma_nam": 99.4,
+    "zone_dinh": 4752,
+    "A_xac_nhan": 1979,
+    "trung_nen": 18,
+    "tin_hieu_sau_trend_down": 359,
+    "ty_le_A_tren_zone": 0.4165,
+    "tin_hieu_moi_ma_nam": 3.612,
+    "tin_hieu_quy_doi_pool_102_moi_nam": 368.4,
+    "tin_hieu_moi_ma_nam_theo_ma": {
+      "n": 88,
+      "min": 0.0,
+      "P25": 0.0,
+      "median": 2.767,
+      "P75": 4.427,
+      "max": 12.175,
+      "mean": 2.877
+    },
+    "giay": 7.9
+  },
+  "so_sanh_dung_tang": {
+    "canh_bao": "Long đã đo ở tầng LỆNH THẬT (sau backtest); Short ở đây chỉ tới tầng TÍN HIỆU (trước thực thi) — không cộng thẳng hai số khác tầng.",
+    "long_tin_hieu_nam_quy_doi_pool": 98.5,
+    "long_lenh_that_nam_quy_doi_pool": 63.6,
+    "ty_le_tin_hieu_thanh_lenh_that_DO_DUOC_tu_Long": 0.6456,
+    "short_tin_hieu_nam_quy_doi_pool": 368.4,
+    "short_lenh_UOC_LUONG_ap_ty_le_cua_Long": 237.8,
+    "canh_bao_uoc_luong": "short_lenh_UOC_LUONG là GIẢ ĐỊNH (áp tỉ lệ tín-hiệu→lệnh của Long cho Short), KHÔNG PHẢI ĐO — Short không có tầng thực thi để đo tỉ lệ riêng của chính nó."
+  },
+  "tong_UOC_LUONG_long_lenh_that_cong_short_uoc_luong": 301.4,
+  "tong_TOI_DA_ca_hai_o_tang_tin_hieu": 466.9,
+  "dat_san_150_o_uoc_luong": true
+}

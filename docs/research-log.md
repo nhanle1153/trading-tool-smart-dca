@@ -2017,3 +2017,49 @@ bản sao lưu ở đúng chỗ. Nhưng giả thuyết route-thứ-ba của `-46
 cho một dự án khác: `backfill_data.py` thật sự chạy được trên host, và khi đó `--backup-root` mặc
 định thật sự trỏ đúng chỗ. Tức bản vá cho `E8` không được dựa vào giả định *"luôn chạy trong
 Docker"* — phép kiểm phải là *"file có đáp xuống đích không"*, hỏi trên chính hệ tệp đang chạy.
+
+## 09/09/2026 (tiếp) — TD-0184 Phương án A: đo Short + phát hiện rào DSR không tự qua dù đạt sàn 150
+
+Chủ dự án chốt Phương án A cho vấn đề 63,6 lệnh/năm < sàn 150 (§10.2 Nhánh 1): đo phía SHORT trên
+EXPLORE trước (0 trial, chỉ đếm), rồi làm đồng thời với việc đo độ nhạy rào DSR — phiên `be` nêu
+một phát hiện lớn hơn hẳn câu hỏi ban đầu, đáng ghi lại nguyên vẹn cách nó lộ ra.
+
+**Phát hiện của `be` (đã tự verify độc lập, không tin lời khai):** Nhánh 1 có HAI rào, không phải
+một. Sàn 150 lệnh/năm là rào thứ nhất; rào DSR (`mean_R − dsr_hurdle(N)×std_R/√n ≥ 0,10`, code thật
+ở `gates/dsr.py`/`gates/thresholds.py`, `dsr_hurdle(114) = √(2·ln 114) = 3,0777` — verify khớp)
+là rào thứ hai, ĐỘC LẬP. Ablation D4 chạy trên cửa sổ WFO chỉ **0,63 năm** (spec dòng 3287), nên
+`n` thật dùng cho rào DSR luôn nhỏ hơn "lệnh/năm" rất nhiều: đạt ĐÚNG sàn 150/năm thì `n ≈ 95`, và
+với `std_R` giả định 1,25 thì `mean_R` cần đạt **0,49** mới qua — một con số rất cao cho một hệ
+thống DCA. 🔴 **Đạt sàn 150 KHÔNG tự động qua được rào DSR** — hai điều kiện trong cùng Nhánh 1
+không kéo nhau, và spec không nói rõ điều đó.
+
+🔑 **`std_R`/`mean_R` KHÔNG được tự đo ở đây, dù có vẻ là bước hiển nhiên tiếp theo.** Tính hai đại
+lượng đó cần `pnl_abs` lệnh thật — trên CALIB/WFO là "chạm dữ liệu" (DR-014 §2), tiêu 1 trial, đúng
+việc TD-0184 định làm và đang bị chặn; trên EXPLORE thì `DR-D0PRE-05` §4 cấm thẳng ("KHÔNG
+expectancy, KHÔNG PnL theo arm"). Không có đường vòng hợp lệ. Xử bằng
+`docs/du-lieu-do/td0184-do-nhay-rao-dsr.py`: BẢNG ĐỘ NHẠY thuần toán (import thẳng công thức từ
+`gates/dsr.py`, không chép lại — N1), quét nhiều giả định `std_R` × nhiều mốc lệnh/năm, không đo
+bất kỳ dữ liệu nào. Mọi ô trong bảng là ĐIỀU KIỆN GIẢ ĐỊNH, không phải kết quả đo — ghi rõ trong
+chính file để không ai đọc nhầm.
+
+**Đo Short (Bước 1, `docs/du-lieu-do/do_short_pheu_tin_hieu_explore.py`):** mirror ĐÚNG các hàm sản
+xuất (`_tinh_zone_4h`→zone đỉnh, `_xac_nhan_3_3b`→`loai="dinh"` + SL-invalidation lật dấu,
+`du_dieu_kien_trend_theo_tang(huong_muc_tieu="DOWN")` — hàm đã generic sẵn, không viết lại), CHỈ
+đếm TÍN HIỆU, không chạy backtest (Short không có tầng thực thi — `can_short=False`, không đi qua
+`custom_stake_amount`/`mult_regime` nên không dính bug TD-0197 đang được vá). Kết quả trên 88 mã
+EXPLORE: **368,4 tín hiệu/năm quy đổi pool** (Long chỉ 98,5 tín hiệu/năm cùng tầng) — khớp hướng đã
+đoán (64% thời gian 1D DOWN vs 19% UP cho Long). 🔴 **So SAI TẦNG là lỗi dễ mắc nhất ở đây:** Long
+đã đo tới tầng LỆNH THẬT (63,6/năm, sau backtest+admission+sizing), Short chỉ đo tới tầng TÍN HIỆU
+— cộng thẳng hai số khác tầng là trộn hai đại lượng cùng tên khác nghĩa (họ lỗi `L-Z48c`). Áp tỉ lệ
+tín-hiệu→lệnh ĐO ĐƯỢC của Long (64,56%) cho Short (GIẢ ĐỊNH, không đo — Short không có tầng thực
+thi riêng để đo tỉ lệ của chính nó) ⇒ ước lượng Short ≈ 237,8 lệnh/năm ⇒ tổng ước lượng ≈ 301,4 —
+vượt xa sàn 150.
+
+**Đọc hai kết quả CÙNG NHAU, không tách rời:** sàn 150 có vẻ giải quyết được nếu mở Short (dù còn
+phải qua đủ ba điều kiện `DR-D4-01` §2b, và D4 hiện chỉ có giá trị cho LONG theo chính DR đó — mở
+Short cho D4 là quyết định RIÊNG, không tự động theo sau việc "đủ mẫu"). Nhưng rào DSR cần `n`
+lớn hơn nhiều so với những gì cửa sổ WFO 0,63 năm có thể cho dù tần suất/năm cao tới đâu, TRỪ KHI
+tần suất đạt tới hàng nghìn lệnh/năm (bảng độ nhạy: ~950-1500 lệnh/năm mới đưa `mean_R` cần thiết
+xuống mức khả thi ~0,16-0,23 ở `std_R`=1,25) — một bậc độ lớn khác hẳn câu hỏi "đạt sàn 150".
+Ghi cho chủ dự án quyết: mở rộng cửa sổ WFO, hay chấp nhận D4 khó kết luận bằng thống kê cổ điển ở
+quy mô dữ liệu hiện có, hay hướng khác — không tự chọn.

@@ -1,0 +1,81 @@
+{
+  "nguon": "TD-0184 — độ nhạy rào DSR theo lệnh/năm và std_R giả định, 0 trial, KHÔNG chạm dữ liệu",
+  "canh_bao": "std_R là GIẢ ĐỊNH, KHÔNG PHẢI ĐO ĐƯỢC — không có đường hợp lệ để đo mean_R/std_R thật mà không tiêu trial (WFO) hoặc phạm DR-D0PRE-05 §4 (EXPLORE).",
+  "cong_thuc": "mean_R_can = DSR_ADJ_EXPECTANCY_MIN + sqrt(2*ln(N_DANG_KY)) * std_R / sqrt(n)",
+  "N_DANG_KY": 114,
+  "dsr_hurdle": 3.0777,
+  "DSR_ADJ_EXPECTANCY_MIN": 0.1,
+  "nam_wfo": 0.63,
+  "bang": [
+    {
+      "lenh_nam": 63.6,
+      "n_that_tren_wfo_0_63_nam": 40,
+      "mean_R_can_std=0.5": 0.3433,
+      "mean_R_can_std=0.75": 0.465,
+      "mean_R_can_std=1.0": 0.5866,
+      "mean_R_can_std=1.25": 0.7083,
+      "mean_R_can_std=1.5": 0.8299,
+      "mean_R_can_std=2.0": 1.0733
+    },
+    {
+      "lenh_nam": 100,
+      "n_that_tren_wfo_0_63_nam": 63,
+      "mean_R_can_std=0.5": 0.2939,
+      "mean_R_can_std=0.75": 0.3908,
+      "mean_R_can_std=1.0": 0.4878,
+      "mean_R_can_std=1.25": 0.5847,
+      "mean_R_can_std=1.5": 0.6816,
+      "mean_R_can_std=2.0": 0.8755
+    },
+    {
+      "lenh_nam": 150,
+      "n_that_tren_wfo_0_63_nam": 94,
+      "mean_R_can_std=0.5": 0.2587,
+      "mean_R_can_std=0.75": 0.3381,
+      "mean_R_can_std=1.0": 0.4174,
+      "mean_R_can_std=1.25": 0.4968,
+      "mean_R_can_std=1.5": 0.5762,
+      "mean_R_can_std=2.0": 0.7349
+    },
+    {
+      "lenh_nam": 300,
+      "n_that_tren_wfo_0_63_nam": 189,
+      "mean_R_can_std=0.5": 0.2119,
+      "mean_R_can_std=0.75": 0.2679,
+      "mean_R_can_std=1.0": 0.3239,
+      "mean_R_can_std=1.25": 0.3798,
+      "mean_R_can_std=1.5": 0.4358,
+      "mean_R_can_std=2.0": 0.5477
+    },
+    {
+      "lenh_nam": 600,
+      "n_that_tren_wfo_0_63_nam": 378,
+      "mean_R_can_std=0.5": 0.1792,
+      "mean_R_can_std=0.75": 0.2187,
+      "mean_R_can_std=1.0": 0.2583,
+      "mean_R_can_std=1.25": 0.2979,
+      "mean_R_can_std=1.5": 0.3375,
+      "mean_R_can_std=2.0": 0.4166
+    },
+    {
+      "lenh_nam": 950,
+      "n_that_tren_wfo_0_63_nam": 598,
+      "mean_R_can_std=0.5": 0.1629,
+      "mean_R_can_std=0.75": 0.1944,
+      "mean_R_can_std=1.0": 0.2259,
+      "mean_R_can_std=1.25": 0.2573,
+      "mean_R_can_std=1.5": 0.2888,
+      "mean_R_can_std=2.0": 0.3517
+    },
+    {
+      "lenh_nam": 1500,
+      "n_that_tren_wfo_0_63_nam": 945,
+      "mean_R_can_std=0.5": 0.1501,
+      "mean_R_can_std=0.75": 0.1751,
+      "mean_R_can_std=1.0": 0.2001,
+      "mean_R_can_std=1.25": 0.2251,
+      "mean_R_can_std=1.5": 0.2502,
+      "mean_R_can_std=2.0": 0.3002
+    }
+  ]
+}
