@@ -145,6 +145,7 @@ chính con số đó lại treo vào **`MT-29`** (§10.2 áp cho MỖI HƯỚNG 
 |---|---|---|---|
 | **Bộ lọc trend Phần 2 có đáng không?** | `Z0-T0` · `Z0-T1` · `Z0`(=`Z0-T2`) | 883 · 206 · 28 | ✅ **CÓ** cho A và B |
 | **DCA ba tranche có đáng không?** | `Z0` vs `Z3`/`Z3b` | 28 vs 28 vs 28 | ❌ **KHÔNG**, và không bao giờ ở tần suất này |
+| **SL neo zone có tốt hơn SL theo ATR không?** | `Z1` vs `Z0` | 8 vs 28, `n_giao = 6` | ❌ **KHÔNG** — và vì một lý do khác hẳn, xem §2.5 hạng (3) |
 
 `n` của **cả chín arm**, lần đầu đo trên cùng một hệ thống (sau vá `TD-0207`):
 
@@ -238,7 +239,47 @@ INCONCLUSIVE"*. Ba lý lẽ dưới đây là **lý do đề xuất**, không ph
 
 ---
 
-### 2.5 Một hạng hỏng THỨ HAI, khác hẳn thiếu mẫu: **biến so sánh gần như không tồn tại**
+### 2.5 BA cách một ma trận ablation không đo được thứ nó khai — và dự án nay có ví dụ thật cho cả ba
+
+§1.2 là hạng **(0)**: *mẫu quá nhỏ so với nhiễu*. Nó cần một giả định về `std_R`. Ba hạng dưới đây
+**không cần giả định nào** — chúng là tính chất của **ma trận thiết kế**, không phải của nhiễu:
+
+| Hạng | Nội dung | Ví dụ thật | Trạng thái |
+|---|---|---|---|
+| **(1)** | **Biến KHÔNG đổi gì** — hai arm cho cùng một tập lệnh | `MT-21` (`Z1`≡`Z0`), `MT-15` (`Z0`≡`Z0-V1`) | ✅ **đã chết bằng phép đo** (`TD-0214`) — chúng trùng vì arm **chưa được nối** |
+| **(2)** | **Biến gần như không tồn tại** — đổi, nhưng quá ít để phân xử | `Z2` vs `Z3` (**0** lệnh khác), `Z3b` vs `Z3` (**1/22** lệnh) | 🔴 còn sống (`TD-0213`) |
+| **(3)** | **Biến đổi KÈM một thứ khác đổi theo** — arm khác thật, nhưng khác vì **hai** lý do trộn vào nhau | `Z1` vs `Z0` (`TD-0215`) | 🔴 **mới**, xem dưới |
+
+🔴 **Hạng (3) khác hai hạng kia ở chỗ đòi cách xử ngược lại.** Hạng (1) và (2) là *"không đo được"*
+⇒ hành động là thêm mẫu hoặc bỏ phép so. Hạng (3) là *"**đo được, nhưng không phải thứ mình
+tưởng**"* ⇒ hành động là **sửa lại câu hỏi**, vì con số vẫn ra và vẫn trông hợp lệ.
+
+**Ca `Z1` vs `Z0`** (`td0215-z1-vs-z0-tap-lenh.json`, `Z0`+`Z1` chạy CÙNG một lượt):
+`n_A = 22 · n_B = 6 · n_giao = 6 · chi_co_o_B = 0` ⇒ **`Z1` là tập con NGHIÊM NGẶT của `Z0`**.
+72,7% lệnh của `Z0` biến mất trong `Z1`, và biến mất ở **cổng kết nạp §6.8f** — vì `Z1` đổi SL ⇒
+`r_eff_plan` đổi ⇒ cỡ lệnh đổi ⇒ bị chặn — **không phải vì SL tốt hay xấu**.
+
+Phải tách hai vế, vì chúng khác nhau:
+
+- **(i) Nội tại — KHÔNG hỏng.** Trên 6 lệnh giao, `Z1` và `Z0` khác **đúng một** biến (kiểu SL).
+  Phép so paired ở đó **hợp lệ về cấu trúc**. Không được ghi là *"phép so vô hiệu"* — nó không vô
+  hiệu, nó **hẹp**.
+- **(ii) Ngoại suy — HỎNG.** Sáu lệnh đó được chọn bởi **chính cơ chế tương quan với biến đang
+  xét** (cỡ lệnh là hàm của SL). Kết quả trên chúng **không suy rộng** ra 22 lệnh của `Z0`.
+
+⇒ Phép so `Z1` vs `Z0` **không** trả lời *"SL neo zone hay SL ATR tốt hơn"*. Nó trả lời *"trên tập
+con 27% mà cả hai kiểu SL cùng qua được cổng kết nạp, kiểu nào tốt hơn"* — một câu hỏi khác, và
+không phải câu §10.1 đặt ra. Cộng thêm cỡ mẫu: `n_giao = 6` cho thuế nhiễu paired **0,497** (`ρ`=0,95)
+đến **1,571** (`ρ`=0,5), tức **5,0 → 15,7 lần** ngưỡng 0,10 R — nên kể cả vế (i) hợp lệ, nó cũng
+không phán quyết được gì.
+
+📌 **Một quan sát thật về SL, chỉ là trên `n = 6`:** `Z1` có `TIME_STOP` **2/6 (33%)** trong khi
+`Z0` có **0/22**. SL theo `2,2×ATR` giữ lệnh tới hết hạn ở một phần ba số ca. Ghi vì nó là dấu hiệu
+về hành vi, **không** dùng làm căn cứ.
+
+---
+
+**Phần dưới đây là chi tiết của hạng (1) và (2), đo ở `TD-0213`/`TD-0214`.**
 
 `TD-0213` + `TD-0214` (`td0213-arm-dca-sau-va.json`, `td0214-ba-arm-cuoi-sau-va.json`; 88 mã, WFO,
 **sau vá**, 0 trial) là **lần đầu cả chín arm có số trên cùng một hệ thống**. Hai kết quả, ngược
@@ -402,5 +443,6 @@ thật"* — đó là **xác nhận dự báo §2.2**, không phải thông tin 
 | 10/09/2026 | Phiên `c3` bác `×2` cho Short (spec dòng 4187 / 4973-4974) ⇒ trần 324 → **162**, kết luận mạnh hơn; và chặn ca nghi ngờ `MT-25` bằng cận `λ < 0,138` |
 | 10/09/2026 | Chủ dự án chốt **phương án A** — DR này |
 | 10/09/2026 | Phiên `c3` soi §2.4, bắt ba lỗi: (a) mặc-định-Z0 nằm TRONG Nhánh 2 mà spec 4295 khoá sau "Nhánh 1 đã PASS" ⇒ đây là quyết định MỚI, không phải dẫn chiếu; (b) `18,07%` là số 48 mã / `[T0,T2]` / trước cả hai bản vá ⇒ **rút khỏi DR**; (c) lý lẽ bất đối xứng là khẩu vị rủi ro, không suy từ đo ⇒ hạ hạng. Cả ba đã kiểm lại trên đĩa và **nhận** |
+| 11/09/2026 | `TD-0215`: `Z1` là **tập con NGHIÊM NGẶT** của `Z0` (`n_giao = 6`, `chi_co_o_B = 0`) — 72,7% lệnh mất ở cổng kết nạp §6.8f vì `Z1` đổi SL ⇒ đổi cỡ lệnh. Sinh **hạng hỏng (3)** ở §2.5: *"đo được nhưng không phải thứ mình tưởng"*. §2.1 thêm một câu hỏi D4 **không** trả lời được |
 | 10/09/2026 | `TD-0213` + `TD-0214`: **lần đầu cả chín arm có số trên cùng một hệ thống**. `n` nhóm C trải **8 → 40** (không đồng nhất như `DR-D4-09` gộp) ⇒ tách bảng theo arm, đúng thứ §4 ghi trước là sẽ phải sửa. `MT-21`/`MT-15` hết hiệu lực **bằng phép đo**. Kết luận không đổi, biên rộng hơn |
 | 10/09/2026 | `TD-0212` đo lại ba arm SAU bản vá: `Z0-T0` 883 (−8%), `Z0-T1` 206, `Z0` 28. **§7 điều kiện 3 kiểm — KHÔNG kích hoạt**, §2.1 giữ nguyên. H-4 cả ba arm dưới 40%. Bản vá đổi số đếm của arm nhiều lệnh, không đổi arm ít lệnh — cơ chế tranh chỗ mở, §1.1 |
