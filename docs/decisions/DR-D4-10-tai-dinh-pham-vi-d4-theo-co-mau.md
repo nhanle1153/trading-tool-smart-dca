@@ -243,6 +243,24 @@ Và nó chặt hơn ở ba chỗ:
   vá (`td0212-ba-arm-sau-va.json`): `Z0-T0` 883 (−8%), `Z0-T1` 206 (không đổi), `Z0` 28 (không đổi).
   **§7 điều kiện 3 đã kiểm và KHÔNG kích hoạt** (`Z0-T1` không rơi dưới 100) ⇒ §2.1 giữ nguyên.
   Mọi con số `n` trong DR này nay là số **sau vá**, không còn trộn hai hệ thống.
+- 🔴 **Giả định *"cả nhóm C cùng `n = 28` vì chung tầng entry"* CHƯA ĐƯỢC KIỂM sau bản vá** — mọi
+  phép đo hiện có (`td0205`, `td0212`, `td0207-h4-sau-va`) chỉ chạy `Z0-T0`/`Z0-T1`/`Z0`. Có lý do
+  cụ thể để nghi: `Z3` bơm tới 3 tranche nên **giữ chỗ lâu hơn** `Z0` (chỉ 1 tranche), mà TD-0212
+  vừa chứng minh chiếm-chỗ là cơ chế thật (`Z0-T0` −8%). `TD-0213` đang đo `Z3`/`Z3b`/`Z2`.
+
+  **Cách đọc kết quả đó ĐƯỢC VIẾT TRƯỚC KHI CÓ SỐ, đây:** `n` tới hạn để một arm nhóm C **thôi**
+  là INCONCLUSIVE-theo-định-nghĩa (tức thuế nhiễu tụt xuống bằng ngưỡng 0,10 R) là
+
+  | `std_R` | 0,58 | 1,00 | 1,25 | 1,50 |
+  |---|---|---|---|---|
+  | `n` tới hạn | **319** | 947 | 1.480 | 2.131 |
+
+  ⇒ Ngay cả ở `std_R` rộng lượng nhất, một arm nhóm C phải có `n ≥ 319` — **gấp 11 lần** con số
+  hiện tại, và cơ chế tranh chỗ chỉ có thể làm `n` **giảm**, không làm tăng.
+  **Kết luận §1.2/§2.1/§2.2 vì thế BẤT BIẾN với mọi kết quả có thể có của `TD-0213`.** Thứ duy nhất
+  phải sửa nếu `Z3` lệch là **bảng `n` theo arm** ở §2.1/§2.3 — tách từng arm thay vì ghi chung 28.
+  🔑 Ghi trước để phép đo sắp tới không thể được đọc thành *"đã gỡ được vấn đề"* dù nó ra số nào.
+
 - **Kết luận này chỉ cho LONG.** `DR-D4-01 §2` đã ghi; Short mở ra một bộ arm thứ hai với `n` riêng
   chưa ai đo (`do_short_pheu_tin_hieu_explore.json` mới tới tầng tín hiệu, con số 237,8 lệnh/năm là
   **ƯỚC LƯỢNG**, không đo).
