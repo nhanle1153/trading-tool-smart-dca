@@ -216,6 +216,35 @@ INCONCLUSIVE"*. Ba lý lẽ dưới đây là **lý do đề xuất**, không ph
 
 ---
 
+### 2.5 Một hạng hỏng THỨ HAI, khác hẳn thiếu mẫu: **biến so sánh gần như không tồn tại**
+
+`TD-0213` (`td0213-arm-dca-sau-va.json`, 88 mã, WFO, **sau vá**, 0 trial) xác nhận `n = 28` giống
+hệt trên `Z3`/`Z3b`/`Z2` — đúng dự đoán ghi trước ở §4, nên §2.1/§2.3 **không phải tách bảng `n`**.
+Nhưng nó lộ ra một thứ khác, và thứ đó **không nằm trong lập luận §1.2**:
+
+| Phép so | Biến điều khiển | Trạng thái **sau vá** |
+|---|---|---|
+| `Z2` vs `Z3` | DG5 | 🔴 **0 lệnh khác nhau** — trùng khít cả `exit_reason` lẫn `tp1_theo_nguon` |
+| `Z3b` vs `Z3` | DG6 Early Invalidation | 🔴 **đúng 1/22 lệnh** (`DG6_EARLY_INVALIDATION` nổ 1 lần) |
+| `Z1` vs `Z0` | SL neo zone vs `2,2×ATR` | ⏳ **chưa đo sau vá** |
+| `Z0-V1` vs `Z0` | điều kiện (c) volume | ⏳ **chưa đo sau vá** |
+| `Z0-S1` vs `Z0` | notional cố định | ⏳ **chưa đo sau vá** |
+
+🔑 **Vì sao đây là một hạng riêng, không phải một biến thể của §1.2.** Lập luận INCONCLUSIVE ở §1.2
+nói *"mẫu quá nhỏ so với nhiễu"* và cần một giả định về `std_R`. Hạng này nói *"**biến điều khiển
+gần như không thay đổi trên dữ liệu này**"* — nó là tính chất của **ma trận thiết kế**, không phải
+của nhiễu, nên nó đúng **với mọi `std_R`, không cần giả định nào**. Một khác biệt một-lệnh không
+phân xử được tiêu chí *"vượt ≥ 20%"* dù phương sai bằng bao nhiêu.
+
+⇒ Hệ quả cho §2.3: trong bảy suất mua **thống kê mô tả**, ít nhất **một suất (`Z2`) mua một tập
+lệnh trùng khít với `Z3`**, và một suất nữa (`Z3b`) mua một tập lệch đúng một lệnh. Ghi ra để chủ
+dự án biết trước khi D4 chạy. 🔴 **DR này KHÔNG tự sửa kế toán 9 suất của `DR-D4-01`** — đó là
+quyết định của chủ dự án; đây chỉ là thông tin đầu vào nếu chủ dự án muốn mở lại nó.
+
+⚠️ **Không suy rộng ra ba dòng ⏳.** `MT-21` từng ghi *"`Z1` ≡ `Z0`"*, nhưng đó là phát hiện **trước**
+`TD-0192` (✅, đã nối `Z1`) và trước `TD-0193` (✅, đã nối §3.3b) — **lỗi thời, không dùng làm căn cứ
+hiện hành**. Ba phép so đó phải đo mới biết; không có phép đo thì không có phát biểu.
+
 ## 3. Vì sao đây là làm CHẶT hơn, không phải nới
 
 Không đổi **một ngưỡng nào**: `0,10 R` · `≥ 20%` · `150 lệnh/năm` · `N = 114` · rào `3,0777` giữ
