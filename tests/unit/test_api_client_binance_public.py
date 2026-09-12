@@ -652,3 +652,44 @@ class TestDocQuoteVolume1dThang:
         with patch("http.client.HTTPSConnection", return_value=_fake_conn(body=body)):
             with pytest.raises(KhoLuuTruError, match="0 hàng đọc được"):
                 doc_quote_volume_1d_thang(symbol="ABCUSDT", nam=2025, thang=6)
+class TestMaPhiASCIITrongDuongDan:
+    """🔴 Đã NỔ THẬT trong lượt chạy TD-0231 (629 mã, chết ở mã thứ ~600):
+    `UnicodeEncodeError: 'ascii' codec can't encode characters`.
+
+    `http.client._encode_request` gọi `request.encode("ascii")`, nên một ký tự
+    ngoài ASCII trong đường dẫn làm nó raise **trước khi** gửi đi. Mà sàn có
+    mã tên phi ASCII, và **một trong số đó nằm trong chính pool 102 mã giao
+    dịch**: `币安人生USDT`.
+
+    ⇒ `tai_dump_agg_trades()` (DR-015 Bước 2, từ TD-0162) mang **CÙNG** lỗi và
+    chưa nổ chỉ vì chưa lần nào chạm đúng mã đó. Hai ca dưới canh **cả hai**
+    hàm — vá một chỗ rồi để chỗ kia là chọn để nó nổ lần sau.
+    """
+
+    MA_PHI_ASCII = "币安人生USDT"
+
+    def test_doc_quote_volume_khong_no_voi_ma_phi_ascii(self) -> None:
+        body = _zip_nen([_hang(MS_2025_06_12, "42.0")])
+        conn = _fake_conn(body=body)
+        with patch("http.client.HTTPSConnection", return_value=conn):
+            kq = doc_quote_volume_1d_thang(
+                symbol=self.MA_PHI_ASCII, nam=2025, thang=6
+            )
+        assert kq == {date(2025, 6, 12): 42.0}
+        duong_dan = conn.request.call_args[0][1]
+        # Đường dẫn phải THUẦN ASCII — nếu không, http.client raise trước khi gửi
+        duong_dan.encode("ascii")
+        assert "%" in duong_dan
+
+    def test_tai_dump_agg_trades_khong_no_voi_ma_phi_ascii(self, tmp_path) -> None:
+        conn = _fake_conn(body=b"noi dung gia")
+        with patch("http.client.HTTPSConnection", return_value=conn):
+            kq = tai_dump_agg_trades(
+                symbol=self.MA_PHI_ASCII,
+                ngay=date(2025, 6, 12),
+                thu_muc_cache=tmp_path,
+            )
+        assert kq.exists()
+        duong_dan = conn.request.call_args[0][1]
+        duong_dan.encode("ascii")
+        assert "%" in duong_dan

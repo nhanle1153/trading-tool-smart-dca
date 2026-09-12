@@ -316,6 +316,24 @@ def latency_samples_ms(
     return samples
 
 
+def _ma_url(x: str) -> str:
+    """Mã hoá phần trăm một đoạn đường dẫn URL.
+
+    🔴 **Không phải phòng xa — đã nổ thật, và nó SỐNG ở cả hàm bên cạnh.**
+    `http.client` đòi dòng request thuần ASCII (`_encode_request` gọi
+    `request.encode("ascii")`), nên một ký tự ngoài ASCII trong đường dẫn làm
+    nó raise `UnicodeEncodeError` **trước khi** gửi đi. Mà sàn có mã tên phi
+    ASCII: `config/pool.yaml` có `币安人生USDT` **trong chính pool 102 mã giao
+    dịch**, và kho lưu trữ còn `我踏马来了USDT` · `牛来USDT` · `龙虾USDT` ·
+    `哈基米USDT`.
+
+    ⇒ `tai_dump_agg_trades()` (DR-015 Bước 2) mang **cùng** lỗi này từ TD-0162
+    và chưa nổ chỉ vì chưa lần nào chạm đúng mã đó. Vá cả hai chỗ, không vá
+    một chỗ rồi để chỗ kia — biết mà để lại là chọn để nó nổ lần sau.
+    """
+    return urllib.parse.quote(x, safe="")
+
+
 AGG_TRADES_HOST = "data.binance.vision"
 
 
@@ -356,7 +374,7 @@ def tai_dump_agg_trades(
     if dich.exists() and dich.stat().st_size > 0:
         return dich
 
-    duong_dan = f"/data/futures/um/daily/aggTrades/{symbol}/{ten}"
+    duong_dan = f"/data/futures/um/daily/aggTrades/{_ma_url(symbol)}/{_ma_url(ten)}"
     # R3 — CÙNG breaker với `_goi_json_cong_khai` (một hạ tầng Binance),
     # nhưng KHÔNG áp `tier_c.api_calls_per_min` — đó là trần weight công
     # bố riêng cho `fapi.binance.com`, không có trần tương đương công bố
@@ -603,7 +621,9 @@ def doc_quote_volume_1d_thang(
     3. `quote_volume` không parse được ⇒ raise, không bỏ qua hàng đó.
     """
     ten = f"{symbol}-1d-{nam:04d}-{thang:02d}.zip"
-    duong_dan = f"/data/futures/um/monthly/klines/{symbol}/1d/{ten}"
+    duong_dan = (
+        f"/data/futures/um/monthly/klines/{_ma_url(symbol)}/1d/{_ma_url(ten)}"
+    )
 
     _kiem_tra_breaker()
     conn = http.client.HTTPSConnection(AGG_TRADES_HOST, timeout=timeout)
