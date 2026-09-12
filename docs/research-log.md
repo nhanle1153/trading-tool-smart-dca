@@ -2450,6 +2450,30 @@ nào"*** thành ***"dừng hay không"*** — với người đang quyết, hai 
 nhìn thấy loại này: nó không sai một dữ kiện nào, và **câu đọc lên vẫn trôi**. Cùng họ với *"sai ở
 NHÃN dán lên phép đo"* (09/09, sáu lần trong một buổi).
 
+### 🔑 Cơ chế thứ BA, và là cái khó bắt nhất: mọi MẢNH đều đúng, chỉ PHẠM VI kết luận sai
+
+Ca thứ năm của ngày, do `[f5177d]` gây ra và `[3f7d14]` bắt. Câu lọt vào `DR-FAI-01 §3`:
+*"D4 Long-only **không chạy**, 0 suất trial tiêu"*, suy từ `44,8 lệnh/năm < sàn 150` của `MT-29`.
+
+Kiểm `td0212-ba-arm-sau-va.json`: `Z0` = **44,8** (trượt) · `Z0-T1` = **325,6** (vượt) ·
+`Z0-T0` = **1.396,0** (vượt). ⇒ `44,8` là số của **MỘT arm**, không phải của D4. Câu đó đúng với
+**7/9 arm**, sai với hai arm Phần 2 — và nó **ngầm trả lời** câu 1 của `MT-26` khi `MT-26` đang
+ghi CHƯA GIẢI.
+
+**Vì sao tách khỏi hai cơ chế trên — và vì sao nó khó bắt nhất:** `MT-29` **tồn tại thật**, trích
+dẫn **đúng**, con số `44,8` **đúng**, phép trừ `44,8 < 150` **đúng**. **Mọi mảnh đều kiểm được, và
+không mảnh nào sai.** Chỉ **phạm vi** của kết luận là sai. Hai cơ chế trên còn có một thứ sai để
+mà tìm (một file chưa mở, một chữ nén hai hạng); cái này **không có gì sai để thấy** — chỉ có một
+lượng tử hoá thầm lặng từ *"arm này"* sang *"D4"*.
+
+🔴 **Câu chẩn đoán rút ra, dùng được ngay:** ***một dẫn chiếu có thật KHÔNG chứng minh phần suy ra
+từ nó.*** Kiểm được `MT-29` có thật ≠ kiểm được *"nên D4 không chạy"*. Hôm đó `[f5177d]` kiểm
+`back-end-note.md:118`, thấy đúng, rồi nhận cả hệ quả — **kiểm một nửa rồi tin cả câu**.
+
+⚠️ Và một điều `[3f7d14]` nói lại cho công bằng, giữ vì nó chặn cách đọc sai: đây **không** phải
+lỗi *nặng hơn* ca `adjust_trade_position`, nó là lỗi **cùng loại** — ở ca kia `[3f7d14]` là **nguồn**
+của câu sai, ở ca này nguồn là `[67bb21]`. Ba phiên, cùng một họ, không ai cẩu thả.
+
 🔴 Chỗ đắt nhất: `[67bb21]` **tự dạy chính sự phân biệt đó** cho phiên khác ở tin nhắn ngay trước
 (*"câu hỏi là FreqAI vào theo TƯ CÁCH NÀO, không phải CÓ HAY KHÔNG"*), rồi tự xoá nó khi tóm tắt —
 vì trong một bản tóm tắt thì *"bị chặn"* **gọn hơn** *"đi được nhưng phải trả giá X"*. ⇒ **Chi phí
