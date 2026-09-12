@@ -2515,3 +2515,118 @@ lỗi trong mã, nó là **tính chất của việc hai phiên nói chuyện v�
 là kỷ luật *"mở file trước khi khẳng định về mã"* — và chi tiết sắc nhất của cả ca này là
 `[3f7d14]` vi phạm đúng kỷ luật đó **trong cùng buổi họ đang dạy lại nó cho một phiên khác**. Một
 quy tắc mình vừa phát biểu không tự động trở thành một quy tắc mình đang tuân thủ.
+
+---
+
+## 12/09/2026 (tiếp) — TD-0230: pool mà D4 sắp backtest là ảnh chụp HÔM NAY. Và hai bài học về *phạm vi* của một khẳng định.
+
+### 1. Phát hiện: `MT-08` ở lần thứ hai, tại một chỗ đắt hơn nhiều
+
+Đi tìm câu trả lời cho ba việc chủ dự án hỏi (đổi ảnh Docker · chạy D4 cho `Z0-T1` · FreqAI), rà
+soát bắt được một thứ **không nằm trong cả ba**:
+
+| Khẳng định | Bằng chứng, tự kiểm trên đĩa |
+|---|---|
+| `delisted_at` chưa bao giờ được điền ngoài test | `grep -rn "delisted_at" --include=*.py` → **đúng 5 kết quả**: `src/tool_d/pool.py:32` (khai báo), `:115` (dùng), **3 chỗ còn lại đều trong `tests/unit/test_pool.py`** |
+| Bộ sinh `SymbolStat` DUY NHẤT chỉ đọc hiện tại | `pool.py:41 build_symbol_stats()` lọc `status == "TRADING"` + `quote_volume_24h` từ ticker **24h hiện tại** ⇒ `delisted_at` luôn `None` |
+| `config/pool.yaml` không phải point-in-time | `entrypoints/build_pool.py:226` gọi `compute_pool()`; docstring `:3-7` của chính file đó tự khai *"H1-D ĐẦY ĐỦ … là việc RIÊNG của D1 — **CHƯA viết ở đây**"* |
+| Không có việc nào mở để viết phần đó | Khối 10 `TASKS.md:146-156` = **đúng ba dòng** TD-0095/0096/0097, **cả ba ✅**, và cả ba chỉ là **hàm thuần + test dựng tay** |
+| Một quyết định đã chốt đòi ngược lại | `DR-D1-01` §3 (`:51`): *"**Không mở DR chấp nhận survivorship bias.** TD-0096 phải nạp thêm 219 symbol này … vào tập ứng viên khi tính pool tại mốc `t` lùi về quá khứ"* |
+
+⇒ `pool.yaml` (102 mã, tiêu chí đo tại **09/2026**) sắp được dùng để backtest **[T0,T2] = 04/2024 →
+01/2026**. Hai chiều lệch, **cả hai cùng chiều "trông đẹp hơn thật"**: mã đã chết bị loại khỏi rổ
+(219 mã, `DR-D1-01` §1 đo thật) và mã chưa sinh vẫn nằm trong rổ (`listing_age_days_min: 180` đo
+tại lúc chốt, nên một mã lên sàn 01/2026 vẫn "đủ tuổi" vào 09/2026 dù không tồn tại suốt CALIB).
+
+🔑 **Đây là `MT-08` ở lần thứ hai — cùng hình dạng, khác chỗ, và chỗ này đắt hơn:** một chính sách
+đã chốt mà phần thi hành **chưa bao giờ tồn tại**, trong khi dòng việc mang nhãn ✅. `N12` mục 3
+(*"đừng tin chữ ✅ khi nó là điều kiện phụ thuộc"*) viết ra đúng cho ca này — và lần này ✅ **không
+sai**: TD-0096 thật sự đã viết `pairlist_point_in_time()` và thật sự có test. Thứ sai là **phạm vi**
+của cái ✅ đó: nó chứng nhận một **hàm**, và bị đọc thành chứng nhận một **năng lực**.
+
+🔴 **Vì sao nó đứng TRƯỚC câu ảnh Docker** — câu mà chủ dự án đang hỏi: ảnh Docker quyết định *con số
+có tái lập được hay không*; pool quyết định *con số có ĐÚNG hay không*. Và chiều lệch của pool là
+**chiều PASS** — loại lệch mà không cổng nào tự bắt được. Cộng với spec `:4338` (*"mỗi lần đổi pool
+= backfill lại toàn bộ, **MỌI số cũ không so sánh được**"*), nó là món **đắt lên theo thời gian**:
+sửa trước khi tiêu `B2` thì rẻ, sau thì mất cả suất trial lẫn kết luận.
+
+### 2. Phát hiện thứ hai: khoá `arm` là MỘT chuỗi nhưng gộp HAI trục
+
+Đo trên `td0212-ba-arm-sau-va.json`, cả ba đều single-entry (`phan_bo_tranche` 100% tranche 1):
+
+| arm | tầng trend | lệnh (88 mã, WFO) | quy đổi pool 102 /năm | sàn 150 mỗi hướng (`MT-29`) |
+|---|---|---|---|---|
+| `Z0-T0` | `KHONG` | 686 | 1.396,0 | ✅ nhưng là arm **chẩn đoán** |
+| `Z0-T1` | `CHI_4H` | 160 | **325,6** | ✅ **ứng viên duy nhất** |
+| `Z0` | `DAY_DU` | 22 | **44,8** | ❌ dưới sàn; `Z0 ⊆ Z0-T1` tuyệt đối |
+
+`DR-D4-10` §2.4 chốt **trục DCA** (`Z0` thay `Z3`). **Không chốt nào nói trục TREND của arm sản
+xuất.** Nên `TD-0227` đặt `arm: "Z0"` sẽ cho production chạy tiền thật ở cấu hình mà `MT-29` đã chốt
+là **không thể qua sàn**, trong khi thứ D4 phán quyết là `Z0-T1`. Ghi nhận theo quy tắc 11, chủ dự
+án chốt **treo `TD-0227`**, không tự chọn bên.
+
+### 3. Bài học đo lường: một phép kiểm-có-răng cho ra 3 đỏ ở chỗ tôi dự 2
+
+`TD-0230` cần một hàm liệt kê S3. Phá thật bốn lần trong Docker, khôi phục `diff -q` giống
+byte-đối-byte mỗi lần:
+
+| Phá | Dự | Thật |
+|---|---|---|
+| bỏ phân trang | 2 đỏ | **3 đỏ** |
+| cắt im lặng ở trần trang | 1 đỏ | 1 đỏ ✅ |
+| lỗi mạng trả rỗng thay vì raise | 1 đỏ | 1 đỏ ✅ |
+| `iter("Prefix")` hút cả thẻ cấp gốc | — | 4 đỏ |
+
+Ca thứ ba của phép phá đầu (`test_qua_TRAN_TRANG`) đỏ vì **trần trang chỉ có nghĩa khi phân trang
+tồn tại** — bỏ phân trang thì không bao giờ chạm trần. Dự đoán thiếu một ca là chuyện nhỏ; điều
+đáng ghi là **nó đi đúng chiều an toàn**: phép phá bắt được NHIỀU hơn dự, không phải ít hơn. Con số
+đáng lo là chiều ngược lại.
+
+📌 **Và phép đo tự xác nhận rằng phân trang không phải lo xa:** lượt liệt kê gốc trả **1018 thư mục
+qua 2 trang**. Mỗi trang giới hạn 1000 — dừng ở trang đầu là mất 18 mã **trong im lặng**, đúng
+chiều "rổ thiếu ít hơn thực tế". `DR-D1-01` §1 đã nêu đúng chỗ này bằng chữ; nay có một phép kiểm
+canh nó. Đối chứng độc lập: `exchangeInfo` trả **658** mã perpetual/USDT — **khớp đúng con số 658
+của `DR-D1-01` §1** đo cách đây 5 ngày.
+
+### 4. 🔴 Đính chính phạm vi của chính `TD-0229` (hôm qua) — và nó do phiên khác nêu ra
+
+Phiên `[f5177d]` chỉ ra một đường mà khung lựa chọn *"giữ digest HOẶC đổi sang `_freqai`"* của tôi
+**không có**: ảnh ta chạy là ảnh **DẪN XUẤT** (`FROM …@sha256:7031bca4…` rồi `pip install --user`),
+nên thêm `datasieve` + `lightgbm` vào **chính bước pip đó** giữ nguyên base digest. Họ đã đo bằng
+`pip install --dry-run` trong container: **đúng hai gói được cài, không gói nào bị nâng cấp.**
+
+Điều đó buộc tôi đọc lại chính hàm mình viết hôm qua. `doc_runtime_image_digest()` đọc dòng
+`FROM …@sha256:` của `docker/Dockerfile` ⇒ nó ghi **digest ẢNH GỐC**, không ghi nội dung các lớp
+dẫn xuất. Phát biểu chính xác, ba mức — không phải một:
+
+| Thay đổi | Có bị bắt? | Bắt bởi cái gì |
+|---|---|---|
+| đổi dòng `FROM` (base digest) | ✅ | **cả hai**: `git_sha` và `runtime_image_digest` |
+| thêm gói pip vào Dockerfile, **đã commit** | ✅ | **`git_sha`** — Dockerfile nằm trong git, và `cache_key` gộp `git_sha` |
+| dựng lại ảnh từ Dockerfile **sửa mà chưa commit**, hoặc `pip install` ngay trong container đang chạy | ❌ | **không gì cả** — không đầu vào nào của `cache_key` đổi |
+
+⇒ Câu tôi nói hôm qua (*"đổi ảnh Docker nay không còn im lặng"*) **đúng cho hai dòng đầu**, và dòng
+thứ ba là một khoảng hở còn nguyên. Khoảng hở đó **không phải do khoá thứ 8 yếu** — nó là hệ quả của
+việc mọi thứ canh môi trường đều canh **mô tả của ảnh** (Dockerfile trong git), chứ không canh **ảnh
+đang chạy**. Muốn đóng thì phải ghi digest của ảnh DẪN XUẤT lúc chạy, và `docker history` trên ảnh
+đó đã được thử và **thất bại** (`DR-FAI-01` §4b điều 5: `Dockerfile*` không có trong ảnh vì cài
+editable; `docker history` trả `No such image`).
+
+🔑 **Bài học, và nó KHÁC bài học của `MT-08` ở mục 1 dù nghe giống:** ở mục 1, một cái ✅ chứng nhận
+một *hàm* bị đọc thành chứng nhận một *năng lực*. Ở đây, một *phép vá có thật, đã kiểm-có-răng ba
+lần* bị **chính tác giả** phát biểu rộng hơn phạm vi nó phủ. Cả hai là lỗi **PHẠM VI**, không phải
+lỗi nội dung — và không lớp canh nào của dự án nhìn thấy loại này, vì mọi phép kiểm đều kiểm *mã*,
+không kiểm *câu nói về mã*. Đây là lần thứ hai trong hai ngày liên tiếp (`12/09` mục trước: một
+khẳng định sai về mã đi qua tin nhắn giữa hai phiên).
+
+📌 Và một chi tiết đáng giữ về **cách** nó bị bắt: lý lẽ tôi thuật cho quyết định *"giữ digest"* —
+*"ảnh `_freqai` có thể khác cả pandas/numpy/ta-lib"* — là **điều 2 của `DR-FAI-01` §4b**, và nó
+**đúng**. Nhưng nó chỉ bác **một** phương án. Một lý lẽ đúng bác đúng thứ nó nhắm tới; nếu khung
+lựa chọn chỉ có hai ô thì nó **trông như** đã bác cả hai. Chi phí của việc dựng khung hẹp rơi vào
+chỗ không ai kiểm: **phương án không được đặt lên bàn**.
+
+⚠️ Quyết định *"giữ nguyên digest"* của chủ dự án **không đổi** vì đường thứ ba: lý do họ chuẩn y là
+spec `:472-473` (*"Muốn thử ML → giả thuyết riêng, **ngân sách riêng, lockbox riêng**"*) — một lý do
+về **quản trị**, không về hạ tầng. Đường thứ ba giải bài toán *kỹ thuật* (ảnh chạy được FreqAI)
+nhưng không giải bài toán *quản trị* (ML không đi trên đường sản xuất của Tool D). Hai câu khác
+nhau, và chỉ câu thứ hai được hỏi.
