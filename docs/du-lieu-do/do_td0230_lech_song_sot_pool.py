@@ -218,20 +218,83 @@ def main(argv: list[str] | None = None) -> int:
         elif v:
             ngoai_pool_song_tai_t1.append(sym)
 
-    # ── Con số (3): trong nhóm (2), bao nhiêu huỷ niêm yết TRƯỚC T2 ─────
-    huy_truoc_t2 = [
-        sym
-        for sym in ngoai_pool_song_tai_t1
-        if (k := khoang[sym]).thang_cuoi is not None and k.thang_cuoi < thang_t2
+    # ── Con số (3): KÊNH "mã đã chết bị loại khỏi rổ" ───────────────────
+    # 🔴 ĐÃ SỬA PHẠM VI sau lượt chạy đầu (12/09/2026). Bản đầu tính con số
+    # này CHỈ TRONG nhóm (2) — sai đơn vị: nhóm (2) đòi mã còn sống tại T1
+    # và không có trong pool HÔM NAY, nên nó bỏ qua đúng những mã đã chết
+    # rồi (chết thì đương nhiên không có trong pool hôm nay, nhưng cũng
+    # không "sống tại T1" nếu chết trước đó). Kênh này phải đo trên TOÀN
+    # BỘ ứng viên, theo TỪNG CỬA SỔ.
+    #
+    # "Chết" ở đây = kho lưu trữ ngừng sinh nến 1d. `thang_cuoi_moi_nhat`
+    # là tháng đầy đủ mới nhất kho có cho mã CÒN sống — mọi mã có
+    # `thang_cuoi` bằng nó thì coi là còn sống, không phải "chết hôm nay".
+    thang_cuoi_moi_nhat = max(
+        (k.thang_cuoi for k in khoang.values() if k.thang_cuoi is not None),
+        default=None,
+    )
+
+    def chet_trong_cua_so(thang_dau_cs: str, thang_cuoi_cs: str) -> dict[str, object]:
+        """Mã ĐANG SỐNG tại đầu cửa sổ rồi NGỪNG trong cửa sổ đó."""
+        trong: list[str] = []
+        for sym, k in khoang.items():
+            if k.thang_dau is None or k.thang_cuoi is None:
+                continue
+            if k.thang_cuoi == thang_cuoi_moi_nhat:
+                continue  # còn sống tới hôm nay
+            if k.thang_dau <= thang_dau_cs and thang_dau_cs <= k.thang_cuoi < thang_cuoi_cs:
+                trong.append(sym)
+        return {
+            "n": len(trong),
+            "trong_pool_hien_tai": sorted(s for s in trong if s in pool),
+            "danh_sach": sorted(trong),
+        }
+
+    # Mọi mã có mốc kết thúc THẬT (đã ngừng sinh nến) — kênh này tổng thể.
+    da_ngung = sorted(
+        s
+        for s, k in khoang.items()
+        if k.thang_cuoi is not None and k.thang_cuoi != thang_cuoi_moi_nhat
+    )
+    so_3 = {
+        "thang_cuoi_moi_nhat_trong_kho": thang_cuoi_moi_nhat,
+        "tong_ma_da_ngung_sinh_nen": len(da_ngung),
+        "trong_CALIB_T0_den_T1": chet_trong_cua_so(thang_t0, thang_t1),
+        "trong_WFO_T1_den_T2": chet_trong_cua_so(thang_t1, thang_t2),
+        "danh_sach_da_ngung": da_ngung,
+    }
+
+    # ── Đối chứng với DR-D1-01 §1 ───────────────────────────────────────
+    # 🔴 Phép trừ `874 − 658 = 219` của DR-D1-01 §1 trừ một tập lọc theo
+    # `contractType` (phía sàn) khỏi một tập lọc theo TÊN (phía kho) — hai
+    # tiêu chí khác nhau, nên hiệu KHÔNG phải "đã huỷ niêm yết".
+    ngoai_perp = sorted(set(khoang) - con_tren_san)
+    ngoai_perp_van_song = [
+        s for s in ngoai_perp if khoang[s].thang_cuoi == thang_cuoi_moi_nhat
     ]
-    da_roi_khoi_san = [s for s in huy_truoc_t2 if s not in con_tren_san]
+    doi_chung = {
+        "_doc": (
+            "DR-D1-01 §1 tính 874 - 658 = 219 và gọi đó là 'đã thật sự biến mất khỏi "
+            "exchangeInfo'. Phép trừ đó trừ một tập lọc theo contractType (phía sàn) "
+            "khỏi một tập lọc theo TÊN (phía kho). Mã như AAPLUSDT/AMZNUSDT qua được "
+            "lọc tên của kho (kết thúc bằng USDT) nhưng KHÔNG phải PERPETUAL trên sàn "
+            "(chúng là TRADIFI_PERPETUAL, status TRADING — đang giao dịch NGAY BÂY GIỜ) "
+            "⇒ bị đếm thành 'đã biến mất'. Kết luận của DR-D1-01 (CÓ nguồn, không chấp "
+            "nhận bias) KHÔNG lung lay — chỉ CON SỐ 219 là đếm quá tay."
+        ),
+        "kho_tru_perp_usdt": len(ngoai_perp),
+        "trong_do_van_con_sinh_nen_hom_nay": len(ngoai_perp_van_song),
+        "vi_du_van_con_sinh_nen": ngoai_perp_van_song[:12],
+        "so_ma_da_ngung_sinh_nen_THAT": len(da_ngung),
+    }
 
     ket_qua = {
         "nguon": "TD-0230, 12/09/2026 — đo ĐỘ LỆCH SỐNG SÓT của config/pool.yaml. "
         "Liệt kê kho tĩnh data.binance.vision (metadata SÀN), 0 trial, "
         "KHÔNG đọc một nến pool nào.",
         "ranh_gioi": (
-            "CẬN TRÊN. Con số (2)/(3) lọc theo KHOẢNG TỒN TẠI của mã, CHƯA áp tiêu chí "
+            "CẬN TRÊN. 🔴 Con số (2) KHÔNG phải một con số về lệch sống sót: nó bị chi phối bởi "
+            "những mã ĐANG niêm yết nhưng TRƯỢT tiêu chí volume >= 15tr USDT, vì nó CHƯA áp tiêu chí "
             "volume >= 15tr USDT tại t (volume lịch sử cần nến thật; với mã pool thì "
             "chặn cứng ở MT-19). ⇒ trả lời 'rổ có thể thiếu TỐI ĐA bao nhiêu mã', KHÔNG "
             "trả lời 'pool đúng tại T1 gồm những mã nào'. Độ phân giải THÁNG: mã lên/rời "
@@ -266,11 +329,8 @@ def main(argv: list[str] | None = None) -> int:
             "khong_do_duoc": len(ngoai_pool_khong_do_duoc),
             "danh_sach": sorted(ngoai_pool_song_tai_t1),
         },
-        "so_3_trong_so_2_huy_niem_yet_truoc_T2": {
-            "n": len(huy_truoc_t2),
-            "da_roi_khoi_exchangeinfo": len(da_roi_khoi_san),
-            "danh_sach": sorted(huy_truoc_t2),
-        },
+        "so_3_kenh_ma_da_chet_bi_loai_khoi_ro": so_3,
+        "doi_chung_dr_d1_01": doi_chung,
         "khoang_ton_tai": {s: asdict(k) for s, k in sorted(khoang.items())},
     }
 
@@ -281,7 +341,12 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  (1) mã pool chưa tồn tại tại T0: {len(so_1['tai_T0']['chua_ton_tai'])}"
           f" / tại T1: {len(so_1['tai_T1']['chua_ton_tai'])}  (trên {len(pool)})")
     print(f"  (2) mã sống tại T1 mà pool không có: {len(ngoai_pool_song_tai_t1)}")
-    print(f"  (3) trong đó huỷ niêm yết trước T2: {len(huy_truoc_t2)}")
+    print(f"  (3) mã đã NGỪNG sinh nến: {so_3['tong_ma_da_ngung_sinh_nen']} tổng"
+          f" · chết trong CALIB: {so_3['trong_CALIB_T0_den_T1']['n']}"
+          f" · chết trong WFO: {so_3['trong_WFO_T1_den_T2']['n']}")
+    print(f"  đối chứng DR-D1-01: kho−perp = {doi_chung['kho_tru_perp_usdt']}, nhưng"
+          f" {doi_chung['trong_do_van_con_sinh_nen_hom_nay']} trong số đó VẪN sinh nến"
+          f" hôm nay ⇒ con số 219 của §1 đếm quá tay")
     return 0
 
 

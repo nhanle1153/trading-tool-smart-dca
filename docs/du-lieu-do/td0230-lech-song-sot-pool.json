@@ -1,0 +1,5776 @@
+{
+ "nguon": "TD-0230, 12/09/2026 — đo ĐỘ LỆCH SỐNG SÓT của config/pool.yaml. Liệt kê kho tĩnh data.binance.vision (metadata SÀN), 0 trial, KHÔNG đọc một nến pool nào.",
+ "ranh_gioi": "CẬN TRÊN. 🔴 Con số (2) KHÔNG phải một con số về lệch sống sót: nó bị chi phối bởi những mã ĐANG niêm yết nhưng TRƯỢT tiêu chí volume >= 15tr USDT, vì nó CHƯA áp tiêu chí volume >= 15tr USDT tại t (volume lịch sử cần nến thật; với mã pool thì chặn cứng ở MT-19). ⇒ trả lời 'rổ có thể thiếu TỐI ĐA bao nhiêu mã', KHÔNG trả lời 'pool đúng tại T1 gồm những mã nào'. Độ phân giải THÁNG: mã lên/rời sàn giữa tháng vào ô cung_thang_khong_phan_giai_duoc, không gộp về bên nào (N6). KHÔNG sửa config/pool.yaml và không đề xuất sửa.",
+ "cach_doc": "Viết TRƯỚC khi chạy (khuôn DR-D4-08 §6). (1)+(2) nhỏ (<= ~5% mỗi bên) ⇒ lệch không đáng kể, D4 chạy được trên pool hiện tại KÈM HẠN CHẾ ĐÃ GHI, và đó là một DỮ KIỆN không phải hy vọng. (2) hoặc (3) LỚN ⇒ mọi số D4 trên pool này mang lệch sống sót theo CHIỀU PASS, và tiêu suất B2 trước khi sửa pool là mua một kết luận mà spec :4338 sẽ vô hiệu hoá ('mỗi lần đổi pool = MỌI số cũ không so sánh được'). Dù kết quả thế nào cũng KHÔNG tự đổi pool — đó là quyết định của chủ dự án.",
+ "moc": {
+  "t0": "2024-04-09",
+  "t1": "2025-06-12",
+  "t2": "2026-01-29"
+ },
+ "trial": 0,
+ "quy_mo": {
+  "pool_hien_tai": 102,
+  "thu_muc_trong_kho": 864,
+  "con_tren_san_exchangeinfo": 658,
+  "da_do_khoang_ton_tai": 864,
+  "chay_thu_max_ma": null
+ },
+ "so_1_ma_pool_chua_ton_tai": {
+  "tai_T0": {
+   "chua_ton_tai": 44,
+   "cung_thang_khong_phan_giai_duoc": 2,
+   "khong_do_duoc": 0
+  },
+  "tai_T1": {
+   "chua_ton_tai": 24,
+   "cung_thang_khong_phan_giai_duoc": 0,
+   "khong_do_duoc": 0
+  }
+ },
+ "so_1_chi_tiet": {
+  "tai_T0": {
+   "chua_ton_tai": [
+    "1000CATUSDT",
+    "4USDT",
+    "AEROUSDT",
+    "AKEUSDT",
+    "APRUSDT",
+    "ASTERUSDT",
+    "BTRUSDT",
+    "BULLAUSDT",
+    "BUSDT",
+    "COLLECTUSDT",
+    "DOODUSDT",
+    "EPICUSDT",
+    "FARTCOINUSDT",
+    "FLOCKUSDT",
+    "GIGGLEUSDT",
+    "HEMIUSDT",
+    "HYPEUSDT",
+    "MAGMAUSDT",
+    "METUSDT",
+    "MONUSDT",
+    "MOODENGUSDT",
+    "MUBARAKUSDT",
+    "NOMUSDT",
+    "ORCAUSDT",
+    "PENGUUSDT",
+    "POLUSDT",
+    "PROMUSDT",
+    "PUMPUSDT",
+    "RAYSOLUSDT",
+    "SKRUSDT",
+    "TRIAUSDT",
+    "TRUMPUSDT",
+    "TUTUSDT",
+    "UAIUSDT",
+    "USELESSUSDT",
+    "VELVETUSDT",
+    "VIRTUALUSDT",
+    "WLFIUSDT",
+    "XANUSDT",
+    "XPLUSDT",
+    "ZAMAUSDT",
+    "ZKUSDT",
+    "ZROUSDT",
+    "币安人生USDT"
+   ],
+   "cung_thang_khong_phan_giai_duoc": [
+    "ENAUSDT",
+    "TAOUSDT"
+   ],
+   "khong_do_duoc": []
+  },
+  "tai_T1": {
+   "chua_ton_tai": [
+    "4USDT",
+    "AKEUSDT",
+    "APRUSDT",
+    "ASTERUSDT",
+    "BTRUSDT",
+    "BULLAUSDT",
+    "COLLECTUSDT",
+    "FLOCKUSDT",
+    "GIGGLEUSDT",
+    "HEMIUSDT",
+    "MAGMAUSDT",
+    "METUSDT",
+    "MONUSDT",
+    "NOMUSDT",
+    "SKRUSDT",
+    "TRIAUSDT",
+    "UAIUSDT",
+    "USELESSUSDT",
+    "VELVETUSDT",
+    "WLFIUSDT",
+    "XANUSDT",
+    "XPLUSDT",
+    "ZAMAUSDT",
+    "币安人生USDT"
+   ],
+   "cung_thang_khong_phan_giai_duoc": [],
+   "khong_do_duoc": []
+  }
+ },
+ "so_2_ma_song_tai_T1_ma_pool_khong_co": {
+  "n": 385,
+  "cung_thang_khong_phan_giai_duoc": 19,
+  "khong_do_duoc": 0,
+  "danh_sach": [
+   "1000000MOGUSDT",
+   "1000CHEEMSUSDT",
+   "1000FLOKIUSDT",
+   "1000LUNCUSDT",
+   "1000RATSUSDT",
+   "1000SATSUSDT",
+   "1000WHYUSDT",
+   "1000XECUSDT",
+   "1000XUSDT",
+   "1INCHUSDT",
+   "1MBABYDOGEUSDT",
+   "ACHUSDT",
+   "ACTUSDT",
+   "ACXUSDT",
+   "AERGOUSDT",
+   "AEVOUSDT",
+   "AGIXUSDT",
+   "AGLDUSDT",
+   "AGTUSDT",
+   "AI16ZUSDT",
+   "AIOTUSDT",
+   "AIUSDT",
+   "AIXBTUSDT",
+   "AKTUSDT",
+   "ALCHUSDT",
+   "ALGOUSDT",
+   "ALICEUSDT",
+   "ALPACAUSDT",
+   "ALPHAUSDT",
+   "ALPINEUSDT",
+   "ALTUSDT",
+   "AMBUSDT",
+   "ANIMEUSDT",
+   "ANKRUSDT",
+   "APEUSDT",
+   "API3USDT",
+   "ARCUSDT",
+   "ARKMUSDT",
+   "ARKUSDT",
+   "ARPAUSDT",
+   "ASRUSDT",
+   "ASTRUSDT",
+   "ATAUSDT",
+   "ATHUSDT",
+   "AUCTIONUSDT",
+   "AUSDT",
+   "AVAAIUSDT",
+   "AVAUSDT",
+   "AWEUSDT",
+   "AXLUSDT",
+   "AXSUSDT",
+   "B2USDT",
+   "B3USDT",
+   "BABYUSDT",
+   "BADGERUSDT",
+   "BAKEUSDT",
+   "BALUSDT",
+   "BANANAS31USDT",
+   "BANANAUSDT",
+   "BANDUSDT",
+   "BANKUSDT",
+   "BANUSDT",
+   "BATUSDT",
+   "BBUSDT",
+   "BEAMXUSDT",
+   "BELUSDT",
+   "BERAUSDT",
+   "BICOUSDT",
+   "BIDUSDT",
+   "BIGTIMEUSDT",
+   "BIOUSDT",
+   "BLURUSDT",
+   "BLZUSDT",
+   "BMTUSDT",
+   "BNTUSDT",
+   "BNXUSDT",
+   "BONDUSDT",
+   "BRETTUSDT",
+   "BROCCOLI714USDT",
+   "BROCCOLIF3BUSDT",
+   "BRUSDT",
+   "BSVUSDT",
+   "BSWUSDT",
+   "BTCDOMUSDT",
+   "BTCSTUSDT",
+   "C98USDT",
+   "CATIUSDT",
+   "CELOUSDT",
+   "CELRUSDT",
+   "CETUSUSDT",
+   "CFXUSDT",
+   "CGPTUSDT",
+   "CHESSUSDT",
+   "CHILLGUYUSDT",
+   "CHRUSDT",
+   "CHZUSDT",
+   "CKBUSDT",
+   "COMBOUSDT",
+   "COMPUSDT",
+   "COOKIEUSDT",
+   "COSUSDT",
+   "COWUSDT",
+   "CTKUSDT",
+   "CTSIUSDT",
+   "CVCUSDT",
+   "CVXUSDT",
+   "CYBERUSDT",
+   "DARUSDT",
+   "DEEPUSDT",
+   "DEFIUSDT",
+   "DEGENUSDT",
+   "DEGOUSDT",
+   "DENTUSDT",
+   "DEXEUSDT",
+   "DFUSDT",
+   "DGBUSDT",
+   "DIAUSDT",
+   "DODOXUSDT",
+   "DOGSUSDT",
+   "DOLOUSDT",
+   "DRIFTUSDT",
+   "DUSDT",
+   "DUSKUSDT",
+   "DYDXUSDT",
+   "DYMUSDT",
+   "EDUUSDT",
+   "EGLDUSDT",
+   "EIGENUSDT",
+   "ENJUSDT",
+   "ENSUSDT",
+   "EPTUSDT",
+   "ETHWUSDT",
+   "FHEUSDT",
+   "FIDAUSDT",
+   "FIOUSDT",
+   "FISUSDT",
+   "FLMUSDT",
+   "FLOWUSDT",
+   "FLUXUSDT",
+   "FORMUSDT",
+   "FORTHUSDT",
+   "FTMUSDT",
+   "FTTUSDT",
+   "FUNUSDT",
+   "FXSUSDT",
+   "GALAUSDT",
+   "GASUSDT",
+   "GHSTUSDT",
+   "GLMRUSDT",
+   "GLMUSDT",
+   "GMTUSDT",
+   "GMXUSDT",
+   "GOATUSDT",
+   "GPSUSDT",
+   "GRASSUSDT",
+   "GRIFFAINUSDT",
+   "GTCUSDT",
+   "GUNUSDT",
+   "GUSDT",
+   "HAEDALUSDT",
+   "HEIUSDT",
+   "HFTUSDT",
+   "HIFIUSDT",
+   "HIGHUSDT",
+   "HIPPOUSDT",
+   "HIVEUSDT",
+   "HMSTRUSDT",
+   "HOOKUSDT",
+   "HOTUSDT",
+   "HUMAUSDT",
+   "HYPERUSDT",
+   "ICXUSDT",
+   "IDEXUSDT",
+   "IDUSDT",
+   "ILVUSDT",
+   "IMXUSDT",
+   "INITUSDT",
+   "IOTAUSDT",
+   "IOTXUSDT",
+   "IOUSDT",
+   "IPUSDT",
+   "JASMYUSDT",
+   "JELLYJELLYUSDT",
+   "JOEUSDT",
+   "JSTUSDT",
+   "KAIAUSDT",
+   "KAITOUSDT",
+   "KASUSDT",
+   "KAVAUSDT",
+   "KDAUSDT",
+   "KERNELUSDT",
+   "KEYUSDT",
+   "KLAYUSDT",
+   "KMNOUSDT",
+   "KNCUSDT",
+   "KOMAUSDT",
+   "KSMUSDT",
+   "LAYERUSDT",
+   "LEVERUSDT",
+   "LINAUSDT",
+   "LISTAUSDT",
+   "LOKAUSDT",
+   "LOOMUSDT",
+   "LPTUSDT",
+   "LQTYUSDT",
+   "LRCUSDT",
+   "LSKUSDT",
+   "LUMIAUSDT",
+   "LUNA2USDT",
+   "MAGICUSDT",
+   "MANAUSDT",
+   "MANTAUSDT",
+   "MASKUSDT",
+   "MAVIAUSDT",
+   "MAVUSDT",
+   "MBOXUSDT",
+   "MDTUSDT",
+   "MELANIAUSDT",
+   "MEMEFIUSDT",
+   "MEMEUSDT",
+   "MERLUSDT",
+   "METISUSDT",
+   "MEUSDT",
+   "MEWUSDT",
+   "MILKUSDT",
+   "MINAUSDT",
+   "MKRUSDT",
+   "MLNUSDT",
+   "MOCAUSDT",
+   "MORPHOUSDT",
+   "MOVEUSDT",
+   "MOVRUSDT",
+   "MTLUSDT",
+   "MYROUSDT",
+   "NEIROETHUSDT",
+   "NEIROUSDT",
+   "NEOUSDT",
+   "NFPUSDT",
+   "NILUSDT",
+   "NKNUSDT",
+   "NMRUSDT",
+   "NOTUSDT",
+   "NTRNUSDT",
+   "NULSUSDT",
+   "NXPCUSDT",
+   "OBOLUSDT",
+   "OCEANUSDT",
+   "OGNUSDT",
+   "OGUSDT",
+   "OMGUSDT",
+   "OMNIUSDT",
+   "OMUSDT",
+   "ONEUSDT",
+   "ONTUSDT",
+   "ORBSUSDT",
+   "ORDIUSDT",
+   "OXTUSDT",
+   "PARTIUSDT",
+   "PAXGUSDT",
+   "PEOPLEUSDT",
+   "PERPUSDT",
+   "PHAUSDT",
+   "PHBUSDT",
+   "PIPPINUSDT",
+   "PIXELUSDT",
+   "PLUMEUSDT",
+   "PNUTUSDT",
+   "POLYXUSDT",
+   "PONKEUSDT",
+   "POPCATUSDT",
+   "PORTALUSDT",
+   "POWRUSDT",
+   "PROMPTUSDT",
+   "PUNDIXUSDT",
+   "PYTHUSDT",
+   "QNTUSDT",
+   "QTUMUSDT",
+   "QUICKUSDT",
+   "RADUSDT",
+   "RAREUSDT",
+   "RAYUSDT",
+   "RDNTUSDT",
+   "REDUSDT",
+   "REEFUSDT",
+   "REIUSDT",
+   "RENDERUSDT",
+   "RENUSDT",
+   "REZUSDT",
+   "RIFUSDT",
+   "RLCUSDT",
+   "RONINUSDT",
+   "ROSEUSDT",
+   "RPLUSDT",
+   "RSRUSDT",
+   "RUNEUSDT",
+   "RVNUSDT",
+   "SAFEUSDT",
+   "SAGAUSDT",
+   "SANDUSDT",
+   "SANTOSUSDT",
+   "SCRTUSDT",
+   "SCRUSDT",
+   "SCUSDT",
+   "SEIUSDT",
+   "SFPUSDT",
+   "SHELLUSDT",
+   "SIGNUSDT",
+   "SIRENUSDT",
+   "SKLUSDT",
+   "SKYAIUSDT",
+   "SLERFUSDT",
+   "SLPUSDT",
+   "SNTUSDT",
+   "SNXUSDT",
+   "SOLVUSDT",
+   "SONICUSDT",
+   "SOONUSDT",
+   "SOPHUSDT",
+   "SPELLUSDT",
+   "SPXUSDT",
+   "SSVUSDT",
+   "STEEMUSDT",
+   "STGUSDT",
+   "STMXUSDT",
+   "STORJUSDT",
+   "STOUSDT",
+   "STPTUSDT",
+   "STRAXUSDT",
+   "STXUSDT",
+   "SUNUSDT",
+   "SUPERUSDT",
+   "SUSDT",
+   "SWARMSUSDT",
+   "SWELLUSDT",
+   "SXPUSDT",
+   "SXTUSDT",
+   "SYNUSDT",
+   "SYRUPUSDT",
+   "SYSUSDT",
+   "THETAUSDT",
+   "THEUSDT",
+   "TLMUSDT",
+   "TNSRUSDT",
+   "TOKENUSDT",
+   "TONUSDT",
+   "TRBUSDT",
+   "TROYUSDT",
+   "TRUUSDT",
+   "TSTUSDT",
+   "TURBOUSDT",
+   "TWTUSDT",
+   "UMAUSDT",
+   "UNFIUSDT",
+   "USDCUSDT",
+   "USTCUSDT",
+   "USUALUSDT",
+   "UXLINKUSDT",
+   "VANAUSDT",
+   "VANRYUSDT",
+   "VELODROMEUSDT",
+   "VETUSDT",
+   "VICUSDT",
+   "VIDTUSDT",
+   "VINEUSDT",
+   "VOXELUSDT",
+   "VTHOUSDT",
+   "VVVUSDT",
+   "WALUSDT",
+   "WAVESUSDT",
+   "WAXPUSDT",
+   "WCTUSDT",
+   "WUSDT",
+   "XAIUSDT",
+   "XCNUSDT",
+   "XEMUSDT",
+   "XTZUSDT",
+   "XVGUSDT",
+   "XVSUSDT",
+   "YFIUSDT",
+   "YGGUSDT",
+   "ZEREBROUSDT",
+   "ZETAUSDT",
+   "ZILUSDT",
+   "ZKJUSDT",
+   "ZRXUSDT"
+  ]
+ },
+ "so_3_kenh_ma_da_chet_bi_loai_khoi_ro": {
+  "thang_cuoi_moi_nhat_trong_kho": "2026-08",
+  "tong_ma_da_ngung_sinh_nen": 31,
+  "trong_CALIB_T0_den_T1": {
+   "n": 15,
+   "trong_pool_hien_tai": [],
+   "danh_sach": [
+    "ANTUSDT",
+    "AUDIOUSDT",
+    "BLUEBIRDUSDT",
+    "BTSUSDT",
+    "COCOSUSDT",
+    "EOSUSDT",
+    "FOOTBALLUSDT",
+    "FRONTUSDT",
+    "GALUSDT",
+    "HNTUSDT",
+    "MATICUSDT",
+    "MBLUSDT",
+    "RNDRUSDT",
+    "SRMUSDT",
+    "TOMOUSDT"
+   ]
+  },
+  "trong_WFO_T1_den_T2": {
+   "n": 0,
+   "trong_pool_hien_tai": [],
+   "danh_sach": []
+  },
+  "danh_sach_da_ngung": [
+   "1000BTTCUSDT",
+   "AERGOUSDT",
+   "AKROUSDT",
+   "ANCUSDT",
+   "ANTUSDT",
+   "AUDIOUSDT",
+   "BDXNUSDT",
+   "BLUEBIRDUSDT",
+   "BTCSTUSDT",
+   "BTSUSDT",
+   "BTTUSDT",
+   "BZRXUSDT",
+   "COCOSUSDT",
+   "DODOUSDT",
+   "DOTECOUSDT",
+   "EOSUSDT",
+   "FOOTBALLUSDT",
+   "FRONTUSDT",
+   "GALUSDT",
+   "HNTUSDT",
+   "KEEPUSDT",
+   "LENDUSDT",
+   "LUNAUSDT",
+   "MATICUSDT",
+   "MBLUSDT",
+   "NUUSDT",
+   "RNDRUSDT",
+   "SRMUSDT",
+   "SXPUSDT",
+   "TOMOUSDT",
+   "YFIIUSDT"
+  ]
+ },
+ "doi_chung_dr_d1_01": {
+  "_doc": "DR-D1-01 §1 tính 874 - 658 = 219 và gọi đó là 'đã thật sự biến mất khỏi exchangeInfo'. Phép trừ đó trừ một tập lọc theo contractType (phía sàn) khỏi một tập lọc theo TÊN (phía kho). Mã như AAPLUSDT/AMZNUSDT qua được lọc tên của kho (kết thúc bằng USDT) nhưng KHÔNG phải PERPETUAL trên sàn (chúng là TRADIFI_PERPETUAL, status TRADING — đang giao dịch NGAY BÂY GIỜ) ⇒ bị đếm thành 'đã biến mất'. Kết luận của DR-D1-01 (CÓ nguồn, không chấp nhận bias) KHÔNG lung lay — chỉ CON SỐ 219 là đếm quá tay.",
+  "kho_tru_perp_usdt": 210,
+  "trong_do_van_con_sinh_nen_hom_nay": 179,
+  "vi_du_van_con_sinh_nen": [
+   "AAOIUSDT",
+   "AAPLUSDT",
+   "ADBEUSDT",
+   "ALABUSDT",
+   "AMATUSDT",
+   "AMDUSDT",
+   "AMZNUSDT",
+   "ANTHROPICUSDT",
+   "APPUSDT",
+   "ARMUSDT",
+   "ASMLUSDT",
+   "ASTSUSDT"
+  ],
+  "so_ma_da_ngung_sinh_nen_THAT": 31
+ },
+ "khoang_ton_tai": {
+  "0GUSDT": {
+   "symbol": "0GUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "1000000BOBUSDT": {
+   "symbol": "1000000BOBUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30
+  },
+  "1000000MOGUSDT": {
+   "symbol": "1000000MOGUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44
+  },
+  "1000BONKUSDT": {
+   "symbol": "1000BONKUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68
+  },
+  "1000BTTCUSDT": {
+   "symbol": "1000BTTCUSDT",
+   "thang_dau": "2022-01",
+   "thang_cuoi": "2022-04",
+   "so_khoa": 8
+  },
+  "1000CATUSDT": {
+   "symbol": "1000CATUSDT",
+   "thang_dau": "2024-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 46
+  },
+  "1000CHEEMSUSDT": {
+   "symbol": "1000CHEEMSUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44
+  },
+  "1000FLOKIUSDT": {
+   "symbol": "1000FLOKIUSDT",
+   "thang_dau": "2023-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 80
+  },
+  "1000LUNCUSDT": {
+   "symbol": "1000LUNCUSDT",
+   "thang_dau": "2022-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 96
+  },
+  "1000PEPEUSDT": {
+   "symbol": "1000PEPEUSDT",
+   "thang_dau": "2023-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 80
+  },
+  "1000RATSUSDT": {
+   "symbol": "1000RATSUSDT",
+   "thang_dau": "2023-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 66
+  },
+  "1000SATSUSDT": {
+   "symbol": "1000SATSUSDT",
+   "thang_dau": "2023-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 66
+  },
+  "1000SHIBUSDT": {
+   "symbol": "1000SHIBUSDT",
+   "thang_dau": "2021-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 128
+  },
+  "1000WHYUSDT": {
+   "symbol": "1000WHYUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44
+  },
+  "1000XECUSDT": {
+   "symbol": "1000XECUSDT",
+   "thang_dau": "2021-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 120
+  },
+  "1000XUSDT": {
+   "symbol": "1000XUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44
+  },
+  "1INCHUSDT": {
+   "symbol": "1INCHUSDT",
+   "thang_dau": "2020-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 138
+  },
+  "1MBABYDOGEUSDT": {
+   "symbol": "1MBABYDOGEUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48
+  },
+  "2ZUSDT": {
+   "symbol": "2ZUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "42USDT": {
+   "symbol": "42USDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "4USDT": {
+   "symbol": "4USDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "A2ZUSDT": {
+   "symbol": "A2ZUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28
+  },
+  "AAOIUSDT": {
+   "symbol": "AAOIUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "AAPLUSDT": {
+   "symbol": "AAPLUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10
+  },
+  "AAVEUSDT": {
+   "symbol": "AAVEUSDT",
+   "thang_dau": "2020-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 142
+  },
+  "ACEUSDT": {
+   "symbol": "ACEUSDT",
+   "thang_dau": "2023-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 66
+  },
+  "ACHUSDT": {
+   "symbol": "ACHUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 86
+  },
+  "ACTUSDT": {
+   "symbol": "ACTUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44
+  },
+  "ACUUSDT": {
+   "symbol": "ACUUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16
+  },
+  "ACXUSDT": {
+   "symbol": "ACXUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42
+  },
+  "ADAUSDT": {
+   "symbol": "ADAUSDT",
+   "thang_dau": "2020-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 160
+  },
+  "ADBEUSDT": {
+   "symbol": "ADBEUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "AERGOUSDT": {
+   "symbol": "AERGOUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-06",
+   "so_khoa": 44
+  },
+  "AEROUSDT": {
+   "symbol": "AEROUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42
+  },
+  "AEVOUSDT": {
+   "symbol": "AEVOUSDT",
+   "thang_dau": "2024-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 60
+  },
+  "AGIXUSDT": {
+   "symbol": "AGIXUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 86
+  },
+  "AGLDUSDT": {
+   "symbol": "AGLDUSDT",
+   "thang_dau": "2023-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 76
+  },
+  "AGTUSDT": {
+   "symbol": "AGTUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32
+  },
+  "AI16ZUSDT": {
+   "symbol": "AI16ZUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40
+  },
+  "AIAUSDT": {
+   "symbol": "AIAUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "AIGENSYNUSDT": {
+   "symbol": "AIGENSYNUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10
+  },
+  "AINUSDT": {
+   "symbol": "AINUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28
+  },
+  "AIOTUSDT": {
+   "symbol": "AIOTUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34
+  },
+  "AIOUSDT": {
+   "symbol": "AIOUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26
+  },
+  "AIUSDT": {
+   "symbol": "AIUSDT",
+   "thang_dau": "2024-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 64
+  },
+  "AIXBTUSDT": {
+   "symbol": "AIXBTUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42
+  },
+  "AKEUSDT": {
+   "symbol": "AKEUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "AKROUSDT": {
+   "symbol": "AKROUSDT",
+   "thang_dau": "2021-01",
+   "thang_cuoi": "2022-05",
+   "so_khoa": 34
+  },
+  "AKTUSDT": {
+   "symbol": "AKTUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44
+  },
+  "ALABUSDT": {
+   "symbol": "ALABUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "ALCHUSDT": {
+   "symbol": "ALCHUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40
+  },
+  "ALGOUSDT": {
+   "symbol": "ALGOUSDT",
+   "thang_dau": "2020-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 150
+  },
+  "ALICEUSDT": {
+   "symbol": "ALICEUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 132
+  },
+  "ALLOUSDT": {
+   "symbol": "ALLOUSDT",
+   "thang_dau": "2025-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 20
+  },
+  "ALLUSDT": {
+   "symbol": "ALLUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26
+  },
+  "ALPACAUSDT": {
+   "symbol": "ALPACAUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50
+  },
+  "ALPHAUSDT": {
+   "symbol": "ALPHAUSDT",
+   "thang_dau": "2020-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 140
+  },
+  "ALPINEUSDT": {
+   "symbol": "ALPINEUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32
+  },
+  "ALTUSDT": {
+   "symbol": "ALTUSDT",
+   "thang_dau": "2024-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 64
+  },
+  "AMATUSDT": {
+   "symbol": "AMATUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "AMBUSDT": {
+   "symbol": "AMBUSDT",
+   "thang_dau": "2023-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 84
+  },
+  "AMDUSDT": {
+   "symbol": "AMDUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "AMZNUSDT": {
+   "symbol": "AMZNUSDT",
+   "thang_dau": "2026-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 14
+  },
+  "ANCUSDT": {
+   "symbol": "ANCUSDT",
+   "thang_dau": "2022-03",
+   "thang_cuoi": "2022-05",
+   "so_khoa": 6
+  },
+  "ANIMEUSDT": {
+   "symbol": "ANIMEUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40
+  },
+  "ANKRUSDT": {
+   "symbol": "ANKRUSDT",
+   "thang_dau": "2021-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 136
+  },
+  "ANTHROPICUSDT": {
+   "symbol": "ANTHROPICUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "ANTUSDT": {
+   "symbol": "ANTUSDT",
+   "thang_dau": "2021-12",
+   "thang_cuoi": "2024-05",
+   "so_khoa": 60
+  },
+  "APEUSDT": {
+   "symbol": "APEUSDT",
+   "thang_dau": "2022-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 108
+  },
+  "API3USDT": {
+   "symbol": "API3USDT",
+   "thang_dau": "2022-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 110
+  },
+  "APPUSDT": {
+   "symbol": "APPUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "APRUSDT": {
+   "symbol": "APRUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "APTUSDT": {
+   "symbol": "APTUSDT",
+   "thang_dau": "2022-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 94
+  },
+  "ARBUSDT": {
+   "symbol": "ARBUSDT",
+   "thang_dau": "2023-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 84
+  },
+  "ARCUSDT": {
+   "symbol": "ARCUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40
+  },
+  "ARIAUSDT": {
+   "symbol": "ARIAUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "ARKMUSDT": {
+   "symbol": "ARKMUSDT",
+   "thang_dau": "2023-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 76
+  },
+  "ARKUSDT": {
+   "symbol": "ARKUSDT",
+   "thang_dau": "2023-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 72
+  },
+  "ARMUSDT": {
+   "symbol": "ARMUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "ARPAUSDT": {
+   "symbol": "ARPAUSDT",
+   "thang_dau": "2021-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 118
+  },
+  "ARUSDT": {
+   "symbol": "ARUSDT",
+   "thang_dau": "2021-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 120
+  },
+  "ARXUSDT": {
+   "symbol": "ARXUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "ASMLUSDT": {
+   "symbol": "ASMLUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "ASRUSDT": {
+   "symbol": "ASRUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32
+  },
+  "ASTERUSDT": {
+   "symbol": "ASTERUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "ASTRUSDT": {
+   "symbol": "ASTRUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 86
+  },
+  "ASTSUSDT": {
+   "symbol": "ASTSUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "ATAUSDT": {
+   "symbol": "ATAUSDT",
+   "thang_dau": "2021-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 122
+  },
+  "ATHUSDT": {
+   "symbol": "ATHUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34
+  },
+  "ATOMUSDT": {
+   "symbol": "ATOMUSDT",
+   "thang_dau": "2020-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 158
+  },
+  "ATUSDT": {
+   "symbol": "ATUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "AUCTIONUSDT": {
+   "symbol": "AUCTIONUSDT",
+   "thang_dau": "2023-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 66
+  },
+  "AUDIOUSDT": {
+   "symbol": "AUDIOUSDT",
+   "thang_dau": "2021-08",
+   "thang_cuoi": "2024-05",
+   "so_khoa": 68
+  },
+  "AUSDT": {
+   "symbol": "AUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32
+  },
+  "AVAAIUSDT": {
+   "symbol": "AVAAIUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40
+  },
+  "AVAUSDT": {
+   "symbol": "AVAUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42
+  },
+  "AVAXUSDT": {
+   "symbol": "AVAXUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144
+  },
+  "AVGOUSDT": {
+   "symbol": "AVGOUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10
+  },
+  "AVNTUSDT": {
+   "symbol": "AVNTUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "AWEUSDT": {
+   "symbol": "AWEUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32
+  },
+  "AXLUSDT": {
+   "symbol": "AXLUSDT",
+   "thang_dau": "2024-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 60
+  },
+  "AXSUSDT": {
+   "symbol": "AXSUSDT",
+   "thang_dau": "2020-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 140
+  },
+  "AXTIUSDT": {
+   "symbol": "AXTIUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "AZTECUSDT": {
+   "symbol": "AZTECUSDT",
+   "thang_dau": "2026-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 14
+  },
+  "B2USDT": {
+   "symbol": "B2USDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32
+  },
+  "B3USDT": {
+   "symbol": "B3USDT",
+   "thang_dau": "2025-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 38
+  },
+  "BABAUSDT": {
+   "symbol": "BABAUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10
+  },
+  "BABYUSDT": {
+   "symbol": "BABYUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34
+  },
+  "BADGERUSDT": {
+   "symbol": "BADGERUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68
+  },
+  "BAKEUSDT": {
+   "symbol": "BAKEUSDT",
+   "thang_dau": "2021-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 128
+  },
+  "BALUSDT": {
+   "symbol": "BALUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144
+  },
+  "BANANAS31USDT": {
+   "symbol": "BANANAS31USDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36
+  },
+  "BANANAUSDT": {
+   "symbol": "BANANAUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50
+  },
+  "BANDUSDT": {
+   "symbol": "BANDUSDT",
+   "thang_dau": "2020-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 148
+  },
+  "BANKUSDT": {
+   "symbol": "BANKUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34
+  },
+  "BANUSDT": {
+   "symbol": "BANUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44
+  },
+  "BARDUSDT": {
+   "symbol": "BARDUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "BASEDUSDT": {
+   "symbol": "BASEDUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12
+  },
+  "BASUSDT": {
+   "symbol": "BASUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26
+  },
+  "BATUSDT": {
+   "symbol": "BATUSDT",
+   "thang_dau": "2020-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 158
+  },
+  "BBUSDT": {
+   "symbol": "BBUSDT",
+   "thang_dau": "2024-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 56
+  },
+  "BBXUSDT": {
+   "symbol": "BBXUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "BCHUSDT": {
+   "symbol": "BCHUSDT",
+   "thang_dau": "2020-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 160
+  },
+  "BDXNUSDT": {
+   "symbol": "BDXNUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-03",
+   "so_khoa": 20
+  },
+  "BEAMXUSDT": {
+   "symbol": "BEAMXUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68
+  },
+  "BEATUSDT": {
+   "symbol": "BEATUSDT",
+   "thang_dau": "2025-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 20
+  },
+  "BELUSDT": {
+   "symbol": "BELUSDT",
+   "thang_dau": "2020-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 140
+  },
+  "BERAUSDT": {
+   "symbol": "BERAUSDT",
+   "thang_dau": "2025-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 38
+  },
+  "BEUSDT": {
+   "symbol": "BEUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "BICOUSDT": {
+   "symbol": "BICOUSDT",
+   "thang_dau": "2023-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 72
+  },
+  "BIDUSDT": {
+   "symbol": "BIDUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36
+  },
+  "BIGTIMEUSDT": {
+   "symbol": "BIGTIMEUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70
+  },
+  "BILLUSDT": {
+   "symbol": "BILLUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "BIOUSDT": {
+   "symbol": "BIOUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40
+  },
+  "BIRBUSDT": {
+   "symbol": "BIRBUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16
+  },
+  "BITOUSDT": {
+   "symbol": "BITOUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "BLESSUSDT": {
+   "symbol": "BLESSUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "BLUAIUSDT": {
+   "symbol": "BLUAIUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "BLUEBIRDUSDT": {
+   "symbol": "BLUEBIRDUSDT",
+   "thang_dau": "2022-11",
+   "thang_cuoi": "2024-05",
+   "so_khoa": 38
+  },
+  "BLURUSDT": {
+   "symbol": "BLURUSDT",
+   "thang_dau": "2023-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 82
+  },
+  "BLZUSDT": {
+   "symbol": "BLZUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144
+  },
+  "BMNRUSDT": {
+   "symbol": "BMNRUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "BMTUSDT": {
+   "symbol": "BMTUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36
+  },
+  "BNBUSDT": {
+   "symbol": "BNBUSDT",
+   "thang_dau": "2020-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 158
+  },
+  "BNCUSDT": {
+   "symbol": "BNCUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "BNTUSDT": {
+   "symbol": "BNTUSDT",
+   "thang_dau": "2023-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 74
+  },
+  "BNXUSDT": {
+   "symbol": "BNXUSDT",
+   "thang_dau": "2022-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 106
+  },
+  "BOBUSDT": {
+   "symbol": "BOBUSDT",
+   "thang_dau": "2025-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 20
+  },
+  "BOMEUSDT": {
+   "symbol": "BOMEUSDT",
+   "thang_dau": "2024-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 60
+  },
+  "BONDUSDT": {
+   "symbol": "BONDUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70
+  },
+  "BOTUSDT": {
+   "symbol": "BOTUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "BRETTUSDT": {
+   "symbol": "BRETTUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50
+  },
+  "BREVUSDT": {
+   "symbol": "BREVUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18
+  },
+  "BRKBUSDT": {
+   "symbol": "BRKBUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "BROCCOLI714USDT": {
+   "symbol": "BROCCOLI714USDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36
+  },
+  "BROCCOLIF3BUSDT": {
+   "symbol": "BROCCOLIF3BUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36
+  },
+  "BRUSDT": {
+   "symbol": "BRUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36
+  },
+  "BSBUSDT": {
+   "symbol": "BSBUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12
+  },
+  "BSPUSDT": {
+   "symbol": "BSPUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "BSVUSDT": {
+   "symbol": "BSVUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70
+  },
+  "BSWUSDT": {
+   "symbol": "BSWUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48
+  },
+  "BTCDOMUSDT": {
+   "symbol": "BTCDOMUSDT",
+   "thang_dau": "2021-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 126
+  },
+  "BTCSTUSDT": {
+   "symbol": "BTCSTUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-06",
+   "so_khoa": 128
+  },
+  "BTCUSDT": {
+   "symbol": "BTCUSDT",
+   "thang_dau": "2020-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 160
+  },
+  "BTRUSDT": {
+   "symbol": "BTRUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26
+  },
+  "BTSUSDT": {
+   "symbol": "BTSUSDT",
+   "thang_dau": "2021-02",
+   "thang_cuoi": "2024-05",
+   "so_khoa": 80
+  },
+  "BTTUSDT": {
+   "symbol": "BTTUSDT",
+   "thang_dau": "2021-04",
+   "thang_cuoi": "2022-01",
+   "so_khoa": 20
+  },
+  "BTWUSDT": {
+   "symbol": "BTWUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "BULLAUSDT": {
+   "symbol": "BULLAUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28
+  },
+  "BUSDT": {
+   "symbol": "BUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32
+  },
+  "BXUSDT": {
+   "symbol": "BXUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "BZRXUSDT": {
+   "symbol": "BZRXUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2021-12",
+   "so_khoa": 32
+  },
+  "BZUSDT": {
+   "symbol": "BZUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10
+  },
+  "C98USDT": {
+   "symbol": "C98USDT",
+   "thang_dau": "2021-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 122
+  },
+  "CAKEUSDT": {
+   "symbol": "CAKEUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68
+  },
+  "CAPUSDT": {
+   "symbol": "CAPUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "CARVUSDT": {
+   "symbol": "CARVUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26
+  },
+  "CATIUSDT": {
+   "symbol": "CATIUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48
+  },
+  "CATUSDT": {
+   "symbol": "CATUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "CBRSUSDT": {
+   "symbol": "CBRSUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "CCUSDT": {
+   "symbol": "CCUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "CELOUSDT": {
+   "symbol": "CELOUSDT",
+   "thang_dau": "2021-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 120
+  },
+  "CELRUSDT": {
+   "symbol": "CELRUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 132
+  },
+  "CETUSUSDT": {
+   "symbol": "CETUSUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44
+  },
+  "CFGUSDT": {
+   "symbol": "CFGUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12
+  },
+  "CFXUSDT": {
+   "symbol": "CFXUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 86
+  },
+  "CGPTUSDT": {
+   "symbol": "CGPTUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42
+  },
+  "CHESSUSDT": {
+   "symbol": "CHESSUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50
+  },
+  "CHILLGUYUSDT": {
+   "symbol": "CHILLGUYUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44
+  },
+  "CHIPUSDT": {
+   "symbol": "CHIPUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10
+  },
+  "CHRUSDT": {
+   "symbol": "CHRUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 132
+  },
+  "CHZUSDT": {
+   "symbol": "CHZUSDT",
+   "thang_dau": "2021-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 136
+  },
+  "CIENUSDT": {
+   "symbol": "CIENUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "CKBUSDT": {
+   "symbol": "CKBUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 86
+  },
+  "CLANKERUSDT": {
+   "symbol": "CLANKERUSDT",
+   "thang_dau": "2025-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 20
+  },
+  "CLOUSDT": {
+   "symbol": "CLOUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "CLUSDT": {
+   "symbol": "CLUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10
+  },
+  "COAIUSDT": {
+   "symbol": "COAIUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "COCOSUSDT": {
+   "symbol": "COCOSUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2024-05",
+   "so_khoa": 32
+  },
+  "COHRUSDT": {
+   "symbol": "COHRUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "COINUSDT": {
+   "symbol": "COINUSDT",
+   "thang_dau": "2026-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 14
+  },
+  "COLLECTUSDT": {
+   "symbol": "COLLECTUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18
+  },
+  "COMBOUSDT": {
+   "symbol": "COMBOUSDT",
+   "thang_dau": "2023-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 78
+  },
+  "COMMONUSDT": {
+   "symbol": "COMMONUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "COMPUSDT": {
+   "symbol": "COMPUSDT",
+   "thang_dau": "2020-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 150
+  },
+  "COOKIEUSDT": {
+   "symbol": "COOKIEUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40
+  },
+  "COPPERUSDT": {
+   "symbol": "COPPERUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12
+  },
+  "COSTUSDT": {
+   "symbol": "COSTUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "COSUSDT": {
+   "symbol": "COSUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48
+  },
+  "COTIUSDT": {
+   "symbol": "COTIUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 132
+  },
+  "COWUSDT": {
+   "symbol": "COWUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44
+  },
+  "CRCLUSDT": {
+   "symbol": "CRCLUSDT",
+   "thang_dau": "2026-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 14
+  },
+  "CRDOUSDT": {
+   "symbol": "CRDOUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "CRMUSDT": {
+   "symbol": "CRMUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "CROSSUSDT": {
+   "symbol": "CROSSUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28
+  },
+  "CRVUSDT": {
+   "symbol": "CRVUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144
+  },
+  "CRWDUSDT": {
+   "symbol": "CRWDUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "CRWVUSDT": {
+   "symbol": "CRWVUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "CSCOUSDT": {
+   "symbol": "CSCOUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "CSOPSAMSUNG2LUSDT": {
+   "symbol": "CSOPSAMSUNG2LUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "CSOPSKHYNIX2LUSDT": {
+   "symbol": "CSOPSKHYNIX2LUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "CTKUSDT": {
+   "symbol": "CTKUSDT",
+   "thang_dau": "2020-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 140
+  },
+  "CTRUSDT": {
+   "symbol": "CTRUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "CTSIUSDT": {
+   "symbol": "CTSIUSDT",
+   "thang_dau": "2021-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 118
+  },
+  "CUDISUSDT": {
+   "symbol": "CUDISUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26
+  },
+  "CUSDT": {
+   "symbol": "CUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28
+  },
+  "CVCUSDT": {
+   "symbol": "CVCUSDT",
+   "thang_dau": "2020-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 140
+  },
+  "CVXUSDT": {
+   "symbol": "CVXUSDT",
+   "thang_dau": "2022-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 96
+  },
+  "CXMTUSDT": {
+   "symbol": "CXMTUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "CYBERUSDT": {
+   "symbol": "CYBERUSDT",
+   "thang_dau": "2023-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 74
+  },
+  "CYSUSDT": {
+   "symbol": "CYSUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18
+  },
+  "DAMUSDT": {
+   "symbol": "DAMUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26
+  },
+  "DARUSDT": {
+   "symbol": "DARUSDT",
+   "thang_dau": "2022-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 106
+  },
+  "DASHUSDT": {
+   "symbol": "DASHUSDT",
+   "thang_dau": "2020-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 158
+  },
+  "DATAIPUSDT": {
+   "symbol": "DATAIPUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "DEEPUSDT": {
+   "symbol": "DEEPUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34
+  },
+  "DEFIUSDT": {
+   "symbol": "DEFIUSDT",
+   "thang_dau": "2020-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 146
+  },
+  "DEGENUSDT": {
+   "symbol": "DEGENUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44
+  },
+  "DEGOUSDT": {
+   "symbol": "DEGOUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42
+  },
+  "DELLUSDT": {
+   "symbol": "DELLUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "DENTUSDT": {
+   "symbol": "DENTUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 132
+  },
+  "DEXEUSDT": {
+   "symbol": "DEXEUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42
+  },
+  "DFUSDT": {
+   "symbol": "DFUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42
+  },
+  "DGBUSDT": {
+   "symbol": "DGBUSDT",
+   "thang_dau": "2021-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 130
+  },
+  "DIAUSDT": {
+   "symbol": "DIAUSDT",
+   "thang_dau": "2024-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 46
+  },
+  "DISUSDT": {
+   "symbol": "DISUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "DJTUSDT": {
+   "symbol": "DJTUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "DKNGUSDT": {
+   "symbol": "DKNGUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "DMCUSDT": {
+   "symbol": "DMCUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30
+  },
+  "DODOUSDT": {
+   "symbol": "DODOUSDT",
+   "thang_dau": "2021-02",
+   "thang_cuoi": "2022-05",
+   "so_khoa": 32
+  },
+  "DODOXUSDT": {
+   "symbol": "DODOXUSDT",
+   "thang_dau": "2023-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 74
+  },
+  "DOGEUSDT": {
+   "symbol": "DOGEUSDT",
+   "thang_dau": "2020-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 148
+  },
+  "DOGSUSDT": {
+   "symbol": "DOGSUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50
+  },
+  "DOLOUSDT": {
+   "symbol": "DOLOUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32
+  },
+  "DOODUSDT": {
+   "symbol": "DOODUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32
+  },
+  "DOSUSDT": {
+   "symbol": "DOSUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "DOTECOUSDT": {
+   "symbol": "DOTECOUSDT",
+   "thang_dau": "2021-01",
+   "thang_cuoi": "2021-02",
+   "so_khoa": 4
+  },
+  "DOTUSDT": {
+   "symbol": "DOTUSDT",
+   "thang_dau": "2020-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 146
+  },
+  "DRAMUSDT": {
+   "symbol": "DRAMUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "DRIFTUSDT": {
+   "symbol": "DRIFTUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44
+  },
+  "DUSDT": {
+   "symbol": "DUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40
+  },
+  "DUSKUSDT": {
+   "symbol": "DUSKUSDT",
+   "thang_dau": "2022-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 112
+  },
+  "DYDXUSDT": {
+   "symbol": "DYDXUSDT",
+   "thang_dau": "2021-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 120
+  },
+  "DYMUSDT": {
+   "symbol": "DYMUSDT",
+   "thang_dau": "2024-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 62
+  },
+  "EBAYUSDT": {
+   "symbol": "EBAYUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "EDENUSDT": {
+   "symbol": "EDENUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "EDGEUSDT": {
+   "symbol": "EDGEUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12
+  },
+  "EDUUSDT": {
+   "symbol": "EDUUSDT",
+   "thang_dau": "2023-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 82
+  },
+  "EGLDUSDT": {
+   "symbol": "EGLDUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144
+  },
+  "EIGENUSDT": {
+   "symbol": "EIGENUSDT",
+   "thang_dau": "2024-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 46
+  },
+  "ELSAUSDT": {
+   "symbol": "ELSAUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16
+  },
+  "ENAUSDT": {
+   "symbol": "ENAUSDT",
+   "thang_dau": "2024-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 58
+  },
+  "ENJUSDT": {
+   "symbol": "ENJUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144
+  },
+  "ENSOUSDT": {
+   "symbol": "ENSOUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "ENSUSDT": {
+   "symbol": "ENSUSDT",
+   "thang_dau": "2021-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 116
+  },
+  "EOSUSDT": {
+   "symbol": "EOSUSDT",
+   "thang_dau": "2020-01",
+   "thang_cuoi": "2025-05",
+   "so_khoa": 130
+  },
+  "EPICUSDT": {
+   "symbol": "EPICUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36
+  },
+  "EPTUSDT": {
+   "symbol": "EPTUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34
+  },
+  "ERAUSDT": {
+   "symbol": "ERAUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28
+  },
+  "ESPORTSUSDT": {
+   "symbol": "ESPORTSUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28
+  },
+  "ESPUSDT": {
+   "symbol": "ESPUSDT",
+   "thang_dau": "2026-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 14
+  },
+  "ETCUSDT": {
+   "symbol": "ETCUSDT",
+   "thang_dau": "2020-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 160
+  },
+  "ETHFIUSDT": {
+   "symbol": "ETHFIUSDT",
+   "thang_dau": "2024-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 60
+  },
+  "ETHUSDT": {
+   "symbol": "ETHUSDT",
+   "thang_dau": "2020-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 160
+  },
+  "ETHWUSDT": {
+   "symbol": "ETHWUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68
+  },
+  "EULUSDT": {
+   "symbol": "EULUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "EVAAUSDT": {
+   "symbol": "EVAAUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "EWJUSDT": {
+   "symbol": "EWJUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12
+  },
+  "EWTUSDT": {
+   "symbol": "EWTUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "EWYUSDT": {
+   "symbol": "EWYUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12
+  },
+  "EWZUSDT": {
+   "symbol": "EWZUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "FARTCOINUSDT": {
+   "symbol": "FARTCOINUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42
+  },
+  "FETUSDT": {
+   "symbol": "FETUSDT",
+   "thang_dau": "2023-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 88
+  },
+  "FFUSDT": {
+   "symbol": "FFUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "FHEUSDT": {
+   "symbol": "FHEUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34
+  },
+  "FIDAUSDT": {
+   "symbol": "FIDAUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48
+  },
+  "FIGHTUSDT": {
+   "symbol": "FIGHTUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16
+  },
+  "FILUSDT": {
+   "symbol": "FILUSDT",
+   "thang_dau": "2020-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 142
+  },
+  "FIOUSDT": {
+   "symbol": "FIOUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48
+  },
+  "FISUSDT": {
+   "symbol": "FISUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34
+  },
+  "FLEXUSDT": {
+   "symbol": "FLEXUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "FLMUSDT": {
+   "symbol": "FLMUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144
+  },
+  "FLNCUSDT": {
+   "symbol": "FLNCUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "FLOCKUSDT": {
+   "symbol": "FLOCKUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "FLOWUSDT": {
+   "symbol": "FLOWUSDT",
+   "thang_dau": "2022-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 110
+  },
+  "FLUIDUSDT": {
+   "symbol": "FLUIDUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "FLUXUSDT": {
+   "symbol": "FLUXUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48
+  },
+  "FOGOUSDT": {
+   "symbol": "FOGOUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16
+  },
+  "FOLKSUSDT": {
+   "symbol": "FOLKSUSDT",
+   "thang_dau": "2025-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 20
+  },
+  "FOOTBALLUSDT": {
+   "symbol": "FOOTBALLUSDT",
+   "thang_dau": "2022-09",
+   "thang_cuoi": "2024-05",
+   "so_khoa": 42
+  },
+  "FORMUSDT": {
+   "symbol": "FORMUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36
+  },
+  "FORTHUSDT": {
+   "symbol": "FORTHUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34
+  },
+  "FRAXUSDT": {
+   "symbol": "FRAXUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16
+  },
+  "FRONTUSDT": {
+   "symbol": "FRONTUSDT",
+   "thang_dau": "2023-09",
+   "thang_cuoi": "2024-09",
+   "so_khoa": 26
+  },
+  "FTMUSDT": {
+   "symbol": "FTMUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144
+  },
+  "FTTUSDT": {
+   "symbol": "FTTUSDT",
+   "thang_dau": "2022-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 106
+  },
+  "FUNUSDT": {
+   "symbol": "FUNUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36
+  },
+  "FUSDT": {
+   "symbol": "FUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30
+  },
+  "FWDIUSDT": {
+   "symbol": "FWDIUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "FXSUSDT": {
+   "symbol": "FXSUSDT",
+   "thang_dau": "2023-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 88
+  },
+  "GALAUSDT": {
+   "symbol": "GALAUSDT",
+   "thang_dau": "2021-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 120
+  },
+  "GALUSDT": {
+   "symbol": "GALUSDT",
+   "thang_dau": "2022-05",
+   "thang_cuoi": "2024-07",
+   "so_khoa": 54
+  },
+  "GASUSDT": {
+   "symbol": "GASUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70
+  },
+  "GDXUSDT": {
+   "symbol": "GDXUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "GENIUSUSDT": {
+   "symbol": "GENIUSUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10
+  },
+  "GEVUSDT": {
+   "symbol": "GEVUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "GHSTUSDT": {
+   "symbol": "GHSTUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48
+  },
+  "GIGADEVUSDT": {
+   "symbol": "GIGADEVUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "GIGGLEUSDT": {
+   "symbol": "GIGGLEUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "GLMRUSDT": {
+   "symbol": "GLMRUSDT",
+   "thang_dau": "2023-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 72
+  },
+  "GLMUSDT": {
+   "symbol": "GLMUSDT",
+   "thang_dau": "2024-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 62
+  },
+  "GLWUSDT": {
+   "symbol": "GLWUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "GMEUSDT": {
+   "symbol": "GMEUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "GMTUSDT": {
+   "symbol": "GMTUSDT",
+   "thang_dau": "2022-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 108
+  },
+  "GMXUSDT": {
+   "symbol": "GMXUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 86
+  },
+  "GOATUSDT": {
+   "symbol": "GOATUSDT",
+   "thang_dau": "2024-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 46
+  },
+  "GOOGLUSDT": {
+   "symbol": "GOOGLUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12
+  },
+  "GPSUSDT": {
+   "symbol": "GPSUSDT",
+   "thang_dau": "2025-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 38
+  },
+  "GRAMUSDT": {
+   "symbol": "GRAMUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "GRASSUSDT": {
+   "symbol": "GRASSUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44
+  },
+  "GRIFFAINUSDT": {
+   "symbol": "GRIFFAINUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40
+  },
+  "GRTUSDT": {
+   "symbol": "GRTUSDT",
+   "thang_dau": "2020-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 138
+  },
+  "GRVTUSDT": {
+   "symbol": "GRVTUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "GSUSDT": {
+   "symbol": "GSUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "GTCUSDT": {
+   "symbol": "GTCUSDT",
+   "thang_dau": "2021-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 126
+  },
+  "GUAUSDT": {
+   "symbol": "GUAUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18
+  },
+  "GUNUSDT": {
+   "symbol": "GUNUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36
+  },
+  "GUSDT": {
+   "symbol": "GUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50
+  },
+  "GWEIUSDT": {
+   "symbol": "GWEIUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16
+  },
+  "HAEDALUSDT": {
+   "symbol": "HAEDALUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32
+  },
+  "HANAUSDT": {
+   "symbol": "HANAUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "HANMIUSDT": {
+   "symbol": "HANMIUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "HBARUSDT": {
+   "symbol": "HBARUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 132
+  },
+  "HDUSDT": {
+   "symbol": "HDUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "HEIUSDT": {
+   "symbol": "HEIUSDT",
+   "thang_dau": "2025-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 38
+  },
+  "HEMIUSDT": {
+   "symbol": "HEMIUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26
+  },
+  "HFTUSDT": {
+   "symbol": "HFTUSDT",
+   "thang_dau": "2023-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 82
+  },
+  "HIFIUSDT": {
+   "symbol": "HIFIUSDT",
+   "thang_dau": "2023-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 72
+  },
+  "HIGHUSDT": {
+   "symbol": "HIGHUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 86
+  },
+  "HIMSUSDT": {
+   "symbol": "HIMSUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "HIPPOUSDT": {
+   "symbol": "HIPPOUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44
+  },
+  "HIVEUSDT": {
+   "symbol": "HIVEUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42
+  },
+  "HK0700USDT": {
+   "symbol": "HK0700USDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "HK1810USDT": {
+   "symbol": "HK1810USDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "HMSTRUSDT": {
+   "symbol": "HMSTRUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48
+  },
+  "HNTUSDT": {
+   "symbol": "HNTUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2024-05",
+   "so_khoa": 90
+  },
+  "HOLOUSDT": {
+   "symbol": "HOLOUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "HOMEUSDT": {
+   "symbol": "HOMEUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30
+  },
+  "HOODUSDT": {
+   "symbol": "HOODUSDT",
+   "thang_dau": "2026-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 14
+  },
+  "HOOKUSDT": {
+   "symbol": "HOOKUSDT",
+   "thang_dau": "2023-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 88
+  },
+  "HOTUSDT": {
+   "symbol": "HOTUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 132
+  },
+  "HPEUSDT": {
+   "symbol": "HPEUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "HUMAUSDT": {
+   "symbol": "HUMAUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32
+  },
+  "HUSDT": {
+   "symbol": "HUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30
+  },
+  "HYPERUSDT": {
+   "symbol": "HYPERUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34
+  },
+  "HYPEUSDT": {
+   "symbol": "HYPEUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32
+  },
+  "HYUNDAIUSDT": {
+   "symbol": "HYUNDAIUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "IBMUSDT": {
+   "symbol": "IBMUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "ICNTUSDT": {
+   "symbol": "ICNTUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28
+  },
+  "ICPUSDT": {
+   "symbol": "ICPUSDT",
+   "thang_dau": "2021-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 128
+  },
+  "ICXUSDT": {
+   "symbol": "ICXUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144
+  },
+  "IDEXUSDT": {
+   "symbol": "IDEXUSDT",
+   "thang_dau": "2023-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 80
+  },
+  "IDOLUSDT": {
+   "symbol": "IDOLUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28
+  },
+  "IDUSDT": {
+   "symbol": "IDUSDT",
+   "thang_dau": "2023-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 84
+  },
+  "ILVUSDT": {
+   "symbol": "ILVUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68
+  },
+  "IMXUSDT": {
+   "symbol": "IMXUSDT",
+   "thang_dau": "2022-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 110
+  },
+  "INITUSDT": {
+   "symbol": "INITUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34
+  },
+  "INJUSDT": {
+   "symbol": "INJUSDT",
+   "thang_dau": "2022-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 98
+  },
+  "INTCUSDT": {
+   "symbol": "INTCUSDT",
+   "thang_dau": "2026-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 14
+  },
+  "INTWUSDT": {
+   "symbol": "INTWUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "INUSDT": {
+   "symbol": "INUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26
+  },
+  "INXUSDT": {
+   "symbol": "INXUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16
+  },
+  "IONQUSDT": {
+   "symbol": "IONQUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "IOSTUSDT": {
+   "symbol": "IOSTUSDT",
+   "thang_dau": "2020-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 158
+  },
+  "IOTAUSDT": {
+   "symbol": "IOTAUSDT",
+   "thang_dau": "2020-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 158
+  },
+  "IOTXUSDT": {
+   "symbol": "IOTXUSDT",
+   "thang_dau": "2021-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 122
+  },
+  "IOUSDT": {
+   "symbol": "IOUSDT",
+   "thang_dau": "2024-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 54
+  },
+  "IPUSDT": {
+   "symbol": "IPUSDT",
+   "thang_dau": "2025-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 38
+  },
+  "IRENUSDT": {
+   "symbol": "IRENUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "IRUSDT": {
+   "symbol": "IRUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18
+  },
+  "IRYSUSDT": {
+   "symbol": "IRYSUSDT",
+   "thang_dau": "2025-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 20
+  },
+  "IWMUSDT": {
+   "symbol": "IWMUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "JASMYUSDT": {
+   "symbol": "JASMYUSDT",
+   "thang_dau": "2022-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 106
+  },
+  "JCTUSDT": {
+   "symbol": "JCTUSDT",
+   "thang_dau": "2025-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 20
+  },
+  "JELLYJELLYUSDT": {
+   "symbol": "JELLYJELLYUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36
+  },
+  "JOEUSDT": {
+   "symbol": "JOEUSDT",
+   "thang_dau": "2023-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 84
+  },
+  "JPMUSDT": {
+   "symbol": "JPMUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "JSTUSDT": {
+   "symbol": "JSTUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34
+  },
+  "JTOUSDT": {
+   "symbol": "JTOUSDT",
+   "thang_dau": "2023-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 66
+  },
+  "JUPUSDT": {
+   "symbol": "JUPUSDT",
+   "thang_dau": "2024-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 64
+  },
+  "KAIAUSDT": {
+   "symbol": "KAIAUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42
+  },
+  "KAITOUSDT": {
+   "symbol": "KAITOUSDT",
+   "thang_dau": "2025-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 38
+  },
+  "KASUSDT": {
+   "symbol": "KASUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68
+  },
+  "KATUSDT": {
+   "symbol": "KATUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12
+  },
+  "KAVAUSDT": {
+   "symbol": "KAVAUSDT",
+   "thang_dau": "2020-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 148
+  },
+  "KDAUSDT": {
+   "symbol": "KDAUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48
+  },
+  "KEEPUSDT": {
+   "symbol": "KEEPUSDT",
+   "thang_dau": "2021-06",
+   "thang_cuoi": "2022-02",
+   "so_khoa": 18
+  },
+  "KERNELUSDT": {
+   "symbol": "KERNELUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34
+  },
+  "KEYUSDT": {
+   "symbol": "KEYUSDT",
+   "thang_dau": "2023-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 80
+  },
+  "KGENUSDT": {
+   "symbol": "KGENUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "KITEUSDT": {
+   "symbol": "KITEUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "KLACUSDT": {
+   "symbol": "KLACUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "KLAYUSDT": {
+   "symbol": "KLAYUSDT",
+   "thang_dau": "2021-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 118
+  },
+  "KMNOUSDT": {
+   "symbol": "KMNOUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42
+  },
+  "KNCUSDT": {
+   "symbol": "KNCUSDT",
+   "thang_dau": "2020-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 150
+  },
+  "KODEX200USDT": {
+   "symbol": "KODEX200USDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "KOMAUSDT": {
+   "symbol": "KOMAUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42
+  },
+  "KORUUSDT": {
+   "symbol": "KORUUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "KOUSDT": {
+   "symbol": "KOUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "KSMUSDT": {
+   "symbol": "KSMUSDT",
+   "thang_dau": "2020-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 142
+  },
+  "KSTRUSDT": {
+   "symbol": "KSTRUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "KUAISHOUUSDT": {
+   "symbol": "KUAISHOUUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "LABUSDT": {
+   "symbol": "LABUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "LAUSDT": {
+   "symbol": "LAUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30
+  },
+  "LAYERUSDT": {
+   "symbol": "LAYERUSDT",
+   "thang_dau": "2025-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 38
+  },
+  "LDOUSDT": {
+   "symbol": "LDOUSDT",
+   "thang_dau": "2022-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 96
+  },
+  "LENDUSDT": {
+   "symbol": "LENDUSDT",
+   "thang_dau": "2020-07",
+   "thang_cuoi": "2020-11",
+   "so_khoa": 10
+  },
+  "LEVERUSDT": {
+   "symbol": "LEVERUSDT",
+   "thang_dau": "2023-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 84
+  },
+  "LGELECTRONICSUSDT": {
+   "symbol": "LGELECTRONICSUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "LIGHTUSDT": {
+   "symbol": "LIGHTUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "LINAUSDT": {
+   "symbol": "LINAUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 132
+  },
+  "LINEAUSDT": {
+   "symbol": "LINEAUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "LINKUSDT": {
+   "symbol": "LINKUSDT",
+   "thang_dau": "2020-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 160
+  },
+  "LISTAUSDT": {
+   "symbol": "LISTAUSDT",
+   "thang_dau": "2024-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 54
+  },
+  "LITEUSDT": {
+   "symbol": "LITEUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "LITUSDT": {
+   "symbol": "LITUSDT",
+   "thang_dau": "2021-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 134
+  },
+  "LLYUSDT": {
+   "symbol": "LLYUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "LOKAUSDT": {
+   "symbol": "LOKAUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48
+  },
+  "LOOMUSDT": {
+   "symbol": "LOOMUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70
+  },
+  "LPTUSDT": {
+   "symbol": "LPTUSDT",
+   "thang_dau": "2021-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 116
+  },
+  "LQTYUSDT": {
+   "symbol": "LQTYUSDT",
+   "thang_dau": "2023-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 84
+  },
+  "LRCUSDT": {
+   "symbol": "LRCUSDT",
+   "thang_dau": "2020-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 142
+  },
+  "LRCXUSDT": {
+   "symbol": "LRCXUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "LSKUSDT": {
+   "symbol": "LSKUSDT",
+   "thang_dau": "2024-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 64
+  },
+  "LTCUSDT": {
+   "symbol": "LTCUSDT",
+   "thang_dau": "2020-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 160
+  },
+  "LUMIAUSDT": {
+   "symbol": "LUMIAUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42
+  },
+  "LUNA2USDT": {
+   "symbol": "LUNA2USDT",
+   "thang_dau": "2022-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 96
+  },
+  "LUNAUSDT": {
+   "symbol": "LUNAUSDT",
+   "thang_dau": "2021-01",
+   "thang_cuoi": "2022-05",
+   "so_khoa": 34
+  },
+  "LYNUSDT": {
+   "symbol": "LYNUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "LYTEUSDT": {
+   "symbol": "LYTEUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "MAGICUSDT": {
+   "symbol": "MAGICUSDT",
+   "thang_dau": "2023-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 88
+  },
+  "MAGMAUSDT": {
+   "symbol": "MAGMAUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18
+  },
+  "MANAUSDT": {
+   "symbol": "MANAUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 132
+  },
+  "MANTAUSDT": {
+   "symbol": "MANTAUSDT",
+   "thang_dau": "2024-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 64
+  },
+  "MANTRAUSDT": {
+   "symbol": "MANTRAUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12
+  },
+  "MARAUSDT": {
+   "symbol": "MARAUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "MASKUSDT": {
+   "symbol": "MASKUSDT",
+   "thang_dau": "2021-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 122
+  },
+  "MATICUSDT": {
+   "symbol": "MATICUSDT",
+   "thang_dau": "2020-10",
+   "thang_cuoi": "2024-09",
+   "so_khoa": 96
+  },
+  "MAVIAUSDT": {
+   "symbol": "MAVIAUSDT",
+   "thang_dau": "2024-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 62
+  },
+  "MAVUSDT": {
+   "symbol": "MAVUSDT",
+   "thang_dau": "2023-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 78
+  },
+  "MBLUSDT": {
+   "symbol": "MBLUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2024-05",
+   "so_khoa": 14
+  },
+  "MBOXUSDT": {
+   "symbol": "MBOXUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50
+  },
+  "MDTUSDT": {
+   "symbol": "MDTUSDT",
+   "thang_dau": "2023-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 78
+  },
+  "MEGAUSDT": {
+   "symbol": "MEGAUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16
+  },
+  "MEITUANUSDT": {
+   "symbol": "MEITUANUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "MELANIAUSDT": {
+   "symbol": "MELANIAUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40
+  },
+  "MEMEFIUSDT": {
+   "symbol": "MEMEFIUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34
+  },
+  "MEMEUSDT": {
+   "symbol": "MEMEUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68
+  },
+  "MERLUSDT": {
+   "symbol": "MERLUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32
+  },
+  "METAUSDT": {
+   "symbol": "METAUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12
+  },
+  "METISUSDT": {
+   "symbol": "METISUSDT",
+   "thang_dau": "2024-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 60
+  },
+  "METUSDT": {
+   "symbol": "METUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "MEUSDT": {
+   "symbol": "MEUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42
+  },
+  "MEWUSDT": {
+   "symbol": "MEWUSDT",
+   "thang_dau": "2024-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 54
+  },
+  "MILKUSDT": {
+   "symbol": "MILKUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32
+  },
+  "MINAUSDT": {
+   "symbol": "MINAUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 86
+  },
+  "MINIMAXUSDT": {
+   "symbol": "MINIMAXUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "MIRAUSDT": {
+   "symbol": "MIRAUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "MITOUSDT": {
+   "symbol": "MITOUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26
+  },
+  "MKRUSDT": {
+   "symbol": "MKRUSDT",
+   "thang_dau": "2020-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 146
+  },
+  "MLNUSDT": {
+   "symbol": "MLNUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36
+  },
+  "MMTUSDT": {
+   "symbol": "MMTUSDT",
+   "thang_dau": "2025-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 20
+  },
+  "MOCAUSDT": {
+   "symbol": "MOCAUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42
+  },
+  "MONUSDT": {
+   "symbol": "MONUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "MOODENGUSDT": {
+   "symbol": "MOODENGUSDT",
+   "thang_dau": "2024-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 46
+  },
+  "MORPHOUSDT": {
+   "symbol": "MORPHOUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44
+  },
+  "MOVEUSDT": {
+   "symbol": "MOVEUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42
+  },
+  "MOVRUSDT": {
+   "symbol": "MOVRUSDT",
+   "thang_dau": "2023-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 66
+  },
+  "MRKUSDT": {
+   "symbol": "MRKUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "MRNAUSDT": {
+   "symbol": "MRNAUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "MRVLUSDT": {
+   "symbol": "MRVLUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "MSFTUSDT": {
+   "symbol": "MSFTUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10
+  },
+  "MSTRUSDT": {
+   "symbol": "MSTRUSDT",
+   "thang_dau": "2026-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 14
+  },
+  "MTLUSDT": {
+   "symbol": "MTLUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 132
+  },
+  "MUBARAKUSDT": {
+   "symbol": "MUBARAKUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36
+  },
+  "MUSDT": {
+   "symbol": "MUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28
+  },
+  "MUUSDT": {
+   "symbol": "MUUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10
+  },
+  "MUUUSDT": {
+   "symbol": "MUUUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "MVLLUSDT": {
+   "symbol": "MVLLUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "MYROUSDT": {
+   "symbol": "MYROUSDT",
+   "thang_dau": "2024-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 60
+  },
+  "MYXUSDT": {
+   "symbol": "MYXUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30
+  },
+  "NAORISUSDT": {
+   "symbol": "NAORISUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28
+  },
+  "NATGASUSDT": {
+   "symbol": "NATGASUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10
+  },
+  "NAVERUSDT": {
+   "symbol": "NAVERUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "NBISUSDT": {
+   "symbol": "NBISUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "NEARUSDT": {
+   "symbol": "NEARUSDT",
+   "thang_dau": "2020-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 142
+  },
+  "NEIROETHUSDT": {
+   "symbol": "NEIROETHUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48
+  },
+  "NEIROUSDT": {
+   "symbol": "NEIROUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48
+  },
+  "NEOUSDT": {
+   "symbol": "NEOUSDT",
+   "thang_dau": "2020-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 158
+  },
+  "NETUSDT": {
+   "symbol": "NETUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "NEWTUSDT": {
+   "symbol": "NEWTUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30
+  },
+  "NFLXUSDT": {
+   "symbol": "NFLXUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "NFPUSDT": {
+   "symbol": "NFPUSDT",
+   "thang_dau": "2023-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 66
+  },
+  "NIGHTUSDT": {
+   "symbol": "NIGHTUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18
+  },
+  "NILUSDT": {
+   "symbol": "NILUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36
+  },
+  "NKNUSDT": {
+   "symbol": "NKNUSDT",
+   "thang_dau": "2021-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 130
+  },
+  "NMRUSDT": {
+   "symbol": "NMRUSDT",
+   "thang_dau": "2023-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 78
+  },
+  "NOKUSDT": {
+   "symbol": "NOKUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "NOMUSDT": {
+   "symbol": "NOMUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "NOTUSDT": {
+   "symbol": "NOTUSDT",
+   "thang_dau": "2024-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 56
+  },
+  "NOWUSDT": {
+   "symbol": "NOWUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "NTRNUSDT": {
+   "symbol": "NTRNUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68
+  },
+  "NULSUSDT": {
+   "symbol": "NULSUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50
+  },
+  "NUUSDT": {
+   "symbol": "NUUSDT",
+   "thang_dau": "2021-10",
+   "thang_cuoi": "2022-02",
+   "so_khoa": 10
+  },
+  "NVDAUSDT": {
+   "symbol": "NVDAUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12
+  },
+  "NVOUSDT": {
+   "symbol": "NVOUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "NXPCUSDT": {
+   "symbol": "NXPCUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32
+  },
+  "OBOLUSDT": {
+   "symbol": "OBOLUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32
+  },
+  "OCEANUSDT": {
+   "symbol": "OCEANUSDT",
+   "thang_dau": "2020-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 140
+  },
+  "OGNUSDT": {
+   "symbol": "OGNUSDT",
+   "thang_dau": "2021-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 130
+  },
+  "OGUSDT": {
+   "symbol": "OGUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32
+  },
+  "OLUSDT": {
+   "symbol": "OLUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30
+  },
+  "OMGUSDT": {
+   "symbol": "OMGUSDT",
+   "thang_dau": "2020-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 148
+  },
+  "OMNIUSDT": {
+   "symbol": "OMNIUSDT",
+   "thang_dau": "2024-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 58
+  },
+  "OMUSDT": {
+   "symbol": "OMUSDT",
+   "thang_dau": "2024-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 62
+  },
+  "ONDOUSDT": {
+   "symbol": "ONDOUSDT",
+   "thang_dau": "2024-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 64
+  },
+  "ONDSUSDT": {
+   "symbol": "ONDSUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "ONEUSDT": {
+   "symbol": "ONEUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 132
+  },
+  "ONGUSDT": {
+   "symbol": "ONGUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68
+  },
+  "ONTUSDT": {
+   "symbol": "ONTUSDT",
+   "thang_dau": "2020-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 158
+  },
+  "ONUSDT": {
+   "symbol": "ONUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "OPENAIUSDT": {
+   "symbol": "OPENAIUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "OPENUSDT": {
+   "symbol": "OPENUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "OPGUSDT": {
+   "symbol": "OPGUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10
+  },
+  "OPNUSDT": {
+   "symbol": "OPNUSDT",
+   "thang_dau": "2026-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 14
+  },
+  "OPUSDT": {
+   "symbol": "OPUSDT",
+   "thang_dau": "2022-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 102
+  },
+  "ORBSUSDT": {
+   "symbol": "ORBSUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70
+  },
+  "ORCAUSDT": {
+   "symbol": "ORCAUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42
+  },
+  "ORCLUSDT": {
+   "symbol": "ORCLUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "ORDERUSDT": {
+   "symbol": "ORDERUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "ORDIUSDT": {
+   "symbol": "ORDIUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68
+  },
+  "OUSDT": {
+   "symbol": "OUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "OXTUSDT": {
+   "symbol": "OXTUSDT",
+   "thang_dau": "2023-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 74
+  },
+  "PANWUSDT": {
+   "symbol": "PANWUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "PARTIUSDT": {
+   "symbol": "PARTIUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36
+  },
+  "PAXGUSDT": {
+   "symbol": "PAXGUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36
+  },
+  "PAYPUSDT": {
+   "symbol": "PAYPUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12
+  },
+  "PDDUSDT": {
+   "symbol": "PDDUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "PENDLEUSDT": {
+   "symbol": "PENDLEUSDT",
+   "thang_dau": "2023-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 76
+  },
+  "PENGUSDT": {
+   "symbol": "PENGUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "PENGUUSDT": {
+   "symbol": "PENGUUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42
+  },
+  "PEOPLEUSDT": {
+   "symbol": "PEOPLEUSDT",
+   "thang_dau": "2021-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 114
+  },
+  "PERPUSDT": {
+   "symbol": "PERPUSDT",
+   "thang_dau": "2023-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 84
+  },
+  "PHAROSUSDT": {
+   "symbol": "PHAROSUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "PHAUSDT": {
+   "symbol": "PHAUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42
+  },
+  "PHBUSDT": {
+   "symbol": "PHBUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 86
+  },
+  "PIEVERSEUSDT": {
+   "symbol": "PIEVERSEUSDT",
+   "thang_dau": "2025-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 20
+  },
+  "PIPPINUSDT": {
+   "symbol": "PIPPINUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40
+  },
+  "PIXELUSDT": {
+   "symbol": "PIXELUSDT",
+   "thang_dau": "2024-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 62
+  },
+  "PLAYUSDT": {
+   "symbol": "PLAYUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28
+  },
+  "PLTRUSDT": {
+   "symbol": "PLTRUSDT",
+   "thang_dau": "2026-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 14
+  },
+  "PLUMEUSDT": {
+   "symbol": "PLUMEUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36
+  },
+  "PNUTUSDT": {
+   "symbol": "PNUTUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44
+  },
+  "POLUSDT": {
+   "symbol": "POLUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48
+  },
+  "POLYXUSDT": {
+   "symbol": "POLYXUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70
+  },
+  "PONKEUSDT": {
+   "symbol": "PONKEUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44
+  },
+  "POPCATUSDT": {
+   "symbol": "POPCATUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50
+  },
+  "POPMARTUSDT": {
+   "symbol": "POPMARTUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "PORT3USDT": {
+   "symbol": "PORT3USDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30
+  },
+  "PORTALUSDT": {
+   "symbol": "PORTALUSDT",
+   "thang_dau": "2024-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 62
+  },
+  "POWERUSDT": {
+   "symbol": "POWERUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18
+  },
+  "POWRUSDT": {
+   "symbol": "POWRUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70
+  },
+  "PRLUSDT": {
+   "symbol": "PRLUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10
+  },
+  "PROMPTUSDT": {
+   "symbol": "PROMPTUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34
+  },
+  "PROMUSDT": {
+   "symbol": "PROMUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40
+  },
+  "PROVEUSDT": {
+   "symbol": "PROVEUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26
+  },
+  "PTBUSDT": {
+   "symbol": "PTBUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "PUFFERUSDT": {
+   "symbol": "PUFFERUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30
+  },
+  "PUMPBTCUSDT": {
+   "symbol": "PUMPBTCUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30
+  },
+  "PUMPUSDT": {
+   "symbol": "PUMPUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34
+  },
+  "PUNDIXUSDT": {
+   "symbol": "PUNDIXUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34
+  },
+  "PYPLUSDT": {
+   "symbol": "PYPLUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "PYTHUSDT": {
+   "symbol": "PYTHUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68
+  },
+  "QCOMUSDT": {
+   "symbol": "QCOMUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "QNTUSDT": {
+   "symbol": "QNTUSDT",
+   "thang_dau": "2022-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 94
+  },
+  "QNTXUSDT": {
+   "symbol": "QNTXUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "QQQUSDT": {
+   "symbol": "QQQUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10
+  },
+  "QTUMUSDT": {
+   "symbol": "QTUMUSDT",
+   "thang_dau": "2020-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 158
+  },
+  "QUICKUSDT": {
+   "symbol": "QUICKUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48
+  },
+  "QUSDT": {
+   "symbol": "QUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "RADUSDT": {
+   "symbol": "RADUSDT",
+   "thang_dau": "2023-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 80
+  },
+  "RAMUSDT": {
+   "symbol": "RAMUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "RAREUSDT": {
+   "symbol": "RAREUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50
+  },
+  "RAVEUSDT": {
+   "symbol": "RAVEUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18
+  },
+  "RAYSOLUSDT": {
+   "symbol": "RAYSOLUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42
+  },
+  "RAYUSDT": {
+   "symbol": "RAYUSDT",
+   "thang_dau": "2021-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 122
+  },
+  "RDDTUSDT": {
+   "symbol": "RDDTUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "RDNTUSDT": {
+   "symbol": "RDNTUSDT",
+   "thang_dau": "2023-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 82
+  },
+  "RECALLUSDT": {
+   "symbol": "RECALLUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "REDUSDT": {
+   "symbol": "REDUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36
+  },
+  "REEFUSDT": {
+   "symbol": "REEFUSDT",
+   "thang_dau": "2021-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 134
+  },
+  "REIUSDT": {
+   "symbol": "REIUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48
+  },
+  "RENDERUSDT": {
+   "symbol": "RENDERUSDT",
+   "thang_dau": "2024-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 52
+  },
+  "RENUSDT": {
+   "symbol": "RENUSDT",
+   "thang_dau": "2020-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 142
+  },
+  "RESOLVUSDT": {
+   "symbol": "RESOLVUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30
+  },
+  "REUSDT": {
+   "symbol": "REUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "REZUSDT": {
+   "symbol": "REZUSDT",
+   "thang_dau": "2024-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 58
+  },
+  "RIFUSDT": {
+   "symbol": "RIFUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70
+  },
+  "RIVERUSDT": {
+   "symbol": "RIVERUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "RIVNUSDT": {
+   "symbol": "RIVNUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "RKLBUSDT": {
+   "symbol": "RKLBUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "RLCUSDT": {
+   "symbol": "RLCUSDT",
+   "thang_dau": "2020-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 148
+  },
+  "RLSUSDT": {
+   "symbol": "RLSUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18
+  },
+  "RNDRUSDT": {
+   "symbol": "RNDRUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2024-07",
+   "so_khoa": 36
+  },
+  "ROBOUSDT": {
+   "symbol": "ROBOUSDT",
+   "thang_dau": "2026-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 14
+  },
+  "RONINUSDT": {
+   "symbol": "RONINUSDT",
+   "thang_dau": "2024-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 62
+  },
+  "ROSEUSDT": {
+   "symbol": "ROSEUSDT",
+   "thang_dau": "2021-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 114
+  },
+  "RPLUSDT": {
+   "symbol": "RPLUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48
+  },
+  "RSRUSDT": {
+   "symbol": "RSRUSDT",
+   "thang_dau": "2020-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 142
+  },
+  "RUNEUSDT": {
+   "symbol": "RUNEUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144
+  },
+  "RVNUSDT": {
+   "symbol": "RVNUSDT",
+   "thang_dau": "2021-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 134
+  },
+  "RVVUSDT": {
+   "symbol": "RVVUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "SAFEUSDT": {
+   "symbol": "SAFEUSDT",
+   "thang_dau": "2024-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 46
+  },
+  "SAGAUSDT": {
+   "symbol": "SAGAUSDT",
+   "thang_dau": "2024-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 58
+  },
+  "SAHARAUSDT": {
+   "symbol": "SAHARAUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30
+  },
+  "SAMSUNGEMUSDT": {
+   "symbol": "SAMSUNGEMUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "SAMSUNGUSDT": {
+   "symbol": "SAMSUNGUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "SANDUSDT": {
+   "symbol": "SANDUSDT",
+   "thang_dau": "2021-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 136
+  },
+  "SANTOSUSDT": {
+   "symbol": "SANTOSUSDT",
+   "thang_dau": "2024-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 46
+  },
+  "SAPIENUSDT": {
+   "symbol": "SAPIENUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26
+  },
+  "SCRTUSDT": {
+   "symbol": "SCRTUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44
+  },
+  "SCRUSDT": {
+   "symbol": "SCRUSDT",
+   "thang_dau": "2024-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 46
+  },
+  "SCUSDT": {
+   "symbol": "SCUSDT",
+   "thang_dau": "2021-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 130
+  },
+  "SEIUSDT": {
+   "symbol": "SEIUSDT",
+   "thang_dau": "2023-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 74
+  },
+  "SENTUSDT": {
+   "symbol": "SENTUSDT",
+   "thang_dau": "2025-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 20
+  },
+  "SFPUSDT": {
+   "symbol": "SFPUSDT",
+   "thang_dau": "2021-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 134
+  },
+  "SHAZUSDT": {
+   "symbol": "SHAZUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "SHELLUSDT": {
+   "symbol": "SHELLUSDT",
+   "thang_dau": "2025-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 38
+  },
+  "SHOPUSDT": {
+   "symbol": "SHOPUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "SIGNUSDT": {
+   "symbol": "SIGNUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34
+  },
+  "SIRENUSDT": {
+   "symbol": "SIRENUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36
+  },
+  "SKATEUSDT": {
+   "symbol": "SKATEUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30
+  },
+  "SKDDUSDT": {
+   "symbol": "SKDDUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "SKHYNIXUSDT": {
+   "symbol": "SKHYNIXUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "SKHYUSDT": {
+   "symbol": "SKHYUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "SKLUSDT": {
+   "symbol": "SKLUSDT",
+   "thang_dau": "2020-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 138
+  },
+  "SKRUSDT": {
+   "symbol": "SKRUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16
+  },
+  "SKUUUSDT": {
+   "symbol": "SKUUUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "SKYAIUSDT": {
+   "symbol": "SKYAIUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32
+  },
+  "SKYUSDT": {
+   "symbol": "SKYUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "SLERFUSDT": {
+   "symbol": "SLERFUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44
+  },
+  "SLPUSDT": {
+   "symbol": "SLPUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70
+  },
+  "SLXUSDT": {
+   "symbol": "SLXUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "SMCIUSDT": {
+   "symbol": "SMCIUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "SMHUSDT": {
+   "symbol": "SMHUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "SNDKUSDT": {
+   "symbol": "SNDKUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10
+  },
+  "SNOWUSDT": {
+   "symbol": "SNOWUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "SNTUSDT": {
+   "symbol": "SNTUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68
+  },
+  "SNXUSDT": {
+   "symbol": "SNXUSDT",
+   "thang_dau": "2020-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 146
+  },
+  "SNXXUSDT": {
+   "symbol": "SNXXUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "SOFIUSDT": {
+   "symbol": "SOFIUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "SOLUSDT": {
+   "symbol": "SOLUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144
+  },
+  "SOLVUSDT": {
+   "symbol": "SOLVUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40
+  },
+  "SOMIUSDT": {
+   "symbol": "SOMIUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26
+  },
+  "SONICUSDT": {
+   "symbol": "SONICUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40
+  },
+  "SONYUSDT": {
+   "symbol": "SONYUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "SOONUSDT": {
+   "symbol": "SOONUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32
+  },
+  "SOPHUSDT": {
+   "symbol": "SOPHUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32
+  },
+  "SOXLUSDT": {
+   "symbol": "SOXLUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "SOXSUSDT": {
+   "symbol": "SOXSUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "SPACEUSDT": {
+   "symbol": "SPACEUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16
+  },
+  "SPCXUSDT": {
+   "symbol": "SPCXUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "SPELLUSDT": {
+   "symbol": "SPELLUSDT",
+   "thang_dau": "2022-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 96
+  },
+  "SPKUSDT": {
+   "symbol": "SPKUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30
+  },
+  "SPORTFUNUSDT": {
+   "symbol": "SPORTFUNUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16
+  },
+  "SPXUSDT": {
+   "symbol": "SPXUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42
+  },
+  "SPYUSDT": {
+   "symbol": "SPYUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10
+  },
+  "SQDUSDT": {
+   "symbol": "SQDUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30
+  },
+  "SQQQUSDT": {
+   "symbol": "SQQQUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "SRMUSDT": {
+   "symbol": "SRMUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2024-05",
+   "so_khoa": 90
+  },
+  "SSVUSDT": {
+   "symbol": "SSVUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 86
+  },
+  "STABLEUSDT": {
+   "symbol": "STABLEUSDT",
+   "thang_dau": "2025-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 20
+  },
+  "STARUSDT": {
+   "symbol": "STARUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "STBLUSDT": {
+   "symbol": "STBLUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "STEEMUSDT": {
+   "symbol": "STEEMUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68
+  },
+  "STGUSDT": {
+   "symbol": "STGUSDT",
+   "thang_dau": "2022-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 98
+  },
+  "STMXUSDT": {
+   "symbol": "STMXUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 132
+  },
+  "STORJUSDT": {
+   "symbol": "STORJUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144
+  },
+  "STOUSDT": {
+   "symbol": "STOUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34
+  },
+  "STPTUSDT": {
+   "symbol": "STPTUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70
+  },
+  "STRAXUSDT": {
+   "symbol": "STRAXUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70
+  },
+  "STRCUSDT": {
+   "symbol": "STRCUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "STRKUSDT": {
+   "symbol": "STRKUSDT",
+   "thang_dau": "2024-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 62
+  },
+  "STXUSDT": {
+   "symbol": "STXUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 86
+  },
+  "STXXUSDT": {
+   "symbol": "STXXUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "SUIUSDT": {
+   "symbol": "SUIUSDT",
+   "thang_dau": "2023-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 80
+  },
+  "SUNUSDT": {
+   "symbol": "SUNUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50
+  },
+  "SUPERUSDT": {
+   "symbol": "SUPERUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68
+  },
+  "SUSDT": {
+   "symbol": "SUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40
+  },
+  "SUSHIUSDT": {
+   "symbol": "SUSHIUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144
+  },
+  "SWARMSUSDT": {
+   "symbol": "SWARMSUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40
+  },
+  "SWELLUSDT": {
+   "symbol": "SWELLUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44
+  },
+  "SXPUSDT": {
+   "symbol": "SXPUSDT",
+   "thang_dau": "2020-07",
+   "thang_cuoi": "2026-05",
+   "so_khoa": 142
+  },
+  "SXTUSDT": {
+   "symbol": "SXTUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32
+  },
+  "SYNUSDT": {
+   "symbol": "SYNUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50
+  },
+  "SYRUPUSDT": {
+   "symbol": "SYRUPUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32
+  },
+  "SYSUSDT": {
+   "symbol": "SYSUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50
+  },
+  "TACUSDT": {
+   "symbol": "TACUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28
+  },
+  "TAGUSDT": {
+   "symbol": "TAGUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28
+  },
+  "TAIKOUSDT": {
+   "symbol": "TAIKOUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30
+  },
+  "TAKEUSDT": {
+   "symbol": "TAKEUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "TANSSIUSDT": {
+   "symbol": "TANSSIUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28
+  },
+  "TAOUSDT": {
+   "symbol": "TAOUSDT",
+   "thang_dau": "2024-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 58
+  },
+  "TAUSDT": {
+   "symbol": "TAUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28
+  },
+  "TBTUSDT": {
+   "symbol": "TBTUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "TEMUSDT": {
+   "symbol": "TEMUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "TENCENTUSDT": {
+   "symbol": "TENCENTUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "TERUSDT": {
+   "symbol": "TERUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "THETAUSDT": {
+   "symbol": "THETAUSDT",
+   "thang_dau": "2020-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 152
+  },
+  "THEUSDT": {
+   "symbol": "THEUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44
+  },
+  "TIAUSDT": {
+   "symbol": "TIAUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70
+  },
+  "TLMUSDT": {
+   "symbol": "TLMUSDT",
+   "thang_dau": "2021-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 124
+  },
+  "TMFUSDT": {
+   "symbol": "TMFUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "TNSRUSDT": {
+   "symbol": "TNSRUSDT",
+   "thang_dau": "2024-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 58
+  },
+  "TOKENUSDT": {
+   "symbol": "TOKENUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68
+  },
+  "TOMOUSDT": {
+   "symbol": "TOMOUSDT",
+   "thang_dau": "2020-10",
+   "thang_cuoi": "2024-05",
+   "so_khoa": 88
+  },
+  "TONUSDT": {
+   "symbol": "TONUSDT",
+   "thang_dau": "2024-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 60
+  },
+  "TOSHIUSDT": {
+   "symbol": "TOSHIUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "TOWNSUSDT": {
+   "symbol": "TOWNSUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26
+  },
+  "TQQQUSDT": {
+   "symbol": "TQQQUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "TRADOORUSDT": {
+   "symbol": "TRADOORUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "TRBUSDT": {
+   "symbol": "TRBUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144
+  },
+  "TREEUSDT": {
+   "symbol": "TREEUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28
+  },
+  "TRIAUSDT": {
+   "symbol": "TRIAUSDT",
+   "thang_dau": "2026-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 14
+  },
+  "TROYUSDT": {
+   "symbol": "TROYUSDT",
+   "thang_dau": "2024-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 46
+  },
+  "TRUMPUSDT": {
+   "symbol": "TRUMPUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40
+  },
+  "TRUSTUSDT": {
+   "symbol": "TRUSTUSDT",
+   "thang_dau": "2025-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 20
+  },
+  "TRUTHUSDT": {
+   "symbol": "TRUTHUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "TRUUSDT": {
+   "symbol": "TRUUSDT",
+   "thang_dau": "2023-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 84
+  },
+  "TRXUSDT": {
+   "symbol": "TRXUSDT",
+   "thang_dau": "2020-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 160
+  },
+  "TSLAUSDT": {
+   "symbol": "TSLAUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16
+  },
+  "TSMUSDT": {
+   "symbol": "TSMUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10
+  },
+  "TSTUSDT": {
+   "symbol": "TSTUSDT",
+   "thang_dau": "2025-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 38
+  },
+  "TTWOUSDT": {
+   "symbol": "TTWOUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "TURBOUSDT": {
+   "symbol": "TURBOUSDT",
+   "thang_dau": "2024-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 56
+  },
+  "TURTLEUSDT": {
+   "symbol": "TURTLEUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "TUSDT": {
+   "symbol": "TUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 86
+  },
+  "TUTUSDT": {
+   "symbol": "TUTUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36
+  },
+  "TWTUSDT": {
+   "symbol": "TWTUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68
+  },
+  "TXNUSDT": {
+   "symbol": "TXNUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "TZAUSDT": {
+   "symbol": "TZAUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "UAIUSDT": {
+   "symbol": "UAIUSDT",
+   "thang_dau": "2025-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 20
+  },
+  "UBERUSDT": {
+   "symbol": "UBERUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "UBUSDT": {
+   "symbol": "UBUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "UMAUSDT": {
+   "symbol": "UMAUSDT",
+   "thang_dau": "2023-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 80
+  },
+  "UNFIUSDT": {
+   "symbol": "UNFIUSDT",
+   "thang_dau": "2021-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 134
+  },
+  "UNITREEUSDT": {
+   "symbol": "UNITREEUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "UNIUSDT": {
+   "symbol": "UNIUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144
+  },
+  "URNMUSDT": {
+   "symbol": "URNMUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "USARUSDT": {
+   "symbol": "USARUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "USDCUSDT": {
+   "symbol": "USDCUSDT",
+   "thang_dau": "2023-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 84
+  },
+  "USELESSUSDT": {
+   "symbol": "USELESSUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26
+  },
+  "USTCUSDT": {
+   "symbol": "USTCUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68
+  },
+  "USUALUSDT": {
+   "symbol": "USUALUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42
+  },
+  "USUSDT": {
+   "symbol": "USUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18
+  },
+  "UVXYUSDT": {
+   "symbol": "UVXYUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "UXLINKUSDT": {
+   "symbol": "UXLINKUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48
+  },
+  "VANAUSDT": {
+   "symbol": "VANAUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42
+  },
+  "VANRYUSDT": {
+   "symbol": "VANRYUSDT",
+   "thang_dau": "2024-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 60
+  },
+  "VELODROMEUSDT": {
+   "symbol": "VELODROMEUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42
+  },
+  "VELVETUSDT": {
+   "symbol": "VELVETUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28
+  },
+  "VETUSDT": {
+   "symbol": "VETUSDT",
+   "thang_dau": "2020-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 158
+  },
+  "VFYUSDT": {
+   "symbol": "VFYUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "VICUSDT": {
+   "symbol": "VICUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36
+  },
+  "VIDTUSDT": {
+   "symbol": "VIDTUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50
+  },
+  "VINEUSDT": {
+   "symbol": "VINEUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40
+  },
+  "VIRTUALUSDT": {
+   "symbol": "VIRTUALUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42
+  },
+  "VOXELUSDT": {
+   "symbol": "VOXELUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50
+  },
+  "VRTUSDT": {
+   "symbol": "VRTUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "VSTUSDT": {
+   "symbol": "VSTUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "VTHOUSDT": {
+   "symbol": "VTHOUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40
+  },
+  "VUSDT": {
+   "symbol": "VUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "VVVUSDT": {
+   "symbol": "VVVUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40
+  },
+  "WALUSDT": {
+   "symbol": "WALUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36
+  },
+  "WAVESUSDT": {
+   "symbol": "WAVESUSDT",
+   "thang_dau": "2020-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 146
+  },
+  "WAXPUSDT": {
+   "symbol": "WAXPUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70
+  },
+  "WCTUSDT": {
+   "symbol": "WCTUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34
+  },
+  "WDCUSDT": {
+   "symbol": "WDCUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "WENUSDT": {
+   "symbol": "WENUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "WETUSDT": {
+   "symbol": "WETUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18
+  },
+  "WIFUSDT": {
+   "symbol": "WIFUSDT",
+   "thang_dau": "2024-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 64
+  },
+  "WLDUSDT": {
+   "symbol": "WLDUSDT",
+   "thang_dau": "2023-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 76
+  },
+  "WLFIUSDT": {
+   "symbol": "WLFIUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26
+  },
+  "WMTUSDT": {
+   "symbol": "WMTUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8
+  },
+  "WOOUSDT": {
+   "symbol": "WOOUSDT",
+   "thang_dau": "2022-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 106
+  },
+  "WUSDT": {
+   "symbol": "WUSDT",
+   "thang_dau": "2024-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 58
+  },
+  "XAGUSDT": {
+   "symbol": "XAGUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16
+  },
+  "XAIUSDT": {
+   "symbol": "XAIUSDT",
+   "thang_dau": "2024-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 64
+  },
+  "XANUSDT": {
+   "symbol": "XANUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "XAUTUSDT": {
+   "symbol": "XAUTUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12
+  },
+  "XAUUSDT": {
+   "symbol": "XAUUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18
+  },
+  "XBIUSDT": {
+   "symbol": "XBIUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "XCNUSDT": {
+   "symbol": "XCNUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34
+  },
+  "XEMUSDT": {
+   "symbol": "XEMUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 132
+  },
+  "XLEUSDT": {
+   "symbol": "XLEUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "XLMUSDT": {
+   "symbol": "XLMUSDT",
+   "thang_dau": "2020-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 160
+  },
+  "XMRUSDT": {
+   "symbol": "XMRUSDT",
+   "thang_dau": "2020-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 158
+  },
+  "XNYUSDT": {
+   "symbol": "XNYUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26
+  },
+  "XPDUSDT": {
+   "symbol": "XPDUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16
+  },
+  "XPINUSDT": {
+   "symbol": "XPINUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "XPLUSDT": {
+   "symbol": "XPLUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26
+  },
+  "XPTUSDT": {
+   "symbol": "XPTUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16
+  },
+  "XRPUSDT": {
+   "symbol": "XRPUSDT",
+   "thang_dau": "2020-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 160
+  },
+  "XTZUSDT": {
+   "symbol": "XTZUSDT",
+   "thang_dau": "2020-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 158
+  },
+  "XVGUSDT": {
+   "symbol": "XVGUSDT",
+   "thang_dau": "2023-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 76
+  },
+  "XVSUSDT": {
+   "symbol": "XVSUSDT",
+   "thang_dau": "2023-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 82
+  },
+  "YALAUSDT": {
+   "symbol": "YALAUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26
+  },
+  "YBUSDT": {
+   "symbol": "YBUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "YFIIUSDT": {
+   "symbol": "YFIIUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2022-04",
+   "so_khoa": 40
+  },
+  "YFIUSDT": {
+   "symbol": "YFIUSDT",
+   "thang_dau": "2020-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 146
+  },
+  "YGGUSDT": {
+   "symbol": "YGGUSDT",
+   "thang_dau": "2023-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 74
+  },
+  "ZAMAUSDT": {
+   "symbol": "ZAMAUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16
+  },
+  "ZBTUSDT": {
+   "symbol": "ZBTUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "ZECUSDT": {
+   "symbol": "ZECUSDT",
+   "thang_dau": "2020-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 158
+  },
+  "ZENUSDT": {
+   "symbol": "ZENUSDT",
+   "thang_dau": "2020-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 140
+  },
+  "ZEREBROUSDT": {
+   "symbol": "ZEREBROUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40
+  },
+  "ZESTUSDT": {
+   "symbol": "ZESTUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "ZETAUSDT": {
+   "symbol": "ZETAUSDT",
+   "thang_dau": "2024-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 62
+  },
+  "ZHIPUUSDT": {
+   "symbol": "ZHIPUUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4
+  },
+  "ZHONGJIUSDT": {
+   "symbol": "ZHONGJIUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "ZILUSDT": {
+   "symbol": "ZILUSDT",
+   "thang_dau": "2020-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 150
+  },
+  "ZKCUSDT": {
+   "symbol": "ZKCUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24
+  },
+  "ZKJUSDT": {
+   "symbol": "ZKJUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32
+  },
+  "ZKPUSDT": {
+   "symbol": "ZKPUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18
+  },
+  "ZKUSDT": {
+   "symbol": "ZKUSDT",
+   "thang_dau": "2024-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 54
+  },
+  "ZMUSDT": {
+   "symbol": "ZMUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6
+  },
+  "ZORAUSDT": {
+   "symbol": "ZORAUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28
+  },
+  "ZRCUSDT": {
+   "symbol": "ZRCUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28
+  },
+  "ZROUSDT": {
+   "symbol": "ZROUSDT",
+   "thang_dau": "2024-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 54
+  },
+  "ZRXUSDT": {
+   "symbol": "ZRXUSDT",
+   "thang_dau": "2020-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 150
+  },
+  "币安人生USDT": {
+   "symbol": "币安人生USDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22
+  },
+  "我踏马来了USDT": {
+   "symbol": "我踏马来了USDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16
+  },
+  "牛来USDT": {
+   "symbol": "牛来USDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2
+  },
+  "龙虾USDT": {
+   "symbol": "龙虾USDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12
+  }
+ }
+}
