@@ -189,12 +189,24 @@ hạng GIỮA hai arm lệch cỡ mẫu) sang cả câu hỏi TUYỆT ĐỐI khi
 
 ### 2.4 Câu DCA đi đường nào — và mặc định khi không đo được
 
-Câu *"DCA ba tranche có đáng không"* rời khỏi cổng thống kê và đi đường **lý lẽ thiết kế + quan sát
-vận hành**, quyết tại **D11 (dry-run)** với ba đầu vào, tất cả đã hoặc sẽ có mà không tốn trial thêm:
+✅ **ĐÃ DUYỆT — chủ dự án chốt 12/09/2026: mặc định `Z0` single-entry.** Mục này ghi cả đường đã bị
+loại lẫn lý do, vì đường bị loại **do chính bản trước của mục này đề ra**.
 
-1. `mean_R` thô + CI của `Z0` vs `Z3`/`Z3b` từ §2.3 — **mô tả, không phán quyết**;
-2. phân bố tranche thực tế — ⏳ **CHƯA CÓ SỐ DÙNG ĐƯỢC**, xem cảnh báo ngay dưới;
-3. hành vi tranche 2/3 quan sát ở dry-run.
+🔴 **ĐÍNH CHÍNH — bản trước định tuyến câu DCA sang D11 (dry-run). Đó là SAI HƯỚNG: D11 có ÍT thông
+tin hơn chỗ ta đang đứng.** Tính từ 44,8 lệnh/năm đã đo (quy đổi pool 102):
+
+| Giai đoạn | Số lệnh |
+|---|---|
+| Backtest WFO — **đang có** | **28** |
+| Dry-run 2 tháng | 7,5 |
+| Dry-run 3 tháng | 11,2 |
+| Dry-run 12 tháng | 44,8 |
+| Cần để **thôi** INCONCLUSIVE (`std_R` = 0,58) | **319** ⇒ **7,1 năm** chạy liên tục |
+
+⇒ **Câu DCA không bao giờ được trả lời bằng dữ liệu ở tần suất này** — không ở backtest, không ở
+dry-run, không ở nhiều năm live đầu. *"Quyết sau"* vì thế **không phải một lựa chọn**, nó là hoãn
+không có đường ra. Và hoãn thì đắt hơn: mang thêm máy móc chưa xác minh vào tiền thật, **và tiêu
+lượt chạm lockbox duy nhất** (`DR-011`) cho một cấu hình không biện minh được.
 
 🔴 **Cảnh báo về đầu vào (2) — con số `18,07%` đã bị RÚT khỏi DR này.** Bản đầu dẫn *"chỉ 18,07%
 lệnh bơm đủ 3 tranche"* từ `dg2-explore-quet-arm.json`. Kiểm header file đó: **48 mã alt**, cửa sổ
@@ -228,14 +240,52 @@ INCONCLUSIVE"*. Ba lý lẽ dưới đây là **lý do đề xuất**, không ph
 - 🟢 **Fail-closed:** một cơ chế **không chứng minh được là đáng** thì không nên lên tiền thật —
   cùng logic N6 áp cho gate (*"gate không thể vô tình PASS"*). Đây là lý lẽ mạnh nhất trong ba cái,
   vì nó không cần một phép đo nào.
-- 🟡 **Khẩu vị rủi ro, ĐÃ KHAI — không suy ra từ phép đo nào:** tranche 2/3 bơm thêm tiền khi giá đi
-  ngược, nên hướng sai của nó đắt hơn hướng sai của việc bỏ qua. ⚠️ Nhưng "bơm thêm khi giá đi
-  ngược" **chính là thiết kế** của DCA, không phải khuyết tật của nó; câu này chỉ thành lý lẽ nếu
-  kèm giả định *"xác suất thesis sai đủ lớn"*, mà xác suất đó **chưa đo**. Tiền lệ `MT-22` có phép
+- 🟢 **Máy móc chưa xác minh — lý lẽ THAY THẾ cho lý lẽ rủi ro đã bị rút (xem ngay dưới).** `Z0` bỏ
+  được: kế hoạch ba mức giá, `adjust_trade_position`, DG1–DG5, năm hệ số `mult_*`, luật *"đã chốt
+  TP1 thì không DCA thêm"*, và **nguyên nhân gốc của `MT-25`** (thang `R_realized` co vì mẫu số giả
+  định ba tranche). DCA là phần hệ thống có **nhiều máy móc chưa xác minh nhất**, và đồng thời là
+  phần **duy nhất không thể xác minh**.
+
+- 🔴 ~~**Khẩu vị rủi ro:** tranche 2/3 bơm thêm tiền khi giá đi ngược, nên hướng sai của nó đắt hơn~~
+  **RÚT — lý lẽ này SAI, không phải yếu.** Kiểm code: `sizing.py:28` ghi *"`planned_risk_usdt` không
+  đổi tới 1e-9"* dù khớp một hay ba tranche, và `sizing.py:277` chặn cứng `Σ w_tranche = 1`.
+  ⇒ **Tổng rủi ro mỗi lệnh bị chặn cứng theo thiết kế** (`D0.1`: size suy ngược từ ngân sách rủi ro
+  cố định). DCA **không** bơm thêm rủi ro — nó phân bổ **cùng một** ngân sách rủi ro vào ba mức giá.
+  Giữ lại dòng gạch để không ai dựng lại lý lẽ đó lần nữa. *(Phiên `c3` hạ nó xuống "khẩu vị rủi
+  ro"; kiểm code thì phải bỏ hẳn — đây là lần thứ sáu trong hai ngày một suy luận nghe hợp lý bị một
+  phép kiểm dưới một phút bác.)* Tiền lệ `MT-22` có phép
   đo kèm (A 43,1% vs B 81,2%); ở đây **không có**. Vì thế nó đứng ở hạng thấp hơn hai cái trên.
 
-⏳ **Chờ chủ dự án xác nhận mặc định này.** Nếu không xác nhận, câu DCA ở lại trạng thái mở và
-**không được ngầm hiểu theo hướng nào**.
+#### Cái giá thật của việc bỏ DCA — nhỏ hơn tên gọi của nó gợi ý
+
+🔑 **`Z0` và `Z3` có ĐÚNG CÙNG 22 lệnh** (`td0212` + `td0213`, cùng phễu 2.621 → 1.104 → 32). DCA
+**không tạo thêm một cơ hội nào** — nó chỉ đổi chuyện xảy ra **sau khi** vào lệnh. Chọn `Z0` vì thế
+**không mất lệnh nào**, chỉ mất cơ chế hạ giá vào trung bình.
+
+Cơ chế đó hiện thân ở mức: tranche 2 nổ **8/22 (36%)**, tranche 3 nổ **2/22 (9,1%)**. Hơn một nửa
+số lệnh (**12/22**) dừng ở một tranche — tức **đã chạy như `Z0`** rồi.
+
+#### Bốn điều được chốt
+
+1. **Mặc định `Z0` single-entry.** Căn cứ: không phán quyết được ở **mọi** giai đoạn (bảng trên) +
+   lockbox chỉ một lượt chạm + `Z0` không mất lệnh nào.
+2. 🔴 **DCA KHÔNG BỊ BÁC BỎ.** Nó chuyển thành giả thuyết trong Idea Queue, ghi nguyên văn:
+   ***"chưa từng được đo, không phải đã thất bại"***. Phân biệt này bắt buộc — `DR-D4-09 §2.2` sinh
+   ra đúng để chặn việc đọc INCONCLUSIVE thành FAIL, và bỏ DCA **vĩnh viễn** dựa trên một phép đo
+   không có khả năng phát hiện chính là kết cục nó cấm.
+3. **Điều kiện mở lại, viết TRƯỚC (khuôn OQ-07):** DCA được xét lại khi hệ thống đạt **`n ≥ 319`**
+   trên một cấu hình cố định. ⚠️ Ở 44,8 lệnh/năm đó là **7,1 năm**, nên trên thực tế đây là **điều
+   kiện về việc NÂNG TẦN SUẤT, không phải về việc chờ** — nói thẳng để không ai tưởng nó sẽ tự đến.
+   ❌ **KHÔNG** phải điều kiện mở lại: *"thấy tiếc"*, hoặc một kết quả `Z0` không như mong đợi.
+4. **Phương án giữa (bỏ tranche 3, giữ hai tranche) bị LOẠI ở đây, có lý do.** Tranche 3 chỉ nổ
+   9,1% nên nó rẻ về máy móc — nhưng đó là **cấu hình không ai đăng ký**, và chọn nó **vì vừa nhìn
+   thấy tranche 3 hiếm nổ** chính là chọn-sau-khi-nhìn-số mà `DR-010` sinh ra để cấm. Nó thuộc Idea
+   Queue, không thuộc quyết định này.
+
+🔴 **Điều quyết định này KHÔNG dựa vào:** không một con số expectancy/PnL nào — vì trên đĩa **không
+có con số nào để dựa vào**. Nó **không** phát biểu rằng DCA kém. Nó phát biểu rằng **không thể
+biết**, và đưa thứ không biện minh được vào lượt lockbox duy nhất là cái giá cao hơn cái mất khi bỏ
+nó.
 
 ---
 
@@ -390,7 +440,12 @@ Và nó chặt hơn ở ba chỗ:
 - **Không** đổi ngưỡng nào của §10.2, không đổi `N`, không đóng băng thêm tham số nào.
 - **Không** cấp phép chạm LOCKBOX. Phương án *"dùng cả CALIB+WFO"* ở §1.3 chỉ là **phép tính trần**,
   **không phải đề xuất** — nó phá phân vùng `DR-011` và DR này không xin phép làm thế.
-- **Không** chốt mặc định `Z0` single-entry của §2.4 — đó là đề xuất chờ chủ dự án xác nhận.
+- ~~Không chốt mặc định `Z0` single-entry của §2.4 — đó là đề xuất chờ chủ dự án xác nhận.~~
+  ✅ **ĐÃ CHỐT 12/09/2026** — xem §2.4. Giữ dòng gạch để thấy rõ nó từng là đề xuất, không phải
+  thứ DR này tự quyết từ đầu.
+- **Không** chốt *"DCA bị bác bỏ"*. §2.4 điều 2 nói ngược lại: DCA vào Idea Queue với nhãn *"chưa
+  từng được đo"*. Ai đọc DR này thành *"dự án đã loại DCA"* là đọc sai.
+- **Không** chốt cấu hình hai tranche (§2.4 điều 4) — nó chưa được đăng ký, thuộc Idea Queue.
 
 ---
 
@@ -427,7 +482,10 @@ thật"* — đó là **xác nhận dự báo §2.2**, không phải thông tin 
 | b | Gate `L-Z57`: bộ kết quả giả lập trong đó một arm nhóm C mang `DSR_adj` vượt ngưỡng mà cờ là `mo_ta` ⇒ gate **KHÔNG** được trả PASS ⇒ test ĐỎ nếu trả |
 | c | Test khoá: dự báo §2.2 được ghim thành hằng — arm nhóm C mà kết cục ≠ INCONCLUSIVE ⇒ báo đỏ kèm thông báo trỏ về §2.2 (cờ đỏ tầng đo, không phải kết quả) |
 | d | `d4_han_che` khi đóng cổng D4: ghi rõ D4 **không** phán quyết câu DCA, kèm §2.4 |
-| e | ⏳ **Đo lại `Z3`/`Z2` sau bản vá `TD-0207`** (0 trial, EXPLORE, chỉ đếm) — điều kiện để đầu vào (2) của §2.4 được dùng. Chưa có số thì §2.4 chạy trên hai đầu vào, không phải ba |
+| e | ✅ Đo lại `Z3`/`Z2` sau bản vá — xong ở `TD-0213`/`TD-0214`/`TD-0215` |
+| f | **Nộp DCA vào Idea Queue** (§2.4 điều 2) qua `E6 --nop-y-tuong`, `mechanism` = *"hạ giá vào trung bình ba tranche neo zone"*, kèm nguyên văn *"chưa từng được đo, không phải đã thất bại"* và điều kiện mở lại `n ≥ 319`. 🔴 Ghi `data_source` và `explore_evidence` đúng: mọi số dẫn là **EXPLORE, 0 trial** (`TD-0126` bắt buộc) |
+| g | `d4_han_che` khi đóng cổng D4: thêm dòng **"D4 không phán quyết câu DCA; mặc định `Z0` theo `DR-D4-10 §2.4`, DCA nằm ở Idea Queue"** — nhãn `nguoi-khai`, không được ghi thành `do-duoc` |
+| h | `tier_c.arm_ablation.arm` hiện là **`"Z3"`** (`config/tool_d_config.yaml:139`). Chú thích tại chỗ ghi giá trị này *"chỉ để chiến lược NẠP ĐƯỢC ngoài ablation; bộ chạy E3 ghi đè theo từng arm"* ⇒ nó **không** ảnh hưởng kết quả ablation, **nhưng nó CHÍNH LÀ arm chạy ở dry-run và live** — tức đúng chỗ §2.4 vừa chốt. 🔴 **Đổi sang `Z0` KHÔNG làm trong DR này**: đó là thay đổi hành vi hệ thống, phải là một việc riêng có test khoá + kiểm-có-răng, và `arm` là khoá `tier_c` nên phải rà kế toán DOF trước khi đụng |
 
 ---
 
@@ -443,6 +501,7 @@ thật"* — đó là **xác nhận dự báo §2.2**, không phải thông tin 
 | 10/09/2026 | Phiên `c3` bác `×2` cho Short (spec dòng 4187 / 4973-4974) ⇒ trần 324 → **162**, kết luận mạnh hơn; và chặn ca nghi ngờ `MT-25` bằng cận `λ < 0,138` |
 | 10/09/2026 | Chủ dự án chốt **phương án A** — DR này |
 | 10/09/2026 | Phiên `c3` soi §2.4, bắt ba lỗi: (a) mặc-định-Z0 nằm TRONG Nhánh 2 mà spec 4295 khoá sau "Nhánh 1 đã PASS" ⇒ đây là quyết định MỚI, không phải dẫn chiếu; (b) `18,07%` là số 48 mã / `[T0,T2]` / trước cả hai bản vá ⇒ **rút khỏi DR**; (c) lý lẽ bất đối xứng là khẩu vị rủi ro, không suy từ đo ⇒ hạ hạng. Cả ba đã kiểm lại trên đĩa và **nhận** |
+| 12/09/2026 | **Chủ dự án chốt §2.4: mặc định `Z0` single-entry.** DCA **không bị bác bỏ** — vào Idea Queue với nhãn *"chưa từng được đo"*, điều kiện mở lại `n ≥ 319`. Hai đính chính đi kèm: (a) định tuyến sang D11 là **sai hướng** — dry-run chỉ cho 7,5–11 lệnh, ÍT hơn 28 đang có, và cần **7,1 năm** để đạt 319; (b) lý lẽ *"tranche 2/3 bơm thêm rủi ro"* **bị RÚT vì SAI** — `sizing.py:28,277` chặn cứng tổng rủi ro, DCA phân bổ cùng một ngân sách vào ba mức giá |
 | 11/09/2026 | `TD-0215`: `Z1` là **tập con NGHIÊM NGẶT** của `Z0` (`n_giao = 6`, `chi_co_o_B = 0`) — 72,7% lệnh mất ở cổng kết nạp §6.8f vì `Z1` đổi SL ⇒ đổi cỡ lệnh. Sinh **hạng hỏng (3)** ở §2.5: *"đo được nhưng không phải thứ mình tưởng"*. §2.1 thêm một câu hỏi D4 **không** trả lời được |
 | 10/09/2026 | `TD-0213` + `TD-0214`: **lần đầu cả chín arm có số trên cùng một hệ thống**. `n` nhóm C trải **8 → 40** (không đồng nhất như `DR-D4-09` gộp) ⇒ tách bảng theo arm, đúng thứ §4 ghi trước là sẽ phải sửa. `MT-21`/`MT-15` hết hiệu lực **bằng phép đo**. Kết luận không đổi, biên rộng hơn |
 | 10/09/2026 | `TD-0212` đo lại ba arm SAU bản vá: `Z0-T0` 883 (−8%), `Z0-T1` 206, `Z0` 28. **§7 điều kiện 3 kiểm — KHÔNG kích hoạt**, §2.1 giữ nguyên. H-4 cả ba arm dưới 40%. Bản vá đổi số đếm của arm nhiều lệnh, không đổi arm ít lệnh — cơ chế tranh chỗ mở, §1.1 |
