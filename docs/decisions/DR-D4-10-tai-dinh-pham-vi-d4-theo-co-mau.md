@@ -132,8 +132,10 @@ dưới ngưỡng 40% của §10.2:
 
 **H-4 không còn là tiêu chí hỏng** — nó từng là một lỗi mã, không phải một tính chất của thị trường.
 
-⇒ Trong toàn bộ Nhánh 1, tiêu chí duy nhất đang hỏng là **44,8 lệnh/năm < sàn 150**. Và cách đọc
-chính con số đó lại treo vào **`MT-29`** (§10.2 áp cho MỖI HƯỚNG hay cho TỔNG hệ thống — chưa chốt).
+⇒ Trong toàn bộ Nhánh 1, tiêu chí duy nhất đang hỏng là **số lệnh/năm < sàn 150**.
+✅ **`MT-29` đã chốt 12/09/2026 — phương án (A): sàn áp cho MỖI HƯỚNG**, không phải tổng hệ thống.
+⚠️ Nhưng con số phải đọc **theo từng arm**, không phải một con số chung: **44,8** là của `Z0` và
+nhóm C; `Z0-T1` có **325,6** và `Z0-T0` có **1.396,0** — cả hai **vượt sàn**. Xem §2.1.
 
 ---
 
@@ -159,6 +161,31 @@ và nó trùng khít với ranh giới **có/không có tầng lọc trend 1D**,
 
 D4 từ nay **chỉ phán quyết câu thứ nhất**. Câu thứ hai chuyển sang đường ở §2.4.
 
+#### 🔴 Ai là CẤU HÌNH ỨNG VIÊN, ai chỉ là arm CHẨN ĐOÁN — `MT-26` chốt 12/09/2026, phương án (C)
+
+Câu 1 của `MT-26` (*"'cấu hình tốt nhất' của Nhánh 1 có bao gồm `Z0-T0`/`Z0-T1` không"*) **đã được
+chủ dự án chốt**, và nó phân đôi hai arm thay vì nhận hoặc loại cả hai:
+
+| Arm | Địa vị | Căn cứ |
+|---|---|---|
+| **`Z0-T1`** (chỉ 4H, bỏ tầng 1D) | ✅ **CẤU HÌNH ỨNG VIÊN** | §10.1b viết *"`Z0-T1` ≥ `Z0-T2` → **giảm 3 DOF** → hạ `N`, hạ rào DSR"* — chỉ giảm DOF khi **bỏ tầng 1D khỏi hệ thống SẢN XUẤT** ⇒ spec **có** tính tới việc nhận nó |
+| **`Z0-T0`** (tắt hết Phần 2) | 🔬 **CHẨN ĐOÁN, không dự Nhánh 1** | spec `:962` cảnh báo nó thoái hoá thành mean-reversion; §10.1b mô tả nó để trả lời *"Phần 2 đóng góp gì"*, không để nhận |
+
+⇒ **D4 có ĐÚNG MỘT cấu hình ứng viên vượt sàn 150 lệnh/năm: `Z0-T1`** (325,6 lệnh/năm, `n = 206`,
+ngưỡng hiệu dụng `mean_R` **0,22–0,42 R**). Cao, nhưng **không bất khả** như nhóm C (0,44–0,97 R).
+
+🔴 **Và (C) sửa cách đọc `MT-29`.** `MT-29` (cũng chốt 12/09) kết luận *"Long-only **KHÔNG BAO GIỜ**
+qua được sàn ⇒ D4 Long-only **không chạy, 0 suất trial tiêu**"* từ con số **44,8 lệnh/năm**. Nhưng
+44,8 là của arm **`Z0`**; `Z0-T1` có **325,6** và `Z0-T0` có **1.396,0** — cả hai **vượt sàn**. Câu
+đó vì thế đúng với **7/9 arm**, không đúng với hai arm còn lại, và kết luận *"D4 không chạy"* **ngầm
+giả định** `Z0-T0`/`Z0-T1` không phải cấu hình — tức nó ngầm trả lời câu 1 của `MT-26` trong khi
+`MT-26` đang ghi **CHƯA GIẢI**. Dưới (C) thì **D4 có một nhánh chạy được**, và `MT-29` sẽ được gắn
+đính chính tại chỗ (giữ nguyên chữ cũ).
+
+⚠️ **(C) chỉ trả lời CÂU 1 của `MT-26`. Câu 2 vẫn MỞ** — *xếp hạng phải dùng đại lượng bất biến
+theo cỡ mẫu thay vì `DSR_adj` thô* — và nó **phải giải trước khi đọc kết quả D4**. (C) định nghĩa
+**ai được dự**, không định nghĩa **so bằng gì**.
+
 ### 2.2 Dự báo INCONCLUSIVE của nhóm C được ghi TRƯỚC, không phát hiện SAU
 
 Bảy arm nhóm C **được khai là INCONCLUSIVE ngay tại DR này**, kèm phép tính §1.2. Khi bộ chạy
@@ -181,7 +208,8 @@ lỗi kế toán. Cả hai đều là **cờ đỏ về tầng đo**, đúng câ
 
 | Arm | Suất mua cái gì |
 |---|---|
-| `Z0-T0`, `Z0-T1` | **Phán quyết Nhánh 1** — PASS/INCONCLUSIVE/FAIL đầy đủ |
+| **`Z0-T1`** | ✅ **Phán quyết Nhánh 1** — PASS/INCONCLUSIVE/FAIL đầy đủ. **Cấu hình ứng viên DUY NHẤT vượt sàn** (`MT-26` (C), §2.1) |
+| **`Z0-T0`** | 🔬 **CHẨN ĐOÁN** — trả lời *"Phần 2 đóng góp gì"*. 🔴 Suất này **KHÔNG mua một phán quyết Nhánh 1**; spec `:962` cảnh báo arm này thoái hoá thành mean-reversion |
 | 7 arm nhóm C | **Thống kê MÔ TẢ** — `mean_R` thô + khoảng tin cậy + `n` + thuế nhiễu, làm đầu vào cho quyết định ở §2.4 |
 
 🔴 **CẤM đọc `DSR_adj` của nhóm C như một phán quyết** — mở rộng `DR-D4-09 §2.4` (vốn chỉ cấm xếp
@@ -326,6 +354,37 @@ không phán quyết được gì.
 📌 **Một quan sát thật về SL, chỉ là trên `n = 6`:** `Z1` có `TIME_STOP` **2/6 (33%)** trong khi
 `Z0` có **0/22**. SL theo `2,2×ATR` giữ lệnh tới hết hạn ở một phần ba số ca. Ghi vì nó là dấu hiệu
 về hành vi, **không** dùng làm căn cứ.
+
+---
+
+#### 🔴 Hạng (3) áp cho CHÍNH hai arm Phần 2 — phát hiện 12/09/2026
+
+`TD-0215` cho thấy `Z1` là tập con nghiêm ngặt của `Z0`. Nhưng đối chiếu `so_tap_lenh` **trước và
+sau** bản vá `TD-0207` thì hạng (3) còn ở một chỗ nặng hơn — **chính hai arm mà §2.1 gọi là phán
+quyết/chẩn đoán được**:
+
+| Quan hệ | Trước vá (`td0205`) | Sau vá (`td0212`) |
+|---|---|---|
+| `Z0 ⊆ Z0-T0` | ✅ đúng tuyệt đối (`chi_co_o_B = 0`) | ❌ **1 lệnh mồ côi** |
+| `Z0-T1 ⊆ Z0-T0` | lệch 1 lệnh | ❌ **lệch 20 lệnh = 12,5% của `Z0-T1`** |
+| `Z0 ⊆ Z0-T1` | ✅ | ✅ **vẫn đúng** |
+
+🔑 **Vì sao đây là điều vô lý cần giải thích, không phải một con số phụ:** `Z0-T0` **tắt hết** bộ lọc
+trend. Mọi lệnh qua được bộ lọc **đầy đủ** thì đương nhiên phải qua được **không lọc**. Vậy mà có
+lệnh của `Z0` và 20 lệnh của `Z0-T1` **không tồn tại** trong `Z0-T0`.
+
+Cơ chế duy nhất giải thích được là **tranh chỗ mở** (một lệnh mở mỗi cặp): ở `Z0-T0` có 686 lệnh,
+một tín hiệu **chưa lọc** đến sớm hơn chiếm mất chỗ mà lệnh **đã lọc** sẽ dùng. Cùng cơ chế đã làm
+`Z0-T0` mất 8% lệnh sau bản vá (§1.1).
+
+⇒ **Câu *"nới bộ lọc chỉ THÊM lệnh"* là SAI.** Nới bộ lọc vừa **thêm** vừa **đánh bật**. Hệ quả cho
+§2.1: phép so `Z0-T1` vs `Z0` **không** phải phép so trên cùng một tập nền, nên
+1. theo `DR-D4-09 §2.1` phải so **paired trên tập giao** và khai riêng phần không giao;
+2. theo `DR-D4-09 §2.4` (`206/28 = 7,4 ≥ 2`) **CẤM** xếp hạng bằng `DSR_adj` thô — đây cũng chính là
+   **câu 2 của `MT-26`, vẫn đang MỞ**.
+
+⚠️ Ghi nợ: **chưa ai đo** quan hệ tập hợp giữa nhóm `Z0/Z0-T1/Z0-T0` và nhóm `Z3/Z3b/Z2`, hay với
+`Z0-V1`/`Z0-S1`. `Z0` và `Z3` **trùng CỠ** (22) nhưng **chưa có phép đo nào chứng minh trùng TẬP**.
 
 ---
 
@@ -501,6 +560,7 @@ thật"* — đó là **xác nhận dự báo §2.2**, không phải thông tin 
 | 10/09/2026 | Phiên `c3` bác `×2` cho Short (spec dòng 4187 / 4973-4974) ⇒ trần 324 → **162**, kết luận mạnh hơn; và chặn ca nghi ngờ `MT-25` bằng cận `λ < 0,138` |
 | 10/09/2026 | Chủ dự án chốt **phương án A** — DR này |
 | 10/09/2026 | Phiên `c3` soi §2.4, bắt ba lỗi: (a) mặc-định-Z0 nằm TRONG Nhánh 2 mà spec 4295 khoá sau "Nhánh 1 đã PASS" ⇒ đây là quyết định MỚI, không phải dẫn chiếu; (b) `18,07%` là số 48 mã / `[T0,T2]` / trước cả hai bản vá ⇒ **rút khỏi DR**; (c) lý lẽ bất đối xứng là khẩu vị rủi ro, không suy từ đo ⇒ hạ hạng. Cả ba đã kiểm lại trên đĩa và **nhận** |
+| 12/09/2026 | **`MT-26` câu 1 chốt — phương án (C):** `Z0-T1` là **cấu hình ứng viên**, `Z0-T0` chỉ **chẩn đoán**. Căn cứ: §10.1b (*"giảm 3 DOF"* ⇒ spec tính tới việc **nhận** `Z0-T1`) vs spec `:962` (cảnh báo `Z0-T0` thoái hoá). ⇒ D4 có **đúng một** ứng viên vượt sàn. Sửa cách đọc `MT-29`: câu *"Long-only không bao giờ qua sàn"* đúng với 7/9 arm, **không** với `Z0-T1` (325,6) và `Z0-T0` (1.396,0). 🔴 **Câu 2 của `MT-26` vẫn MỞ.** Và §2.5 thêm **hạng (3) cho chính arm Phần 2**: sau `TD-0207` các arm **không còn lồng nhau** (1 và 20 lệnh mồ côi) — cơ chế tranh chỗ mở |
 | 12/09/2026 | **Chủ dự án chốt §2.4: mặc định `Z0` single-entry.** DCA **không bị bác bỏ** — vào Idea Queue với nhãn *"chưa từng được đo"*, điều kiện mở lại `n ≥ 319`. Hai đính chính đi kèm: (a) định tuyến sang D11 là **sai hướng** — dry-run chỉ cho 7,5–11 lệnh, ÍT hơn 28 đang có, và cần **7,1 năm** để đạt 319; (b) lý lẽ *"tranche 2/3 bơm thêm rủi ro"* **bị RÚT vì SAI** — `sizing.py:28,277` chặn cứng tổng rủi ro, DCA phân bổ cùng một ngân sách vào ba mức giá |
 | 11/09/2026 | `TD-0215`: `Z1` là **tập con NGHIÊM NGẶT** của `Z0` (`n_giao = 6`, `chi_co_o_B = 0`) — 72,7% lệnh mất ở cổng kết nạp §6.8f vì `Z1` đổi SL ⇒ đổi cỡ lệnh. Sinh **hạng hỏng (3)** ở §2.5: *"đo được nhưng không phải thứ mình tưởng"*. §2.1 thêm một câu hỏi D4 **không** trả lời được |
 | 10/09/2026 | `TD-0213` + `TD-0214`: **lần đầu cả chín arm có số trên cùng một hệ thống**. `n` nhóm C trải **8 → 40** (không đồng nhất như `DR-D4-09` gộp) ⇒ tách bảng theo arm, đúng thứ §4 ghi trước là sẽ phải sửa. `MT-21`/`MT-15` hết hiệu lực **bằng phép đo**. Kết luận không đổi, biên rộng hơn |
