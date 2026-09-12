@@ -2418,3 +2418,9 @@ sai nằm trong `DR-FAI-01` §phạm vi — và nếu ai đó vì tin nó mà b�
 ⚠️ **Giới hạn của kết luận:** đây là *"đã thấy một ca"*, không phải *"đã đo tần suất"*. Không ai
 đếm được có bao nhiêu khẳng định khác đã đi qua kênh tin nhắn giữa các phiên mà không rơi vào file
 nào — theo định nghĩa, những cái đó không để lại dấu vết để đếm.
+
+**Và khoảng hở này không vá được bằng một test** (bổ sung của `[3f7d14]`, nhận): nó không phải một
+lỗi trong mã, nó là **tính chất của việc hai phiên nói chuyện với nhau**. Thứ duy nhất thu hẹp được
+là kỷ luật *"mở file trước khi khẳng định về mã"* — và chi tiết sắc nhất của cả ca này là
+`[3f7d14]` vi phạm đúng kỷ luật đó **trong cùng buổi họ đang dạy lại nó cho một phiên khác**. Một
+quy tắc mình vừa phát biểu không tự động trở thành một quy tắc mình đang tuân thủ.
