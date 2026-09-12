@@ -2436,6 +2436,26 @@ bản thì mở file là bác được trong hai giây; phỏng đoán về ngư
 mình đã đọc** — tốn hơn, và dễ khiến họ nhận bừa cho xong. Cùng họ *"chốt bị nới vì một lý do nghe
 hợp lý"*: thứ khó cãi lại không phải thứ sai nhất, mà là thứ đắt nhất để cãi.
 
+### 🔑 Cơ chế thứ hai, tách riêng vì nó KHÁC: mất thông tin ở lớp DIỄN ĐẠT
+
+Cùng ngày, cùng phiên `[67bb21]`, một ca thứ hai **không cùng cơ chế với bốn ca trên**. Họ định
+thuật lại cho chủ dự án: *"cả hai đường đều đang bị chặn — A bị §0c.2 bác, B bị `HAN_NGACH_CHON: 0`"*.
+Hai vế **không cùng hạng**: A có một **CÁI GIÁ** (đi được ngay, nhưng phải đè `DR-D0PRE-02` hoặc khai
+DSR không áp dụng — `DR-FAI-01 §7.3.5`), B có một **CƠ CHẾ CHẶN** (`DR-Q3-2026:108` — quý khai `0` mà
+có dòng `SELECTED` ⇒ sổ bẩn). Nén hai hạng đó vào một chữ *"bị chặn"* biến câu hỏi ***"đè lên chốt
+nào"*** thành ***"dừng hay không"*** — với người đang quyết, hai câu đó dẫn tới hai hành động khác hẳn.
+
+**Vì sao tách khỏi bốn ca trên:** bốn ca kia mất thông tin ở lớp **ĐO** (chưa mở file). Ca này **đo
+đúng, suy đúng**, rồi mất thông tin ở lớp **DIỄN ĐẠT** — lúc tóm tắt. Không phép kiểm nào của dự án
+nhìn thấy loại này: nó không sai một dữ kiện nào, và **câu đọc lên vẫn trôi**. Cùng họ với *"sai ở
+NHÃN dán lên phép đo"* (09/09, sáu lần trong một buổi).
+
+🔴 Chỗ đắt nhất: `[67bb21]` **tự dạy chính sự phân biệt đó** cho phiên khác ở tin nhắn ngay trước
+(*"câu hỏi là FreqAI vào theo TƯ CÁCH NÀO, không phải CÓ HAY KHÔNG"*), rồi tự xoá nó khi tóm tắt —
+vì trong một bản tóm tắt thì *"bị chặn"* **gọn hơn** *"đi được nhưng phải trả giá X"*. ⇒ **Chi phí
+của việc rút gọn rơi đúng vào chỗ người đọc cần phân biệt nhất.** Rút gọn không phải thao tác trung
+tính: nó bỏ đi **sự phân biệt**, và giữ lại **kết luận** — mà kết luận thì lúc nào cũng đọc trôi hơn.
+
 **Và khoảng hở này không vá được bằng một test** (bổ sung của `[3f7d14]`, nhận): nó không phải một
 lỗi trong mã, nó là **tính chất của việc hai phiên nói chuyện với nhau**. Thứ duy nhất thu hẹp được
 là kỷ luật *"mở file trước khi khẳng định về mã"* — và chi tiết sắc nhất của cả ca này là
