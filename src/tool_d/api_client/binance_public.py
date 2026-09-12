@@ -40,9 +40,11 @@ import json
 import time
 import urllib.parse
 import urllib.request
+from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
+from xml.etree import ElementTree
 from urllib.error import HTTPError, URLError
 
 from tool_d.config.loader import load_tool_d_config, resolve
@@ -385,6 +387,165 @@ def tai_dump_agg_trades(
     tam.write_bytes(noi_dung)
     tam.replace(dich)  # đổi tên nguyên tử: không để lại file tải dở mang tên thật
     return dich
+
+
+# Kho lưu trữ tĩnh của Binance đứng sau một bucket S3 — liệt kê được bằng
+# ListObjects (v1) với `prefix`/`delimiter`/`marker`. CÙNG host với
+# `tai_dump_agg_trades`, nên dùng lại đúng hằng `AGG_TRADES_HOST`.
+KHO_LUU_TRU_ENDPOINT = "s3-ap-northeast-1.amazonaws.com"
+KHO_LUU_TRU_BUCKET = AGG_TRADES_HOST
+
+# R5 — vòng lặp CÓ BIÊN. Mỗi trang tối đa 1000 khoá; 500 trang = 500.000
+# khoá, dư sức cho mọi prefix của kho này. Vượt trần ⇒ RAISE, KHÔNG cắt
+# bớt im lặng: một danh sách bị cắt ngắn mà không ai biết đọc thành "kho
+# chỉ có thế", tức im lặng theo chiều "không thiếu gì" (N6).
+TRAN_TRANG_LIET_KE = 500
+
+_NS_S3 = "{http://s3.amazonaws.com/doc/2006-03-01/}"
+
+
+class KhoLuuTruError(BinancePublicApiError):
+    """Liệt kê kho lưu trữ thất bại.
+
+    CỐ Ý là exception chứ không phải danh sách rỗng: ở phép đo TD-0230,
+    "rỗng" đọc thành *"không mã nào bị thiếu khỏi pool"* — tức im lặng
+    đúng theo chiều PASS, chiều mà không cổng nào của dự án bắt được.
+    """
+
+
+@dataclass(frozen=True)
+class KetQuaLietKe:
+    """Kết quả một lượt liệt kê. `so_trang >= 1` là bằng chứng đã có phản
+    hồi THẬT, nên `khoa == [] and thu_muc == []` phân biệt được với lỗi:
+    rỗng-thật thì `so_trang >= 1`, lỗi thì đã raise từ trước."""
+
+    prefix: str
+    khoa: tuple[str, ...]
+    thu_muc: tuple[str, ...]
+    so_trang: int
+
+
+def _doc_xml_kho_luu_tru(duong_dan: str, *, timeout: float) -> Any:
+    """Một request tới bucket. R3 — dùng CÙNG breaker với các hàm khác
+    (một hạ tầng Binance); KHÔNG áp `tier_c.api_calls_per_min` vì trần đó
+    là trần weight công bố riêng cho `fapi.binance.com`, đúng như
+    `tai_dump_agg_trades` đã ghi."""
+    _kiem_tra_breaker()
+    conn = http.client.HTTPSConnection(KHO_LUU_TRU_ENDPOINT, timeout=timeout)
+    try:
+        conn.request("GET", duong_dan)
+        resp = conn.getresponse()
+        if resp.status != 200:
+            resp.read()
+            _ghi_nhan_that_bai(http_status=resp.status)
+            raise KhoLuuTruError(
+                f"liệt kê {KHO_LUU_TRU_ENDPOINT}{duong_dan} thất bại: HTTP {resp.status}"
+            )
+        noi_dung = resp.read()
+        _ghi_nhan_thanh_cong()
+    except OSError as exc:
+        raise KhoLuuTruError(
+            f"liệt kê {KHO_LUU_TRU_ENDPOINT}{duong_dan} thất bại: {exc}"
+        ) from exc
+    finally:
+        conn.close()
+    try:
+        return ElementTree.fromstring(noi_dung)
+    except ElementTree.ParseError as exc:
+        raise KhoLuuTruError(
+            f"phản hồi của {KHO_LUU_TRU_ENDPOINT}{duong_dan} không phải XML hợp lệ: {exc}"
+        ) from exc
+
+
+def liet_ke_kho_luu_tru(
+    *,
+    prefix: str,
+    delimiter: str | None = None,
+    timeout: float = 30.0,
+    tran_trang: int = TRAN_TRANG_LIET_KE,
+) -> KetQuaLietKe:
+    """TD-0230 — liệt kê kho tĩnh `data.binance.vision` qua S3 ListObjects.
+
+    Đây là nguồn mà `DR-D1-01` §1-2 đã dùng thật để lấy danh sách mã đã
+    huỷ niêm yết và mốc lên/rời sàn của từng mã: kho KHÔNG xoá thư mục của
+    mã đã huỷ, khác `exchangeInfo` (chỉ phản ánh trạng thái HIỆN TẠI).
+
+    Đặt ở đây, không phải module riêng — **R1 Single Egress**, cùng lý do
+    `tai_dump_agg_trades` đã ghi.
+
+    🔴 **Phân trang là phần BẮT BUỘC, không phải tối ưu.** Mỗi trang tối
+    đa 1000 mục; `DR-D1-01` §1 đã nêu đúng chỗ này (*"phân trang qua
+    `NextMarker` vì mỗi trang giới hạn 1000 mục"*). Dừng ở trang đầu cho
+    một câu trả lời **nhỏ hơn thực tế** — và ở phép đo TD-0230, nhỏ hơn
+    thực tế nghĩa là *"pool thiếu ít mã hơn"*, tức lệch đúng chiều PASS.
+
+    `NextMarker` chỉ được bucket trả khi có `delimiter`; không có
+    `delimiter` thì marker của trang sau là **khoá cuối** của trang này
+    (đúng chuẩn ListObjects v1). Xử cả hai, không giả định một dạng.
+    """
+    if not prefix:
+        raise KhoLuuTruError("prefix rỗng — sẽ liệt kê TOÀN BỘ bucket, không cho phép")
+    if tran_trang < 1:
+        raise KhoLuuTruError(f"tran_trang phải >= 1, nhận: {tran_trang}")
+
+    khoa: list[str] = []
+    thu_muc: list[str] = []
+    marker: str | None = None
+    so_trang = 0
+
+    while True:
+        tham_so: dict[str, str] = {"prefix": prefix}
+        if delimiter is not None:
+            tham_so["delimiter"] = delimiter
+        if marker is not None:
+            tham_so["marker"] = marker
+        duong_dan = f"/{KHO_LUU_TRU_BUCKET}/?" + urllib.parse.urlencode(tham_so)
+
+        goc = _doc_xml_kho_luu_tru(duong_dan, timeout=timeout)
+        so_trang += 1
+
+        # `Key` chỉ xuất hiện trong `Contents`, `Prefix` con của
+        # `CommonPrefixes` chỉ xuất hiện ở đó — nhưng `Prefix` cũng là thẻ
+        # cấp GỐC (echo lại prefix đã gửi), nên KHÔNG được `iter("Prefix")`
+        # thẳng: sẽ hút luôn thẻ gốc và sinh một "thư mục" giả.
+        khoa_trang = [
+            k.text for c in goc.iter(f"{_NS_S3}Contents")
+            for k in c.findall(f"{_NS_S3}Key") if k.text
+        ]
+        khoa.extend(khoa_trang)
+        thu_muc.extend(
+            p.text for cp in goc.iter(f"{_NS_S3}CommonPrefixes")
+            for p in cp.findall(f"{_NS_S3}Prefix") if p.text
+        )
+
+        bi_cat = goc.findtext(f"{_NS_S3}IsTruncated", default="false").strip().lower()
+        if bi_cat != "true":
+            break
+        if so_trang >= tran_trang:
+            raise KhoLuuTruError(
+                f"prefix {prefix!r} còn bị cắt sau {so_trang} trang (trần "
+                f"{tran_trang}) — KHÔNG trả danh sách thiếu; siết prefix hoặc "
+                "nâng trần một cách tường minh"
+            )
+        tiep = goc.findtext(f"{_NS_S3}NextMarker")
+        if tiep:
+            marker = tiep
+        elif thu_muc and delimiter is not None:
+            marker = thu_muc[-1]
+        elif khoa_trang:
+            marker = khoa_trang[-1]
+        else:
+            raise KhoLuuTruError(
+                f"prefix {prefix!r}: bucket báo IsTruncated=true nhưng không có "
+                "NextMarker và trang rỗng — không suy ra được marker kế tiếp"
+            )
+
+    return KetQuaLietKe(
+        prefix=prefix,
+        khoa=tuple(khoa),
+        thu_muc=tuple(thu_muc),
+        so_trang=so_trang,
+    )
 
 
 def get_open_interest_hist(

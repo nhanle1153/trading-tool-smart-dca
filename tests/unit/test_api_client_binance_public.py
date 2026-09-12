@@ -26,7 +26,9 @@ from tool_d.api_client.binance_public import (
     dat_lai_trang_thai_mang_cho_kiem,
     get_exchange_info,
     get_open_interest_hist,
+    KhoLuuTruError,
     latency_samples_ms,
+    liet_ke_kho_luu_tru,
     tai_dump_agg_trades,
 )
 
@@ -385,3 +387,166 @@ class TestTaiDumpAggTradesBreaker:
                 symbol="ETHUSDT", ngay=date(2024, 6, 2), thu_muc_cache=tmp_path
             )
         assert ket_qua.exists()
+def _xml_s3(
+    *,
+    prefix: str,
+    khoa: tuple[str, ...] = (),
+    thu_muc: tuple[str, ...] = (),
+    bi_cat: bool = False,
+    next_marker: str | None = None,
+) -> bytes:
+    """Dựng phản hồi ListObjects v1 ĐÚNG hình dạng bucket thật trả về —
+    kèm thẻ `<Prefix>` ở CẤP GỐC (echo lại prefix đã gửi). Thẻ gốc đó là
+    cái bẫy: `iter("Prefix")` thẳng sẽ hút luôn nó và sinh một "thư mục"
+    giả không tồn tại."""
+    phan = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<ListBucketResult xmlns="http://s3.amazonaws.com/doc/2006-03-01/">',
+        "<Name>data.binance.vision</Name>",
+        f"<Prefix>{prefix}</Prefix>",
+        "<Delimiter>/</Delimiter>",
+        f"<IsTruncated>{'true' if bi_cat else 'false'}</IsTruncated>",
+    ]
+    if next_marker is not None:
+        phan.append(f"<NextMarker>{next_marker}</NextMarker>")
+    phan += [f"<Contents><Key>{k}</Key><Size>7</Size></Contents>" for k in khoa]
+    phan += [f"<CommonPrefixes><Prefix>{t}</Prefix></CommonPrefixes>" for t in thu_muc]
+    phan.append("</ListBucketResult>")
+    return "".join(phan).encode("utf-8")
+
+
+def _fake_conn_nhieu_trang(*bodies: bytes, status: int = 200) -> MagicMock:
+    """Một `HTTPSConnection` giả trả LẦN LƯỢT từng body — cần thiết để ca
+    phân trang là phân trang THẬT (nhiều lượt request), không phải một
+    lượt được khẳng định là nhiều."""
+    conn = MagicMock()
+    responses = []
+    for body in bodies:
+        resp = MagicMock()
+        resp.status = status
+        resp.read.return_value = body
+        responses.append(resp)
+    conn.getresponse.side_effect = responses
+    return conn
+
+
+class TestLietKeKhoLuuTru:
+    """TD-0230 — liệt kê kho tĩnh `data.binance.vision` (S3 ListObjects).
+
+    🔴 Ba ca có RĂNG ở đây canh cùng một hình dạng lỗi: **trả một danh
+    sách NGẮN HƠN thực tế mà không ai biết**. Ở phép đo TD-0230, ngắn hơn
+    thực tế đọc thành *"pool thiếu ít mã hơn"* — tức im lặng đúng theo
+    chiều PASS, chiều mà không cổng nào của dự án bắt được.
+    """
+
+    PREFIX = "data/futures/um/monthly/klines/"
+
+    def test_mot_trang_doc_dung_khoa_va_thu_muc(self) -> None:
+        body = _xml_s3(
+            prefix=self.PREFIX,
+            khoa=("data/x/a.zip",),
+            thu_muc=(f"{self.PREFIX}BTCUSDT/", f"{self.PREFIX}ETHUSDT/"),
+        )
+        with patch("http.client.HTTPSConnection", return_value=_fake_conn_nhieu_trang(body)):
+            kq = liet_ke_kho_luu_tru(prefix=self.PREFIX, delimiter="/")
+        assert kq.khoa == ("data/x/a.zip",)
+        assert kq.thu_muc == (f"{self.PREFIX}BTCUSDT/", f"{self.PREFIX}ETHUSDT/")
+        assert kq.so_trang == 1
+
+    def test_the_Prefix_cap_goc_KHONG_bi_tinh_la_thu_muc(self) -> None:
+        """Nếu tính, mọi lượt liệt kê sẽ có thêm một "thư mục" giả =
+        chính prefix đã gửi — và phép trừ tập của TD-0230 lệch đúng 1."""
+        body = _xml_s3(prefix=self.PREFIX, thu_muc=(f"{self.PREFIX}BTCUSDT/",))
+        with patch("http.client.HTTPSConnection", return_value=_fake_conn_nhieu_trang(body)):
+            kq = liet_ke_kho_luu_tru(prefix=self.PREFIX, delimiter="/")
+        assert kq.thu_muc == (f"{self.PREFIX}BTCUSDT/",)
+        assert self.PREFIX not in kq.thu_muc
+
+    def test_PHAN_TRANG_khong_dung_o_trang_dau(self) -> None:
+        """RĂNG 1 — `DR-D1-01` §1 nêu đúng chỗ này: mỗi trang giới hạn
+        1000 mục. Dừng ở trang đầu ⇒ thiếu mã, lệch chiều PASS."""
+        t1 = _xml_s3(
+            prefix=self.PREFIX,
+            thu_muc=(f"{self.PREFIX}AAAUSDT/",),
+            bi_cat=True,
+            next_marker=f"{self.PREFIX}AAAUSDT/",
+        )
+        t2 = _xml_s3(prefix=self.PREFIX, thu_muc=(f"{self.PREFIX}ZZZUSDT/",))
+        conn = _fake_conn_nhieu_trang(t1, t2)
+        with patch("http.client.HTTPSConnection", return_value=conn):
+            kq = liet_ke_kho_luu_tru(prefix=self.PREFIX, delimiter="/")
+        assert kq.so_trang == 2
+        assert kq.thu_muc == (f"{self.PREFIX}AAAUSDT/", f"{self.PREFIX}ZZZUSDT/")
+        assert conn.request.call_count == 2
+        # marker phải có mặt trong request thứ HAI, không phải request đầu
+        assert "marker" not in conn.request.call_args_list[0][0][1]
+        assert "marker" in conn.request.call_args_list[1][0][1]
+
+    def test_thieu_NextMarker_thi_dung_khoa_CUOI_cua_trang(self) -> None:
+        """ListObjects v1 chỉ trả `NextMarker` khi có `delimiter`. Không
+        có thì marker của trang sau là khoá cuối trang này — không được
+        giả định chỉ một dạng."""
+        t1 = _xml_s3(prefix=self.PREFIX, khoa=("k/1.zip", "k/2.zip"), bi_cat=True)
+        t2 = _xml_s3(prefix=self.PREFIX, khoa=("k/3.zip",))
+        conn = _fake_conn_nhieu_trang(t1, t2)
+        with patch("http.client.HTTPSConnection", return_value=conn):
+            kq = liet_ke_kho_luu_tru(prefix=self.PREFIX)
+        assert kq.khoa == ("k/1.zip", "k/2.zip", "k/3.zip")
+        assert "marker=k%2F2.zip" in conn.request.call_args_list[1][0][1]
+
+    def test_qua_TRAN_TRANG_thi_RAISE_chu_khong_tra_danh_sach_thieu(self) -> None:
+        """RĂNG 2 — R5 vòng lặp có biên, nhưng cắt ở biên phải NỔ. Cắt im
+        lặng là đúng thứ trả "kho chỉ có thế"."""
+        bi_cat = _xml_s3(prefix=self.PREFIX, khoa=("k/1.zip",), bi_cat=True, next_marker="k/1.zip")
+        conn = _fake_conn_nhieu_trang(bi_cat, bi_cat, bi_cat)
+        with patch("http.client.HTTPSConnection", return_value=conn):
+            with pytest.raises(KhoLuuTruError, match="còn bị cắt sau"):
+                liet_ke_kho_luu_tru(prefix=self.PREFIX, tran_trang=2)
+
+    def test_loi_mang_thi_RAISE_chu_khong_tra_RONG(self) -> None:
+        """RĂNG 3 — N6. Rỗng ở đây đọc thành "không mã nào bị thiếu"."""
+        conn = MagicMock()
+        conn.request.side_effect = OSError("mô phỏng đứt mạng")
+        with patch("http.client.HTTPSConnection", return_value=conn):
+            with pytest.raises(KhoLuuTruError, match="thất bại"):
+                liet_ke_kho_luu_tru(prefix=self.PREFIX)
+
+    def test_http_loi_thi_RAISE(self) -> None:
+        conn = _fake_conn_nhieu_trang(b"loi", status=503)
+        with patch("http.client.HTTPSConnection", return_value=conn):
+            with pytest.raises(KhoLuuTruError, match="HTTP 503"):
+                liet_ke_kho_luu_tru(prefix=self.PREFIX)
+
+    def test_xml_hong_thi_RAISE_chu_khong_tra_RONG(self) -> None:
+        conn = _fake_conn_nhieu_trang(b"<khong phai xml hop le")
+        with patch("http.client.HTTPSConnection", return_value=conn):
+            with pytest.raises(KhoLuuTruError, match="không phải XML hợp lệ"):
+                liet_ke_kho_luu_tru(prefix=self.PREFIX)
+
+    def test_RONG_THAT_phan_biet_duoc_voi_LOI(self) -> None:
+        """Prefix không tồn tại: HTTP 200, 0 mục. `so_trang >= 1` là bằng
+        chứng đã có phản hồi thật — nên rỗng-thật đọc được, không lẫn với
+        lỗi (lỗi đã raise từ trước)."""
+        body = _xml_s3(prefix="data/khong-ton-tai/")
+        with patch("http.client.HTTPSConnection", return_value=_fake_conn_nhieu_trang(body)):
+            kq = liet_ke_kho_luu_tru(prefix="data/khong-ton-tai/", delimiter="/")
+        assert kq.khoa == () and kq.thu_muc == ()
+        assert kq.so_trang == 1
+
+    def test_prefix_rong_bi_tu_choi_truoc_khi_goi_mang(self) -> None:
+        with patch("http.client.HTTPSConnection") as mock_conn:
+            with pytest.raises(KhoLuuTruError, match="prefix rỗng"):
+                liet_ke_kho_luu_tru(prefix="")
+        mock_conn.assert_not_called()
+
+    def test_breaker_dang_mo_thi_khong_mo_ket_noi_moi(self) -> None:
+        """Dùng CHUNG breaker với `_goi_json_cong_khai` — một hạ tầng
+        Binance, đúng như `tai_dump_agg_trades` đã làm."""
+        with patch("tool_d.api_client.binance_public.urllib.request.urlopen") as mock_urlopen:
+            mock_urlopen.side_effect = _http_error(418)
+            with pytest.raises(BinancePublicApiError):
+                get_exchange_info()  # mở breaker DUNG_HAN qua đường fapi
+        with patch("http.client.HTTPSConnection") as mock_conn:
+            with pytest.raises(BinanceBreakerMoError):
+                liet_ke_kho_luu_tru(prefix=self.PREFIX)
+        mock_conn.assert_not_called()
