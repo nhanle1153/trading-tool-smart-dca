@@ -36,10 +36,12 @@ from __future__ import annotations
 import hashlib
 import hmac
 import http.client
+import io
 import json
 import time
 import urllib.parse
 import urllib.request
+import zipfile
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -546,6 +548,126 @@ def liet_ke_kho_luu_tru(
         thu_muc=tuple(thu_muc),
         so_trang=so_trang,
     )
+
+
+class NenThangKhongCoError(BinancePublicApiError):
+    """Kho không có file nến tháng đó cho mã đó (HTTP 404).
+
+    Tách riêng khỏi lỗi mạng, cùng lý do `AggTradesNotFoundError`: một tháng
+    không có file là **DỮ KIỆN** (mã chưa lên sàn, hoặc đã rời sàn), không
+    phải sự cố. Bên gọi phải xử tường minh — coi nó như *"volume = 0"* là
+    gộp *"không đo được"* với *"đo được và bằng 0"*, đúng thứ N6 cấm.
+    """
+
+
+# Nến Binance: 0 open_time · 1 open · 2 high · 3 low · 4 close · 5 volume
+# · 6 close_time · 7 QUOTE_VOLUME · 8 count · 9 taker_buy_volume
+# · 10 taker_buy_quote_volume · 11 ignore
+_COT_OPEN_TIME = 0
+_COT_QUOTE_VOLUME = 7
+
+# 🔴 Binance đã ĐỔI ĐƠN VỊ mốc thời gian trong kho lưu trữ: file cũ ghi
+# MILLI-giây, file mới ghi MICRO-giây. Không phát hiện được thì mọi mốc đọc
+# lệch ~1000 lần và rơi về năm 1970 — mà 1970 thì "trước mọi mốc T", tức
+# lệch đúng theo chiều "mã nào cũng đã tồn tại". Ngưỡng: 1e14 ms ≈ năm 5138,
+# nên mọi giá trị lớn hơn thế chắc chắn là micro-giây.
+_NGUONG_MICRO_GIAY = 1e14
+
+
+def doc_quote_volume_1d_thang(
+    *,
+    symbol: str,
+    nam: int,
+    thang: int,
+    timeout: float = 60.0,
+) -> dict[date, float]:
+    """TD-0231 — đọc `quote_volume` từng NGÀY của một THÁNG, từ kho lưu trữ.
+
+    Dùng để dựng lại `SymbolStat.quote_volume_24h` **TẠI một mốc `t` trong quá
+    khứ** — chính thứ docstring `pool.py` của `pairlist_point_in_time()` đòi
+    bên gọi tự cung cấp, và chưa từng có ai cung cấp.
+
+    Đặt ở đây, không phải module riêng — **R1 Single Egress**, cùng lý do
+    `tai_dump_agg_trades()` đã ghi.
+
+    Đọc nhánh **monthly** (≈30 hàng/file) thay vì `daily/` (1 hàng/file): một
+    lượt tải là đủ cho cả tháng.
+
+    🔴 **Fail-closed ba chỗ:**
+
+    1. HTTP 404 ⇒ `NenThangKhongCoError` — dữ kiện, không phải 0.
+    2. Mốc thời gian đọc ra **không nằm trong đúng tháng đã hỏi** ⇒ raise.
+       Đây là chốt canh **lẫn đơn vị** (milli/micro-giây): lệch đơn vị đẩy
+       mọi mốc về 1970, mà 1970 *"trước mọi mốc T"* nghĩa là *"mã nào cũng
+       đã tồn tại"* — lệch đúng chiều làm rổ trông đầy hơn thực tế.
+    3. `quote_volume` không parse được ⇒ raise, không bỏ qua hàng đó.
+    """
+    ten = f"{symbol}-1d-{nam:04d}-{thang:02d}.zip"
+    duong_dan = f"/data/futures/um/monthly/klines/{symbol}/1d/{ten}"
+
+    _kiem_tra_breaker()
+    conn = http.client.HTTPSConnection(AGG_TRADES_HOST, timeout=timeout)
+    try:
+        conn.request("GET", duong_dan)
+        resp = conn.getresponse()
+        if resp.status == 404:
+            resp.read()
+            raise NenThangKhongCoError(
+                f"kho không có {ten} (HTTP 404 tại {AGG_TRADES_HOST}{duong_dan})"
+            )
+        if resp.status != 200:
+            resp.read()
+            _ghi_nhan_that_bai(http_status=resp.status)
+            raise KhoLuuTruError(
+                f"tải {AGG_TRADES_HOST}{duong_dan} thất bại: HTTP {resp.status}"
+            )
+        noi_dung = resp.read()
+        _ghi_nhan_thanh_cong()
+    except OSError as exc:
+        raise KhoLuuTruError(
+            f"tải {AGG_TRADES_HOST}{duong_dan} thất bại: {exc}"
+        ) from exc
+    finally:
+        conn.close()
+
+    try:
+        with zipfile.ZipFile(io.BytesIO(noi_dung)) as z:
+            ten_csv = z.namelist()[0]
+            tho = z.read(ten_csv).decode("utf-8")
+    except (zipfile.BadZipFile, IndexError, UnicodeDecodeError) as exc:
+        raise KhoLuuTruError(f"{ten} không giải nén được: {exc}") from exc
+
+    ket_qua: dict[date, float] = {}
+    for dong in tho.splitlines():
+        dong = dong.strip()
+        if not dong:
+            continue
+        o = dong.split(",")
+        if len(o) <= _COT_QUOTE_VOLUME:
+            raise KhoLuuTruError(f"{ten}: hàng thiếu cột — {dong[:80]!r}")
+        try:
+            moc_tho = float(o[_COT_OPEN_TIME])
+        except ValueError:
+            # Hàng tiêu đề của file mới — bỏ qua đúng hàng đó, không bỏ file.
+            continue
+        chia = 1_000_000.0 if moc_tho > _NGUONG_MICRO_GIAY else 1_000.0
+        ngay = datetime.fromtimestamp(moc_tho / chia, tz=timezone.utc).date()
+        if (ngay.year, ngay.month) != (nam, thang):
+            raise KhoLuuTruError(
+                f"{ten}: mốc {moc_tho!r} đọc ra {ngay.isoformat()}, không nằm "
+                f"trong tháng {nam:04d}-{thang:02d} — nghi LẪN ĐƠN VỊ "
+                "(milli/micro-giây). DỪNG, không trả số sai đơn vị."
+            )
+        try:
+            ket_qua[ngay] = float(o[_COT_QUOTE_VOLUME])
+        except ValueError as exc:
+            raise KhoLuuTruError(
+                f"{ten}: quote_volume không đọc được ở {ngay}: {o[_COT_QUOTE_VOLUME]!r}"
+            ) from exc
+
+    if not ket_qua:
+        raise KhoLuuTruError(f"{ten}: giải nén được nhưng 0 hàng đọc được")
+    return ket_qua
 
 
 def get_open_interest_hist(

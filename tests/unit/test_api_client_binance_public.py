@@ -8,7 +8,9 @@ là "đạt" cho phát hiện thật).
 
 from __future__ import annotations
 
+import io
 import json
+import zipfile
 from datetime import date
 from unittest.mock import MagicMock, patch
 from urllib.error import HTTPError
@@ -27,6 +29,8 @@ from tool_d.api_client.binance_public import (
     get_exchange_info,
     get_open_interest_hist,
     KhoLuuTruError,
+    NenThangKhongCoError,
+    doc_quote_volume_1d_thang,
     latency_samples_ms,
     liet_ke_kho_luu_tru,
     tai_dump_agg_trades,
@@ -550,3 +554,101 @@ class TestLietKeKhoLuuTru:
             with pytest.raises(BinanceBreakerMoError):
                 liet_ke_kho_luu_tru(prefix=self.PREFIX)
         mock_conn.assert_not_called()
+def _zip_nen(rows: list[str], *, ten: str = "X-1d-2025-06.csv") -> bytes:
+    """Dựng một file zip nến trong bộ nhớ, đúng hình dạng kho lưu trữ."""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr(ten, "\n".join(rows))
+    return buf.getvalue()
+
+
+def _hang(moc: int, quote_volume: str = "1000000.0") -> str:
+    """Một hàng nến 12 cột; chỉ cột 0 (open_time) và 7 (quote_volume) có nghĩa."""
+    o = [str(moc), "1", "2", "0.5", "1.5", "10", str(moc + 1), quote_volume, "5", "1", "1", "0"]
+    return ",".join(o)
+
+
+# 2025-06-12 00:00:00 UTC
+MS_2025_06_12 = 1749686400000
+US_2025_06_12 = MS_2025_06_12 * 1000
+
+
+class TestDocQuoteVolume1dThang:
+    """TD-0231 — dựng lại `quote_volume_24h` TẠI một mốc quá khứ, thứ mà
+    `pool.pairlist_point_in_time()` đòi bên gọi cung cấp và chưa ai cung cấp.
+
+    🔴 Ca có RĂNG quan trọng nhất ở đây là **chốt canh LẪN ĐƠN VỊ**: kho đã
+    đổi mốc thời gian từ milli- sang micro-giây. Đọc lệch đơn vị đẩy mọi mốc
+    về 1970, mà *"1970 thì trước mọi mốc T"* nghĩa là **"mã nào cũng đã tồn
+    tại"** — lệch đúng chiều làm rổ trông đầy hơn thực tế, tức chiều PASS.
+    """
+
+    def test_doc_dung_quote_volume_milli_giay(self) -> None:
+        body = _zip_nen([_hang(MS_2025_06_12, "12345678.9")])
+        with patch("http.client.HTTPSConnection", return_value=_fake_conn(body=body)):
+            kq = doc_quote_volume_1d_thang(symbol="ABCUSDT", nam=2025, thang=6)
+        assert kq == {date(2025, 6, 12): 12345678.9}
+
+    def test_doc_dung_quote_volume_MICRO_giay(self) -> None:
+        """File mới của kho ghi micro-giây — phải ra CÙNG một ngày."""
+        body = _zip_nen([_hang(US_2025_06_12, "12345678.9")])
+        with patch("http.client.HTTPSConnection", return_value=_fake_conn(body=body)):
+            kq = doc_quote_volume_1d_thang(symbol="ABCUSDT", nam=2025, thang=6)
+        assert kq == {date(2025, 6, 12): 12345678.9}
+
+    def test_moc_ROI_NGOAI_THANG_thi_RAISE(self) -> None:
+        """RĂNG — chốt canh lẫn đơn vị. Hỏi tháng 7 mà file trả mốc tháng 6
+        thì DỪNG, không trả một con số sai đơn vị."""
+        body = _zip_nen([_hang(MS_2025_06_12)])
+        with patch("http.client.HTTPSConnection", return_value=_fake_conn(body=body)):
+            with pytest.raises(KhoLuuTruError, match="LẪN ĐƠN VỊ"):
+                doc_quote_volume_1d_thang(symbol="ABCUSDT", nam=2025, thang=7)
+
+    def test_404_la_DU_KIEN_khong_phai_loi_va_khong_dung_breaker(self) -> None:
+        """Tháng không có file = mã chưa lên sàn / đã rời sàn. Coi nó như
+        `volume = 0` là gộp "không đo được" với "đo được và bằng 0" (N6)."""
+        with patch("http.client.HTTPSConnection", return_value=_fake_conn(status=404)):
+            with pytest.raises(NenThangKhongCoError):
+                doc_quote_volume_1d_thang(symbol="ABCUSDT", nam=2020, thang=1)
+        # breaker còn sạch ⇒ lượt gọi sau vẫn đi được
+        body = _zip_nen([_hang(MS_2025_06_12)])
+        with patch("http.client.HTTPSConnection", return_value=_fake_conn(body=body)):
+            assert doc_quote_volume_1d_thang(symbol="ABCUSDT", nam=2025, thang=6)
+
+    def test_http_loi_thi_RAISE(self) -> None:
+        with patch("http.client.HTTPSConnection", return_value=_fake_conn(status=503)):
+            with pytest.raises(KhoLuuTruError, match="HTTP 503"):
+                doc_quote_volume_1d_thang(symbol="ABCUSDT", nam=2025, thang=6)
+
+    def test_zip_hong_thi_RAISE(self) -> None:
+        with patch("http.client.HTTPSConnection", return_value=_fake_conn(body=b"khong phai zip")):
+            with pytest.raises(KhoLuuTruError, match="không giải nén được"):
+                doc_quote_volume_1d_thang(symbol="ABCUSDT", nam=2025, thang=6)
+
+    def test_hang_tieu_de_bi_bo_QUA_nhung_file_van_doc_duoc(self) -> None:
+        """File mới của kho có hàng tiêu đề — bỏ qua đúng hàng đó, không bỏ file."""
+        body = _zip_nen(["open_time,open,high,low,close,volume,close_time,quote_volume,count,a,b,c",
+                         _hang(MS_2025_06_12, "777.0")])
+        with patch("http.client.HTTPSConnection", return_value=_fake_conn(body=body)):
+            kq = doc_quote_volume_1d_thang(symbol="ABCUSDT", nam=2025, thang=6)
+        assert kq == {date(2025, 6, 12): 777.0}
+
+    def test_hang_thieu_cot_thi_RAISE(self) -> None:
+        body = _zip_nen([f"{MS_2025_06_12},1,2,3"])
+        with patch("http.client.HTTPSConnection", return_value=_fake_conn(body=body)):
+            with pytest.raises(KhoLuuTruError, match="thiếu cột"):
+                doc_quote_volume_1d_thang(symbol="ABCUSDT", nam=2025, thang=6)
+
+    def test_quote_volume_khong_doc_duoc_thi_RAISE_chu_khong_bo_qua(self) -> None:
+        body = _zip_nen([_hang(MS_2025_06_12, "khong-phai-so")])
+        with patch("http.client.HTTPSConnection", return_value=_fake_conn(body=body)):
+            with pytest.raises(KhoLuuTruError, match="quote_volume không đọc được"):
+                doc_quote_volume_1d_thang(symbol="ABCUSDT", nam=2025, thang=6)
+
+    def test_file_rong_thi_RAISE_chu_khong_tra_dict_RONG(self) -> None:
+        """Dict rỗng ở đây đọc thành "tháng đó không có giao dịch nào" — khác
+        hẳn "file không tồn tại" (404) và khác hẳn "đọc không ra"."""
+        body = _zip_nen([""])
+        with patch("http.client.HTTPSConnection", return_value=_fake_conn(body=body)):
+            with pytest.raises(KhoLuuTruError, match="0 hàng đọc được"):
+                doc_quote_volume_1d_thang(symbol="ABCUSDT", nam=2025, thang=6)
