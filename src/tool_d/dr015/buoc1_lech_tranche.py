@@ -79,7 +79,10 @@ from tool_d.config.loader import DEFAULT_CONFIG_PATH, load_tool_d_config
 from tool_d.ledger.registry import DEFAULT_REGISTRY_PATH, TrialLedger
 from tool_d.ledger.timerange import assert_dataset_timerange, dataset_boundaries_from_config
 from tool_d.measurement.hashing import sha256_of
-from tool_d.measurement.provenance import build_provenance
+from tool_d.measurement.provenance import (
+    build_provenance,
+    doc_runtime_image_digest,
+)
 from tool_d.measurement.tri_state import Measured
 
 DEFAULT_DU_LIEU_THO_PATH = Path("docs/du-lieu-do/dr015-luot-khop-tranche.json")
@@ -265,6 +268,11 @@ def ghi_dong_ctrl(
         data_files={"dr015_luot_khop_tranche": data_path_abs},
         cache_mode="none",
         guard_passed=True,
+        # TD-0229 — khoá xuất xứ thứ 8 (MT-07). `doc_runtime_image_digest`
+        # RAISE nếu không xác định được; cố ý KHÔNG bắt lỗi ở đây, cùng lý do
+        # `build_provenance` không bắt `GitInfoError`: một bản ghi không biết
+        # mình chạy trên ảnh nào thì không đáng tồn tại.
+        runtime_image_digest=doc_runtime_image_digest(repo_dir),
     )
     return ledger.reserve(
         n_dang_ky=0,  # không dùng cho CTRL (bỏ qua kiểm ngân sách)

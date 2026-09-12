@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from collections.abc import Mapping
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -39,6 +40,69 @@ REQUIRED_PROVENANCE_KEYS: frozenset[str] = frozenset(
         "guard_passed",
     }
 )
+
+
+# Tập của TOOL D = 7 khoá spec + khoá thứ 8 (MT-07). CỐ Ý tách khỏi
+# `REQUIRED_PROVENANCE_KEYS`: hằng số kia phải giữ đúng nghĩa "tập spec §0d.5
+# đòi" (dòng 597-616 liệt kê đúng 7). Gộp hai thứ vào một tên là đúng lớp trôi
+# ngữ nghĩa mà dự án đã dính nhiều lần — "spec đòi" và "Tool D đòi thêm" là hai
+# phát biểu khác nhau và phải kiểm được riêng.
+KHOA_XUAT_XU_TOOL_D: frozenset[str] = REQUIRED_PROVENANCE_KEYS | {
+    "runtime_image_digest"
+}
+
+# Dấu hiệu "đang chạy trong ảnh của chính project này": file do
+# `docker/Dockerfile` nướng vào lúc build. Không có nó ⇒ không phải ảnh ta ghim.
+DAU_HIEU_ANH = Path("/opt/freqtrade_source_commit.txt")
+
+# `FROM <repo>@sha256:<64 hex>` — digest ghim ở ĐÚNG MỘT chỗ: docker/Dockerfile.
+_RE_FROM_DIGEST = re.compile(r"^FROM\s+\S+@(sha256:[0-9a-f]{64})\s*$", re.MULTILINE)
+_RE_DIGEST_HOP_LE = re.compile(r"sha256:[0-9a-f]{64}")
+
+
+class ImageDigestError(RuntimeError):
+    """Không xác định được digest ảnh đang chạy.
+
+    CỐ Ý là exception chứ không phải giá trị trả về: N6 cấm giá trị lính canh
+    (`""`, `"UNKNOWN"`), và một khối xuất xứ khai sai môi trường còn tệ hơn một
+    khối không tồn tại — nó trông như bằng chứng.
+    """
+
+
+def doc_runtime_image_digest(
+    repo_dir: Path,
+    *,
+    dau_hieu_anh: Path | None = None,
+) -> str:
+    """Đọc digest ảnh đang chạy — khoá xuất xứ thứ 8 (MT-07). FAIL-CLOSED.
+
+    Hai vế, cả hai đều cần:
+
+    1. **Đang chạy trong ảnh của project** — `DAU_HIEU_ANH` do `docker/Dockerfile`
+       nướng vào lúc build. Chạy trên host (soạn thảo) thì file này không có, và
+       theo N7 lần chạy đó không phải bằng chứng nên KHÔNG được ghi xuất xứ.
+    2. **Digest ghim** — đọc dòng `FROM ...@sha256:...` của `docker/Dockerfile`.
+
+    Vế 1 một mình không đủ (không nói ảnh nào); vế 2 một mình không đủ (chỉ nói
+    *ghim* gì, không nói đang *chạy* gì). Hai vế cùng đúng thì mới kết luận được.
+    """
+    dau_hieu = DAU_HIEU_ANH if dau_hieu_anh is None else dau_hieu_anh
+    if not dau_hieu.is_file():
+        raise ImageDigestError(
+            f"không thấy {dau_hieu} — không chạy trong ảnh Docker của project. "
+            "Theo N7, lần chạy ngoài Docker không phải bằng chứng, nên không "
+            "được ghi khối xuất xứ."
+        )
+    dockerfile = repo_dir / "docker" / "Dockerfile"
+    if not dockerfile.is_file():
+        raise ImageDigestError(f"không thấy {dockerfile} để đọc digest ghim")
+    khop = _RE_FROM_DIGEST.findall(dockerfile.read_text(encoding="utf-8"))
+    if len(khop) != 1:
+        raise ImageDigestError(
+            f"{dockerfile}: cần ĐÚNG MỘT dòng `FROM ...@sha256:<64 hex>`, "
+            f"tìm thấy {len(khop)}"
+        )
+    return khop[0]
 
 
 @dataclass(frozen=True)
@@ -122,6 +186,31 @@ def validate_provenance(d: Mapping[str, Any]) -> list[str]:
     return errors
 
 
+def validate_provenance_tool_d(d: Mapping[str, Any]) -> list[str]:
+    """Kiểm theo chuẩn TOOL D = `validate_provenance()` + khoá thứ 8 (MT-07).
+
+    Tách khỏi `validate_provenance()` CÓ CHỦ ĐÍCH: hàm kia thi hành spec §0d.5
+    (đúng 7 khoá) và phải giữ nguyên nghĩa đó — N1, spec là nguồn sự thật. Hàm
+    này thi hành thêm một ràng buộc **của riêng dự án**, và người đọc phải phân
+    biệt được hai thứ khi một trong hai đổi.
+
+    🔴 `null` bị TỪ CHỐI, không phải bỏ qua: đó chính là trạng thái khoá thứ 8
+    nằm suốt từ MT-07 (06/09/2026) tới TD-0229 — khai có khoá, giá trị rỗng,
+    không ai kiểm. Một khoá xuất xứ mà `null` cũng qua được thì nó không canh gì.
+    """
+    errors = list(validate_provenance(d))
+    if "runtime_image_digest" not in d:
+        errors.append("thiếu khoá bắt buộc (Tool D, MT-07): runtime_image_digest")
+        return errors
+    digest = d.get("runtime_image_digest")
+    if not isinstance(digest, str) or not _RE_DIGEST_HOP_LE.fullmatch(digest):
+        errors.append(
+            "runtime_image_digest phải là 'sha256:<64 hex>' — N6 cấm giá trị "
+            f"lính canh và cấm null, nhận: {digest!r}"
+        )
+    return errors
+
+
 def cache_key(prov: Provenance) -> str:
     """Khoá cache cho WFO tự viết (0d.3, dòng 572-575): gộp params_hash +
     code_sha + data_hash thành một khoá duy nhất.
@@ -134,6 +223,12 @@ def cache_key(prov: Provenance) -> str:
             "params_effective": prov.params_effective,
             "git_sha": prov.git_sha,
             "data_hashes": prov.data_hashes,
+            # TD-0229 — khoá thứ 8 vào khoá cache. Đây là chỗ DUY NHẤT biến
+            # "đã ghi là phải cẩn thận" thành "không làm sai được": đổi ảnh
+            # Docker ⇒ khoá cache đổi ⇒ kết quả cũ KHÔNG thể bị dùng lại cho
+            # môi trường mới. Trước TD-0229, đổi `docker/Dockerfile:21` là một
+            # thao tác im lặng hoàn toàn — suite xanh, cache vẫn trúng.
+            "runtime_image_digest": prov.runtime_image_digest,
         },
         sort_keys=True,
         ensure_ascii=False,

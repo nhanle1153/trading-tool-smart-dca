@@ -24,7 +24,10 @@ from pathlib import Path
 
 from tool_d.config.loader import DEFAULT_CONFIG_PATH, load_tool_d_config
 from tool_d.measurement.guard import EXIT_GUARD_BLOCKED, GuardOutcome, measurement_guard
-from tool_d.measurement.provenance import build_provenance
+from tool_d.measurement.provenance import (
+    build_provenance,
+    doc_runtime_image_digest,
+)
 from tool_d.measurement.tri_state import audit_line, scan_for_sentinels
 from tool_d.reporting.report_model import build_metrics
 
@@ -59,6 +62,9 @@ def render_report(
         data_files={},
         cache_mode="none",
         guard_passed=report_guard_passed,
+        # TD-0229 — khoá xuất xứ thứ 8 (MT-07), xem chú thích ở
+        # `dr015/buoc1_lech_tranche.py`. Fail-closed, không bắt lỗi.
+        runtime_image_digest=doc_runtime_image_digest(REPO_DIR),
     )
 
     lines = [
@@ -71,6 +77,7 @@ def render_report(
         f"  cache_mode:            {prov.cache_mode}",
         f"  params_source:         {prov.params_source}",
         f"  data_hashes:           {prov.data_hashes}",
+        f"  runtime_image_digest:  {prov.runtime_image_digest}",
         "",
         "BÁO CÁO ĐỊNH KỲ (§12d.2) — D0-PRE: chưa có kỳ vận hành nào",
         "-" * 70,

@@ -39,7 +39,10 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any
 
-from tool_d.measurement.provenance import Provenance, validate_provenance
+from tool_d.measurement.provenance import (
+    Provenance,
+    validate_provenance_tool_d,
+)
 from tool_d.measurement.tri_state import Measured, Status
 from tool_d.wfo.folds import Fold
 
@@ -179,7 +182,13 @@ def validate_fold_record(d: Mapping[str, Any]) -> list[str]:
     if "provenance" not in d:
         loi.append("thiếu khối provenance (L-Z40)")
     else:
-        loi.extend(f"provenance: {e}" for e in validate_provenance(d["provenance"]))
+        # TD-0229 — dùng bản TOOL D (7 khoá spec + khoá thứ 8, MT-07). Bản ghi
+        # fold là đầu vào của gate D9; không biết nó chạy trên ảnh Docker nào
+        # thì mọi so sánh giữa các fold đều có thể đang bắc cầu qua hai môi
+        # trường khác nhau mà không ai hay.
+        loi.extend(
+            f"provenance: {e}" for e in validate_provenance_tool_d(d["provenance"])
+        )
 
     chi_so = d.get("chi_so")
     if not isinstance(chi_so, Mapping) or not chi_so:
