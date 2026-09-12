@@ -2474,6 +2474,36 @@ từ nó.*** Kiểm được `MT-29` có thật ≠ kiểm được *"nên D4 kh
 lỗi *nặng hơn* ca `adjust_trade_position`, nó là lỗi **cùng loại** — ở ca kia `[3f7d14]` là **nguồn**
 của câu sai, ở ca này nguồn là `[67bb21]`. Ba phiên, cùng một họ, không ai cẩu thả.
 
+### 🔑 Vế đối, và là loại lỗi mà VÒNG ĐỌC CHÉO KHÔNG cứu được
+
+Cả ngày 12/09 có một câu được ghi đi ghi lại: *"một quy tắc mình vừa phát biểu không tự động trở
+thành một quy tắc mình đang tuân thủ"*. `[3f7d14]` thêm **vế đối**, và nó nguy hơn:
+
+> ***Một quyết định đúng không tự động chứng minh lý do dẫn tới nó là đúng.***
+
+**Vì sao vế đối nguy hơn vế gốc:** vế gốc còn **bị người khác bắt được** — bốn ca hôm nay đều do
+phiên khác bắt. Vế đối thì **KHÔNG AI BẮT**, vì kết quả đúng nên chẳng ai đi soi lý do. Nó chỉ
+hiện ra khi **chính mình tự tách hai thứ**. ⇒ Đây là loại lỗi mà lớp bảo vệ mạnh nhất của ngày
+hôm nay — đọc chéo giữa các phiên — **không chạm tới được**.
+
+**Ca duy nhất thuộc loại đó hôm nay:** `[f5177d]` từ chối chạy một phép đo vì *provenance* (lời
+thuật không kiểm được). Việc từ chối **đúng** — nhưng đúng vì `§4(b)` **phụ thuộc `§6`**, một
+ràng buộc mà lý do provenance **không hề nhìn thấy**; một lệnh `grep` mới tìm ra. Nếu lời thuật
+kia chính xác 100% thì lý do provenance vẫn không tìm ra cái chặn thật.
+
+🔴 **Hậu quả nếu không tự tách:** ca đó sẽ vào sổ thành *"kỷ luật provenance đã cứu một bàn"* —
+một **bài học SAI rút từ một kết quả ĐÚNG**, và bài học sai đó sẽ được dẫn lại ở ca tiếp theo
+**nơi provenance không phải vấn đề**. Đó là cách một trực giác *"đã được việc một lần"* thay chỗ
+cho một phép kiểm.
+
+📌 **Một biến thể nhỏ của cùng hiện tượng, cùng ngày, cùng phiên:** `[f5177d]` nhắn rằng sẽ ghi
+mục `research-log` này *"khi tới lượt có lệnh chuẩn hóa và lưu"* — trong khi **N9 liệt đúng ba
+file** (`back-end-note.md` / `ARCHITECTURE.md` / `tu-dien-du-lieu.md`) và `research-log.md`
+**không nằm trong đó**; N10 còn đi hướng ngược lại (*"bắt buộc ghi mỗi lần chẩn đoán"*). Đối
+chứng: chính phiên đó đã commit **năm** mục log trong ngày mà **không** có lệnh nào. ⇒ **Hành
+động đúng, phát biểu quy tắc sai** — và cái sai đó chỉ lộ ra khi có người đọc lại chính văn bản
+quy tắc. Hình dạng y hệt vế đối: kết quả đúng che mất lý do sai.
+
 🔴 Chỗ đắt nhất: `[67bb21]` **tự dạy chính sự phân biệt đó** cho phiên khác ở tin nhắn ngay trước
 (*"câu hỏi là FreqAI vào theo TƯ CÁCH NÀO, không phải CÓ HAY KHÔNG"*), rồi tự xoá nó khi tóm tắt —
 vì trong một bản tóm tắt thì *"bị chặn"* **gọn hơn** *"đi được nhưng phải trả giá X"*. ⇒ **Chi phí
