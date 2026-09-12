@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "arm_result.schema.json",
+  "title": "Bản ghi kết quả MỘT ARM của ablation D0.9 (TD-0232, D4)",
+  "description": "🔴 Lý do file này tồn tại TRƯỚC khi bộ chạy TD-0184 được viết: `n = 206` mà DR-D4-10 §2.1 dẫn được tính trên TOÀN cửa sổ [T1,T2] (231 ngày), trong khi ba cửa sổ TEST của sơ đồ fold (DR-D3-01, folds.py:174-185) chỉ phủ 147/231 ngày — đoạn 84 ngày đầu là train-only ở CẢ BA fold. Hai cách đọc cho n = 206 vs ~131, tức thuế nhiễu h/√n lệch 25%. Mà `dsr.py:52` nhận `n_trades: int` KHÔNG có ngữ nghĩa cửa sổ nào, và `chay_wfo`/`sinh_folds` không có người gọi nào từ `run_ablation.py` — nên bộ chạy sẽ quyết câu đó BẰNG CÁCH VÔ TÌNH nếu không có chỗ nào bắt nó khai. MT-36 (chủ dự án chốt 13/09/2026): phán quyết Nhánh 1 dùng `n_phan_quyet` (chỉ đoạn TEST); `n_mo_ta` (toàn cửa sổ) báo kèm và dán nhãn MÔ TẢ. Bắt buộc CẢ HAI trường ⇒ thiếu một là bản ghi KHÔNG BIỂU DIỄN ĐƯỢC, không phải bị báo đỏ sau (bài học TD-0127: một phép kiểm có thể bị bỏ qua, một trường không tồn tại thì không ai truyền vào được). LƯU Ý cho người sửa file này: `additionalProperties` là false ở mọi cấp, nên thêm một khoá vào code mà quên thêm ở đây sẽ làm cửa ghi thật NỔ — vì vậy test phải đối chiếu ĐẦU RA THẬT của `build_arm_record()` với schema này, không chỉ fixture gõ tay (tiền lệ fold_record.schema.json).",
+  "$defs": {
+    "provenance": {
+      "type": "object",
+      "description": "Khối xuất xứ của TOOL D = 7 khoá spec §0d.5 + khoá thứ 8 `runtime_image_digest` (MT-07, nối dây ở TD-0229). 🔴 Khác `fold_record.schema.json`: ở đây khoá thứ 8 là BẮT BUỘC và KHÔNG nhận null — một bản ghi phán quyết D4 mà không truy được ảnh Docker nào sinh ra nó thì không đáng tồn tại. Giữ đồng bộ với `KHOA_XUAT_XU_TOOL_D` trong measurement/provenance.py.",
+      "required": [
+        "params_source",
+        "params_effective",
+        "git_sha",
+        "reproducible_from_sha",
+        "data_hashes",
+        "cache_mode",
+        "guard_passed",
+        "runtime_image_digest"
+      ],
+      "properties": {
+        "params_source": { "enum": ["yaml", "params_file", "env"] },
+        "params_effective": { "type": "object" },
+        "git_sha": { "type": "string", "minLength": 1 },
+        "reproducible_from_sha": { "type": "boolean" },
+        "data_hashes": { "type": "object" },
+        "cache_mode": { "type": "string" },
+        "guard_passed": { "type": "boolean" },
+        "runtime_image_digest": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "measured": {
+      "type": "object",
+      "description": "Ba trạng thái của §0d.6 (L-Z41). `value` chỉ được khác null khi status == ok — ràng buộc viết thành if/then, không chỉ nằm trong mô tả.",
+      "required": ["status", "value", "note"],
+      "properties": {
+        "status": { "enum": ["pending", "unreadable", "ok"] },
+        "value": {},
+        "note": { "type": ["string", "null"] }
+      },
+      "additionalProperties": false,
+      "if": {
+        "properties": { "status": { "enum": ["pending", "unreadable"] } },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": { "value": { "type": "null" } }
+      }
+    },
+    "cua_so": {
+      "type": "object",
+      "description": "Mốc của một đoạn được đếm. Nửa mở [start, end) — cùng quy ước folds.py:76-79.",
+      "required": ["start", "end"],
+      "properties": {
+        "start": { "type": "string", "format": "date" },
+        "end": { "type": "string", "format": "date" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "required": [
+    "loai",
+    "arm",
+    "huong",
+    "dataset",
+    "pham_vi_phan_quyet",
+    "n_phan_quyet",
+    "n_mo_ta",
+    "cua_so_phan_quyet",
+    "cua_so_mo_ta",
+    "chi_so",
+    "ket_cuc",
+    "provenance"
+  ],
+  "properties": {
+    "loai": { "const": "ARM_RESULT" },
+    "arm": {
+      "description": "Chín cấu hình B2 (§10.1 + §10.1b). `Z0-T2` KHÔNG có mặt: nó CHÍNH LÀ `Z0` (spec: 'Mốc so sánh — không phải arm mới, không tốn trial thêm'). Giữ đồng bộ với `arm_switches.ARM_HOP_LE`.",
+      "enum": ["Z0", "Z1", "Z2", "Z3", "Z3b", "Z0-T0", "Z0-T1", "Z0-V1", "Z0-S1"]
+    },
+    "huong": {
+      "description": "§10.1 dòng 4187 cấm gộp kết quả hai hướng; MT-29 chốt sàn 150 lệnh/năm áp cho MỖI HƯỚNG. Nên hướng là một trường của bản ghi, không phải một ghi chú.",
+      "enum": ["LONG", "SHORT"]
+    },
+    "dataset": {
+      "description": "DR-D4-09 §1.1: ablation D0.9 chạy trên WFO [T1,T2], 'không phải toàn bộ [T0,T2]'. Danh sách CHO PHÉP một phần tử — nới nó là một quyết định, không phải một lần gõ thêm.",
+      "enum": ["WFO"]
+    },
+    "pham_vi_phan_quyet": {
+      "description": "DR-D4-10 §8 chặng (a): cờ gán theo §2.1, KHÔNG để bộ đọc tự suy từ `n`. `phan_quyet` = suất này mua một phán quyết Nhánh 1 (chỉ `Z0-T1`); `mo_ta` = suất mua chẩn đoán (`Z0-T0`) hoặc thống kê mô tả (7 arm nhóm C).",
+      "enum": ["phan_quyet", "mo_ta"]
+    },
+    "n_phan_quyet": {
+      "description": "🔴 MT-36 — số lệnh trong BA CỬA SỔ TEST của sơ đồ fold. Đây là `n` mà Nhánh 1 dùng, và là `n_trades` truyền vào `dsr_adjusted_expectancy()`.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "n_mo_ta": {
+      "description": "🔴 MT-36 — số lệnh trên TOÀN cửa sổ [T1,T2]. Báo kèm, nhãn MÔ TẢ. CẤM dùng cho phán quyết Nhánh 1. Phải >= `n_phan_quyet` (đoạn test là tập con của toàn cửa sổ) — bất biến đó `validate_arm_record()` canh, JSON Schema không so được hai trường với nhau.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "cua_so_phan_quyet": {
+      "description": "Các đoạn test đã đếm. Rỗng thì `n_phan_quyet` không có nguồn — `validate_arm_record()` từ chối.",
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/cua_so" }
+    },
+    "cua_so_mo_ta": { "$ref": "#/$defs/cua_so" },
+    "chi_so": {
+      "type": "object",
+      "description": "DR-D4-09 §2.3: 'Báo cáo BẮT BUỘC cho MỌI arm — ba con số, không phải một … n · thuế nhiễu (h·std/√n) · DSR_adj. Thiếu một ⇒ bản ghi kết quả không hợp lệ.' `n` đã là hai trường riêng ở trên; ba khoá dưới đây là phần còn lại, cộng `mean_r`/`std_r` vì thuế nhiễu và DSR_adj không đọc được mà không có chúng. `ty_le_rui_ro_da_trien_khai` là ràng buộc MT-25: đo `std_R` một mình là mua một con số không biết đọc theo chiều nào.",
+      "required": [
+        "mean_r",
+        "std_r",
+        "thue_nhieu",
+        "dsr_adj",
+        "ty_le_rui_ro_da_trien_khai"
+      ],
+      "properties": {
+        "mean_r": { "$ref": "#/$defs/measured" },
+        "std_r": { "$ref": "#/$defs/measured" },
+        "thue_nhieu": { "$ref": "#/$defs/measured" },
+        "dsr_adj": { "$ref": "#/$defs/measured" },
+        "ty_le_rui_ro_da_trien_khai": { "$ref": "#/$defs/measured" }
+      },
+      "additionalProperties": { "$ref": "#/$defs/measured" }
+    },
+    "ket_cuc": {
+      "description": "DR-D4-09 §2.2 — BA kết cục, không phải hai. Bọc trong `measured` vì 'chưa phân loại được' là một trạng thái thật, và ghi nó thành FAIL là đúng lỗi §2.2 sinh ra để chặn. Giá trị hợp lệ khi status == ok: PASS | INCONCLUSIVE | FAIL (`gates.ket_cuc.KetCuc`).",
+      "$ref": "#/$defs/measured"
+    },
+    "trial_id": {
+      "description": "Suất trial đã đặt chỗ cho arm này (DR-014). `null` chỉ hợp lệ khi `dataset` là một lần chạy EXPLORE — mà `dataset` chỉ nhận WFO, nên trên thực tế nó phải có.",
+      "type": ["string", "null"]
+    },
+    "provenance": { "$ref": "#/$defs/provenance" }
+  },
+  "additionalProperties": false
+}
