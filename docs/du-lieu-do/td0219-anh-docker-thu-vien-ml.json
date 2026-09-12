@@ -1,0 +1,37 @@
+{
+  "viec": "TD-0219",
+  "cau_hoi": "Anh Docker dang ghim co chay duoc FreqAI khong?",
+  "ngay": "2026-09-12",
+  "trial": 0,
+  "ghi_chu_ke_toan": "Chi kiem kha nang cua anh Docker (import thu vien). KHONG cham CALIB/WFO/LOCKBOX, khong danh gia cau hinh nao => 0 trial theo DR-014 §2. Khong tao state, khong ghi vao so nao.",
+  "moi_truong": {
+    "lenh": "docker compose -f docker/docker-compose.yml run --rm freqtrade -c '<script>'",
+    "service": "freqtrade",
+    "image_digest_ghim": "freqtradeorg/freqtrade@sha256:7031bca43ed7668ebf421725dd5016acade6ef88b0771db3e08c96e6d19a42db",
+    "freqtrade_version": "2026.8",
+    "docker_server": "29.7.2"
+  },
+  "ket_qua": {
+    "goi_freqtrade_freqai_co_tren_dia": true,
+    "thu_vien": {
+      "sklearn": "1.9.0",
+      "joblib": "1.5.3",
+      "lightgbm": "THIEU",
+      "catboost": "THIEU",
+      "torch": "THIEU",
+      "xgboost": "THIEU",
+      "datasieve": "THIEU"
+    },
+    "import_that": {
+      "freqtrade.freqai.data_kitchen": "FAIL - ModuleNotFoundError: No module named 'datasieve'",
+      "freqtrade.freqai.freqai_interface": "FAIL - ModuleNotFoundError: No module named 'datasieve'"
+    }
+  },
+  "ket_luan": "THIEU. Anh dang ghim la bien the THUONG cua freqtrade, khong phai bien the _freqai. Thu muc freqtrade/freqai/ CO ton tai nhung KHONG import duoc vi thieu datasieve (phu thuoc cung cua tang pipeline FreqAI). => FreqAI khong chay duoc tren anh hien tai.",
+  "vi_sao_kiem_import_chu_khong_chi_kiem_thu_muc": "Thu muc freqai/ ton tai la mot dau hieu HINH DANG; import duoc moi la CO CHE. Neu dung lai o 'thu muc co ton tai: True' thi ket luan se NGUOC HAN va sai. Cung bai hoc 08/09 (dung do tinh chat NGU NGHIA bang dau hieu CU PHAP).",
+  "he_qua": [
+    "DIEU KIEN DUNG cua DR-FAI-01 §4(b) - viet TRUOC khi chay - da NO: 'TD-0219 cho thay anh Docker khong co thu vien ML => DUNG, trinh chu du an'.",
+    "Phep do §4(b) (thoi gian tuong mot luot backtest FreqAI) KHONG chay duoc, vi hai ly do doc lap: (1) anh khong import noi FreqAI; (2) repo co 0 dong chien luoc FreqAI (grep feature_engineering_expand_all / set_freqai_targets / freqaimodel => 0 ket qua), ma viet no = cham ma Khoi 17, thu DR-FAI-01 §0 cam khi con o trong.",
+    "Doi digest sang bien the _freqai lam doi runtime_image_digest - khoa xuat xu thu 8 => ban ghi ket qua truoc/sau KHONG so truc tiep duoc (hinh dang DR-D4-08 §8), va quy tac 9 (parity) doi local-staging-prod cung mot anh."
+  ]
+}
