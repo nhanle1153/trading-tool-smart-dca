@@ -2368,3 +2368,53 @@ xảy ra (`4ec0fd3` nuốt file lạ, `2992482` nuốt dòng lạ).
 
 ⚠️ Cách `c3` tự chốt (tách `diff` và `commit` thành hai lệnh) đúng hướng nhưng **không đủ**: cửa sổ
 giữa hai lệnh chính là chỗ phiên kia ghi vào. Nó thu hẹp, không đóng.
+
+---
+
+## 12/09/2026 — Một khẳng định SAI về mã đi qua tin nhắn giữa hai phiên, và chỉ bị bắt vì nó được viết vào FILE
+
+**Bối cảnh:** chủ dự án chốt Tool D sẽ dùng FreqAI (ngược §0c.2 + N3, đã mở Khối 17 —
+`TD-0216…TD-0225`). Trong lúc chia việc, phiên `[3f7d14]` nhắn cho phiên `[f5177d]` một câu mô tả
+hệ thống sau khi `DR-D4-10 §2.4` chốt `Z0` single-entry:
+
+> *"giả định đúng từ nay là `Z0` single-entry — không có tranche 2/3, `adjust_trade_position`
+> không còn trên đường chạy sản xuất."*
+
+Vế cuối **SAI**. `ZoneAbsorption.py:886-887` gọi `_xet_tp1()` **TRƯỚC** chốt arm ở `:891`, nên
+`arm = Z0` chỉ tắt **nhánh bơm tranche**; callback đó vẫn là đường **TP1 chốt 50%**
+(`stake_amount` âm ⇒ `ExitType.PARTIAL_EXIT`). `[f5177d]` chép nguyên khẳng định đó vào đầu Khối 17,
+trong phần *"đọc trước khi viết `DR-FAI-01` §phạm vi"*. Đã sửa ở `e668c8c` (đính chính tại chỗ,
+giữ chữ cũ).
+
+### Hai lỗi khác nhau, không gộp thành một
+
+| Phiên | Lỗi | Họ hàng |
+|---|---|---|
+| `[3f7d14]` | **Khẳng định về mã mà chưa mở mã** — và người nhận tin không có cách nào biết điều đó | `TD-0082`, ở chiều **người khai** |
+| `[f5177d]` | Nhận một câu trong hội thoại làm **tiền đề đã kiểm chứng**, rồi ghi vào file đặc tả | `TD-0082`, ở chiều **người tin lời khai** |
+
+🔴 Đừng rút gọn thành *"phiên nhận suy rộng quá tay"* — nó **không** suy rộng, nó chép đúng. Cũng
+đừng rút gọn thành *"phiên khai ẩu"* rồi coi phiên nhận là nạn nhân: ghi một câu của người khác vào
+file đặc tả **dưới tên mình** là hành động nhận trách nhiệm về câu đó.
+
+### 🔑 Điều đáng giữ nhất — cơ chế cứu được lần này KHÔNG phải kỷ luật tự kiểm
+
+`[3f7d14]` phát hiện ra mình sai **không phải** khi rà lại câu của mình, mà khi đi **kiểm câu của
+người khác**: họ mở `ZoneAbsorption.py` để xác minh ghi chú `[f5177d]` vừa thêm vào Khối 17, rồi
+mới thấy nhánh TP1.
+
+⇒ **Tin nhắn giữa hai phiên không bị soi; chỉ FILE mới bị soi.** Một câu sai sống trong hội thoại
+thì không lớp canh nào của dự án nhìn thấy — không diff, không test, không review. Cùng câu đó vừa
+rơi vào một file là lập tức có người đọc. Lần này ta **may** vì câu sai đi qua một file trước khi
+đi vào một DR.
+
+**Hệ quả thực hành (không phải quy tắc mới, chỉ là cách đọc lại quy tắc cũ):** khi một phiên khác
+mô tả *hành vi của mã* và mô tả đó sắp thành tiền đề cho một quyết định, **mở file trước khi ghi**,
+không phải sau khi bị bác. Chi phí ở đây là một lệnh `sed -n`; giá của việc bỏ qua là một tiền đề
+sai nằm trong `DR-FAI-01` §phạm vi — và nếu ai đó vì tin nó mà bọc/bỏ `adjust_trade_position` thì
+**TP1 chết IM LẶNG** (Freqtrade hạ exception của callback thành WARNING rồi đi tiếp với `rc = 0` —
+`MT-16 (vii)`: *"một chốt fail-closed bị nuốt là một chốt KHÔNG TỒN TẠI"*).
+
+⚠️ **Giới hạn của kết luận:** đây là *"đã thấy một ca"*, không phải *"đã đo tần suất"*. Không ai
+đếm được có bao nhiêu khẳng định khác đã đi qua kênh tin nhắn giữa các phiên mà không rơi vào file
+nào — theo định nghĩa, những cái đó không để lại dấu vết để đếm.
