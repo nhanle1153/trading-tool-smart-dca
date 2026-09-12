@@ -2419,6 +2419,23 @@ sai nằm trong `DR-FAI-01` §phạm vi — và nếu ai đó vì tin nó mà b�
 đếm được có bao nhiêu khẳng định khác đã đi qua kênh tin nhắn giữa các phiên mà không rơi vào file
 nào — theo định nghĩa, những cái đó không để lại dấu vết để đếm.
 
+🔴 **Cập nhật cuối ngày 12/09 — giới hạn ngay trên đã bị chính ngày hôm đó vượt qua: BỐN ca, BA phiên.**
+(1) `[3f7d14]` khẳng định `adjust_trade_position` rời đường chạy sản xuất — chưa mở `ZoneAbsorption.py`;
+(2) `[f5177d]` chép khẳng định đó vào `TASKS.md` như tiền đề đã kiểm chứng; (3) `[3f7d14]` đề nghị phép
+kiểm `grep -c "......"` mô tả như thể đã chạy — chạy thử thì nó **tự khớp với chính dòng lệnh của nó**,
+không bao giờ về 0; (4) `[67bb21]` nhắn *"tôi nghĩ bạn chưa thấy dòng cuối §0c.2"* về một bản nháp mà
+`§1` đang **trích nguyên văn** chính dòng đó — chưa mở file.
+
+⇒ Vẫn **không** đo được tần suất thật (ca không rơi vào file thì không đếm được), nhưng **cận dưới
+bốn ca một ngày** đủ để bỏ cách đọc *"chuyện hiếm"*. Không ca nào là cẩu thả; cả bốn đều xảy ra khi
+**trao đổi nhanh bằng tin nhắn về một file không ai đang mở**.
+
+🔑 **Biến thể nguy nhất là ca (4), và `[67bb21]` tự nêu ra nó:** bọc một khẳng định trong *"tôi nghĩ
+bạn chưa thấy…"* biến nó từ phát biểu về **VĂN BẢN** thành phỏng đoán về **NGƯỜI**. Phát biểu về văn
+bản thì mở file là bác được trong hai giây; phỏng đoán về người thì người nhận phải **tự chứng minh
+mình đã đọc** — tốn hơn, và dễ khiến họ nhận bừa cho xong. Cùng họ *"chốt bị nới vì một lý do nghe
+hợp lý"*: thứ khó cãi lại không phải thứ sai nhất, mà là thứ đắt nhất để cãi.
+
 **Và khoảng hở này không vá được bằng một test** (bổ sung của `[3f7d14]`, nhận): nó không phải một
 lỗi trong mã, nó là **tính chất của việc hai phiên nói chuyện với nhau**. Thứ duy nhất thu hẹp được
 là kỷ luật *"mở file trước khi khẳng định về mã"* — và chi tiết sắc nhất của cả ca này là
