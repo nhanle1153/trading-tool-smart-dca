@@ -129,6 +129,25 @@ def validate_credentials_for_live(*, env: Mapping[str, str] | None = None) -> tu
     Trả về `(api_key, api_secret)` khi đủ cả hai, để bên gọi không phải
     đọc lại `os.environ` một lần nữa (tránh lệch nếu biến đổi giữa hai lần
     đọc — dù hiếm, đọc MỘT LẦN vẫn là kỷ luật an toàn hơn).
+
+    🔴 **Phạm vi, đọc đúng (bổ sung sau khi `DR-D11-02` đổi D10 sang lệnh
+    LIVE TỐI THIỂU — phiên `-3f` nêu, 13/09/2026):**
+
+    1. Hàm này CHỈ kiểm SỰ HIỆN DIỆN (biến rỗng/vắng mặt) — 0 byte ra
+       mạng, nên KHÔNG thể biết khoá sai/hết hạn/thiếu quyền Futures/bị
+       khoá IP. Đó là lỗi xảy ra SAU khi đã gửi request, thuộc phạm vi
+       `phan_loai_ma_loi()` (`risk_supervisor.py`) đọc từ HTTP status/mã
+       Binance thật — hai hàm phủ hai THỜI ĐIỂM khác nhau (trước/sau khi
+       gửi), KHÔNG phải hai đường đọc lỗi song song cho cùng một sự kiện.
+       Đừng gộp: gộp sẽ làm hàm này phải đoán một điều nó không có dữ
+       liệu để biết.
+    2. **Chỉ được gọi từ `main()` của entrypoint (điểm vào tiến trình),
+       KHÔNG BAO GIỜ từ bên trong một callback chiến lược** (`custom_stake_
+       amount`, `confirm_trade_entry`, `custom_stoploss`...). Freqtrade bọc
+       mọi callback bằng `strategy_safe_wrapper`, hạ MỌI exception xuống
+       WARNING rồi tiếp tục chạy — `MT-16` (vii) đã đo đúng cơ chế này nuốt
+       `SizingError` fail-closed 12 lần trong một lượt. Gọi hàm này từ một
+       callback = tự đặt chốt fail-closed vào đúng chỗ nó chắc chắn bị nuốt.
     """
     nguon = env if env is not None else os.environ
     api_key = nguon.get(ENV_BINANCE_API_KEY, "")
