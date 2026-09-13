@@ -243,11 +243,25 @@ def kiem_khai_lai_khop_ban_goc(
     "supervisor không import code bot" cho phần SẢN XUẤT.
     """
     lech: list[str] = []
+    #: 🔴 PHẢI phủ ĐỦ mọi trường của `HangSoKhaiLai` — §6.6(2) liệt kê bốn
+    #: thứ (`E_D`, thang dd 5/8/20, trần margin 0.85) và cái làm cho ngoại
+    #: lệ LD-09 này HỢP LỆ chính là phép đối chiếu, nên một trường khai lại
+    #: mà KHÔNG có dòng ở đây là ngoại lệ mất đúng thứ biện minh cho nó.
+    #: `L-Z44` có một ca ghim quan hệ đó bằng `dataclasses.fields()`, để
+    #: thêm hằng số thứ sáu mà quên đối chiếu thì suite báo đỏ, không im.
+    #: (TD-0241: `tran_margin_ty_le` đã khai từ TD-0196 nhưng KHÔNG được
+    #: đối chiếu — đúng khoảng hở đó, phát hiện khi viết `L-Z44`.)
     doi_chieu = (
         ("e_d", "tier_a.E_D"),
         ("dd_soft_pct", "tier_c.dd_ladder_pct.soft"),
         ("dd_halt_pct", "tier_c.dd_ladder_pct.halt"),
         ("dd_abort_pct", "tier_c.dd_ladder_pct.abort"),
+        # §6.8f là GỐC của 0,85; `tier_frozen.mult_deploy_thr` là bên MƯỢN
+        # (xem `admission.py:80-88`). Đối chiếu qua đúng đường mà
+        # `TRAN_MARGIN_TREN_E_D` đã bị ghim (`test_admission.py:148`) —
+        # KHÔNG thêm khoá YAML mới, vì đó là nguồn sự thật thứ ba cho cùng
+        # một số (bài học MT-03) và sẽ đụng kế toán DOF.
+        ("tran_margin_ty_le", "tier_frozen.mult_deploy_thr.value"),
     )
     for truong, duong_dan in doi_chieu:
         that = float(doc_resolve(cfg_that, duong_dan))

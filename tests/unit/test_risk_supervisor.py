@@ -196,6 +196,13 @@ class TestKhaiLaiCoChuDich:
                 "tier_c.dd_ladder_pct.soft": HANG_SO_KHAI_LAI.dd_soft_pct,
                 "tier_c.dd_ladder_pct.halt": HANG_SO_KHAI_LAI.dd_halt_pct,
                 "tier_c.dd_ladder_pct.abort": HANG_SO_KHAI_LAI.dd_abort_pct,
+                # TD-0241 — thêm đường của `tran_margin_ty_le`. KHẲNG ĐỊNH
+                # của ca này KHÔNG đổi (vẫn đúng 1 chỗ lệch, vẫn là `e_d`);
+                # chỉ bộ giả lập được dạy thêm một đường mà hàm thật nay có
+                # đối chiếu. Nếu ai đó gỡ dòng này cho "đỡ vướng" thì ca
+                # quay về KeyError chứ không âm thầm xanh — nới ở đây là
+                # nới thấy được.
+                "tier_frozen.mult_deploy_thr.value": HANG_SO_KHAI_LAI.tran_margin_ty_le,
             }[duong_dan]
 
         lech = kiem_khai_lai_khop_ban_goc(gia_lap, doc_resolve=resolve_gia)
