@@ -46,10 +46,10 @@
     "force_exit": "market",
     "force_entry": "market",
     "stoploss": "market",
-    "stoploss_on_exchange": false,
+    "stoploss_on_exchange": true,
     "stoploss_on_exchange_interval": 60
   },
-  "_comment_order_types": "entry='limit' bắt buộc theo §3.5 dòng 1191. stoploss_on_exchange=false vì custom_stoploss (§0c.1) xử lý nội bộ, không đẩy SL lên sàn. Các trường còn lại không được spec quy định — giữ mặc định freqtrade (config_full.example.json trong image).",
+  "_comment_order_types": "entry='limit' bắt buộc theo §3.5 dòng 1191. stoploss_on_exchange=true (DR-D11-02, MT-39, TD-0244) — §6.6(1) đòi SL SỐNG TRÊN SÀN, không phải bot tự theo dõi rồi tự đóng. ĐÍNH CHÍNH: chú thích cũ ở đây ('custom_stoploss xử lý nội bộ, không đẩy SL lên sàn') SAI kỹ thuật — custom_stoploss() vẫn ghi giá trị vào trade.stop_loss rồi Freqtrade tự đẩy lên sàn (huỷ+đặt lại STOP_MARKET, D2a) bất kể cờ này bật hay tắt; hai thứ không loại trừ nhau. Các trường còn lại không được spec quy định — giữ mặc định freqtrade (config_full.example.json trong image).",
 
   "order_time_in_force": {
     "entry": "PO",

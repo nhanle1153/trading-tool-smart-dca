@@ -51,6 +51,14 @@ from collections.abc import Iterable, Mapping
 from pathlib import Path
 from typing import Any
 
+# TD-0244 — đường dẫn CHÍNH THỨC duy nhất của sổ Decision Log, cùng khuôn
+# `registry/<tên>.jsonl` của mọi sổ khác (`trial_registry.jsonl`,
+# `idea_queue.jsonl`, `param_change_proposals.jsonl`). Định nghĩa Ở ĐÂY —
+# nơi module sở hữu file — để `TD-0239` (nối phần VAO_RA_LENH/PLAN/
+# GATE_CHECK vào sản xuất) dùng LẠI đúng hằng số này, không tự đặt một
+# đường dẫn thứ hai cho cùng một sổ (LD-09: một nguồn sự thật).
+DEFAULT_DECISION_LOG_PATH = Path("registry/decision_log.jsonl")
+
 # Trường bắt buộc để dựng khoá, theo đúng bốn dòng của spec §8.3.
 TRUONG_KHOA: dict[str, tuple[str, ...]] = {
     "VAO_RA_LENH": ("exchange_order_id",),

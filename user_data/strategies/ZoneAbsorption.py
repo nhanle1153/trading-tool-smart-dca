@@ -123,6 +123,8 @@ from tool_d.entry_confirmation import bat_dieu_kien_c_cua_arm, quet_xac_nhan_zon
 from tool_d.notional import bo_loc_tu_market, kiem_san_tool_d
 from tool_d.dg6_early_invalidation import dg6_dong_vi_the, dieu_kien_a, dieu_kien_b
 from tool_d.funding_stop import funding_paid_cumulative, is_funding_stop_triggered
+from tool_d.gap_ms import LenhSl, sinh_ban_ghi_doi_sl
+from tool_d.ledger.decision_log import DEFAULT_DECISION_LOG_PATH, ghi_neu_chua_co
 from tool_d.sizing import (
     HeSoMult,
     KeHoachCoLenh,
@@ -222,15 +224,16 @@ class ZoneAbsorption(IStrategy):
 
     minimal_roi = {"0": 10}  # TP thật = TD-0189 (PHẦN 5)
     # Lưới cuối; SL THẬT đọc từ kế hoạch qua custom_stoploss (chỉ được siết,
-    # không nới). Giá trị là "rủi ro trên vốn đã nhân đòn bẩy": −0.30 ở 3x
-    # = giá đi ngược 10%, xa hơn mọi SL zone hợp lệ (R_eff ≤ ~3%) nhưng
-    # vẫn trong đệm thanh lý (~33% ở 3x, L-Z3 ≥ 8).
-    # 🔴 KHÔNG dùng −0.9 như Minimal: Freqtrade nhân SÀN stake lên theo
-    # 1/(1−|stoploss|) để dự phòng lỗ — với −0.9 là ×10, và lần chạy đầu
-    # của file này đã bị chính điều đó chặn lệnh mẫu (stake 14,7 < min 18,4)
-    # rồi NUỐT exception. Đây là một trong ba thứ TD-0082 chưa tính
-    # (cùng với mult_* và phép chia đòn bẩy) — xem MT-16 triệu chứng (vii).
-    stoploss = -0.30
+    # không nới). 🔴 ĐÍNH CHÍNH (`DR-D11-02` §5, TD-0244): giá trị GHI Ở ĐÂY
+    # KHÔNG PHẢI giá trị hiệu dụng — `resolvers/strategy_resolver.py`
+    # (Freqtrade) ưu tiên "Configuration → Strategy → default", và
+    # `config/freqtrade/config.json` khai `"stoploss": -0.99` nên GHI ĐÈ
+    # thuộc tính này. Đặt cùng giá trị ở đây để không còn hai con số khác
+    # nhau cho một lưới cuối — sửa `stoploss` thì phải sửa CẢ HAI chỗ, có
+    # test khoá canh (`test_lz24_freqtrade_config_flags.py`).
+    # −0,99 là lưới cuối RẤT RỘNG, cố ý không phải SL thật (§0c.3) — nó chỉ
+    # là giá được đẩy lên sàn trong ca `custom_stoploss` raise (MT-41).
+    stoploss = -0.99
 
     def __init__(self, config: dict) -> None:
         super().__init__(config)
@@ -980,7 +983,53 @@ class ZoneAbsorption(IStrategy):
         bẩy thật (MT-16 triệu chứng vi). `stoploss_from_absolute(...,
         leverage=)` là hàm Freqtrade cấp đúng cho việc này."""
         kh, _, _ = self._doc_ke_hoach(trade)
+        self._ghi_gap_ms(trade, sl_price=kh.sl)
         return stoploss_from_absolute(kh.sl, current_rate, is_short=trade.is_short, leverage=trade.leverage)
+
+    def _ghi_gap_ms(self, trade, *, sl_price: float) -> None:
+        """TD-0244 (§8.3 LD-21, D2c) — ghi Decision Log mỗi lần khối lượng
+        SL trên sàn đổi. Gọi lại TOÀN BỘ lịch sử `trade.orders` mỗi lần
+        (không giữ trạng thái trong `self.*`, né hình dạng lỗi MT-40/
+        MT-41): cửa ghi `ghi_neu_chua_co` tự no-op theo `sl_order_id_new`
+        (LD-19) nên gọi lại không sinh trùng, và một lần restart giữa
+        chừng không làm mất một `gap_ms` nào — lần gọi kế tiếp đọc lại
+        đúng lịch sử đó từ DB Freqtrade (bền) và ghi bù.
+
+        🔴 Dưới arm single-entry (`arm_switches.ARM_DON_TRANCHE`, gồm cả
+        `Z0` — mặc định sản xuất theo `DR-D4-10` §2.4), khối lượng SL
+        KHÔNG BAO GIỜ đổi ⇒ hàm này trả về đúng `[]` mỗi lần, không phải
+        lỗi — N6 cấm bịa số, `pending` là trạng thái ĐÚNG khi sự kiện
+        chưa từng xảy ra. Xem mâu thuẫn đã ghi nhận (chờ chủ dự án) về
+        việc D2c có đo được gì trên arm sản xuất hiện tại hay không."""
+        lenh_sl = [
+            LenhSl(
+                order_id=o.order_id,
+                status=o.status,
+                amount=o.amount if o.amount is not None else o.ft_amount,
+                order_date=o.order_date,
+                order_update_date=o.order_update_date,
+            )
+            for o in trade.orders
+            if o.ft_order_side == "stoploss"
+        ]
+        if len(lenh_sl) < 2:
+            return  # chưa có gì để ĐỔI — không mở file (N6: không việc thừa)
+        moc_khop_entry = [
+            o.order_filled_date
+            for o in trade.orders
+            if o.ft_order_side == trade.entry_side
+            and o.status == "closed"
+            and o.order_filled_date is not None
+        ]
+        ban_ghi = sinh_ban_ghi_doi_sl(
+            lenh_sl=lenh_sl,
+            moc_khop_entry=moc_khop_entry,
+            trade_id=trade.id,
+            sl_price=sl_price,
+            nguon=self.dp.runmode.value,
+        )
+        for bg in ban_ghi:
+            ghi_neu_chua_co(DEFAULT_DECISION_LOG_PATH, bg)
 
     def custom_exit(self, pair, trade, current_time, current_rate, current_profit, **kwargs):
         kh, _, _ = self._doc_ke_hoach(trade)
