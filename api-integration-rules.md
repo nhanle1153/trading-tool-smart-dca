@@ -15,6 +15,8 @@
 | 1 | Binance USDⓈ-M Futures REST — public market data | Tải OHLCV lịch sử, Open Interest lịch sử, metadata sàn (min notional, precision) — dùng ở D0-PRE và mọi giai đoạn backtest | ☐ MOCK ☐ SANDBOX ☑ LIVE (dữ liệu công khai, không có sandbox riêng cho market data) | ☐ Có ☑ Không |
 | 2 | Binance USDⓈ-M Futures REST + WebSocket — đặt/sửa/huỷ lệnh, User Data Stream | Thực thi giao dịch thật (tranche, SL, TP) — **chỉ dùng từ D3.5 (testnet) trở đi, KHÔNG dùng ở D0-PRE** | ☑ MOCK (backtest/dry-run) ☑ SANDBOX (testnet, D3.5/D10) ☑ LIVE (D12, vốn nhỏ) | ☐ Có ☑ Không *(miễn phí truy cập API — chi phí thật là phí giao dịch, xem `provider-map.md`)* |
 | 3 | Telegram Bot API — `sendMessage` | Cảnh báo MỘT CHIỀU khi heartbeat của tiến trình Freqtrade cũ quá ngưỡng, hoặc trạng thái bot khác `RUNNING` kéo dài — TD-0209, dùng từ D10-D12 (dry-run trở đi, watchdog KHÔNG chạy ở D0-PRE vì chưa có tiến trình dài nào để giám sát) | ☐ MOCK ☑ LIVE (Telegram không cấp sandbox riêng cho Bot API — kiểm bằng bot Telegram thật trỏ vào chat thử nghiệm, không phải môi trường giả lập) ☐ SANDBOX | ☐ Có ☑ Không |
+| 4 | Binance USDⓈ-M Futures REST **KÝ** — đọc margin/vị thế/thanh lý (`GET /fapi/v2/account`, `/fapi/v2/positionRisk`, `/fapi/v1/forceOrders`) | Risk Supervisor (§6.6, TD-0241) tự đọc trạng thái tài khoản — dùng từ D11-D12, KHÔNG chạy ở D0-PRE/D4 (không có tài khoản live để đọc) | ☑ MOCK (test đơn vị) ☐ SANDBOX (không có testnet cho endpoint này, `DR-D35-01`) ☑ LIVE (D11-D12) | ☐ Có ☑ Không |
+| 5 | Freqtrade REST API **CỤC BỘ** — `POST /api/v1/stop` | Risk Supervisor dừng HẲN vòng lặp bot khi `LIQUIDATED`/breaker `dung_han` (TD-0241, `DR-D11-03`) — control API của CHÍNH tiến trình Freqtrade trên máy, KHÔNG phải Binance | ☑ MOCK (test đơn vị) ☑ LIVE (D11-D12, chỉ khi Freqtrade chạy với `-c config/freqtrade/config.risk_supervisor.json`) ☐ SANDBOX | ☐ Có ☑ Không |
 
 > ⚠️ G2 đã đúng như cảnh báo của template: SDK `ccxt` (Freqtrade dùng nội bộ) gọi mạng ngầm — không
 > tự viết HTTP client riêng, nhưng vẫn phải áp R1-R12 vì bản chất vẫn là gọi ra ngoài.
@@ -34,6 +36,9 @@
 | `DELETE /fapi/v1/order` (huỷ lệnh, D3.5+) | DELETE | ☑ Có | cùng nhóm order weight | 10 | ☑ Có *(huỷ một lệnh đã huỷ trả lỗi rõ ràng, không tạo tác dụng phụ)* |
 | `PUT /fapi/v1/order` (sửa khối lượng SL, D3.5+) | PUT | ☐ Không | cùng nhóm order weight | 10 | ☐ Không *(R9: cần idempotency key)* |
 | `POST /bot<token>/sendMessage` (Telegram, TD-0209) | POST | ☐ Không | ~30 msg/s/bot toàn cục (không dùng gần tới trần — watchdog chỉ gửi khi CHUYỂN trạng thái) | 10 | ☑ Có *(R9: KHÔNG retry nội bộ — một lần thử/vòng poll, vòng poll 60s sau tự thử lại nếu thất bại; xem 4.4b)* |
+| `GET /fapi/v2/account`, `GET /fapi/v2/positionRisk` (Risk Supervisor, TD-0241) | GET | ☑ Có | Cùng nhóm weight REST public KÝ, chịu `tier_c.api_calls_per_min` (Cấp C) | 10 | ☑ Có |
+| `GET /fapi/v1/forceOrders?autoCloseType=LIQUIDATION` (Risk Supervisor, TD-0241) | GET | ☑ Có | Cùng nhóm weight REST public KÝ | 10 | ☑ Có |
+| `POST /api/v1/stop` (Freqtrade cục bộ, TD-0241) | POST | ☑ Có *(xác nhận qua mã nguồn `rpc.py:978` — gọi khi đã `STOPPED` trả `"already stopped"`, không lỗi)* | Không công bố (control API cục bộ, không phải Binance) | 10 | ☑ Có *(R5 bounded — tối đa 5 lần, backoff cố định 2s; 401 KHÔNG retry, xem 4.3)* |
 
 > Cột `Idempotent?` — endpoint đặt lệnh và sửa lệnh đánh dấu **Không**: gọi lại khi không chắc lệnh
 > trước có tới nơi hay không (timeout, mất kết nối) có thể tạo lệnh trùng hoặc sửa hai lần. Freqtrade
@@ -60,6 +65,8 @@
 | Telegram 401 (Unauthorized — token sai) | ☑ Lỗi logic | Không retry — token cấu hình sai, dừng watchdog + ghi log cục bộ MỨC CAO NHẤT (đây là ca "kênh báo lỗi tự nó hỏng", không được im lặng) |
 | Telegram 400 (Bad Request — chat_id/text sai) | ☑ Lỗi logic | Không retry — lỗi cấu hình, ghi log cục bộ |
 | Telegram 5xx / timeout / lỗi kết nối | ☑ Retry được | KHÔNG backoff nội bộ — một lần thử, thất bại thì ghi log cục bộ + giữ nguyên trạng thái "chưa báo", vòng poll 60s kế tiếp tự thử lại (4.4b) |
+| Freqtrade control API 401 (Unauthorized — sai username/password, TD-0241) | ☑ Lỗi logic | Không retry — lỗi CẤU HÌNH cục bộ (`.env` sai), raise `FreqtradeAuthError` ngay ở lần gọi đầu tiên |
+| Freqtrade control API 5xx / timeout / lỗi kết nối (TD-0241) | ☑ Retry được | Backoff CỐ ĐỊNH 2s (không luỹ tiến — sự kiện dừng khẩn cấp cần thử nhanh, không phải tiết kiệm tài nguyên), tối đa 5 lần rồi RAISE (không nuốt) |
 
 ## 4.4. Ngưỡng cấu hình
 

@@ -123,11 +123,22 @@ tool-d-smart-dca/                  ← git root = E:\Trading Tool_Smart DCA
 │  ├─ ledger/       registry · budget · audit_checks · idea_queue · param_proposals
 │  ├─ lockbox/      seal · access_log
 │  ├─ gates/        thresholds · dsr
-│  └─ reporting/    report_model
+│  ├─ reporting/    report_model
+│  ├─ api_client/   binance_public (R1 single egress Binance) ·
+│  │                freqtrade_control (single egress RIÊNG — control API
+│  │                cục bộ của Freqtrade, TD-0241)
+│  ├─ risk_supervisor.py  ← §6.6, tầng THUẦN (breaker, đối chiếu L-Z44,
+│  │                         phát hiện thanh lý, bền vững hoá trạng thái)
+│  └─ ops/          heartbeat · heartbeat_watchdog · telegram_client
+│                    (TD-0209) · risk_supervisor_daemon (TD-0241) — tiến
+│                    trình VẬN HÀNH, KHÔNG phải entrypoint đo lường (xem 3.3)
 ├─ entrypoints/                    ← ĐÚNG 8 file, không hơn (xem 3.3)
 ├─ tests/lock/                     ← 1 file / 1 test khoá L-Zxx
 ├─ tests/unit/  tests/fixtures/
-├─ runs/                           ← runs/<trial_id>/metrics.seal (gitignored)
+├─ runs/                           ← runs/<trial_id>/metrics.seal ·
+│                                    runs/risk_supervisor/state.json (TD-0241,
+│                                    bền vững hoá breaker/cờ LIQUIDATED qua
+│                                    restart) — cả hai gitignored
 └─ docker/                         ← Dockerfile · docker-compose.yml
 ```
 
@@ -153,6 +164,12 @@ Nếu rải entrypoint trong `src/` thì test này không viết được.
 Spec ghi rõ: *"Không có E9 script thử nghiệm nhanh. Nếu cần xem thử, đó là E1 với
 `budget_line = B3` và ghi registry"* (dòng 664–665). Vì vậy **sự vắng mặt của
 `scripts/quick_test.py` hay `notebooks/` là một quyết định kiến trúc**, không phải thiếu sót.
+
+🔴 `src/tool_d/ops/` (TD-0209, TD-0241) KHÔNG nằm trong danh sách đóng này và KHÔNG bị L-Z36 kiểm —
+nó không sinh file kết quả đo lường, không chạm CALIB/WFO/LOCKBOX, không gọi `measurement_guard()`.
+Đây là tiến trình VẬN HÀNH (watchdog heartbeat, Risk Supervisor daemon), một phạm trù khác hẳn "đường
+sinh số liệu nghiên cứu" mà §0d.2 muốn khoá cứng — quyết định đã ghi ở `api-integration-rules.md`
+Mục 4.4b và `DR-D11-03`. Đừng nhầm "8 file entrypoint" với "mọi script chạy được trong repo".
 
 ### 3.4. Vì sao `registry/` tách khỏi `user_data/`
 
