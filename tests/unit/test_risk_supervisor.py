@@ -25,12 +25,16 @@ from tool_d.risk_supervisor import (
     UNREADABLE,
     KetQuaEndpoint,
     RiskSupervisorError,
+    TrangThaiBenVung,
     TrangThaiBreaker,
     doc_nguong_breaker,
     doc_snapshot_an_toan,
+    doc_trang_thai,
     ghi_nhan_ket_qua,
     kiem_khai_lai_khop_ban_goc,
+    luu_trang_thai,
     phan_loai_ma_loi,
+    phat_hien_thanh_ly,
     trang_thai_tai_khoan,
 )
 
@@ -256,3 +260,83 @@ class TestSnapshotAnToanTungEndpoint:
 
     def test_khong_endpoint_nao_thi_tra_dict_rong(self) -> None:
         assert doc_snapshot_an_toan({}) == {}
+
+
+class TestPhatHienThanhLy:
+    """TD-0241 — `phat_hien_thanh_ly()` đọc `force_orders` (đã lọc
+    `autoCloseType=LIQUIDATION` phía server)."""
+
+    def test_mang_rong_la_khong_thanh_ly(self) -> None:
+        assert phat_hien_thanh_ly([], tu_thoi_diem_ms=1000) is False
+
+    def test_lenh_moi_hon_moc_la_thanh_ly(self) -> None:
+        assert phat_hien_thanh_ly([{"time": 2000}], tu_thoi_diem_ms=1000) is True
+
+    def test_lenh_dung_moc_tinh_la_thanh_ly(self) -> None:
+        assert phat_hien_thanh_ly([{"time": 1000}], tu_thoi_diem_ms=1000) is True
+
+    def test_lenh_cu_hon_moc_khong_tinh(self) -> None:
+        """Lệnh thanh lý CŨ (trước khi vị thế hiện tại được mở) không được
+        tính — nếu không, một lần thanh lý lịch sử sẽ mãi mãi khiến daemon
+        báo LIQUIDATED dù tài khoản đã hồi phục và mở vị thế mới."""
+        assert phat_hien_thanh_ly([{"time": 500}], tu_thoi_diem_ms=1000) is False
+
+    def test_mot_lenh_moi_giua_nhieu_lenh_cu_van_bat_duoc(self) -> None:
+        lenh = [{"time": 100}, {"time": 200}, {"time": 5000}]
+        assert phat_hien_thanh_ly(lenh, tu_thoi_diem_ms=1000) is True
+
+    def test_thieu_truong_time_RAISE_khong_doan(self) -> None:
+        with pytest.raises(RiskSupervisorError, match="'time'"):
+            phat_hien_thanh_ly([{"symbol": "BTCUSDT"}], tu_thoi_diem_ms=1000)
+
+
+class TestBenVungTrangThaiQuaRestart:
+    """TD-0241 — `luu_trang_thai()`/`doc_trang_thai()`. Bài học `MT-40`/
+    `MT-41`: một cờ an toàn chỉ sống trong RAM là một cờ không tồn tại sau
+    khi tiến trình restart."""
+
+    def test_chua_co_file_tra_ve_trang_thai_sach(self, tmp_path) -> None:
+        duong_dan = tmp_path / "khong_ton_tai" / "state.json"
+        trang_thai = doc_trang_thai(duong_dan)
+        assert trang_thai == TrangThaiBenVung(breaker=TrangThaiBreaker())
+        assert trang_thai.la_thanh_ly is False
+
+    def test_ghi_roi_doc_lai_khop_nguyen_ban(self, tmp_path) -> None:
+        duong_dan = tmp_path / "state.json"
+        goc = TrangThaiBenVung(
+            breaker=TrangThaiBreaker(
+                so_loi_lien_tiep=3, mo_tam=True, thoi_diem_mo=T0, backoff_s=4.0
+            ),
+            la_thanh_ly=False,
+        )
+        luu_trang_thai(goc, duong_dan)
+        assert doc_trang_thai(duong_dan) == goc
+
+    def test_co_do_thanh_ly_song_sot_qua_ghi_doc(self, tmp_path) -> None:
+        duong_dan = tmp_path / "state.json"
+        goc = TrangThaiBenVung(breaker=TrangThaiBreaker(dung_han=True), la_thanh_ly=True)
+        luu_trang_thai(goc, duong_dan)
+        doc_lai = doc_trang_thai(duong_dan)
+        assert doc_lai.la_thanh_ly is True
+        assert doc_lai.breaker.dung_han is True
+
+    def test_ghi_nguyen_tu_khong_de_lai_file_tam(self, tmp_path) -> None:
+        duong_dan = tmp_path / "state.json"
+        luu_trang_thai(TrangThaiBenVung(breaker=TrangThaiBreaker()), duong_dan)
+        assert duong_dan.exists()
+        assert not (tmp_path / "state.json.dang-ghi").exists()
+
+    def test_file_hong_RAISE_khong_am_tham_coi_la_sach(self, tmp_path) -> None:
+        """🔴 Ca quan trọng nhất: file CÓ tồn tại mà đọc hỏng KHÔNG được
+        coi là "chưa từng ghi" — nó có thể đang che một `dung_han=True`
+        ghi từ trước. Khác hẳn ca 'chưa có file' ở trên."""
+        duong_dan = tmp_path / "state.json"
+        duong_dan.write_text("khong phai json hop le", encoding="utf-8")
+        with pytest.raises(RiskSupervisorError, match="KHÔNG đọc được"):
+            doc_trang_thai(duong_dan)
+
+    def test_thieu_khoa_ben_trong_cung_raise(self, tmp_path) -> None:
+        duong_dan = tmp_path / "state.json"
+        duong_dan.write_text('{"breaker": {}}', encoding="utf-8")
+        with pytest.raises(RiskSupervisorError):
+            doc_trang_thai(duong_dan)

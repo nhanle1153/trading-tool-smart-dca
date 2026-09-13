@@ -9,10 +9,11 @@ nối vào một tiến trình/entrypoint thật là việc SAU, khi tới gần
 (dry-run) — Risk Supervisor không cần CHẠY THẬT ở D4 (backtest-only),
 chỉ cần TỒN TẠI và có phép kiểm để không bị quên tới lúc cần.
 
-🔴 **KHÔNG được thêm entrypoint thứ 9** (L-Z36, N3). Cách tiến trình này
-chạy thật (một script riêng ngoài `entrypoints/`? một chế độ của một
-entrypoint có sẵn?) là quyết định CHƯA CHỐT — ghi vào Open Questions khi
-tới lúc, không tự chọn ở đây.
+🔴 **KHÔNG được thêm entrypoint thứ 9** (L-Z36, N3). ✅ **Đã chốt**
+(`DR-D11-03`, TD-0241): tiến trình chạy dạng module độc lập
+`src/tool_d/ops/risk_supervisor_daemon.py` (cùng khuôn `heartbeat_watchdog.py`
+của TD-0209) — script riêng ngoài `entrypoints/`, không phải một chế độ
+của entrypoint có sẵn, không phải service Docker dài hạn mới.
 
 ════ Bốn ràng buộc vận hành (§6.6, LD-22/23/26) — module này phủ đến đâu ════
 
@@ -38,11 +39,13 @@ của `tool_d_config.yaml` và KHÔNG tính vào `N_ĐĂNG_KÝ`/DOF.
 
 from __future__ import annotations
 
+import json
 import math
 import os
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from datetime import datetime, timedelta
+from pathlib import Path
 
 NGUONG_BREAKER_MAC_DINH = 5
 BACKOFF_KHOI_DIEM_S = 1.0
@@ -334,15 +337,109 @@ def doc_snapshot_an_toan(doc: Mapping[str, Callable[[], object]]) -> dict[str, K
     return ra
 
 
+# ═══════════════════════════════════════════════════════════════════
+# TD-0241 (DR-D11-03) — phát hiện thanh lý + bền vững hoá trạng thái
+# ═══════════════════════════════════════════════════════════════════
+
+
+def phat_hien_thanh_ly(
+    force_orders: Sequence[Mapping[str, object]], *, tu_thoi_diem_ms: int
+) -> bool:
+    """Đóng TODO (1) cũ: nguồn xác nhận thanh lý là REST
+    `GET /fapi/v1/forceOrders?autoCloseType=LIQUIDATION` (xác nhận qua mã
+    nguồn `ccxt`, `DR-D11-03` §2.4) — KHÔNG cần user data stream WebSocket
+    (quyết định đã chốt, xem DR). `autoCloseType` là bộ lọc phía SERVER,
+    nên bất kỳ phần tử nào trong `force_orders` (đã được tầng gọi lọc đúng
+    filter đó) ⇒ ĐÃ có lệnh bị thanh lý.
+
+    Hàm THUẦN — không tự gọi mạng. Tầng gọi (daemon) chỉ được truyền vào
+    đây kết quả ĐÃ ĐỌC ĐƯỢC (`KetQuaEndpoint.doc_duoc is True` từ
+    `doc_snapshot_an_toan()`); đọc lỗi/timeout phải đi thẳng
+    `trang_thai_tai_khoan(la_thanh_ly=None)` → `unreadable`, KHÔNG BAO GIỜ
+    gọi hàm này với dữ liệu rỗng-vì-lỗi rồi đọc kết quả `False` thành "an
+    toàn" (N6 — gộp "không đọc được" vào "OK" là fail-OPEN trên đúng cờ
+    §6.6(2) gọi là "CỜ ĐỎ").
+    """
+    for lenh in force_orders:
+        thoi_diem = lenh.get("time")
+        if thoi_diem is None:
+            raise RiskSupervisorError(f"bản ghi forceOrders thiếu trường 'time': {lenh!r}")
+        if int(thoi_diem) >= tu_thoi_diem_ms:
+            return True
+    return False
+
+
+@dataclass(frozen=True)
+class TrangThaiBenVung:
+    """Phần trạng thái PHẢI sống sót qua khởi động lại tiến trình — bài học
+    `MT-40`/`MT-41` (đỉnh equity/kế hoạch cỡ lệnh chỉ sống trong RAM, mất
+    sạch mỗi lần restart, vô hiệu hoá một tầng Cấp C). `la_thanh_ly` là
+    tri-state ĐÃ CHỐT (không phải lần đọc mới nhất) — một khi `True` thì
+    KHÔNG hàm nào trong file này tự gỡ, đúng "CỜ ĐỎ, không tự phục hồi".
+    """
+
+    breaker: TrangThaiBreaker
+    la_thanh_ly: bool = False
+
+
+def luu_trang_thai(trang_thai: TrangThaiBenVung, duong_dan: Path) -> None:
+    """Ghi NGUYÊN TỬ (file tạm + `rename`) — cùng khuôn
+    `binance_public.tai_dump_agg_trades()`: tiến trình chết giữa chừng
+    không được để lại một file mang TÊN THẬT nhưng nội dung dở dang."""
+    duong_dan.parent.mkdir(parents=True, exist_ok=True)
+    noi_dung = {
+        "breaker": {
+            "so_loi_lien_tiep": trang_thai.breaker.so_loi_lien_tiep,
+            "dung_han": trang_thai.breaker.dung_han,
+            "mo_tam": trang_thai.breaker.mo_tam,
+            "thoi_diem_mo": (
+                trang_thai.breaker.thoi_diem_mo.isoformat() if trang_thai.breaker.thoi_diem_mo else None
+            ),
+            "backoff_s": trang_thai.breaker.backoff_s,
+        },
+        "la_thanh_ly": trang_thai.la_thanh_ly,
+    }
+    tam = duong_dan.with_name(duong_dan.name + ".dang-ghi")
+    tam.write_text(json.dumps(noi_dung, indent=2, ensure_ascii=False), encoding="utf-8")
+    tam.replace(duong_dan)
+
+
+def doc_trang_thai(duong_dan: Path) -> TrangThaiBenVung:
+    """Chưa có file (lần khởi động ĐẦU TIÊN của tiến trình) → trạng thái
+    SẠCH — đây là ca DUY NHẤT "chưa đọc được" hợp lệ đọc thành trạng thái
+    an toàn, vì "chưa từng ghi" là một sự thật rõ ràng, khác hẳn "có ghi
+    nhưng đọc hỏng". File CÓ tồn tại mà hỏng ⇒ RAISE (fail-closed) — không
+    được âm thầm coi hỏng là sạch, vì file hỏng có thể đang che một
+    `dung_han=True`/`la_thanh_ly=True` đã ghi trước đó (N6).
+    """
+    if not duong_dan.exists():
+        return TrangThaiBenVung(breaker=TrangThaiBreaker())
+    try:
+        tho = json.loads(duong_dan.read_text(encoding="utf-8"))
+        b = tho["breaker"]
+        breaker = TrangThaiBreaker(
+            so_loi_lien_tiep=b["so_loi_lien_tiep"],
+            dung_han=b["dung_han"],
+            mo_tam=b["mo_tam"],
+            thoi_diem_mo=(datetime.fromisoformat(b["thoi_diem_mo"]) if b["thoi_diem_mo"] else None),
+            backoff_s=b["backoff_s"],
+        )
+        return TrangThaiBenVung(breaker=breaker, la_thanh_ly=tho["la_thanh_ly"])
+    except (json.JSONDecodeError, OSError, KeyError, TypeError, ValueError) as exc:
+        raise RiskSupervisorError(
+            f"trạng thái đã lưu ở {duong_dan} tồn tại nhưng KHÔNG đọc được: {exc} — "
+            "không tự coi là sạch, có thể đang che một cờ đỏ đã ghi trước đó"
+        ) from exc
+
+
 # ════════════════════════════════════════════════════════════════════
 # TODO (ghi để không quên, KHÔNG phải việc của TD-0196):
-#   1. Xác nhận CHÍNH XÁC trường Binance đánh dấu lệnh thanh lý (REST
-#      `positionRisk`/`userTrades`, hay field `x`/`X` của user data
-#      stream `ORDER_TRADE_UPDATE`) trước khi viết tầng ĐỌC THẬT gọi
-#      `trang_thai_tai_khoan()` — chưa verify trong phiên này (rule 6).
-#   2. Quyết định tiến trình này CHẠY Ở ĐÂU (không phải entrypoint thứ
-#      9 — L-Z36) khi tới gần D10/D11.
+#   1. ✅ Giải bởi `DR-D11-03` (TD-0241) — `GET /fapi/v1/forceOrders`
+#      (`phat_hien_thanh_ly` ở trên), không cần user data stream.
+#   2. ✅ Giải bởi `DR-D11-03` — `src/tool_d/ops/risk_supervisor_daemon.py`,
+#      không phải entrypoint thứ 9.
 #   3. `provider-map.md` cần một dòng cho "Binance — Risk Supervisor
 #      đọc margin/vị thế" nếu coi đây là dịch vụ tách biệt với market
-#      data (TD-0079 mới điền market-data + đặt lệnh).
+#      data (TD-0079 mới điền market-data + đặt lệnh). — Đóng ở
+#      `DR-D11-03` (TD-0241), xem `provider-map.md`.
 # ════════════════════════════════════════════════════════════════════
