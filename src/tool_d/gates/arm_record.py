@@ -9,8 +9,31 @@ nhận `n_trades: int` **không có ngữ nghĩa cửa sổ nào**, và `chay_wf
 `sinh_folds` **không có người gọi nào** từ `run_ablation.py`. ⇒ Bộ chạy sẽ
 quyết câu đó **bằng cách vô tình** nếu không có chỗ nào bắt nó khai.
 
-`MT-36` (chủ dự án chốt 13/09/2026): Nhánh 1 phán quyết trên `n_phan_quyet`
-(chỉ đoạn TEST); `n_mo_ta` (toàn cửa sổ) báo kèm, dán nhãn **MÔ TẢ**.
+🔄 **`TD-0234` SỬA `MT-36` (13/09/2026).** Bản đầu đặt `n_phan_quyet` = chỉ
+đoạn TEST và cho Nhánh 1 phán quyết trên đó. Đọc hết `DR-D3-01` §2 thì tiền đề
+ấy sai: §2 ghi *"WFO của Tool D **KHÔNG** khớp lại tham số"* và *"đơn vị phân
+tích của fold là **thứ hạng giữa các arm**, không phải **giá trị tuyệt đối của
+một arm**"*, còn §5.3 hoãn phán quyết thống kê sang **D9**. Nhánh 1 hỏi đúng
+một *giá trị tuyệt đối của một arm* ⇒ nó đọc **TOÀN cửa sổ WFO**; sơ đồ fold là
+việc của D9. Và mã đã làm đúng thế rồi: `run_ablation.py` **không gọi**
+`chay_wfo`/`sinh_folds` — đó là **ranh giới theo thiết kế**, không phải lỗ hổng
+(tôi đã đọc sự vắng mặt đó thành một lỗ hổng khi mở `MT-36`; nó không phải).
+
+Hai trường vì thế đổi **TÊN**, không đổi nghĩa: `n_toan_cua_so` / `n_chi_test`,
+cộng `nguon_phan_quyet` khai **tường minh** cửa sổ nào đem so ngưỡng.
+🔑 Giữ tên cũ mà đảo nghĩa sẽ làm **một** tên trường mang **hai** nghĩa ở hai
+thời điểm — đúng lỗi *hai nguồn sự thật* mà `N1`/`MT-03` sinh ra để cấm.
+
+🔴 **Cái MẤT, khai ra chứ không ỉm:** bỏ fold khỏi Nhánh 1 nghĩa là phán quyết
+D4 **không còn phép kiểm ổn định theo thời gian**, nên một PASS có thể đến từ
+một tháng tốt. Bù bằng `lenh_theo_thang` làm **MÔ TẢ** — và tuyệt đối không
+thành ngưỡng, vì một ngưỡng tuỳ tiện lại là chỗ uốn kết luận sau khi thấy số.
+
+🔄 **`TD-0234` cũng thi hành `MT-37`:** `Δ_R(LONG) = 0,1612` đo trên **đúng hai
+cặp** (91 lượt khớp), mà `d3_5_han_che` — bản tự khai của chính cổng D3.5 —
+khai bốn hạn chế và **không** khai phạm vi mã. Chủ dự án chốt: **không đặt sàn
+số mã, BẮT KHAI phạm vi** (`delta_r_pham_vi` + `so_ma_da_chay`). Hai con số
+cạnh nhau, không phán xét — cùng khuôn `MT-36`.
 
 🔑 **Vì sao SCHEMA + hai bất biến, chứ không phải một phép kiểm lúc audit.**
 `TD-0127` đã dạy: *một phép kiểm có thể bị bỏ qua, một tham số không tồn tại
@@ -21,7 +44,7 @@ là `required` ⇒ một bản ghi chỉ mang một con số `n` là **không bi
 Ba bất biến JSON Schema **không** so được (nó không so hai trường với nhau),
 nên chúng sống ở đây:
 
-1. `n_phan_quyet <= n_mo_ta` — đoạn test là **tập con** của toàn cửa sổ. Vi
+1. `n_chi_test <= n_toan_cua_so` — đoạn test là **tập con** của toàn cửa sổ. Vi
    phạm nghĩa là hai con số đến từ hai phép đếm khác nhau, và khi đó **cả hai**
    đều không đọc được.
 2. `pham_vi_phan_quyet` phải khớp **bảng đã chốt** ở `DR-D4-10` §2.1/§2.3 —
@@ -64,6 +87,15 @@ ARM_MUA_PHAN_QUYET: frozenset[str] = frozenset({"Z0-T1"})
 ARM_NHOM_C: frozenset[str] = frozenset(ARM_HOP_LE) - {"Z0-T1", "Z0-T0"}
 
 PHAM_VI_HOP_LE: frozenset[str] = frozenset({"phan_quyet", "mo_ta"})
+
+#: 🔄 `TD-0234` — TRỤC THỨ HAI, khác hẳn `pham_vi_phan_quyet`: **cửa sổ nào**
+#: được đem so ngưỡng Nhánh 1. `chi_test` giữ chỗ cho D9 (`DR-D3-01` §5.3).
+NGUON_HOP_LE: frozenset[str] = frozenset({"toan_cua_so", "chi_test"})
+
+#: 🔴 Đường sinh của D4 chỉ phát ra giá trị này, và `build_arm_record()` **không
+#: nhận** nó làm tham số — đổi nó là một QUYẾT ĐỊNH cần DR, không phải một lần
+#: truyền tham số khác. Cùng thủ pháp `pham_vi_phan_quyet`.
+NGUON_PHAN_QUYET_D4: str = "toan_cua_so"
 
 #: `DR-D4-09` §2.3: *"Báo cáo BẮT BUỘC cho MỌI arm — ba con số, không phải
 #: một … Thiếu một ⇒ bản ghi kết quả không hợp lệ."* `n` đã là hai trường
@@ -132,24 +164,79 @@ def validate_arm_record(d: Mapping[str, Any]) -> list[str]:
         loi.append(f"arm {arm!r} không thuộc {ARM_HOP_LE}")
 
     # ── Bất biến 1: đoạn test là TẬP CON của toàn cửa sổ ────────────────
-    n_pq, n_mt = d.get("n_phan_quyet"), d.get("n_mo_ta")
-    if not isinstance(n_pq, int) or isinstance(n_pq, bool):
-        loi.append(f"thiếu hoặc sai kiểu `n_phan_quyet`: {n_pq!r} (MT-36)")
-    if not isinstance(n_mt, int) or isinstance(n_mt, bool):
-        loi.append(f"thiếu hoặc sai kiểu `n_mo_ta`: {n_mt!r} (MT-36)")
-    if isinstance(n_pq, int) and isinstance(n_mt, int) and n_pq > n_mt:
+    n_tcs, n_ct = d.get("n_toan_cua_so"), d.get("n_chi_test")
+    if not isinstance(n_tcs, int) or isinstance(n_tcs, bool):
+        loi.append(f"thiếu hoặc sai kiểu `n_toan_cua_so`: {n_tcs!r} (MT-36)")
+    if not isinstance(n_ct, int) or isinstance(n_ct, bool):
+        loi.append(f"thiếu hoặc sai kiểu `n_chi_test`: {n_ct!r} (MT-36)")
+    if isinstance(n_tcs, int) and isinstance(n_ct, int) and n_ct > n_tcs:
         loi.append(
-            f"n_phan_quyet ({n_pq}) > n_mo_ta ({n_mt}) — đoạn test là TẬP CON của "
-            "toàn cửa sổ, nên vi phạm này nghĩa là hai con số đến từ hai phép "
+            f"n_chi_test ({n_ct}) > n_toan_cua_so ({n_tcs}) — đoạn test là TẬP CON "
+            "của toàn cửa sổ, nên vi phạm này nghĩa là hai con số đến từ hai phép "
             "đếm khác nhau và KHI ĐÓ CẢ HAI đều không đọc được (MT-36)"
         )
 
-    cs_pq = d.get("cua_so_phan_quyet")
-    if not isinstance(cs_pq, list) or not cs_pq:
+    cs_ct = d.get("cua_so_chi_test")
+    if not isinstance(cs_ct, list) or not cs_ct:
         loi.append(
-            "thiếu `cua_so_phan_quyet` — `n_phan_quyet` không có nguồn thì nó chỉ "
-            "là một con số được khai, không phải một con số được đếm"
+            "thiếu `cua_so_chi_test` — `n_chi_test` không có nguồn thì nó chỉ là "
+            "một con số được khai, không phải một con số được đếm"
         )
+
+    # ── Trục thứ hai: cửa sổ nào đem so ngưỡng (TD-0234, MT-36 sửa) ──────
+    nguon = d.get("nguon_phan_quyet")
+    if nguon not in NGUON_HOP_LE:
+        loi.append(
+            f"nguon_phan_quyet {nguon!r} không thuộc {sorted(NGUON_HOP_LE)} — "
+            "cửa sổ nào đem so ngưỡng phải được KHAI, không để bộ chạy quyết bằng "
+            "cách vô tình (MT-36)"
+        )
+    elif nguon != NGUON_PHAN_QUYET_D4:
+        loi.append(
+            f"nguon_phan_quyet={nguon!r} nhưng D4 phán quyết trên "
+            f"{NGUON_PHAN_QUYET_D4!r} — DR-D3-01 §2: fold đo THỨ HẠNG giữa các arm, "
+            "còn Nhánh 1 hỏi GIÁ TRỊ TUYỆT ĐỐI của một arm; §5.3 hoãn phán quyết "
+            "thống kê sang D9. Đổi vế này là một quyết định cần DR"
+        )
+
+    # ── Mô tả bù cho phép kiểm ổn định thời gian đã mất (TD-0234) ────────
+    ltt = d.get("lenh_theo_thang")
+    if not isinstance(ltt, Mapping) or not ltt:
+        loi.append(
+            "thiếu `lenh_theo_thang` — bỏ sơ đồ fold khỏi Nhánh 1 làm D4 mất phép "
+            "kiểm ổn định theo THỜI GIAN, nên một PASS có thể đến từ một tháng "
+            "tốt. Trường mô tả này là phần bù và phải CÓ MẶT; một trường mô tả "
+            "tuỳ chọn thì sẽ không bao giờ xuất hiện"
+        )
+    else:
+        for thang, so in ltt.items():
+            if not isinstance(so, int) or isinstance(so, bool) or so < 0:
+                loi.append(f"lenh_theo_thang[{thang!r}] = {so!r} — phải là số nguyên >= 0")
+
+    # ── MT-37: phạm vi của thước Δ_R phải được KHAI, không đặt sàn ───────
+    so_ma_chay = d.get("so_ma_da_chay")
+    if not isinstance(so_ma_chay, int) or isinstance(so_ma_chay, bool) or so_ma_chay < 1:
+        loi.append(
+            f"thiếu hoặc sai kiểu `so_ma_da_chay`: {so_ma_chay!r} (MT-37) — nó đứng "
+            "cạnh `delta_r_pham_vi.so_ma` để khoảng cách giữa thước và kết quả NHÌN "
+            "THẤY ĐƯỢC"
+        )
+
+    dr_pv = d.get("delta_r_pham_vi")
+    if not isinstance(dr_pv, Mapping):
+        loi.append(
+            "thiếu `delta_r_pham_vi` (MT-37) — Δ_R(LONG)=0,1612 đo trên ĐÚNG HAI "
+            "cặp, và `d3_5_han_che` khai bốn hạn chế mà KHÔNG khai phạm vi mã. "
+            "Chủ dự án chốt: không đặt sàn số mã, BẮT KHAI phạm vi"
+        )
+    else:
+        for khoa, kieu in (("so_ma", int), ("so_fill", int), ("dataset", str), ("chien_luoc", str)):
+            gt = dr_pv.get(khoa)
+            if kieu is int:
+                if not isinstance(gt, int) or isinstance(gt, bool) or gt < 1:
+                    loi.append(f"delta_r_pham_vi.{khoa} = {gt!r} — phải là số nguyên >= 1")
+            elif not isinstance(gt, str) or not gt:
+                loi.append(f"delta_r_pham_vi.{khoa} = {gt!r} — phải là chuỗi không rỗng")
 
     # ── Bất biến 2: cờ phạm vi phải khớp bảng DR-D4-10 §2.1 ─────────────
     pv = d.get("pham_vi_phan_quyet")
@@ -220,10 +307,13 @@ def build_arm_record(
     *,
     arm: str,
     huong: str,
-    n_phan_quyet: int,
-    n_mo_ta: int,
-    cua_so_phan_quyet: Sequence[tuple[date, date]],
-    cua_so_mo_ta: tuple[date, date],
+    n_toan_cua_so: int,
+    n_chi_test: int,
+    cua_so_toan_bo: tuple[date, date],
+    cua_so_chi_test: Sequence[tuple[date, date]],
+    lenh_theo_thang: Mapping[str, int],
+    so_ma_da_chay: int,
+    delta_r_pham_vi: Mapping[str, Any],
     chi_so: Mapping[str, Measured[Any]],
     ket_cuc: Measured[str],
     provenance: Provenance,
@@ -231,24 +321,31 @@ def build_arm_record(
 ) -> dict[str, Any]:
     """Dựng một bản ghi arm hợp lệ với `arm_result.schema.json`.
 
-    🔴 **`pham_vi_phan_quyet` KHÔNG phải tham số.** Nó được suy từ `arm` qua
-    `pham_vi_theo_arm()`, nên *"khai sai cờ phạm vi"* là **không biểu diễn
-    được** ở đường này — cùng thủ pháp `TD-0127` đã dùng khi bỏ hẳn tham số
-    `n_tai_sinh` khỏi `TrialLedger`: một phép kiểm có thể bị bỏ qua, một tham
-    số không tồn tại thì không ai truyền vào được.
+    🔴 **`pham_vi_phan_quyet` và `nguon_phan_quyet` KHÔNG phải tham số.** Cái
+    đầu suy từ `arm` qua `pham_vi_theo_arm()`; cái sau là hằng
+    `NGUON_PHAN_QUYET_D4`. Nên *"khai sai cờ phạm vi"* và *"lặng lẽ phán quyết
+    trên đoạn test"* đều là **không biểu diễn được** ở đường này — cùng thủ
+    pháp `TD-0127` đã dùng khi bỏ hẳn tham số `n_tai_sinh` khỏi `TrialLedger`:
+    một phép kiểm có thể bị bỏ qua, một tham số không tồn tại thì không ai
+    truyền vào được.
 
     Fail-closed: dựng xong **tự kiểm** bằng `validate_arm_record()` và raise
     nếu không hợp lệ. Một bản ghi kết quả D4 không hợp lệ mà vẫn được trả về
     là một bản ghi sẽ đi tiếp vào gate.
     """
-    if n_phan_quyet > n_mo_ta:
+    if n_chi_test > n_toan_cua_so:
         raise ArmRecordError(
-            f"n_phan_quyet ({n_phan_quyet}) > n_mo_ta ({n_mo_ta}) — đoạn test là "
-            "TẬP CON của toàn cửa sổ (MT-36)"
+            f"n_chi_test ({n_chi_test}) > n_toan_cua_so ({n_toan_cua_so}) — đoạn "
+            "test là TẬP CON của toàn cửa sổ (MT-36)"
         )
-    if not cua_so_phan_quyet:
+    if not cua_so_chi_test:
         raise ArmRecordError(
-            "cua_so_phan_quyet rỗng — `n_phan_quyet` phải có nguồn đếm được"
+            "cua_so_chi_test rỗng — `n_chi_test` phải có nguồn đếm được"
+        )
+    if not lenh_theo_thang:
+        raise ArmRecordError(
+            "lenh_theo_thang rỗng — nó là phần BÙ cho phép kiểm ổn định thời gian "
+            "mà Nhánh 1 vừa mất khi bỏ sơ đồ fold (MT-36 sửa, TD-0234)"
         )
     ban_ghi: dict[str, Any] = {
         "loai": "ARM_RESULT",
@@ -256,15 +353,19 @@ def build_arm_record(
         "huong": huong,
         "dataset": "WFO",
         "pham_vi_phan_quyet": pham_vi_theo_arm(arm),
-        "n_phan_quyet": n_phan_quyet,
-        "n_mo_ta": n_mo_ta,
-        "cua_so_phan_quyet": [
-            {"start": a.isoformat(), "end": b.isoformat()} for a, b in cua_so_phan_quyet
-        ],
-        "cua_so_mo_ta": {
-            "start": cua_so_mo_ta[0].isoformat(),
-            "end": cua_so_mo_ta[1].isoformat(),
+        "nguon_phan_quyet": NGUON_PHAN_QUYET_D4,
+        "n_toan_cua_so": n_toan_cua_so,
+        "n_chi_test": n_chi_test,
+        "cua_so_toan_bo": {
+            "start": cua_so_toan_bo[0].isoformat(),
+            "end": cua_so_toan_bo[1].isoformat(),
         },
+        "cua_so_chi_test": [
+            {"start": a.isoformat(), "end": b.isoformat()} for a, b in cua_so_chi_test
+        ],
+        "lenh_theo_thang": dict(lenh_theo_thang),
+        "so_ma_da_chay": so_ma_da_chay,
+        "delta_r_pham_vi": dict(delta_r_pham_vi),
         "chi_so": {k: _measured_to_dict(v) for k, v in chi_so.items()},
         "ket_cuc": _measured_to_dict(ket_cuc),
         "trial_id": trial_id,

@@ -30,6 +30,7 @@ from tool_d.gates.arm_record import (
     ARM_MUA_PHAN_QUYET,
     ARM_NHOM_C,
     CHI_SO_BAT_BUOC,
+    NGUON_PHAN_QUYET_D4,
     ArmRecordError,
     build_arm_record,
     pham_vi_theo_arm,
@@ -54,6 +55,22 @@ CUA_SO_TEST = [
 ]
 CUA_SO_TOAN = (date(2025, 6, 12), date(2026, 1, 29))
 
+# 🔄 TD-0234 — ba khối BẮT BUỘC mới. `LENH_THEO_THANG` là phần BÙ cho phép kiểm
+# ổn định thời gian mà Nhánh 1 mất khi bỏ sơ đồ fold; `DELTA_R_PHAM_VI` mang
+# đúng con số của artifact niêm phong (`dr015-luot-khop-tranche.json` →
+# `_nguon.cap` = hai cặp, `_xac_minh.so_dong` = 91).
+LENH_THEO_THANG = {
+    "2025-06": 12, "2025-07": 30, "2025-08": 28, "2025-09": 31,
+    "2025-10": 27, "2025-11": 26, "2025-12": 29, "2026-01": 23,
+}
+SO_MA_DA_CHAY = 102
+DELTA_R_PHAM_VI = {
+    "so_ma": 2,
+    "so_fill": 91,
+    "dataset": "CALIB",
+    "chien_luoc": "ZoneAbsorptionMinimal",
+}
+
 
 def _prov() -> Provenance:
     return Provenance(
@@ -74,21 +91,37 @@ def _chi_so(**ghi_de: Measured[Any]) -> dict[str, Measured[Any]]:
     return base
 
 
+#: Lính canh nội bộ CỦA TEST — phân biệt *"không truyền"* với *"truyền None"*,
+#: vì `None` là một giá trị test có nghĩa (ca `build_arm_record` phải raise).
+#: Không phải giá trị lính canh của tầng đo (N6) — nó không bao giờ ra khỏi file.
+_KHONG_TRUYEN = object()
+
+
 def _ban_ghi(
     *,
     arm: str = "Z0-T1",
-    n_phan_quyet: int = 131,
-    n_mo_ta: int = 206,
+    n_toan_cua_so: int = 206,
+    n_chi_test: int = 131,
+    lenh_theo_thang: Any = None,
+    so_ma_da_chay: int = SO_MA_DA_CHAY,
+    delta_r_pham_vi: Any = _KHONG_TRUYEN,
     ket_cuc: Measured[str] | None = None,
     **kw: Any,
 ) -> dict[str, Any]:
     return build_arm_record(
         arm=arm,
         huong="LONG",
-        n_phan_quyet=n_phan_quyet,
-        n_mo_ta=n_mo_ta,
-        cua_so_phan_quyet=CUA_SO_TEST,
-        cua_so_mo_ta=CUA_SO_TOAN,
+        n_toan_cua_so=n_toan_cua_so,
+        n_chi_test=n_chi_test,
+        cua_so_toan_bo=CUA_SO_TOAN,
+        cua_so_chi_test=CUA_SO_TEST,
+        lenh_theo_thang=LENH_THEO_THANG if lenh_theo_thang is None else lenh_theo_thang,
+        so_ma_da_chay=so_ma_da_chay,
+        delta_r_pham_vi=(
+            dict(DELTA_R_PHAM_VI)
+            if delta_r_pham_vi is _KHONG_TRUYEN
+            else delta_r_pham_vi
+        ),
         chi_so=_chi_so(),
         ket_cuc=ket_cuc if ket_cuc is not None else Measured.ok("PASS"),
         provenance=_prov(),
@@ -113,10 +146,13 @@ class TestDauRaThatKhopSchema:
         ban = build_arm_record(
             arm="Z1",
             huong="LONG",
-            n_phan_quyet=5,
-            n_mo_ta=8,
-            cua_so_phan_quyet=CUA_SO_TEST,
-            cua_so_mo_ta=CUA_SO_TOAN,
+            n_toan_cua_so=8,
+            n_chi_test=5,
+            cua_so_toan_bo=CUA_SO_TOAN,
+            cua_so_chi_test=CUA_SO_TEST,
+            lenh_theo_thang=LENH_THEO_THANG,
+            so_ma_da_chay=SO_MA_DA_CHAY,
+            delta_r_pham_vi=DELTA_R_PHAM_VI,
             chi_so=_chi_so(dsr_adj=Measured.unreadable("n < 2")),
             ket_cuc=Measured.unreadable("mẫu quá mỏng"),
             provenance=_prov(),
@@ -127,43 +163,46 @@ class TestDauRaThatKhopSchema:
 class TestHaiConSoNLaBAT_BUOC:
     """`MT-36` — thiếu một trong hai là bản ghi KHÔNG BIỂU DIỄN ĐƯỢC."""
 
-    @pytest.mark.parametrize("thieu", ["n_phan_quyet", "n_mo_ta"])
+    @pytest.mark.parametrize("thieu", ["n_toan_cua_so", "n_chi_test"])
     def test_thieu_mot_con_so_n_thi_schema_TU_CHOI(self, thieu: str) -> None:
         ban = _ban_ghi()
         del ban[thieu]
         with pytest.raises(jsonschema.ValidationError):
             jsonschema.validate(ban, ARM_RESULT_SCHEMA)
 
-    @pytest.mark.parametrize("thieu", ["n_phan_quyet", "n_mo_ta"])
+    @pytest.mark.parametrize("thieu", ["n_toan_cua_so", "n_chi_test"])
     def test_thieu_mot_con_so_n_thi_validate_BAO_DO(self, thieu: str) -> None:
         ban = _ban_ghi()
         del ban[thieu]
         assert any(thieu in e for e in validate_arm_record(ban))
 
-    def test_n_phan_quyet_LON_HON_n_mo_ta_thi_BI_TU_CHOI(self) -> None:
+    def test_n_chi_test_LON_HON_n_toan_cua_so_thi_BI_TU_CHOI(self) -> None:
         """Đoạn test là TẬP CON của toàn cửa sổ. Vi phạm ⇒ hai con số đến từ
         hai phép đếm khác nhau, và khi đó CẢ HAI đều không đọc được."""
         with pytest.raises(ArmRecordError, match="TẬP CON"):
-            _ban_ghi(n_phan_quyet=206, n_mo_ta=131)
+            _ban_ghi(n_toan_cua_so=131, n_chi_test=206)
         # và validator bắt được cả bản ghi sửa tay
         ban = _ban_ghi()
-        ban["n_phan_quyet"], ban["n_mo_ta"] = 206, 131
+        ban["n_toan_cua_so"], ban["n_chi_test"] = 131, 206
         assert any("TẬP CON" in e for e in validate_arm_record(ban))
 
     def test_bang_nhau_thi_HOP_LE(self) -> None:
         """Không cấm — chỉ cấm test > toàn cửa sổ."""
-        assert validate_arm_record(_ban_ghi(n_phan_quyet=206, n_mo_ta=206)) == []
+        assert validate_arm_record(_ban_ghi(n_toan_cua_so=206, n_chi_test=206)) == []
 
-    def test_cua_so_phan_quyet_rong_thi_BI_TU_CHOI(self) -> None:
-        """`n_phan_quyet` không có nguồn thì nó chỉ là một con số được KHAI."""
-        with pytest.raises(ArmRecordError, match="cua_so_phan_quyet rỗng"):
+    def test_cua_so_chi_test_rong_thi_BI_TU_CHOI(self) -> None:
+        """`n_chi_test` không có nguồn thì nó chỉ là một con số được KHAI."""
+        with pytest.raises(ArmRecordError, match="cua_so_chi_test rỗng"):
             build_arm_record(
                 arm="Z0-T1",
                 huong="LONG",
-                n_phan_quyet=131,
-                n_mo_ta=206,
-                cua_so_phan_quyet=[],
-                cua_so_mo_ta=CUA_SO_TOAN,
+                n_toan_cua_so=206,
+                n_chi_test=131,
+                cua_so_toan_bo=CUA_SO_TOAN,
+                cua_so_chi_test=[],
+                lenh_theo_thang=LENH_THEO_THANG,
+                so_ma_da_chay=SO_MA_DA_CHAY,
+                delta_r_pham_vi=DELTA_R_PHAM_VI,
                 chi_so=_chi_so(),
                 ket_cuc=Measured.ok("PASS"),
                 provenance=_prov(),
@@ -267,10 +306,13 @@ class TestXuatXuTamKhoaLaBAT_BUOC:
             build_arm_record(
                 arm="Z0-T1",
                 huong="LONG",
-                n_phan_quyet=131,
-                n_mo_ta=206,
-                cua_so_phan_quyet=CUA_SO_TEST,
-                cua_so_mo_ta=CUA_SO_TOAN,
+                n_toan_cua_so=206,
+                n_chi_test=131,
+                cua_so_toan_bo=CUA_SO_TOAN,
+                cua_so_chi_test=CUA_SO_TEST,
+                lenh_theo_thang=LENH_THEO_THANG,
+                so_ma_da_chay=SO_MA_DA_CHAY,
+                delta_r_pham_vi=DELTA_R_PHAM_VI,
                 chi_so=_chi_so(),
                 ket_cuc=Measured.ok("PASS"),
                 provenance=prov,
@@ -293,3 +335,136 @@ class TestSchemaKhongNhanKhoaLa:
         ban["dataset"] = "CALIB"
         with pytest.raises(jsonschema.ValidationError):
             jsonschema.validate(ban, ARM_RESULT_SCHEMA)
+
+
+class TestCuaSoNaoDemSoNguong:
+    """🔄 `TD-0234` sửa `MT-36` — TRỤC THỨ HAI, tách khỏi `pham_vi_phan_quyet`.
+
+    `DR-D3-01` §2: fold đo **thứ hạng giữa các arm**; Nhánh 1 hỏi **giá trị
+    tuyệt đối của một arm**. Hai đại lượng khác nhau ⇒ phán quyết đọc TOÀN cửa
+    sổ WFO, và điều đó phải được KHAI chứ không để bộ chạy quyết vô tình.
+    """
+
+    def test_duong_sinh_luon_khai_toan_cua_so(self) -> None:
+        assert _ban_ghi()["nguon_phan_quyet"] == NGUON_PHAN_QUYET_D4 == "toan_cua_so"
+
+    def test_bo_dung_KHONG_NHAN_nguon_lam_tham_so(self) -> None:
+        """Cùng thủ pháp `pham_vi_phan_quyet`/`TD-0127`: *lặng lẽ phán quyết
+        trên đoạn test* phải là KHÔNG BIỂU DIỄN ĐƯỢC, không phải bị báo đỏ sau."""
+        with pytest.raises(TypeError):
+            _ban_ghi(nguon_phan_quyet="chi_test")  # type: ignore[call-arg]
+
+    def test_ban_ghi_sua_tay_sang_chi_test_thi_BAO_DO(self) -> None:
+        ban = _ban_ghi()
+        ban["nguon_phan_quyet"] = "chi_test"
+        assert any("nguon_phan_quyet" in e for e in validate_arm_record(ban))
+
+    def test_thieu_nguon_thi_schema_TU_CHOI_va_validate_BAO_DO(self) -> None:
+        ban = _ban_ghi()
+        del ban["nguon_phan_quyet"]
+        with pytest.raises(jsonschema.ValidationError):
+            jsonschema.validate(ban, ARM_RESULT_SCHEMA)
+        assert any("nguon_phan_quyet" in e for e in validate_arm_record(ban))
+
+    def test_gia_tri_ngoai_hai_ve_bi_schema_TU_CHOI(self) -> None:
+        ban = _ban_ghi()
+        ban["nguon_phan_quyet"] = "mot_thang_tot"
+        with pytest.raises(jsonschema.ValidationError):
+            jsonschema.validate(ban, ARM_RESULT_SCHEMA)
+
+
+class TestLenhTheoThangLaMoTaBatBuoc:
+    """🔄 `TD-0234` — phần BÙ cho phép kiểm ổn định thời gian đã mất.
+
+    🔴 Bắt buộc CÓ MẶT chứ không *nên có*: một trường mô tả tuỳ chọn thì sẽ
+    không bao giờ xuất hiện — đúng hình *ảnh trong gương của PASS RỖNG*, nơi
+    hậu quả duy nhất là một phép đo không bao giờ chạy và không để lại dấu vết.
+    """
+
+    def test_thieu_thi_schema_TU_CHOI(self) -> None:
+        ban = _ban_ghi()
+        del ban["lenh_theo_thang"]
+        with pytest.raises(jsonschema.ValidationError):
+            jsonschema.validate(ban, ARM_RESULT_SCHEMA)
+
+    def test_thieu_thi_validate_BAO_DO(self) -> None:
+        ban = _ban_ghi()
+        del ban["lenh_theo_thang"]
+        assert any("lenh_theo_thang" in e for e in validate_arm_record(ban))
+
+    def test_rong_thi_bo_dung_TU_RAISE(self) -> None:
+        with pytest.raises(ArmRecordError, match="lenh_theo_thang rỗng"):
+            _ban_ghi(lenh_theo_thang={})
+
+    def test_khoa_khong_dung_dang_YYYY_MM_bi_schema_TU_CHOI(self) -> None:
+        ban = _ban_ghi()
+        ban["lenh_theo_thang"] = {"thang 6": 12}
+        with pytest.raises(jsonschema.ValidationError):
+            jsonschema.validate(ban, ARM_RESULT_SCHEMA)
+
+    def test_so_lenh_am_bi_BAO_DO(self) -> None:
+        ban = _ban_ghi()
+        ban["lenh_theo_thang"] = {"2025-06": -1}
+        assert any("lenh_theo_thang" in e for e in validate_arm_record(ban))
+
+    def test_KHONG_co_nguong_nao_tren_phan_bo(self) -> None:
+        """🔴 Ca ghim CHỦ ĐÍCH: một tháng gánh gần hết số lệnh vẫn HỢP LỆ.
+
+        `buoc4_hieu_chinh_hai_chieu.py:6-8` — *ngưỡng tuỳ tiện là chỗ uốn kết
+        luận sau khi thấy số*. Trường này để NGƯỜI ĐỌC thấy phân bố, không để
+        máy phán quyết. Nếu ai thêm một ngưỡng vào đây, ca này báo đỏ.
+        """
+        ban = _ban_ghi(lenh_theo_thang={"2025-06": 205, "2025-07": 1})
+        jsonschema.validate(ban, ARM_RESULT_SCHEMA)
+        assert validate_arm_record(ban) == []
+
+
+class TestPhamViThuocDoDeltaR:
+    """🔄 `TD-0234` thi hành `MT-37` — KHÔNG đặt sàn số mã, BẮT KHAI phạm vi.
+
+    `Δ_R(LONG) = 0,1612` đo trên **đúng hai cặp** (91 lượt khớp), mà
+    `d3_5_han_che` khai bốn hạn chế và **không** khai phạm vi mã.
+    """
+
+    def test_thieu_delta_r_pham_vi_thi_schema_TU_CHOI(self) -> None:
+        ban = _ban_ghi()
+        del ban["delta_r_pham_vi"]
+        with pytest.raises(jsonschema.ValidationError):
+            jsonschema.validate(ban, ARM_RESULT_SCHEMA)
+
+    def test_thieu_delta_r_pham_vi_thi_validate_BAO_DO(self) -> None:
+        ban = _ban_ghi()
+        del ban["delta_r_pham_vi"]
+        assert any("delta_r_pham_vi" in e for e in validate_arm_record(ban))
+
+    def test_bo_dung_TU_RAISE_khi_thieu_delta_r_pham_vi(self) -> None:
+        with pytest.raises(TypeError):
+            _ban_ghi(delta_r_pham_vi=None)  # type: ignore[arg-type]
+
+    @pytest.mark.parametrize("thieu", ["so_ma", "so_fill", "dataset", "chien_luoc"])
+    def test_thieu_mot_o_khai_thi_BAO_DO_O_CA_HAI_CHO(self, thieu: str) -> None:
+        ban = _ban_ghi()
+        del ban["delta_r_pham_vi"][thieu]
+        with pytest.raises(jsonschema.ValidationError):
+            jsonschema.validate(ban, ARM_RESULT_SCHEMA)
+        assert any(thieu in e for e in validate_arm_record(ban))
+
+    def test_thieu_so_ma_da_chay_thi_BAO_DO(self) -> None:
+        ban = _ban_ghi()
+        del ban["so_ma_da_chay"]
+        with pytest.raises(jsonschema.ValidationError):
+            jsonschema.validate(ban, ARM_RESULT_SCHEMA)
+        assert any("so_ma_da_chay" in e for e in validate_arm_record(ban))
+
+    def test_KHONG_co_san_so_ma_toi_thieu(self) -> None:
+        """🔴 Ca ghim CHỦ ĐÍCH: thước đo trên ĐÚNG HAI mã trong khi arm chạy
+        trên 102 mã vẫn **HỢP LỆ**.
+
+        Chủ dự án chốt 13/09/2026: *không sàn, bắt khai phạm vi*. Hai con số
+        cạnh nhau để khoảng cách NHÌN THẤY ĐƯỢC — một sàn tuỳ tiện lại là chỗ
+        uốn kết luận sau khi thấy số. Nếu ai thêm sàn, ca này báo đỏ.
+        """
+        ban = _ban_ghi()
+        assert ban["delta_r_pham_vi"]["so_ma"] == 2
+        assert ban["so_ma_da_chay"] == 102
+        assert validate_arm_record(ban) == []

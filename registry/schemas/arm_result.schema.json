@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "arm_result.schema.json",
-  "title": "Bản ghi kết quả MỘT ARM của ablation D0.9 (TD-0232, D4)",
-  "description": "🔴 Lý do file này tồn tại TRƯỚC khi bộ chạy TD-0184 được viết: `n = 206` mà DR-D4-10 §2.1 dẫn được tính trên TOÀN cửa sổ [T1,T2] (231 ngày), trong khi ba cửa sổ TEST của sơ đồ fold (DR-D3-01, folds.py:174-185) chỉ phủ 147/231 ngày — đoạn 84 ngày đầu là train-only ở CẢ BA fold. Hai cách đọc cho n = 206 vs ~131, tức thuế nhiễu h/√n lệch 25%. Mà `dsr.py:52` nhận `n_trades: int` KHÔNG có ngữ nghĩa cửa sổ nào, và `chay_wfo`/`sinh_folds` không có người gọi nào từ `run_ablation.py` — nên bộ chạy sẽ quyết câu đó BẰNG CÁCH VÔ TÌNH nếu không có chỗ nào bắt nó khai. MT-36 (chủ dự án chốt 13/09/2026): phán quyết Nhánh 1 dùng `n_phan_quyet` (chỉ đoạn TEST); `n_mo_ta` (toàn cửa sổ) báo kèm và dán nhãn MÔ TẢ. Bắt buộc CẢ HAI trường ⇒ thiếu một là bản ghi KHÔNG BIỂU DIỄN ĐƯỢC, không phải bị báo đỏ sau (bài học TD-0127: một phép kiểm có thể bị bỏ qua, một trường không tồn tại thì không ai truyền vào được). LƯU Ý cho người sửa file này: `additionalProperties` là false ở mọi cấp, nên thêm một khoá vào code mà quên thêm ở đây sẽ làm cửa ghi thật NỔ — vì vậy test phải đối chiếu ĐẦU RA THẬT của `build_arm_record()` với schema này, không chỉ fixture gõ tay (tiền lệ fold_record.schema.json).",
+  "title": "Bản ghi kết quả MỘT ARM của ablation D0.9 (TD-0232, sửa TD-0234)",
+  "description": "🔴 Lý do file này tồn tại TRƯỚC khi bộ chạy TD-0184 được viết: `n = 206` mà DR-D4-10 §2.1 dẫn được tính trên TOÀN cửa sổ [T1,T2] (231 ngày), trong khi ba cửa sổ TEST của sơ đồ fold (DR-D3-01, folds.py:174-185) chỉ phủ 147/231 ngày — đoạn 84 ngày đầu là train-only ở CẢ BA fold. Hai cách đọc cho n = 206 vs ~131, tức thuế nhiễu h/√n lệch 25%. Mà `dsr.py:52` nhận `n_trades: int` KHÔNG có ngữ nghĩa cửa sổ nào, và `chay_wfo`/`sinh_folds` không có người gọi nào từ `run_ablation.py` — nên bộ chạy sẽ quyết câu đó BẰNG CÁCH VÔ TÌNH nếu không có chỗ nào bắt nó khai. Bắt buộc CẢ HAI con số ⇒ một bản ghi chỉ mang một `n` là KHÔNG BIỂU DIỄN ĐƯỢC, không phải bị báo đỏ sau (bài học TD-0127: một phép kiểm có thể bị bỏ qua, một trường không tồn tại thì không ai truyền vào được). 🔄 **TD-0234 (13/09/2026) SỬA MT-36.** Bản đầu đặt tên `n_phan_quyet` = chỉ đoạn TEST và cho phán quyết Nhánh 1 đọc đoạn test. Đọc hết DR-D3-01 §2 thì tiền đề đó sai: §2 ghi *WFO của Tool D KHÔNG khớp lại tham số* và *đơn vị phân tích của fold là THỨ HẠNG giữa các arm, không phải GIÁ TRỊ TUYỆT ĐỐI của một arm*, còn §5.3 hoãn phán quyết thống kê sang D9. Nhánh 1 hỏi đúng một giá trị tuyệt đối của một arm ⇒ nó đọc TOÀN cửa sổ WFO; sơ đồ fold là việc của D9. Hai trường vì thế đổi TÊN (`n_toan_cua_so` / `n_chi_test`, bất biến `n_chi_test <= n_toan_cua_so`) và `nguon_phan_quyet` khai TƯỜNG MINH cửa sổ nào được đem so ngưỡng. 🔑 Đổi TÊN chứ không đổi NGHĨA là có chủ đích: giữ tên cũ mà đảo nghĩa làm MỘT tên trường mang HAI nghĩa ở hai thời điểm, đúng lỗi *hai nguồn sự thật* mà N1/MT-03 sinh ra để cấm. 🔴 Cái MẤT, khai ra chứ không ỉm: bỏ fold khỏi Nhánh 1 nghĩa là D4 không còn phép kiểm ổn định theo THỜI GIAN, nên một PASS có thể đến từ một tháng tốt — bù bằng `lenh_theo_thang` làm MÔ TẢ, tuyệt đối không thành ngưỡng. LƯU Ý cho người sửa file này: `additionalProperties` là false ở mọi cấp, nên thêm một khoá vào code mà quên thêm ở đây sẽ làm cửa ghi thật NỔ — vì vậy test phải đối chiếu ĐẦU RA THẬT của `build_arm_record()` với schema này, không chỉ fixture gõ tay (tiền lệ fold_record.schema.json).",
   "$defs": {
     "provenance": {
       "type": "object",
@@ -68,10 +68,14 @@
     "huong",
     "dataset",
     "pham_vi_phan_quyet",
-    "n_phan_quyet",
-    "n_mo_ta",
-    "cua_so_phan_quyet",
-    "cua_so_mo_ta",
+    "nguon_phan_quyet",
+    "n_toan_cua_so",
+    "n_chi_test",
+    "cua_so_toan_bo",
+    "cua_so_chi_test",
+    "lenh_theo_thang",
+    "so_ma_da_chay",
+    "delta_r_pham_vi",
     "chi_so",
     "ket_cuc",
     "provenance"
@@ -91,26 +95,73 @@
       "enum": ["WFO"]
     },
     "pham_vi_phan_quyet": {
-      "description": "DR-D4-10 §8 chặng (a): cờ gán theo §2.1, KHÔNG để bộ đọc tự suy từ `n`. `phan_quyet` = suất này mua một phán quyết Nhánh 1 (chỉ `Z0-T1`); `mo_ta` = suất mua chẩn đoán (`Z0-T0`) hoặc thống kê mô tả (7 arm nhóm C).",
+      "description": "TRỤC THỨ NHẤT — arm này mua GÌ. DR-D4-10 §8 chặng (a): cờ gán theo §2.1, KHÔNG để bộ đọc tự suy từ `n`. `phan_quyet` = suất này mua một phán quyết Nhánh 1 (chỉ `Z0-T1`); `mo_ta` = suất mua chẩn đoán (`Z0-T0`) hoặc thống kê mô tả (7 arm nhóm C).",
       "enum": ["phan_quyet", "mo_ta"]
     },
-    "n_phan_quyet": {
-      "description": "🔴 MT-36 — số lệnh trong BA CỬA SỔ TEST của sơ đồ fold. Đây là `n` mà Nhánh 1 dùng, và là `n_trades` truyền vào `dsr_adjusted_expectancy()`.",
+    "nguon_phan_quyet": {
+      "description": "🔄 TD-0234 (MT-36 sửa) — TRỤC THỨ HAI, khác hẳn trục trên: CỬA SỔ NÀO được đem so ngưỡng. Hai trục phải tách, vì bản đầu của MT-36 gộp chúng vào một cái tên và làm tên trường nói sai. `toan_cua_so` = giá trị tuyệt đối của arm đọc trên toàn [T1,T2] — đúng cho D4 theo DR-D3-01 §2 (fold đo THỨ HẠNG, Nhánh 1 hỏi GIÁ TRỊ TUYỆT ĐỐI) và §5.3 (phán quyết thống kê hoãn sang D9). `chi_test` giữ chỗ cho D9. 🔴 Danh sách CHO PHÉP hai phần tử, nhưng đường sinh chỉ phát ra `toan_cua_so`: đổi nó là một QUYẾT ĐỊNH cần DR, không phải một tham số truyền vào — cùng thủ pháp `pham_vi_phan_quyet`.",
+      "enum": ["toan_cua_so", "chi_test"]
+    },
+    "n_toan_cua_so": {
+      "description": "🔴 MT-36 (sửa TD-0234) — số lệnh trên TOÀN cửa sổ WFO [T1,T2]. Khi `nguon_phan_quyet = toan_cua_so` (đường của D4) thì ĐÂY là `n_trades` truyền vào `dsr_adjusted_expectancy()`.",
       "type": "integer",
       "minimum": 0
     },
-    "n_mo_ta": {
-      "description": "🔴 MT-36 — số lệnh trên TOÀN cửa sổ [T1,T2]. Báo kèm, nhãn MÔ TẢ. CẤM dùng cho phán quyết Nhánh 1. Phải >= `n_phan_quyet` (đoạn test là tập con của toàn cửa sổ) — bất biến đó `validate_arm_record()` canh, JSON Schema không so được hai trường với nhau.",
+    "n_chi_test": {
+      "description": "🔴 MT-36 (sửa TD-0234) — số lệnh CHỈ trong ba cửa sổ TEST của sơ đồ fold (DR-D3-01, folds.py:174-185 — ba cửa sổ test phủ 147/231 ngày; 84 ngày đầu là train-only ở cả ba fold). Báo kèm làm CON SỐ ĐỐI CHỨNG, và giữ lại chính vì nhờ có cả hai con số cạnh nhau mà câu hỏi *n nào đem so ngưỡng* mới nhìn thấy được. Phải <= `n_toan_cua_so` (đoạn test là tập con) — bất biến đó `validate_arm_record()` canh, JSON Schema không so được hai trường với nhau.",
       "type": "integer",
       "minimum": 0
     },
-    "cua_so_phan_quyet": {
-      "description": "Các đoạn test đã đếm. Rỗng thì `n_phan_quyet` không có nguồn — `validate_arm_record()` từ chối.",
+    "cua_so_toan_bo": {
+      "description": "Cửa sổ WFO đã đếm cho `n_toan_cua_so`.",
+      "$ref": "#/$defs/cua_so"
+    },
+    "cua_so_chi_test": {
+      "description": "Các đoạn test đã đếm cho `n_chi_test`. Rỗng thì con số đối chứng không có nguồn — `validate_arm_record()` từ chối.",
       "type": "array",
       "minItems": 1,
       "items": { "$ref": "#/$defs/cua_so" }
     },
-    "cua_so_mo_ta": { "$ref": "#/$defs/cua_so" },
+    "lenh_theo_thang": {
+      "description": "🔄 TD-0234 — THỐNG KÊ MÔ TẢ: khoá `YYYY-MM` → số lệnh. 🔴 Vì sao BẮT BUỘC dù chỉ là mô tả: bỏ sơ đồ fold khỏi Nhánh 1 làm phán quyết D4 mất phép kiểm ổn định theo THỜI GIAN, nên một PASS có thể đến từ một tháng tốt. Trường này là phần bù, và nó phải CÓ MẶT chứ không phải *nên có* — một trường mô tả tuỳ chọn thì sẽ không bao giờ xuất hiện, đúng hình *ảnh trong gương của PASS RỖNG*. 🔴 CẤM biến nó thành NGƯỠNG: `buoc4_hieu_chinh_hai_chieu.py:6-8` — *ngưỡng tuỳ tiện là chỗ uốn kết luận sau khi thấy số*. Nó để NGƯỜI ĐỌC thấy phân bố, không để máy phán quyết.",
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])$" },
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    },
+    "so_ma_da_chay": {
+      "description": "🔄 TD-0234 (MT-37) — số mã arm này THỰC SỰ chạy trên. Đứng cạnh `delta_r_pham_vi.so_ma` để khoảng cách giữa *thước đo trên mấy mã* và *kết quả đo trên mấy mã* NHÌN THẤY ĐƯỢC. Không ngưỡng, không phán xét — hai con số cạnh nhau, đúng khuôn MT-36.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "delta_r_pham_vi": {
+      "description": "🔄 TD-0234 (MT-37) — PHẠM VI của thước Δ_R dùng cho hiệu chỉnh hai chiều (DR-015 §4). 🔴 Vì sao bắt buộc: `d3_5_delta_r_niem_phong.LONG = 0,1612` được đo trên ĐÚNG HAI CẶP (`dr015-luot-khop-tranche.json` → `_nguon.cap` = 1000BONK/USDT:USDT và 1000PEPE/USDT:USDT, 91 lượt khớp), mà `d3_5_han_che` — bản TỰ KHAI của chính cổng D3.5 — khai bốn hạn chế và KHÔNG khai phạm vi mã (thử tám chuỗi, cả tám vắng). Chủ dự án chốt 13/09/2026: KHÔNG đặt sàn số mã tối thiểu, BẮT KHAI phạm vi — một sàn tuỳ tiện là chỗ uốn kết luận, còn một ô khai bắt buộc thì không uốn được. ⚠️ Phương án BỊ LOẠI ghi ở MT-37 để người sau khỏi đề xuất lại: thêm vế fail-closed vào §4 `buoc4_hieu_chinh_hai_chieu` — §4 là TẦNG THUẦN (0 lời gọi đọc file) và người gọi ngoài module duy nhất là một TEST KHOÁ (`test_lz58:39`), nên tham số bắt buộc thì phải sửa L-Z58, còn tham số có mặc định thì fail-OPEN.",
+      "type": "object",
+      "required": ["so_ma", "so_fill", "dataset", "chien_luoc"],
+      "properties": {
+        "so_ma": {
+          "description": "Số mã Δ_R được đo trên. Hôm nay: 2.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "so_fill": {
+          "description": "Số lượt khớp tranche đã quan sát. Hôm nay: 91 (`_xac_minh.so_dong`).",
+          "type": "integer",
+          "minimum": 1
+        },
+        "dataset": {
+          "description": "Tập dữ liệu Δ_R được đo trên — DR-015 Bước 1 chạy trên CALIB, dòng CTRL, 0 trial.",
+          "type": "string",
+          "minLength": 1
+        },
+        "chien_luoc": {
+          "description": "Chiến lược đã sinh các lượt khớp đó. Khác chiến lược đang đo arm ⇒ thước và kết quả không cùng một cỗ máy; đó là một dữ kiện phải ĐỌC ĐƯỢC, không phải một lỗi phải chặn.",
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
     "chi_so": {
       "type": "object",
       "description": "DR-D4-09 §2.3: 'Báo cáo BẮT BUỘC cho MỌI arm — ba con số, không phải một … n · thuế nhiễu (h·std/√n) · DSR_adj. Thiếu một ⇒ bản ghi kết quả không hợp lệ.' `n` đã là hai trường riêng ở trên; ba khoá dưới đây là phần còn lại, cộng `mean_r`/`std_r` vì thuế nhiễu và DSR_adj không đọc được mà không có chúng. `ty_le_rui_ro_da_trien_khai` là ràng buộc MT-25: đo `std_R` một mình là mua một con số không biết đọc theo chiều nào.",
