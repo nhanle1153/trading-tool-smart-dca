@@ -11,6 +11,7 @@
 | Open Interest lịch sử | Binance USDⓈ-M Futures REST — `GET /futures/data/openInterestHist` | Không có | JSON: `{symbol, sumOpenInterest, sumOpenInterestValue, timestamp}` | Miễn phí | Cùng nhóm weight với REST public | TD-0080 cần verify độ dài lịch sử thật trả về (nghi vấn ~30 ngày, spec dòng 4457-4460) — ảnh hưởng trực tiếp thiết kế chỉ báo nếu đúng |
 | Metadata sàn (min notional, precision, danh sách cặp) | Binance USDⓈ-M Futures REST — `GET /fapi/v1/exchangeInfo` | Không có | JSON: quy tắc lot size, tick size, min notional theo từng symbol | Miễn phí | Weight thấp (~1) | Cần cho TD-0082 (kiểm min notional) và TD-0083 (chốt pool ~100 mã) |
 | Đặt/sửa/huỷ lệnh (chỉ D3.5 trở đi — **KHÔNG dùng ở D0-PRE**) | Binance USDⓈ-M Futures REST + User Data Stream (WebSocket), qua Freqtrade exchange abstraction | Không có | JSON lệnh, cập nhật vị thế qua WS | Miễn phí truy cập API; **chi phí thật là phí giao dịch** (maker/taker) + funding — không phải phí gọi API | Order weight riêng, trần lệnh/10s theo cấp tài khoản | Đích đến cuối cùng của toàn bộ pipeline (D12 — vốn nhỏ); TD-0028 đã đọc mã nguồn Freqtrade xác nhận cơ chế huỷ/đặt lại SL khi khối lượng đổi |
+| Cảnh báo vận hành — heartbeat/idle tiến trình (TD-0209, D10-D12) | Telegram Bot API — `POST https://api.telegram.org/bot<token>/sendMessage` | **Không có** — kênh DUY NHẤT, chốt qua trao đổi trực tiếp với chủ dự án 13/09/2026 (xem lý do dưới) | Gửi: JSON `{chat_id, text}`. Nhận: `{ok, result}` hoặc `{ok:false, error_code, description}` | Miễn phí (không tính phí/lệnh gọi) | ~30 message/giây/bot toàn cục — không đáng lo vì watchdog chỉ gửi khi CHUYỂN trạng thái (OK→bất thường, bất thường→OK), không gửi mỗi vòng poll | Kênh MỘT CHIỀU (chỉ gửi, không nhận lệnh điều khiển bot) — **độc lập với khối `telegram`/`api_server` của chính Freqtrade**, khối đó vẫn TẮT theo thiết kế D0-PRE (`config/freqtrade/config.json:116`). Watchdog là tiến trình tách riêng, không phải plugin Freqtrade |
 
 ## Vì sao KHÔNG có provider dự phòng
 
@@ -22,6 +23,12 @@ chung. Đổi sang sàn khác (Bybit, OKX...) sẽ đòi verify lại toàn bộ
 "đổi 1 dòng config". Đây là quyết định nền tảng khó đảo ngược đúng nghĩa — ghi nhận thẳng, không giả
 vờ có dự phòng cho có.
 
+**Telegram (kênh cảnh báo TD-0209)** không có dự phòng vì lý do khác — đây KHÔNG phải hạ tầng thực thi
+chiến lược, chỉ là kênh MỘT CHIỀU báo cho người, nên nếu Telegram tự nó lỗi (token sai, sập dịch vụ),
+đường lùi là **ghi log cục bộ + thử lại ở lượt poll kế tiếp** (xem `api-integration-rules.md` 4.4),
+không phải đổi sang một dịch vụ nhắn tin thứ hai — thêm provider thứ hai cho một cảnh báo phụ trợ là
+phình kiến trúc không cần thiết (Nguyên tắc 4).
+
 ## Nguyên tắc kiến trúc bắt buộc
 
 - **Single Egress (R1, `api-integration-rules.md`):** mọi lệnh gọi Binance đi qua đúng 1 module
@@ -32,6 +39,8 @@ vờ có dự phòng cho có.
   chế này, chỉ cấu hình đúng.
 - `tier_c.api_calls_per_min: 30` (§6.9.5) là **trần tự áp**, thấp hơn nhiều so với trần thật của
   Binance (2400 weight/phút) — chừa lề an toàn, không phải giới hạn kỹ thuật của sàn.
+- **Single Egress cho Telegram là một điểm nghẽn RIÊNG**, tách khỏi `api_client` của Binance (module
+  khác, dịch vụ khác, không dùng chung hàm gọi mạng) — mọi lệnh gửi Telegram đi qua đúng 1 hàm.
 
 ## Giám sát chi phí
 
@@ -48,3 +57,4 @@ vờ có dự phòng cho có.
 | Tác vụ | Provider cũ | Provider mới | Lý do đổi | Ngày |
 |---|---|---|---|---|
 | — | — | — | Khởi tạo lần đầu (TD-0079), chưa có thay đổi | 06/09/2026 |
+| Cảnh báo vận hành | — (chưa có) | Telegram Bot API | Thêm mới cho TD-0209 (heartbeat/idle) — chủ dự án chốt qua trao đổi trực tiếp 13/09/2026, chưa có dòng code nào | 13/09/2026 |
