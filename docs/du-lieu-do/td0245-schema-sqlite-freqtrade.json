@@ -1,0 +1,976 @@
+{
+  "ma_viec": "TD-0245",
+  "cau_hoi": "Database SQLite mà Freqtrade dùng có những bảng/cột nào — đọc từ file SQLite THẬT do chính init_db() của Freqtrade tạo và migrate",
+  "trial": 0,
+  "nguon_schema": {
+    "ham": "freqtrade.persistence.init_db",
+    "mo_ta": "models.py:48 — create_all(engine) rồi check_migrate(...); cùng đường mã bot gọi lúc khởi động",
+    "doc_lai_bang": "PRAGMA table_info trên file sqlite, mode=ro"
+  },
+  "freqtrade_version": "freqtrade 2026.8",
+  "freqtrade_version_raw": "Operating System:\tLinux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.41\nPython Version:\t\tPython 3.14.7\nCCXT Version:\t\t4.5.76\n\nFreqtrade Version:\tfreqtrade 2026.8",
+  "freqtrade_source_commit": "9f10e357a93c1dcf10c2a2b367659214d89c073e",
+  "runtime_image_digest": "sha256:7031bca43ed7668ebf421725dd5016acade6ef88b0771db3e08c96e6d19a42db",
+  "so_bang": 6,
+  "so_cot": 109,
+  "bang": [
+    {
+      "ten": "KeyValueStore",
+      "ddl": "CREATE TABLE \"KeyValueStore\" (\n\tid INTEGER NOT NULL, \n\t\"key\" VARCHAR(50) NOT NULL, \n\tvalue_type VARCHAR(20) NOT NULL, \n\tstring_value VARCHAR(255), \n\tdatetime_value DATETIME, \n\tfloat_value FLOAT, \n\tint_value INTEGER, \n\tPRIMARY KEY (id)\n)",
+      "so_cot": 7,
+      "cot": [
+        {
+          "cid": 0,
+          "ten": "id",
+          "kieu": "INTEGER",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": true
+        },
+        {
+          "cid": 1,
+          "ten": "key",
+          "kieu": "VARCHAR(50)",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 2,
+          "ten": "value_type",
+          "kieu": "VARCHAR(20)",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 3,
+          "ten": "string_value",
+          "kieu": "VARCHAR(255)",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 4,
+          "ten": "datetime_value",
+          "kieu": "DATETIME",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 5,
+          "ten": "float_value",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 6,
+          "ten": "int_value",
+          "kieu": "INTEGER",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        }
+      ],
+      "khoa_ngoai": [],
+      "chi_muc": [
+        "ix_KeyValueStore_key"
+      ]
+    },
+    {
+      "ten": "orders",
+      "ddl": "CREATE TABLE orders (\n\tid INTEGER NOT NULL, \n\tft_trade_id INTEGER NOT NULL, \n\tft_order_side VARCHAR(25) NOT NULL, \n\tft_pair VARCHAR(25) NOT NULL, \n\tft_is_open BOOLEAN NOT NULL, \n\tft_amount FLOAT NOT NULL, \n\tft_price FLOAT NOT NULL, \n\tft_cancel_reason VARCHAR(255), \n\torder_id VARCHAR(255) NOT NULL, \n\tstatus VARCHAR(255), \n\tsymbol VARCHAR(25), \n\torder_type VARCHAR(50), \n\tside VARCHAR(25), \n\tprice FLOAT, \n\taverage FLOAT, \n\tamount FLOAT, \n\tfilled FLOAT, \n\tremaining FLOAT, \n\tcost FLOAT, \n\tstop_price FLOAT, \n\torder_date DATETIME, \n\torder_filled_date DATETIME, \n\torder_update_date DATETIME, \n\tfunding_fee FLOAT, \n\tft_fee_base FLOAT, \n\tft_order_tag VARCHAR(255), \n\tPRIMARY KEY (id), \n\tCONSTRAINT _order_pair_order_id UNIQUE (ft_pair, order_id), \n\tFOREIGN KEY(ft_trade_id) REFERENCES trades (id)\n)",
+      "so_cot": 26,
+      "cot": [
+        {
+          "cid": 0,
+          "ten": "id",
+          "kieu": "INTEGER",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": true
+        },
+        {
+          "cid": 1,
+          "ten": "ft_trade_id",
+          "kieu": "INTEGER",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 2,
+          "ten": "ft_order_side",
+          "kieu": "VARCHAR(25)",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 3,
+          "ten": "ft_pair",
+          "kieu": "VARCHAR(25)",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 4,
+          "ten": "ft_is_open",
+          "kieu": "BOOLEAN",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 5,
+          "ten": "ft_amount",
+          "kieu": "FLOAT",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 6,
+          "ten": "ft_price",
+          "kieu": "FLOAT",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 7,
+          "ten": "ft_cancel_reason",
+          "kieu": "VARCHAR(255)",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 8,
+          "ten": "order_id",
+          "kieu": "VARCHAR(255)",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 9,
+          "ten": "status",
+          "kieu": "VARCHAR(255)",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 10,
+          "ten": "symbol",
+          "kieu": "VARCHAR(25)",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 11,
+          "ten": "order_type",
+          "kieu": "VARCHAR(50)",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 12,
+          "ten": "side",
+          "kieu": "VARCHAR(25)",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 13,
+          "ten": "price",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 14,
+          "ten": "average",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 15,
+          "ten": "amount",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 16,
+          "ten": "filled",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 17,
+          "ten": "remaining",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 18,
+          "ten": "cost",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 19,
+          "ten": "stop_price",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 20,
+          "ten": "order_date",
+          "kieu": "DATETIME",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 21,
+          "ten": "order_filled_date",
+          "kieu": "DATETIME",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 22,
+          "ten": "order_update_date",
+          "kieu": "DATETIME",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 23,
+          "ten": "funding_fee",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 24,
+          "ten": "ft_fee_base",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 25,
+          "ten": "ft_order_tag",
+          "kieu": "VARCHAR(255)",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        }
+      ],
+      "khoa_ngoai": [
+        {
+          "cot": "ft_trade_id",
+          "bang_dich": "trades",
+          "cot_dich": "id"
+        }
+      ],
+      "chi_muc": [
+        "ix_orders_ft_is_open",
+        "ix_orders_ft_trade_id",
+        "ix_orders_order_id",
+        "sqlite_autoindex_orders_1"
+      ]
+    },
+    {
+      "ten": "pairlocks",
+      "ddl": "CREATE TABLE pairlocks (\n\tid INTEGER NOT NULL, \n\tpair VARCHAR(25) NOT NULL, \n\tside VARCHAR(25) NOT NULL, \n\treason VARCHAR(255), \n\tlock_time DATETIME NOT NULL, \n\tlock_end_time DATETIME NOT NULL, \n\tactive BOOLEAN NOT NULL, \n\tPRIMARY KEY (id)\n)",
+      "so_cot": 7,
+      "cot": [
+        {
+          "cid": 0,
+          "ten": "id",
+          "kieu": "INTEGER",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": true
+        },
+        {
+          "cid": 1,
+          "ten": "pair",
+          "kieu": "VARCHAR(25)",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 2,
+          "ten": "side",
+          "kieu": "VARCHAR(25)",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 3,
+          "ten": "reason",
+          "kieu": "VARCHAR(255)",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 4,
+          "ten": "lock_time",
+          "kieu": "DATETIME",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 5,
+          "ten": "lock_end_time",
+          "kieu": "DATETIME",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 6,
+          "ten": "active",
+          "kieu": "BOOLEAN",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        }
+      ],
+      "khoa_ngoai": [],
+      "chi_muc": [
+        "ix_pairlocks_active",
+        "ix_pairlocks_lock_end_time",
+        "ix_pairlocks_pair"
+      ]
+    },
+    {
+      "ten": "trade_custom_data",
+      "ddl": "CREATE TABLE trade_custom_data (\n\tid INTEGER NOT NULL, \n\tft_trade_id INTEGER, \n\tcd_key VARCHAR(255) NOT NULL, \n\tcd_type VARCHAR(25) NOT NULL, \n\tcd_value TEXT NOT NULL, \n\tcreated_at DATETIME NOT NULL, \n\tupdated_at DATETIME, \n\tPRIMARY KEY (id), \n\tCONSTRAINT _trade_id_cd_key UNIQUE (ft_trade_id, cd_key), \n\tFOREIGN KEY(ft_trade_id) REFERENCES trades (id)\n)",
+      "so_cot": 7,
+      "cot": [
+        {
+          "cid": 0,
+          "ten": "id",
+          "kieu": "INTEGER",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": true
+        },
+        {
+          "cid": 1,
+          "ten": "ft_trade_id",
+          "kieu": "INTEGER",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 2,
+          "ten": "cd_key",
+          "kieu": "VARCHAR(255)",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 3,
+          "ten": "cd_type",
+          "kieu": "VARCHAR(25)",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 4,
+          "ten": "cd_value",
+          "kieu": "TEXT",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 5,
+          "ten": "created_at",
+          "kieu": "DATETIME",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 6,
+          "ten": "updated_at",
+          "kieu": "DATETIME",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        }
+      ],
+      "khoa_ngoai": [
+        {
+          "cot": "ft_trade_id",
+          "bang_dich": "trades",
+          "cot_dich": "id"
+        }
+      ],
+      "chi_muc": [
+        "ix_trade_custom_data_ft_trade_id",
+        "sqlite_autoindex_trade_custom_data_1"
+      ]
+    },
+    {
+      "ten": "trades",
+      "ddl": "CREATE TABLE trades (\n\tid INTEGER NOT NULL, \n\texchange VARCHAR(25) NOT NULL, \n\tpair VARCHAR(25) NOT NULL, \n\tbase_currency VARCHAR(25), \n\tstake_currency VARCHAR(25), \n\tis_open BOOLEAN NOT NULL, \n\tfee_open FLOAT NOT NULL, \n\tfee_open_cost FLOAT, \n\tfee_open_currency VARCHAR(25), \n\tfee_close FLOAT NOT NULL, \n\tfee_close_cost FLOAT, \n\tfee_close_currency VARCHAR(25), \n\topen_rate FLOAT NOT NULL, \n\topen_rate_requested FLOAT, \n\topen_trade_value FLOAT, \n\tclose_rate FLOAT, \n\tclose_rate_requested FLOAT, \n\trealized_profit FLOAT, \n\tclose_profit FLOAT, \n\tclose_profit_abs FLOAT, \n\tstake_amount FLOAT NOT NULL, \n\tmax_stake_amount FLOAT, \n\tamount FLOAT NOT NULL, \n\tamount_requested FLOAT, \n\topen_date DATETIME NOT NULL, \n\tclose_date DATETIME, \n\tstop_loss FLOAT, \n\tstop_loss_pct FLOAT, \n\tinitial_stop_loss FLOAT, \n\tinitial_stop_loss_pct FLOAT, \n\tis_stop_loss_trailing BOOLEAN NOT NULL, \n\tmax_rate FLOAT, \n\tmin_rate FLOAT, \n\texit_reason VARCHAR(255), \n\texit_order_status VARCHAR(100), \n\tstrategy VARCHAR(100), \n\tenter_tag VARCHAR(255), \n\ttimeframe INTEGER, \n\ttrading_mode VARCHAR(7), \n\tamount_precision FLOAT, \n\tprice_precision FLOAT, \n\tprecision_mode INTEGER, \n\tprecision_mode_price INTEGER, \n\tcontract_size FLOAT, \n\tleverage FLOAT, \n\tis_short BOOLEAN NOT NULL, \n\tliquidation_price FLOAT, \n\tinterest_rate FLOAT NOT NULL, \n\tfunding_fees FLOAT, \n\tfunding_fee_running FLOAT, \n\trecord_version INTEGER NOT NULL, \n\tPRIMARY KEY (id)\n)",
+      "so_cot": 51,
+      "cot": [
+        {
+          "cid": 0,
+          "ten": "id",
+          "kieu": "INTEGER",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": true
+        },
+        {
+          "cid": 1,
+          "ten": "exchange",
+          "kieu": "VARCHAR(25)",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 2,
+          "ten": "pair",
+          "kieu": "VARCHAR(25)",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 3,
+          "ten": "base_currency",
+          "kieu": "VARCHAR(25)",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 4,
+          "ten": "stake_currency",
+          "kieu": "VARCHAR(25)",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 5,
+          "ten": "is_open",
+          "kieu": "BOOLEAN",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 6,
+          "ten": "fee_open",
+          "kieu": "FLOAT",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 7,
+          "ten": "fee_open_cost",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 8,
+          "ten": "fee_open_currency",
+          "kieu": "VARCHAR(25)",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 9,
+          "ten": "fee_close",
+          "kieu": "FLOAT",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 10,
+          "ten": "fee_close_cost",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 11,
+          "ten": "fee_close_currency",
+          "kieu": "VARCHAR(25)",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 12,
+          "ten": "open_rate",
+          "kieu": "FLOAT",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 13,
+          "ten": "open_rate_requested",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 14,
+          "ten": "open_trade_value",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 15,
+          "ten": "close_rate",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 16,
+          "ten": "close_rate_requested",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 17,
+          "ten": "realized_profit",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 18,
+          "ten": "close_profit",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 19,
+          "ten": "close_profit_abs",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 20,
+          "ten": "stake_amount",
+          "kieu": "FLOAT",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 21,
+          "ten": "max_stake_amount",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 22,
+          "ten": "amount",
+          "kieu": "FLOAT",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 23,
+          "ten": "amount_requested",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 24,
+          "ten": "open_date",
+          "kieu": "DATETIME",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 25,
+          "ten": "close_date",
+          "kieu": "DATETIME",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 26,
+          "ten": "stop_loss",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 27,
+          "ten": "stop_loss_pct",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 28,
+          "ten": "initial_stop_loss",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 29,
+          "ten": "initial_stop_loss_pct",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 30,
+          "ten": "is_stop_loss_trailing",
+          "kieu": "BOOLEAN",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 31,
+          "ten": "max_rate",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 32,
+          "ten": "min_rate",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 33,
+          "ten": "exit_reason",
+          "kieu": "VARCHAR(255)",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 34,
+          "ten": "exit_order_status",
+          "kieu": "VARCHAR(100)",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 35,
+          "ten": "strategy",
+          "kieu": "VARCHAR(100)",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 36,
+          "ten": "enter_tag",
+          "kieu": "VARCHAR(255)",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 37,
+          "ten": "timeframe",
+          "kieu": "INTEGER",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 38,
+          "ten": "trading_mode",
+          "kieu": "VARCHAR(7)",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 39,
+          "ten": "amount_precision",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 40,
+          "ten": "price_precision",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 41,
+          "ten": "precision_mode",
+          "kieu": "INTEGER",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 42,
+          "ten": "precision_mode_price",
+          "kieu": "INTEGER",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 43,
+          "ten": "contract_size",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 44,
+          "ten": "leverage",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 45,
+          "ten": "is_short",
+          "kieu": "BOOLEAN",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 46,
+          "ten": "liquidation_price",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 47,
+          "ten": "interest_rate",
+          "kieu": "FLOAT",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 48,
+          "ten": "funding_fees",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 49,
+          "ten": "funding_fee_running",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 50,
+          "ten": "record_version",
+          "kieu": "INTEGER",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        }
+      ],
+      "khoa_ngoai": [],
+      "chi_muc": [
+        "ix_trades_is_open",
+        "ix_trades_pair"
+      ]
+    },
+    {
+      "ten": "wallet_history",
+      "ddl": "CREATE TABLE wallet_history (\n\tid INTEGER NOT NULL, \n\ttimestamp DATETIME NOT NULL, \n\tcurrency VARCHAR(25) NOT NULL, \n\trate FLOAT, \n\tquote_currency VARCHAR(25) NOT NULL, \n\tbalance FLOAT NOT NULL, \n\ttotal_quote FLOAT, \n\ttotal_position_value FLOAT, \n\tcollateral FLOAT, \n\tleverage FLOAT NOT NULL, \n\tbot_managed BOOLEAN NOT NULL, \n\tPRIMARY KEY (id), \n\tCONSTRAINT unique_wallet_daily UNIQUE (timestamp, currency)\n)",
+      "so_cot": 11,
+      "cot": [
+        {
+          "cid": 0,
+          "ten": "id",
+          "kieu": "INTEGER",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": true
+        },
+        {
+          "cid": 1,
+          "ten": "timestamp",
+          "kieu": "DATETIME",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 2,
+          "ten": "currency",
+          "kieu": "VARCHAR(25)",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 3,
+          "ten": "rate",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 4,
+          "ten": "quote_currency",
+          "kieu": "VARCHAR(25)",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 5,
+          "ten": "balance",
+          "kieu": "FLOAT",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 6,
+          "ten": "total_quote",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 7,
+          "ten": "total_position_value",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 8,
+          "ten": "collateral",
+          "kieu": "FLOAT",
+          "notnull": false,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 9,
+          "ten": "leverage",
+          "kieu": "FLOAT",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        },
+        {
+          "cid": 10,
+          "ten": "bot_managed",
+          "kieu": "BOOLEAN",
+          "notnull": true,
+          "mac_dinh": null,
+          "khoa_chinh": false
+        }
+      ],
+      "khoa_ngoai": [],
+      "chi_muc": [
+        "ix_wallet_history_timestamp",
+        "sqlite_autoindex_wallet_history_1"
+      ]
+    }
+  ]
+}
