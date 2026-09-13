@@ -66,21 +66,35 @@ và mỗi vị thế cần thời gian tồn tại thật để tranche 2/3 kíc
 bản chất của "lệnh live tối thiểu" từ *một hành động xác nhận cơ chế* thành *một giai đoạn vận hành
 tối thiểu kéo dài*. Chủ dự án đã chốt khuôn **"giống D3.5 Bước 2"** (cửa sổ 14 ngày, gia hạn đúng 1
 lần, không đủ thì xử fail-closed, không ép thêm vị thế cho đủ số) — **nhưng một phép đo độc lập từ
-phiên `-3f` (đang soạn `DR-D11-02` cho MT-39) đến SAU khi chốt khuôn này đã làm khuôn đó vô hiệu**:
+phiên `-fa` (đang soạn `DR-D11-02` cho MT-39) đến SAU khi chốt khuôn này đã làm khuôn đó vô hiệu**:
 tốc độ TỰ NHIÊN sinh sự kiện đổi khối lượng SL đo được trên dữ liệu thật chỉ **~12 lần / 50 mã-năm**,
 quy đổi **~24 lần/năm** cho pool 102 mã — nghĩa là cần **~15 THÁNG** vận hành tự nhiên mới tự nhiên
 đủ 30 mẫu, không phải 14 ngày. 14 ngày (khuôn D3.5 Bước 2) được thiết kế cho một tốc độ sự kiện khác
 hẳn (chạm zone), không áp dụng được cho sự kiện đổi khối lượng SL.
 
-🔴 **Mục này QUAY LẠI trạng thái CHỜ, ghi đè lên quyết định "giống D3.5 Bước 2" ở trên** — không
-phải vì quyết định đó sai lúc chốt (thông tin ~15 tháng chưa có lúc đó), mà vì dữ liệu mới xuất hiện
-ngay sau đó. `-3f` đang mang đúng câu hỏi này (có "cưỡng bức sinh sự kiện" trên môi trường đo hay
-không, khai rõ là đo cơ chế chứ không phải đo chiến lược) lên chủ dự án qua `DR-D11-02`, vì ngưỡng/
-cách đo D2c của Mục 5.2 dưới đây phụ thuộc trực tiếp câu trả lời đó. **Không hỏi trùng ở đây** —
-chờ `DR-D11-02` commit xong rồi Mục 4 + 5.2 mới chốt, tránh hai phiên hỏi chồng cùng một quyết định
-(N12 mục 6). D6 (§5.1) và tỉ lệ post-only (§5.3) KHÔNG phụ thuộc số sự kiện đổi SL — mỗi tranche
-khớp đều sinh một điểm dữ liệu cho hai chỉ số đó bất kể có tới tranche 3 hay không, nên hai ngưỡng
-đó vẫn chốt được độc lập với câu hỏi quy mô này.
+**Cập nhật 13/09/2026, sau khi `DR-D11-02` (MT-39, phiên `-fa`) chốt xong:** câu hỏi "15 tháng" ở
+trên bị thay hẳn bởi một cách đóng khung khác, không phải trả lời thêm — `DR-D11-02` §3.2 (bản gốc
+duy nhất, xem liên kết Mục 6) chỉ ra `gap_ms` đo **hành vi CỦA MÁY** (Freqtrade huỷ+đặt lại lệnh SL
+mất bao lâu), không đo hành vi thị trường — nên **không cần chờ tích luỹ tự nhiên**: cưỡng bức sự
+kiện bằng cách chủ động mở các vị thế nhỏ và đẩy chúng qua tranche 2/3, trên chính môi trường live
+tối thiểu (không phải testnet — xem đính chính của `DR-D11-02` §3.2 sau khi đối chiếu với Mục 1 của
+DR này). `spec:2966` không đòi 30 sự kiện phải đến từ giao dịch chiến lược thật.
+
+🔴 **QUYẾT ĐỊNH — Ngân sách cho giai đoạn cưỡng bức (chủ dự án chốt 13/09/2026):**
+- **Tối đa 20 vị thế**, mở **tuần tự** (không mở song song hàng loạt), mỗi vị thế ở notional tối
+  thiểu sàn cho phép (~5-20 USDT, đúng dải `spec:2946`) — dừng SỚM ngay khi đã gom đủ ≥30 sự kiện
+  đổi khối lượng SL, không cần mở hết 20. Vốn quay vòng lại sau khi đóng từng vị thế (không phải
+  20 vị thế cùng treo một lúc); chi phí thật là phí giao dịch + trượt giá + gap_ms rủi ro tồn dư
+  (§5.2 dưới), không phải mất toàn bộ notional.
+- **Cửa sổ 14 ngày, gia hạn ĐÚNG 1 lần** (thêm 14 ngày, tối đa 28 ngày) nếu chưa đủ 20 vị thế hoặc
+  chưa đủ 30 sự kiện. Hết hạn (kể cả sau gia hạn) mà vẫn thiếu → **dừng lại, ghi nhận số sự kiện
+  N thực đo được vào Decision Log/research-log, KHÔNG ép mở thêm vị thế ngoài trần 20 để cố đạt 30**
+  — cùng kỷ luật fail-closed NO_FILL đã dùng ở D3.5 Bước 2 (`spec:4476-4477`).
+- Toàn bộ vị thế cưỡng bức khai **CTRL, 0 trial** (đúng `DR-D11-02` §3.2 — đo cơ chế hệ thống,
+  không đo hiệu năng chiến lược), diễn ra SAU khi đã siết bảo mật ở Mục 3.
+- Cơ chế kỹ thuật để "đẩy" một vị thế qua tranche 2/3 (chọn cặp/zone nào, có can thiệp gì vào tham
+  số hay không) **thuộc phạm vi TD-0244**, không chốt ở đây — DR này chỉ chốt ngân sách tiền/thời
+  gian/số lượng, không chốt cơ chế ép giá.
 
 ## 5. Ba ngưỡng chấp nhận D10 (điền TRƯỚC khi chạy, `L-Z35`)
 
@@ -105,20 +119,32 @@ arm mới, tốn 1 slot Ngân sách A + lockbox mới. Không tự phán ở đ�
 
 ### 5.2 D2c — `gap_ms` (khoảng trống không-SL trên sàn)
 
-⚠️ **Phụ thuộc `DR-D11-02` (MT-39, phiên song song đang soạn):** ngưỡng này chỉ có nghĩa nếu SL
-sống thật trên sàn (phương án (a) mà phiên đó vừa chốt). Nếu `DR-D11-02` đổi hướng, mục này phải
-viết lại — đã báo phiên đó, không tự đoán thay họ.
+Định nghĩa phép đo (mẫu, môi trường, phân loại kế toán) chốt ở `DR-D11-02` §3.2 — **bản gốc duy
+nhất**, không chép lại ở đây (N1): SL sống trên sàn (`stoploss_on_exchange: true`), `gap_ms` đo trên
+mẫu **cưỡng bức** (Mục 4 trên), không chờ tích luỹ tự nhiên, khai CTRL/0 trial.
 
-**Ngưỡng: p99(gap_ms) qua ≥30 sự kiện đổi khối lượng SL ≤ 15.000 ms.** Neo vào chính rủi ro
-`TD-0116` đã đo và tự nhắc *"cần nhớ khi chốt `L_exchange`"*: `PROCESS_THROTTLE_SECS` = 5s
-(`TD-0028`) là nền, cộng round-trip đặt lại SL; latency mạng LẠNH đo được có mẫu tới 11 giây
+🔴 **Hạn chế tồn dư PHẢI đọc kèm mọi con số dưới đây** (nguyên văn `DR-D11-02` §3.2): mẫu cưỡng bức
+chỉ đo **ĐỘ DÀI** khoảng trống cancel→recreate, **không** đo **XÁC SUẤT** khoảng trống đó trùng lúc
+giá chạy ngược mạnh. Một `p99(gap_ms)` nhỏ và đẹp **không** có nghĩa là "cửa sổ an toàn" — nó chỉ
+nói máy phản ứng nhanh, không nói gì về thiệt hại thật (là TÍCH của độ dài và xác suất trùng giá
+bất lợi). Đọc ngưỡng PASS dưới đây như "máy không phải nguồn rủi ro chính", không phải "an toàn
+tuyệt đối".
+
+**Ngưỡng: p99(gap_ms) qua ≥30 sự kiện đổi khối lượng SL (cưỡng bức, Mục 4) ≤ 15.000 ms.** Neo vào
+chính rủi ro `TD-0116` đã đo và tự nhắc *"cần nhớ khi chốt `L_exchange`"*: `PROCESS_THROTTLE_SECS`
+= 5s (`TD-0028`) là nền, cộng round-trip đặt lại SL; latency mạng LẠNH đo được có mẫu tới 11 giây
 (14/30 mẫu > 1s). 15 giây là đúng con số `TD-0116` đã tự nêu làm ranh giới rủi ro, dùng lại — không
-phải hằng số mới.
+phải hằng số mới. **Vì mẫu là cưỡng bức trên môi trường live, không phải testnet, con số này phản
+ánh đúng phần cứng/mạng/Freqtrade thật sẽ chạy ở D11/D12** — không có khoảng cách môi trường cần lo
+như một phép đo trên testnet sẽ có.
 
 **PASS:** p99 ≤ 15.000 ms → `L_exchange` (hiện 3×, `DR-D0PRE-06`) giữ nguyên.
 **FAIL:** p99 > 15.000 ms → theo đúng `spec:2920` fallback đã ghi sẵn: **hạ `L_exchange`** hoặc
 **ghi rủi ro tồn dư vào DR** — KHÔNG thiết kế lại §6. Chọn nhánh nào là quyết định của chủ dự án tại
 thời điểm đó, không tự chọn trước.
+**N < 30 sau khi hết ngân sách Mục 4 (fail-closed):** báo cáo p99 trên N thực đo được, ghi rõ
+`n < 30` là hạn chế của kết luận (N6 — không giả vờ đủ mẫu), KHÔNG dùng phân vị thay thế (ví dụ
+max) để che số mẫu nhỏ trừ khi chủ dự án chốt thêm ở thời điểm đó.
 
 ### 5.3 Tỉ lệ khớp post-only (LD-12)
 
@@ -147,7 +173,10 @@ luận sau khi thấy số"*). Thay vào đó:
   `dr015-buoc3-doi-chung-z0.json` (TD-0163).
 - `p_nf` niêm phong: `docs/du-lieu-do/dr015-buoc2-ty-le-khong-khop.json` (TD-0162), quyết định nền
   `DR-D35-01`.
-- Phụ thuộc: `DR-D11-02` (MT-39, SL trên sàn) cho mục 5.2. Nếu đổi hướng, sửa mục 5.2 tại đây —
-  không tạo DR thứ ba trùng phạm vi (N12 mục 6).
-- Mục 4 (quy mô/thời lượng) **CHƯA chốt** — chờ xác nhận chủ dự án trước khi viết entrypoint đặt
-  lệnh live.
+- Phụ thuộc: `DR-D11-02` (`docs/decisions/DR-D11-02-sl-tren-san.md`, commit `bcc4bf1`, MT-39/TD-0244)
+  cho định nghĩa phép đo `gap_ms` ở mục 5.2 — bản gốc duy nhất cho mẫu/môi trường/kế toán CTRL; DR
+  này chỉ chốt ngân sách (mục 4) và ngưỡng số (mục 5.2). Nếu `DR-D11-02` đổi hướng lần nữa, sửa mục
+  5.2 tại đây theo, không tạo DR thứ ba trùng phạm vi (N12 mục 6).
+- **Mục 4 (ngân sách) và mục 5.2 (ngưỡng D2c) đã chốt đủ ba quyết định của chủ dự án** (13/09/2026):
+  môi trường (mục 2), thời điểm siết bảo mật (mục 3), ngân sách cưỡng bức 20 vị thế/14 ngày+gia hạn
+  1 lần (mục 4). Cơ chế kỹ thuật cưỡng bức tranche 2/3 vẫn để ngỏ cho `TD-0244`.
