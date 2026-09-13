@@ -57,26 +57,38 @@ không sinh sự kiện đổi khối lượng SL; TP1 cũng không sinh (Binanc
 và 3 khớp** — hiếm hơn nhiều so với số lệnh mở, khiến tích luỹ tự nhiên trên roadmap hiện tại
 chậm tới mức không thực tế cho một cổng chặn D11.
 
-Spec đã tự trả lời câu này, không cần quyết định mới về NGUYÊN TẮC — chỉ cần đọc đúng chỗ
-(`tool-d-smart-dca.md:2939-2942`, chính là phương án (a) của D2/D2c):
+Spec tự gợi ý nguyên tắc "cưỡng bức thay vì chờ" ở `tool-d-smart-dca.md:2939-2942` (mô tả cho
+phương án (a) — testnet: *"tạo tranche GIẢ, thử SỬA khối lượng lệnh SL, quan sát Binance trả về
+gì … đây chính là bước thử THẬT, không suy đoán tiếp"*), nhưng **testnet đã bị loại**, không phải
+do DR này: `DR-D11-01` §1 (`TD-0243`, đã commit `083d6ac` — TRƯỚC commit của DR này) xác nhận bằng
+đọc mã nguồn (`TD-0116`, 07/09) rằng Freqtrade **từ chối chạy** trên Binance testnet
+(`binance.py:52` `supports_demo_trading: False` cố ý, `exchange.py:884-890` raise
+`ConfigurationError`) — không phân biệt tranche thật hay tranche cưỡng bức, nên vá được cũng vô
+nghĩa cho D6/tỉ lệ post-only vẫn cần sổ lệnh thật. Chủ dự án đã chốt ở `DR-D11-01` §2: môi trường
+đo D10 là **lệnh live tối thiểu** (phương án (b) của `spec:2945-2952`), không phải testnet.
 
-> *"Testnet — ưu tiên, 0 rủi ro tài chính: Set sandbox/testnet URL trong config Freqtrade, **tạo
-> tranche GIẢ trên testnet, thử SỬA khối lượng lệnh SL**, quan sát Binance trả về gì … đây chính
-> là bước thử THẬT, không suy đoán tiếp."*
+⚠️ **Đính chính (13/09/2026, sau khi rà soát chéo với phiên giữ `TD-0243`):** bản đầu của mục này
+viết "cưỡng bức trên testnet" — sai, viết trước khi `DR-D11-01` xác nhận testnet bất khả thi. Giữ
+nguyên NGUYÊN TẮC cưỡng bức sự kiện (không cần thay đổi: máy không biết tranche thật hay cưỡng
+bức bất kể chạy trên môi trường nào), chỉ đổi **nơi cưỡng bức xảy ra**: mở vài vị thế nhỏ có chủ
+đích trên chính lệnh live tối thiểu đã chốt ở `DR-D11-01`, để tranche 2/3 khớp nhanh hơn tần suất
+tự nhiên — không phải trên một sàn giả.
 
-và `spec:2966` chỉ đòi *"phân bố `gap_ms` qua ≥ 30 lần đổi khối lượng SL"* — không có chữ nào
-buộc 30 lần đó phải đến từ giao dịch chiến lược thật. **Phân biệt với ngưỡng khác cùng con số
-"≥ 30" trong dự án, để không áp nhầm kỷ luật:**
+`spec:2966` chỉ đòi *"phân bố `gap_ms` qua ≥ 30 lần đổi khối lượng SL"* — không có chữ nào buộc
+30 lần đó phải đến từ giao dịch chiến lược thật hay từ một môi trường cụ thể. **Phân biệt với
+ngưỡng khác cùng con số "≥ 30" trong dự án, để không áp nhầm kỷ luật:**
 
 | Phép đo | Đo cái gì | Mẫu bắt buộc tự nhiên? |
 |---|---|---|
 | `DR-015` Bước 2 (tỉ lệ không khớp, `spec:3618`) | hành vi **THỊ TRƯỜNG** (lệnh có khớp không) | ✅ **PHẢI** — gây ra một lượt khớp thì đã trả lời hộ câu hỏi đang đo |
-| D10 — phân bố `gap_ms` (`spec:2966`) | hành vi **CỦA MÁY** (Freqtrade huỷ rồi đặt lại mất bao lâu) | ❌ **KHÔNG** — máy không phân biệt tranche thật hay tranche cưỡng bức trên testnet |
+| D10 — phân bố `gap_ms` (`spec:2966`) | hành vi **CỦA MÁY** (Freqtrade huỷ rồi đặt lại mất bao lâu) | ❌ **KHÔNG** — máy không phân biệt tranche thật hay tranche cưỡng bức |
 
 **Quyết định:** `TD-0244` (bộ sinh `gap_ms`) đọc mẫu từ các lần đổi khối lượng SL cưỡng bức trên
-môi trường đo (testnet, dựng ở `TD-0243`/`DR-D11-01`), khai rõ trong Decision Log là **đo cơ chế
-hệ thống**, không phải đo hiệu năng chiến lược — cùng logic đã dùng cho CTRL/đo-thước ở `MT-08`:
-không tính vào ngân sách nghiên cứu `N=114`, **0 trial**.
+môi trường đo **live tối thiểu đã chốt ở `DR-D11-01`/`TD-0243`** (không phải testnet), khai rõ
+trong Decision Log là **đo cơ chế hệ thống**, không phải đo hiệu năng chiến lược — cùng logic đã
+dùng cho CTRL/đo-thước ở `MT-08`: không tính vào ngân sách nghiên cứu `N=114`, **0 trial**. Vì
+môi trường là live thật (không phải sandbox), mọi vị thế cưỡng bức mang rủi ro tiền thật thật sự
+— quy mô/số lượng vị thế cưỡng bức thuộc phạm vi `DR-D11-01` §4 (đã ghi nhận), không lặp lại ở đây.
 
 🔴 **Hạn chế tồn dư, PHẢI đọc kèm mọi báo cáo `p99(gap_ms)`:** mẫu cưỡng bức đo được **ĐỘ DÀI**
 của khoảng trống cancel→recreate, nhưng **không** đo được **XÁC SUẤT** khoảng trống đó trùng với
@@ -136,24 +148,23 @@ stoploss` … nhưng KHÔNG dùng để dời SL"*).
   chữ spec. Không đổi kết luận (§6.6(1) vẫn là lệnh cấm tường minh ở chỗ khác), nhưng khi mở
   APPEND cho MT-39 cần không lặp lại câu trích sai này.
 
-## 6. Ranh giới với `DR-D11-01` (TD-0243, phiên khác đang soạn song song)
+## 6. Ranh giới với `DR-D11-01` (TD-0243, `083d6ac` — đã commit, đọc SAU khi mục 3.2 viết bản đầu)
 
 Để tránh "một Ý, hai file" (N12 mục 6):
 
 - **DR-D11-02 (đây):** SL sống ở đâu · quyết định bật `stoploss_on_exchange` · định nghĩa
   `gap_ms` đo cái gì, đo bằng mẫu nào (cưỡng bức) · hạn chế tồn dư của phép đo đó. Bảng phân biệt
   hai loại "≥ 30" ở §3.2 là **bản gốc duy nhất** — `DR-D11-01` trỏ tới đây, không chép lại (N1).
-- **`DR-D11-01`:** dựng môi trường đo (testnet hay lệnh live tối thiểu — quyết định đó thuộc phiên
-  kia) · **ngưỡng chấp nhận số** cho cả ba phép đo của D10 (lệch khớp tranche D6, `gap_ms`, tỉ lệ
-  khớp post-only), đọc `gap_ms` trên định nghĩa mẫu-gây-ra đã chốt ở §3.2 trên. **Tại thời điểm
-  DR này được viết (13/09/2026), `DR-D11-01` CHƯA tồn tại** — `TD-0243` vẫn 🔓, chưa được chủ dự
-  án bật đèn xanh trong phiên đang giữ nó. Không suy diễn nội dung của nó; đây chỉ là phân công
-  phạm vi cho lúc nó được viết.
+- **`DR-D11-01`** (nguồn sự thật cho phần này — N1): môi trường đo D10 = **lệnh live tối thiểu**
+  (testnet đã loại bằng mã nguồn, §1 của file đó) · **ngưỡng chấp nhận số** cho cả ba phép đo của
+  D10 (lệch khớp tranche D6, `gap_ms`, tỉ lệ khớp post-only) · quy mô/số lượng vị thế cưỡng bức
+  (§4). DR này (D11-02) chỉ **trích dẫn** kết luận môi trường của `DR-D11-01`, không lặp lại đầy
+  đủ bằng chứng — xem `DR-D11-01` §1 cho chi tiết `supports_demo_trading`/`ConfigurationError`.
 
 ## 7. Điều DR này KHÔNG chốt
 
 - **Không chốt ngưỡng số nào** cho `gap_ms` (bao nhiêu ms là đạt) — thuộc `DR-D11-01`.
-- **Không chốt môi trường đo** (testnet vs lệnh live tối thiểu) — thuộc `DR-D11-01`/`TD-0243`.
+- **Không chốt quy mô/số lượng vị thế cưỡng bức** — thuộc `DR-D11-01` §4.
 - **Không tự sửa `MT-39` trong `back-end-note.md`** — theo N9, cần trả lời 3 câu hỏi trong chat
   và lệnh "chuẩn hóa và lưu" trước khi ghi (APPEND, không viết lại — Phụ lục B.5).
 - **Không viết một dòng mã nào** — chờ "bắt đầu code" trong phiên đang giữ TD-0244.
@@ -166,3 +177,11 @@ stoploss` … nhưng KHÔNG dùng để dời SL"*).
   song song khác trên cùng repo (đọc mã nguồn Freqtrade 2026.8 trong image `docker-tests`, xác
   nhận độc lập D2a/D2b, bác một giả thuyết `after_fill`, phát hiện lỗi tiền đề trong chú thích
   config, phát hiện LD-21, phát hiện `-0.99` vs `-0.30`).
+- **13/09/2026, đính chính cùng ngày** — §3.2 bản đầu viết "cưỡng bức sự kiện **trên testnet**",
+  dẫn `spec:2939-2942` như thể đó là môi trường sẽ dùng. Sai: phiên giữ `TD-0243` chỉ ra
+  `DR-D11-01` (commit `083d6ac`, **trước** commit đầu của DR này) đã loại testnet bằng bằng chứng
+  mã nguồn (`TD-0116`) — Freqtrade từ chối chạy trên Binance testnet, không liên quan gì tới việc
+  tranche là thật hay cưỡng bức. Nguyên tắc "cưỡng bức thay vì chờ tự nhiên" **giữ nguyên**; chỉ
+  đổi nơi cưỡng bức xảy ra, sang môi trường live tối thiểu mà `DR-D11-01` đã chốt. Sửa §3.2 và §6,
+  không xoá lịch sử — ghi lại đây theo đúng kỷ luật "đính chính tại chỗ, giữ nguyên chữ cũ làm
+  lịch sử" mà chính dự án này áp dụng cho `CLAUDE.md`.
