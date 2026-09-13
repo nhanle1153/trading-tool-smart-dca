@@ -33,7 +33,7 @@
 | `POST /fapi/v1/order` (đặt lệnh, D3.5+) | POST | ☐ Không | order weight riêng, trần lệnh/10s theo cấp tài khoản | 10 | ☐ Không *(R9: cần idempotency key, xem 4.4)* |
 | `DELETE /fapi/v1/order` (huỷ lệnh, D3.5+) | DELETE | ☑ Có | cùng nhóm order weight | 10 | ☑ Có *(huỷ một lệnh đã huỷ trả lỗi rõ ràng, không tạo tác dụng phụ)* |
 | `PUT /fapi/v1/order` (sửa khối lượng SL, D3.5+) | PUT | ☐ Không | cùng nhóm order weight | 10 | ☐ Không *(R9: cần idempotency key)* |
-| `POST /bot<token>/sendMessage` (Telegram, TD-0209) | POST | ☐ Không | ~30 msg/s/bot toàn cục (không dùng gần tới trần — watchdog chỉ gửi khi CHUYỂN trạng thái) | 10 | ☑ Có *(R9: chỉ 3 lần, xem 4.4 — retry vô hạn trên một API gửi tin nhắn có thể spam người nhận)* |
+| `POST /bot<token>/sendMessage` (Telegram, TD-0209) | POST | ☐ Không | ~30 msg/s/bot toàn cục (không dùng gần tới trần — watchdog chỉ gửi khi CHUYỂN trạng thái) | 10 | ☑ Có *(R9: KHÔNG retry nội bộ — một lần thử/vòng poll, vòng poll 60s sau tự thử lại nếu thất bại; xem 4.4b)* |
 
 > Cột `Idempotent?` — endpoint đặt lệnh và sửa lệnh đánh dấu **Không**: gọi lại khi không chắc lệnh
 > trước có tới nơi hay không (timeout, mất kết nối) có thể tạo lệnh trùng hoặc sửa hai lần. Freqtrade
@@ -59,7 +59,7 @@
 | Telegram 429 (Too Many Requests) | ☑ Retry được | Backoff luỹ tiến, tôn trọng `retry_after` trong body nếu có |
 | Telegram 401 (Unauthorized — token sai) | ☑ Lỗi logic | Không retry — token cấu hình sai, dừng watchdog + ghi log cục bộ MỨC CAO NHẤT (đây là ca "kênh báo lỗi tự nó hỏng", không được im lặng) |
 | Telegram 400 (Bad Request — chat_id/text sai) | ☑ Lỗi logic | Không retry — lỗi cấu hình, ghi log cục bộ |
-| Telegram 5xx / timeout / lỗi kết nối | ☑ Retry được | Backoff luỹ tiến, tối đa 3 lần (4.4) rồi ghi log cục bộ, KHÔNG coi là đã báo thành công |
+| Telegram 5xx / timeout / lỗi kết nối | ☑ Retry được | KHÔNG backoff nội bộ — một lần thử, thất bại thì ghi log cục bộ + giữ nguyên trạng thái "chưa báo", vòng poll 60s kế tiếp tự thử lại (4.4b) |
 
 ## 4.4. Ngưỡng cấu hình
 
@@ -79,23 +79,37 @@
 > KHÔNG phải tham số tín hiệu chiến lược, nên không cần chốt bằng DR và không tính vào N_ĐĂNG_KÝ.
 > ✅ **Đã xác nhận 09/09/2026** (OQ-09, TD-0196) — dùng đúng đề xuất ban đầu, không đổi số.
 
-### 4.4b. Ngưỡng riêng cho watchdog heartbeat (TD-0209) — ĐỀ XUẤT, CHỜ CHỦ DỰ ÁN XÁC NHẬN
+### 4.4b. Ngưỡng riêng cho watchdog heartbeat (TD-0209) — ✅ dùng nguyên đề xuất (14/09/2026)
 
 Cùng loại quyết định với OQ-09 (chi tiết triển khai, không phải tham số tín hiệu — Nguyên tắc 9), nên
-đề xuất số cụ thể kèm lý do thay vì hỏi mở, theo đúng khuôn đã dùng cho breaker/backoff.
+đề xuất số cụ thể kèm lý do thay vì hỏi mở, theo đúng khuôn đã dùng cho breaker/backoff. Chủ dự án gõ
+"bắt đầu code" không kèm điều chỉnh nào — coi là xác nhận dùng nguyên bảng dưới (trừ một chỗ ĐỔI lúc
+code, ghi tại chỗ, xem dòng "Số lần retry").
 
 | Tham số | Đề xuất | Lý do |
 |---|---|---|
 | Chu kỳ ghi heartbeat | Mỗi vòng lặp bot — hiện `internals.process_throttle_secs = 5` giây (`config/freqtrade/config.json:125`) | Ghi file cục bộ, không phải lệnh gọi mạng — chi phí gần như 0, tận dụng đúng nhịp đã có sẵn |
-| Nội dung heartbeat | `{timestamp, state}` — `state` đọc từ trạng thái nội bộ Freqtrade (RUNNING/STOPPED/...) | Tên việc TD-0209 nói rõ **hai** thứ cần bắt: tiến trình CHẾT/TREO (timestamp cũ) VÀ tiến trình còn sống nhưng bot đã dừng (STOPPED) — chỉ đo tuổi file không phân biệt được hai ca này khi cần chẩn đoán |
+| Nội dung heartbeat | `{thoi_diem, trang_thai, trang_thai_tu_luc}` (ba trường, không phải hai — thêm `trang_thai_tu_luc` lúc code) — `trang_thai` đọc từ trạng thái nội bộ Freqtrade (RUNNING/STOPPED/...) | Tên việc TD-0209 nói rõ **hai** thứ cần bắt: tiến trình CHẾT/TREO (`thoi_diem` cũ) VÀ tiến trình còn sống nhưng bot đã dừng (`trang_thai` khác RUNNING). Vế thứ hai cần biết trạng thái đó đã kéo dài BAO LÂU, không chỉ ĐANG là gì — nếu không có `trang_thai_tu_luc` thì watchdog phải tự nhớ lịch sử giữa các lần poll (mất khi restart); có trường này thì mỗi lần đọc heartbeat là ĐỦ để đánh giá, không cần trạng thái riêng của watchdog cho phần này (`src/tool_d/ops/heartbeat.py`) |
 | Ngưỡng cảnh báo — heartbeat cũ quá (tiến trình chết/treo) | **300 giây (5 phút)** | = 60× chu kỳ ghi; gấp **5 lần** trần backoff breaker (60s, TD-0196) và gấp **~27 lần** độ trễ lạnh tệ nhất từng đo (11s, TD-0116) — đủ lớn để không báo giả vì một vòng lặp chậm bất thường, đủ nhỏ để không bỏ lỡ một ca chết thật hàng giờ liền |
 | Ngưỡng cảnh báo — `state != RUNNING` kéo dài | **300 giây (5 phút)**, cùng số với trên | Đủ thời gian cho một thao tác dừng CÓ CHỦ ĐÍCH ngắn (vd restart thủ công) không bị báo nhầm, vẫn đủ nhanh để bắt ca dừng ngoài ý muốn trong cùng một ca làm việc |
 | Chu kỳ watchdog kiểm tra file | 60 giây | Đủ nhỏ so với ngưỡng 300s (thêm tối đa 60s độ trễ phát hiện); watchdog không gọi Binance nên không cạnh tranh trần API |
-| Số lần retry gửi Telegram trước khi ghi log cục bộ | 3 lần, backoff 2s→4s→8s | Tránh vòng lặp vô hạn khi Telegram tự nó lỗi (401/mất mạng) — sau 3 lần PHẢI ghi log cục bộ mức cao nhất, không được im lặng biến mất (bài học MT-16 vii — exception bị nuốt) |
+| Số lần retry gửi Telegram trước khi ghi log cục bộ | ~~3 lần, backoff 2s→4s→8s~~ → **ĐỔI lúc code (14/09/2026): MỘT lần thử/vòng poll, không backoff nội bộ** | Đề xuất ban đầu tưởng tượng Telegram được gọi liên tục như Binance (cần backoff riêng); thực ra watchdog CHỈ gọi khi CHUYỂN trạng thái, và đã có chu kỳ poll 60s làm cơ chế thử-lại-tự-nhiên — thêm backoff nội bộ là một tầng lặp lại của chính chu kỳ poll (Nguyên tắc 4, tránh trùng cơ chế). Gửi thất bại → GIỮ NGUYÊN trạng thái "chưa báo", vòng poll kế tiếp tự thử lại; không mất bằng chứng vì `KetQuaGuiTelegram.thanh_cong=False` được trả về cho tầng gọi ghi log (không nuốt, MT-16 vii) — xem `src/tool_d/ops/heartbeat_watchdog.py::chay_mot_vong` |
 | Chống spam | Chỉ gửi khi trạng thái CHUYỂN (OK→bất thường, bất thường→OK) | Không gửi lặp lại mỗi lượt poll trong khi tình trạng không đổi; gửi thêm đúng 1 tin khi phục hồi để người nhận biết đã hết |
 | Secret | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` qua ENV, thêm vào `.env.example` (không có giá trị thật) | Cùng cơ chế `BINANCE_API_KEY`/`SECRET` đã có (TD-0242) — tham số VẬN HÀNH, không qua `tool_d_config.yaml` (N4) |
 | Vị trí module watchdog | Ngoài `entrypoints/` (không phải E9) | Không sinh "file kết quả" đo lường, không chạm CALIB/WFO/LOCKBOX/`measurement_guard()` — không thuộc phạm vi khoá 8 file của L-Z36 (spec dòng 664, 671-674: chỉ cấm entrypoint sinh file kết quả nằm ngoài danh sách) |
 | Cơ chế khởi chạy watchdog thật trên máy | Chưa chốt — quyết khi tới D11 setup thật | Cùng khuôn "hàm thuần trước, nối vào tiến trình thật là việc SAU" đã dùng ở `risk_supervisor.py` (TD-0196) và `validate_credentials_for_live()` (TD-0242) — TODO (2) còn treo từ TD-0196 |
+
+**✅ Xác nhận (14/09/2026):** tầng thuần đã dựng — `src/tool_d/ops/heartbeat.py` (ghi/đọc heartbeat,
+tri-state N6), `src/tool_d/ops/telegram_client.py` (single-egress R1, dùng NHÃN lỗi của
+`risk_supervisor` chứ KHÔNG dùng lại state machine breaker — lý do ở docstring đầu file),
+`src/tool_d/ops/heartbeat_watchdog.py` (đánh giá + chống spam + `chay_mot_vong()`). 56 test, Docker
+(N7): `docker compose -f docker/docker-compose.yml run --rm tests -q tests/unit/test_ops_heartbeat.py
+tests/unit/test_ops_telegram_client.py tests/unit/test_ops_heartbeat_watchdog.py` → **56 passed**.
+Kiểm-có-răng: phá `quyet_dinh_loai_tin()` (bỏ hai nhánh CHUYỂN trạng thái) → đúng 3 ca đỏ, đúng các ca
+canh cơ chế chống spam/phục hồi — không phải phần còn lại của suite. **CHƯA nối vào Freqtrade/launcher
+thật** (D10-D12 chưa mở) — hai TODO cuối `heartbeat_watchdog.py` (cơ chế khởi chạy trên máy; xác nhận
+Freqtrade có gọi vòng lặp worker ở CẢ hai trạng thái RUNNING/STOPPED hay chỉ RUNNING, chưa đọc mã
+nguồn cho câu này — rule 6, không đoán).
 
 ## 5. Bảng nghiệm thu — TD-0197, 09/09/2026
 
@@ -132,3 +146,4 @@ bắt buộc nghiệm thu lại trong context sạch riêng khi D3.5 viết code
 | 1.1 | 09/09/2026 | OQ-09 xác nhận (TD-0196): ngưỡng breaker 5 lỗi liên tiếp, backoff 1s→2s→4s→…→60s — giữ đúng số đề xuất ban đầu. Bắt đầu implement `src/tool_d/risk_supervisor.py` (khung THUẦN — phân loại lỗi theo Mục 4.3, state machine circuit breaker, khai lại có chủ đích §6.6(2)). Chưa có tiến trình chạy thật (dry-run/live) — Mục 5 (bảng nghiệm thu) vẫn CHƯA chạy |
 | 1.2 | 09/09/2026 | TD-0197: nối R2 (rate limit) + R3 (circuit breaker) vào `binance_public.py`. Chạy Bảng nghiệm thu Mục 5 lần đầu (reviewer context sạch) — 2 FAIL 🔴 (R5, R10) đã vá; 3 FAIL 🟡 (R6, R8, R12) ghi tech-debt vào `TASKS.md`, không chặn gate. R7/R9 N/A/PASS có điều kiện, chờ nghiệm thu lại ở D3.5 |
 | 1.3 | 13/09/2026 | TD-0209 (gate check, chưa có dòng code): thêm dịch vụ #3 Telegram Bot API vào Mục 4.1-4.3 (chủ dự án chốt kênh + cách phát hiện qua trao đổi trực tiếp). Thêm Mục 4.4b — 9 tham số ĐỀ XUẤT (ngưỡng heartbeat, chu kỳ watchdog, retry, vị trí module...), CHỜ chủ dự án xác nhận trước khi "bắt đầu code" theo quy tắc 17. `provider-map.md` đã có dòng tương ứng |
+| 1.4 | 14/09/2026 | TD-0209: "bắt đầu code" — dựng tầng thuần (`src/tool_d/ops/{heartbeat,telegram_client,heartbeat_watchdog}.py`), 56 test Docker. Đổi 1 tham số lúc code (retry Telegram: bỏ backoff nội bộ 3 lần, dùng chu kỳ poll 60s làm cơ chế thử lại — ghi tại chỗ ở 4.4b, không xoá đề xuất cũ). Chưa nối vào Freqtrade/launcher thật |
