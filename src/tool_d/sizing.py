@@ -53,7 +53,7 @@ không?"* Hỏi câu đó trước khi mở bất kỳ artifact đã niêm phong
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, fields
 from typing import Any, Mapping, Sequence
 
 from tool_d.arm_switches import (
@@ -342,6 +342,60 @@ def lap_ke_hoach_co_lenh(
     )
 
 
+def phuc_hoi_ke_hoach_sau_restart(
+    *, cfg: ToolDConfig, arm: str, r_eff: float, stake_tranche1_da_khop: float,
+) -> KeHoachCoLenh:
+    """TD-0237 (MT-41) — suy ngược `KeHoachCoLenh` khi `self._cho[pair]`
+    (RAM) mất vì tiến trình restart giữa lúc đặt lệnh (post-only, chờ tới
+    180 phút) và lúc tranche 1 khớp.
+
+    Đúng khuôn `gap_ms.py` dùng để né CHÍNH lớp lỗi này ở chỗ khác: không
+    thêm trạng thái tiến trình mới, chỉ đọc lại hai nguồn Freqtrade đã bền
+    vững sẵn — `entry_tag` (giải mã ở nơi gọi, cho `r_eff`) và khối lượng
+    tranche 1 THẬT đã khớp (`stake_tranche1_da_khop` = `trade.stake_amount`
+    ngay sau khi tranche 1 khớp, KHÔNG phải giá trị kế hoạch đã mất).
+
+    `w_tranche`/`L_exchange` là hằng số cấu hình (N4), không đổi qua
+    restart ⇒ `n_full = stake1_thật × L_exchange / w[0]` suy ngược CHÍNH
+    XÁC — và từ đó `notional_tranche(2)/(3)`, `planned_risk_usdt`,
+    `planned_margin_usdt` (thứ tranche 2/3 và kết nạp danh mục thật sự
+    đọc, xem `ZoneAbsorption._vi_the_mo_khac_theo_ke_hoach`) đều CHÍNH XÁC.
+
+    🔴 `mult` (6 hệ số) và `rho_eff_pct` KHÔNG suy ngược được — nhiều tổ
+    hợp mult cho cùng notional (và một số arm như `Z0-S1` định cỡ theo vốn
+    cố định, không đi qua `rho_eff_pct` chút nào). Đánh dấu NaN (cùng quy
+    ước `_zss_hien_tai` của chiến lược: fail-closed, KHÔNG bịa số — N6),
+    không phải `0.0` hay sentinel. Chỉ ảnh hưởng phần AUDIT (`mult_breakdown`
+    §8.3) của riêng lệnh rơi vào ca restart này, không ảnh hưởng risk
+    management: tranche 2/3 và kết nạp danh mục chỉ đọc `n_full_usdt`/
+    `planned_risk_usdt`/`planned_margin_usdt`, cả ba đều chính xác ở trên.
+    """
+    if stake_tranche1_da_khop <= 0:
+        raise SizingError(
+            f"khối lượng tranche 1 đã khớp phải > 0, nhận {stake_tranche1_da_khop} "
+            "— không suy ngược kế hoạch từ một con số vô nghĩa"
+        )
+    if r_eff != r_eff or r_eff <= 0:
+        raise SizingError(f"R_eff phải > 0, nhận {r_eff}")
+    l_exchange = float(resolve(cfg, "tier_a.L_exchange"))
+    rho_pct = float(resolve(cfg, "tier_a.rho_pct"))
+    w = doc_trong_so_tranche(cfg)
+    n_full = stake_tranche1_da_khop * l_exchange / w[0]
+    nan = float("nan")
+    return KeHoachCoLenh(
+        arm=arm,
+        n_full_usdt=n_full,
+        w_tranche=w,
+        l_exchange=l_exchange,
+        rho_pct=rho_pct,
+        rho_eff_pct=nan,
+        mult={f.name: nan for f in fields(HeSoMult)},
+        r_eff=r_eff,
+        planned_risk_usdt=n_full * r_eff,
+        planned_margin_usdt=n_full / l_exchange,
+    )
+
+
 def che_do_co_lenh(arm: str) -> str:
     """`RUI_RO_CO_DINH` hay `NOTIONAL_CO_DINH` — đọc từ bảng của
     `arm_switches`, không định nghĩa lại."""
@@ -365,4 +419,5 @@ __all__ = [
     "mult_edge",
     "mult_regime",
     "mult_zss",
+    "phuc_hoi_ke_hoach_sau_restart",
 ]

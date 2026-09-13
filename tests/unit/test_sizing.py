@@ -35,6 +35,7 @@ from tool_d.sizing import (
     mult_edge,
     mult_regime,
     mult_zss,
+    phuc_hoi_ke_hoach_sau_restart,
 )
 
 CFG_THAT = load_tool_d_config()
@@ -296,3 +297,79 @@ class TestFailClosed:
             "E_D khác 750 — DR-D4-05 §2.2 chốt 750 (nâng từ 500). Đổi số này "
             "cần một DR mới, không phải sửa test cho khớp."
         )
+
+
+# ── 7. TD-0237 (MT-41) — kế hoạch cỡ lệnh sống sót qua restart ─────────
+
+class TestPhucHoiKeHoachSauRestart:
+    """TD-0237 (MT-41) — suy ngược `KeHoachCoLenh` khi `self._cho[pair]`
+    (RAM của `ZoneAbsorption`) mất qua restart. Test này khoá phần TOÁN
+    THUẦN; kịch bản restart nối vào `order_filled()` thật nằm ở
+    `tests/lock/test_td0237_phuc_hoi_ke_hoach_sau_restart.py`."""
+
+    def test_n_full_suy_nguoc_chinh_xac_tu_stake_tranche1_that(self) -> None:
+        cfg = _cfg(l_exchange=3.0, w=(0.25, 0.25, 0.5))
+        goc = lap_ke_hoach_co_lenh(cfg=cfg, arm="Z0", r_eff=0.02, mult=MULT_1)
+        stake1_that = goc.stake_tranche(1)  # "đã khớp đúng kế hoạch" — ca đơn giản nhất
+
+        phuc_hoi = phuc_hoi_ke_hoach_sau_restart(
+            cfg=cfg, arm="Z0", r_eff=0.02, stake_tranche1_da_khop=stake1_that,
+        )
+        assert phuc_hoi.n_full_usdt == pytest.approx(goc.n_full_usdt, rel=1e-9)
+        assert phuc_hoi.planned_risk_usdt == pytest.approx(goc.planned_risk_usdt, rel=1e-9)
+        assert phuc_hoi.planned_margin_usdt == pytest.approx(goc.planned_margin_usdt, rel=1e-9)
+        # Hệ quả: tranche 2/3 suy ngược ra đúng số Freqtrade sẽ hỏi lại.
+        assert phuc_hoi.stake_tranche(2) == pytest.approx(goc.stake_tranche(2), rel=1e-9)
+        assert phuc_hoi.stake_tranche(3) == pytest.approx(goc.stake_tranche(3), rel=1e-9)
+
+    def test_suy_nguoc_KHONG_can_biet_mult_goc_la_gi(self) -> None:
+        """Đúng chỗ đáng giá nhất của phương án B: hai `mult` gốc RẤT khác
+        nhau nhưng cho CÙNG notional tranche 1 thì suy ngược ra CÙNG
+        `n_full` — không cần biết `mult` gốc là gì, và không cần đoán."""
+        cfg = _cfg()
+        m_a = HeSoMult(regime=1.0, zss=1.0, corr=1.0, dd=1.0, edge=1.0, deploy=1.0)
+        m_b = HeSoMult(regime=0.7, zss=0.5, corr=1.0, dd=1.0, edge=1.0, deploy=1.0)
+        a = lap_ke_hoach_co_lenh(cfg=cfg, arm="Z0", r_eff=0.02, mult=m_a)
+        # ép `stake_tranche1_da_khop` của B trùng của A (khớp thật có thể lệch
+        # công thức thiết kế do rounding sàn — đây là đúng lý do phải suy
+        # ngược từ khối lượng THẬT, không phải tính lại mult).
+        stake1_that = a.stake_tranche(1)
+        phuc_hoi_tu_a = phuc_hoi_ke_hoach_sau_restart(cfg=cfg, arm="Z0", r_eff=0.02, stake_tranche1_da_khop=stake1_that)
+        assert phuc_hoi_tu_a.n_full_usdt == pytest.approx(a.n_full_usdt, rel=1e-9)
+        del m_b  # chỉ minh hoạ: không có cách nào phân biệt được m_a với m_b từ stake1_that
+
+    def test_mult_va_rho_eff_danh_dau_NaN_khong_bia_so(self) -> None:
+        """N6 — KHÔNG bịa số, không sentinel (-1/"UNKNOWN"/""). NaN là quy
+        ước fail-closed đã dùng ở `_zss_hien_tai` cho đúng lớp câu hỏi
+        "không suy ra được", tái dùng ở đây cho `mult`/`rho_eff_pct`."""
+        phuc_hoi = phuc_hoi_ke_hoach_sau_restart(cfg=_cfg(), arm="Z0", r_eff=0.02, stake_tranche1_da_khop=10.0)
+        assert phuc_hoi.rho_eff_pct != phuc_hoi.rho_eff_pct  # NaN != NaN
+        assert set(phuc_hoi.mult) == {"regime", "zss", "corr", "dd", "edge", "deploy"}
+        assert all(v != v for v in phuc_hoi.mult.values())
+
+    def test_to_dict_roundtrip_khong_vo_vi_NaN(self) -> None:
+        """`KeHoachCoLenh.to_dict()`/`from_dict()` (đường `custom_data`,
+        L-Z49) phải sống sót với NaN trong `mult`/`rho_eff_pct` — đây
+        chính là hình dạng sẽ đi qua `trade.set_custom_data`."""
+        phuc_hoi = phuc_hoi_ke_hoach_sau_restart(cfg=_cfg(), arm="Z0", r_eff=0.02, stake_tranche1_da_khop=10.0)
+        lai = KeHoachCoLenh.from_dict(phuc_hoi.to_dict())
+        assert lai.n_full_usdt == pytest.approx(phuc_hoi.n_full_usdt)
+        assert lai.rho_eff_pct != lai.rho_eff_pct
+
+    def test_khong_anh_huong_risk_management_ha_luu(self) -> None:
+        """Tranche 2/3 (`adjust_trade_position`) và kết nạp danh mục
+        (`_vi_the_mo_khac_theo_ke_hoach`) chỉ đọc `n_full_usdt`/
+        `planned_risk_usdt`/`planned_margin_usdt` — cả ba đều KHÔNG NaN."""
+        phuc_hoi = phuc_hoi_ke_hoach_sau_restart(cfg=_cfg(), arm="Z0", r_eff=0.02, stake_tranche1_da_khop=10.0)
+        for gia_tri in (phuc_hoi.n_full_usdt, phuc_hoi.planned_risk_usdt, phuc_hoi.planned_margin_usdt):
+            assert gia_tri == gia_tri and gia_tri > 0  # không NaN, không 0/âm vô nghĩa
+
+    def test_stake_khong_duong_thi_raise(self) -> None:
+        for s in (0.0, -1.0):
+            with pytest.raises(SizingError, match="tranche 1 đã khớp"):
+                phuc_hoi_ke_hoach_sau_restart(cfg=_cfg(), arm="Z0", r_eff=0.02, stake_tranche1_da_khop=s)
+
+    def test_r_eff_khong_duong_thi_raise(self) -> None:
+        for r in (0.0, -0.01, float("nan")):
+            with pytest.raises(SizingError):
+                phuc_hoi_ke_hoach_sau_restart(cfg=_cfg(), arm="Z0", r_eff=r, stake_tranche1_da_khop=10.0)

@@ -136,6 +136,7 @@ from tool_d.sizing import (
     mult_edge,
     mult_regime,
     mult_zss,
+    phuc_hoi_ke_hoach_sau_restart,
 )
 from tool_d.arms import co_loc_adx_1d, du_dieu_kien_trend_theo_tang, tang_cua_arm
 from tool_d.take_profit import (
@@ -764,7 +765,11 @@ class ZoneAbsorption(IStrategy):
         if trade.nr_of_successful_entries == 1:
             cho = self._cho.pop(pair, None)
             if cho is None:
-                raise SizingError(f"{pair}: tranche 1 khớp mà không có kế hoạch cỡ lệnh chờ — thứ tự callback đã hỏng")
+                # TD-0237 (MT-41) — self._cho chỉ sống trong RAM; một lần
+                # restart giữa lúc đặt lệnh (post-only, chờ tới 180 phút)
+                # và lúc tranche 1 khớp làm mất nó. KHÔNG raise ngay — suy
+                # ngược lại từ hai nguồn BỀN VỮNG của Freqtrade trước.
+                cho = self._phuc_hoi_ke_hoach_sau_restart(pair, trade)
             hang = self._hang_hien_tai(pair)
             kh = cho["ke_hoach"]
             kh["atr_1h_tai_tranche1"] = float(hang["atr_1h"]) if hang is not None and not math.isnan(hang["atr_1h"]) else 0.0
@@ -791,6 +796,39 @@ class ZoneAbsorption(IStrategy):
         # tức khi tranche 2/3 khớp" — `trade.open_rate` (p_avg THẬT, khác
         # p_avg KẾ HOẠCH đóng băng trong `kh`) chỉ đổi ở đúng những lần này.
         self._cap_nhat_chot_loi(trade, current_time)
+
+    def _phuc_hoi_ke_hoach_sau_restart(self, pair: str, trade) -> dict:
+        """TD-0237 (MT-41) — phục hồi `cho` (hình `{"co_lenh", "ke_hoach",
+        "tag"}`, đúng shape `custom_stake_amount()` cất vào `self._cho`)
+        khi RAM đã mất qua restart. Trả về đúng shape để phần còn lại của
+        `order_filled()` (đã tồn tại từ trước) chạy KHÔNG đổi.
+
+        Giải mã lại `entry_tag` — Freqtrade lưu bền vững trên `Trade`, và
+        đây CHÍNH XÁC là bước đầu `custom_stake_amount()` đã làm (dòng
+        648), không phải một đường mới. `n_full_usdt`/`planned_risk_usdt`/
+        `planned_margin_usdt` suy ngược chính xác từ `trade.stake_amount`
+        (ký quỹ tranche 1 THẬT — xem `phuc_hoi_ke_hoach_sau_restart` ở
+        `sizing.py`); `mult`/`rho_eff_pct` đánh dấu NaN, không bịa (N6).
+        """
+        giai = _giai_ma(trade.enter_tag, atr_1h_tai_tranche1=0.0)
+        if giai is None:
+            raise SizingError(
+                f"{pair}: tranche 1 khớp, self._cho trống (restart?), và "
+                f"enter_tag {trade.enter_tag!r} không giải mã được — không "
+                "phục hồi kế hoạch mò, đây là lỗi lắp ráp không phải chưa có"
+            )
+        kh, d = giai
+        plan = phuc_hoi_ke_hoach_sau_restart(
+            cfg=self._cfg, arm=self._arm, r_eff=kh.r_eff_plan,
+            stake_tranche1_da_khop=float(trade.stake_amount),
+        )
+        logger.warning(
+            "PHUC_HOI_KE_HOACH %s trade=%s tu enter_tag + stake_amount that "
+            "(MT-41 — self._cho mat qua restart; mult breakdown khong suy "
+            "nguoc duoc, danh dau NaN)",
+            pair, trade.id,
+        )
+        return {"co_lenh": plan.to_dict(), "ke_hoach": kh.to_dict(), "tag": d}
 
     def _cap_nhat_chot_loi(self, trade, current_time: datetime) -> None:
         """TD-0189 chặng 2b — (re)tính `KeHoachChotLoi` (mục tiêu TP1) và ghi
