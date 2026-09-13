@@ -63,31 +63,39 @@ def test_stoploss_chien_luoc_khop_config():
     assert m.ZoneAbsorption.stoploss == cfg["stoploss"] == -0.99
 
 
-def test_d2c_chua_la_na_hom_nay_dung_khi_arm_doi_thi_test_nay_do():
-    """MT-43 (`back-end-note.md` mục 7) — D2c/`gap_ms` là N/A CÓ ĐIỀU
-    KIỆN, không phải một sự thật vĩnh viễn: chỉ N/A khi arm sản xuất
-    thuộc `arm_switches.ARM_DON_TRANCHE` (không bao giờ thêm tranche ⇒
-    khối lượng SL không bao giờ đổi) VÀ TP1 không sinh sự kiện trên sàn
-    thật (đã xác nhận bằng đọc mã nguồn: Binance Futures
-    `stoploss_blocks_assets=False` khiến `cancel_stoploss_on_exchange(
-    allow_nonblocking=True)` tự thoát sớm, không huỷ gì).
+ARM_QUAN_SAT_13_09_2026 = "Z3"
 
-    Hôm nay (`tool_d_config.yaml:139` = `"Z3"`) arm CÓ DCA — vế đầu SAI —
-    nên D2c hôm nay vẫn là điều kiện SỐNG, KHÔNG phải N/A. Test này CỐ Ý
-    PASS trong tình trạng đó, và CỐ Ý ĐỎ đúng lúc `TD-0227` đổi arm sang
-    một giá trị thuộc `ARM_DON_TRANCHE` (`"Z0"`) — buộc người thi hành
-    `TD-0227` quay lại đọc `MT-43` và cập nhật `DR-D11-01` một cách
-    TƯỜNG MINH, thay vì để "N/A" âm thầm trở thành sự thật mà không ai
-    kiểm lại (đúng hình dạng PASS RỖNG mà `-3f`/`-80` cùng cảnh báo)."""
+
+def test_arm_san_xuat_doi_thi_phai_doc_lai_mt43():
+    """MT-43 (`back-end-note.md` mục 7) — `d2c_na` (D2c/`gap_ms` là N/A)
+    là một BẤT BIẾN HAI CHIỀU: hợp lệ KHI VÀ CHỈ KHI `tier_c.arm_
+    ablation.arm ∈ arm_switches.ARM_DON_TRANCHE` (không bao giờ thêm
+    tranche ⇒ khối lượng SL không bao giờ đổi; đã xác nhận riêng bằng
+    đọc mã nguồn rằng TP1 cũng không cứu được — Binance Futures
+    `stoploss_blocks_assets=False` khiến `cancel_stoploss_on_exchange(
+    allow_nonblocking=True)` tự thoát sớm khi thoát một phần).
+
+    🔴 CỐ Ý chốt CỨNG giá trị quan sát được HÔM NAY (`"Z3"`, KHÔNG thuộc
+    `ARM_DON_TRANCHE` ⇒ D2c đang là điều kiện SỐNG) làm mốc so sánh,
+    thay vì chỉ kiểm một chiều "còn thuộc tập không". Một tripwire một
+    chiều (chỉ đỏ khi arm ĐI VÀO tập) sẽ xanh trở lại lặng lẽ đúng lúc
+    arm ĐI RA khỏi tập lần thứ hai (ví dụ Idea Queue — `TD-0226` — đưa
+    DCA quay lại production sau khi đã tạm dùng arm single-entry) — mà
+    đó mới là chiều nguy hiểm: một cổng an toàn (§8.3/D2c) bị đánh dấu
+    N/A rồi không ai xét lại. Chốt cứng giá trị cụ thể khiến MỌI thay
+    đổi arm, bất kể hướng nào, đều đỏ — buộc người sửa tự tay xác nhận
+    `d2c_na` đúng hay sai ở giá trị MỚI, không suy diễn theo một hướng
+    rồi quên hướng ngược lại (rủi ro `-3f`/`-80` cùng cảnh báo)."""
     from tool_d.arm_switches import ARM_DON_TRANCHE
     from tool_d.config.loader import load_tool_d_config, resolve
 
     cfg = load_tool_d_config()
     arm = resolve(cfg, "tier_c.arm_ablation.arm")
-    assert arm not in ARM_DON_TRANCHE, (
-        f"arm sản xuất đã đổi thành {arm!r}, thuộc ARM_DON_TRANCHE — D2c/"
-        "gap_ms giờ THỰC SỰ N/A qua đường tranche (TP1 đã xác nhận riêng, "
-        "không đổi theo arm). TRƯỚC khi coi ca đỏ này là bình thường: đọc "
-        "lại MT-43 trong back-end-note.md và cập nhật ngưỡng D2c của "
-        "DR-D11-01 một cách tường minh — đừng chỉ sửa test này cho xanh."
+    thuoc = "THUỘC" if arm in ARM_DON_TRANCHE else "KHÔNG thuộc"
+    assert arm == ARM_QUAN_SAT_13_09_2026, (
+        f"arm sản xuất đã đổi từ {ARM_QUAN_SAT_13_09_2026!r} sang {arm!r} "
+        f"({thuoc} ARM_DON_TRANCHE). TRƯỚC khi sửa hằng số này cho xanh: "
+        "đọc lại MT-43 trong back-end-note.md, tự xác nhận `d2c_na` ở giá "
+        "trị MỚI này đúng hay sai, và cập nhật DR-D11-01 (ngưỡng D2c) một "
+        "cách tường minh nếu trạng thái N/A đã đổi theo."
     )
