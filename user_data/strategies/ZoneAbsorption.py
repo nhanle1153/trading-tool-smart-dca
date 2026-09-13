@@ -995,12 +995,17 @@ class ZoneAbsorption(IStrategy):
         chừng không làm mất một `gap_ms` nào — lần gọi kế tiếp đọc lại
         đúng lịch sử đó từ DB Freqtrade (bền) và ghi bù.
 
-        🔴 Dưới arm single-entry (`arm_switches.ARM_DON_TRANCHE`, gồm cả
-        `Z0` — mặc định sản xuất theo `DR-D4-10` §2.4), khối lượng SL
-        KHÔNG BAO GIỜ đổi ⇒ hàm này trả về đúng `[]` mỗi lần, không phải
-        lỗi — N6 cấm bịa số, `pending` là trạng thái ĐÚNG khi sự kiện
-        chưa từng xảy ra. Xem mâu thuẫn đã ghi nhận (chờ chủ dự án) về
-        việc D2c có đo được gì trên arm sản xuất hiện tại hay không."""
+        🔴 MT-43 (`back-end-note.md` mục 7): dưới arm single-entry
+        (`arm_switches.ARM_DON_TRANCHE`) khối lượng SL KHÔNG BAO GIỜ đổi
+        (và TP1 cũng không sinh sự kiện trên Binance Futures — xác nhận
+        bằng đọc mã nguồn `cancel_stoploss_on_exchange`) ⇒ hàm này trả
+        về đúng `[]`, không phải lỗi — N6 cấm bịa số, `pending`/`[]` là
+        ĐÚNG khi sự kiện chưa từng xảy ra. `TD-0227` sẽ đổi arm sản xuất
+        sang `Z0` (thuộc tập trên) sau khi cổng D4 đóng — tới lúc đó D2c
+        mới thật sự N/A; HÔM NAY arm vẫn `Z3` (có DCA), D2c vẫn là điều
+        kiện SỐNG. `test_td0244_stoploss_on_exchange.py` giữ một test cố
+        ý đỏ đúng lúc arm đổi, để không ai đọc N/A thành vĩnh viễn mà
+        quên tự kiểm lại."""
         lenh_sl = [
             LenhSl(
                 order_id=o.order_id,
