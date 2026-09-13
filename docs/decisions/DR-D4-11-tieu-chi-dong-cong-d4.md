@@ -128,6 +128,30 @@ niêm phong). Loại vì lý do ở §5.
      `DR-D4-11`** (ghim QUYẾT ĐỊNH), không phải ca ghim quan hệ.
 4. Bằng chứng chạy trong Docker (N7). Sổ `trial_registry.jsonl` giữ nguyên số dòng trước/sau.
 
+### 🔴 Đính chính 14/09/2026 — dự đoán ở mục 3 SAI, giữ nguyên chữ cũ làm lịch sử
+
+Mục 3 viết *"Trả tiêu chí về hằng số `18` ⇒ **đúng 1 ca đỏ**"*. Đo thật trong Docker: **6 ca đỏ**.
+Ca ghim QUYẾT ĐỊNH (`test_module_khong_chua_hang_so_18_hay_9`) **có** đỏ đúng như dự đoán, nhưng
+năm ca nữa cũng đỏ vì ghim cứng `18` phá luôn **hành vi** chứ không chỉ vi phạm luật.
+
+Kết quả **mạnh hơn** dự đoán, không yếu hơn — nhưng phải ghi lại, vì một dự đoán sai nằm trong tài
+liệu quyết định thì lần sau có người đọc nó rồi tưởng lớp canh đã hỏng khi thấy 6 thay vì 1. Đây
+cũng đúng bài học dự án đã trả giá nhiều lần: *phát biểu đúng mức những gì phép đo nói*.
+
+Ba phép phá, kết quả THẬT (khôi phục `diff -q` giống hệt):
+
+| Phép phá trên `d4_gate.py` | Ca đỏ |
+|---|---|
+| Bỏ `_kiem_arm_phan_quyet()` | **2** — `test_chi_co_arm_MO_TA_va_ke_toan_KHOP_van_bi_TU_CHOI`, `test_Z0_T1_thieu_ket_cuc_thi_TU_CHOI` |
+| Ghim cứng `18` thay cho quan hệ | **6** — gồm ca ghim QUYẾT ĐỊNH |
+| Bỏ `_kiem_ke_toan()` | **1** — `test_so_b2_lech_so_arm_thi_TU_CHOI` |
+
+📌 Một quan sát từ phép phá thứ nhất, đáng ghi vì nó sửa một khẳng định ngầm: ca
+`test_Z0_T1_mang_co_mo_ta_thi_TU_CHOI` **KHÔNG** đỏ khi bỏ `_kiem_arm_phan_quyet()` — nó được
+`validate_arm_record()` bắt độc lập (`arm_record.py:242-252`). Tức ca đó canh **lớp cũ**, không
+canh lớp mới. Hai lớp chồng nhau ở đúng chỗ này là tốt, nhưng đừng đọc nó thành *"tiêu chí mới
+bắt được cờ sai"*.
+
 ## 8. Việc phái sinh, đã biết, chưa làm
 
 - **`back-end-note.md:80`** còn ghi 18 — chờ lệnh "chuẩn hóa và lưu" (N9).
