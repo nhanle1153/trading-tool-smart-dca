@@ -102,6 +102,7 @@ import json
 import logging
 import math
 from datetime import datetime
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -120,6 +121,14 @@ from tool_d.arm_switches import (
 from tool_d.config.loader import load_tool_d_config, resolve
 from tool_d.dg1_dg5_tranche_gates import danh_gia_tat_ca
 from tool_d.entry_confirmation import bat_dieu_kien_c_cua_arm, quet_xac_nhan_zone
+from tool_d.equity_peak import (
+    DUONG_DAN_MAC_DINH,
+    DinhEquityBenVung,
+    DinhEquityError,
+    dinh_equity_moi,
+    doc_dinh_equity,
+    luu_dinh_equity,
+)
 from tool_d.notional import bo_loc_tu_market, kiem_san_tool_d
 from tool_d.dg6_early_invalidation import dg6_dong_vi_the, dieu_kien_a, dieu_kien_b
 from tool_d.funding_stop import funding_paid_cumulative, is_funding_stop_triggered
@@ -284,6 +293,42 @@ class ZoneAbsorption(IStrategy):
         self._cho: dict[str, dict] = {}   # pair → kế hoạch cỡ lệnh chờ order_filled
         self._halt: set[str] = set()      # pair đang bị HALT tại lúc định cỡ
         self._dinh_equity: float | None = None
+        # TD-0238 (MT-40) — nạp lại đỉnh equity bền vững ở bot_start(), KHÔNG
+        # ở đây: `self.dp`/`self.wallets` chưa sẵn sàng lúc __init__ chạy.
+        self._duong_dan_dinh_equity = DUONG_DAN_MAC_DINH
+        self._ben_vung_hoa_equity = False  # bot_start() đặt lại đúng theo runmode
+
+    # ── vòng đời ─────────────────────────────────────────────────────
+
+    def bot_start(self, **kwargs) -> None:
+        """TD-0238 (MT-40) — nạp lại đỉnh equity bền vững TRƯỚC khi vòng
+        lặp chính chạy. Chỉ live/dry_run được đọc/ghi file này — backtest/
+        hyperopt/plot/edge KHÔNG được rò trạng thái giữa các lượt chạy
+        (mỗi lượt backtest phải độc lập), và không phụ thuộc việc phải
+        xác nhận Freqtrade có gọi `bot_start()` trong backtest hay không:
+        chặn ở `runmode` là đủ dù có gọi hay không.
+
+        🔴 Đã đọc mã nguồn Freqtrade thật (`strategy/interface.py
+        ft_bot_start()`, N7/rule 6): khác `order_filled` (MT-16 vii),
+        exception ở ĐÂY KHÔNG bị `strategy_safe_wrapper` nuốt im lặng —
+        `ft_bot_start()` gọi wrapper không truyền `default_retval`/
+        `supress_error` nên nhánh lỗi RE-RAISE thành `StrategyError`,
+        làm bot KHÔNG khởi động được. `raise` ở dưới vì thế là fail-closed
+        thật, không phải một chốt vô hình.
+        """
+        super().bot_start(**kwargs)
+        self._ben_vung_hoa_equity = self.dp.runmode.value in ("live", "dry_run")
+        if not self._ben_vung_hoa_equity:
+            return
+        da_luu = doc_dinh_equity(self._duong_dan_dinh_equity)
+        if da_luu is None:
+            return
+        if da_luu.stake_currency != self.config["stake_currency"]:
+            raise DinhEquityError(
+                f"đỉnh equity đã lưu ở đơn vị {da_luu.stake_currency!r}, cấu hình hiện "
+                f"tại là {self.config['stake_currency']!r} — không âm thầm trộn đơn vị"
+            )
+        self._dinh_equity = da_luu.dinh
 
     # ── dữ liệu ──────────────────────────────────────────────────────
 
@@ -1407,11 +1452,23 @@ class ZoneAbsorption(IStrategy):
         return np.diff(np.log(dong))
 
     def _dd_pct(self) -> float:
+        """TD-0238 (MT-40) — đỉnh (`self._dinh_equity`) nay đi qua
+        `dinh_equity_moi()` và được ghi bền vững mỗi khi có đỉnh mới
+        (chỉ ở live/dry_run — `_ben_vung_hoa_equity` do `bot_start()` đặt).
+        Hợp đồng trả về (một `float` phần trăm) không đổi."""
         if not self.wallets:
             return 0.0
         tong = float(self.wallets.get_total(self.config["stake_currency"]))
-        if self._dinh_equity is None or tong > self._dinh_equity:
-            self._dinh_equity = tong
+        stake_currency = self.config["stake_currency"]
+        dinh_cu = (
+            DinhEquityBenVung(dinh=self._dinh_equity, stake_currency=stake_currency)
+            if self._dinh_equity is not None else None
+        )
+        dinh_moi = dinh_equity_moi(dinh_cu, tong_hien_tai=tong, stake_currency=stake_currency)
+        if self._dinh_equity is None or dinh_moi.dinh > self._dinh_equity:
+            self._dinh_equity = dinh_moi.dinh
+            if self._ben_vung_hoa_equity:
+                luu_dinh_equity(dinh_moi, self._duong_dan_dinh_equity)
         if not self._dinh_equity:
             return 0.0
         return max(0.0, (self._dinh_equity - tong) / self._dinh_equity * 100.0)
