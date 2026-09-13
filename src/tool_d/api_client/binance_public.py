@@ -148,6 +148,24 @@ def validate_credentials_for_live(*, env: Mapping[str, str] | None = None) -> tu
        WARNING rồi tiếp tục chạy — `MT-16` (vii) đã đo đúng cơ chế này nuốt
        `SizingError` fail-closed 12 lần trong một lượt. Gọi hàm này từ một
        callback = tự đặt chốt fail-closed vào đúng chỗ nó chắc chắn bị nuốt.
+
+       🔑 Ràng buộc này hôm nay là LỜI KHAI (docstring), chưa phải BẰNG
+       CHỨNG (N12 mục 3: một dòng mô tả cũng là lời khai, không phải máy
+       canh) — cùng hình dạng đã cắn dự án ở `ZoneAbsorption.py:224`
+       ("chỉ được siết, không nới", 0 dòng thi hành, phiên `-3f` chỉ ra
+       13/09/2026). Thiết kế gợi ý cho phép kiểm AST đi kèm khi có call
+       site thật (viết TRƯỚC khi có call site sẽ là PASS RỖNG nếu thiếu
+       teeth test bằng nguồn giả — không viết ở đây):
+         - Theo khuôn `find_guard_violation()` (`guard_ast_check.py`), NHƯNG
+           dùng ALLOW-list thay vì deny-list callback (bài học MT-08: danh
+           sách CHO PHÉP an toàn hơn danh sách CẤM) — `ast.walk` tìm mọi
+           `Call` gọi `validate_credentials_for_live`; với MỖI lời gọi, xác
+           nhận `FunctionDef` bao nó tên là `main` (không phải: không nằm
+           trong danh sách callback bị cấm).
+         - Kiểm-có-răng bằng NGUỒN GIẢ (chuỗi văn bản qua `ast.parse`,
+           không cần entrypoint/strategy thật): (a) lời gọi trong
+           `def main():` → sạch; (b) lời gọi trong `def custom_stoploss(
+           self, ...):` → đúng 1 vi phạm.
     """
     nguon = env if env is not None else os.environ
     api_key = nguon.get(ENV_BINANCE_API_KEY, "")
