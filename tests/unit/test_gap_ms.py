@@ -150,6 +150,49 @@ class TestKhongSuyDoanKhiThieuDuLieu:
         assert ket_qua == []
 
 
+class TestDuTruongKhongThua:
+    """L-Z44 lesson (`test_lz44_khai_lai_hang_so_supervisor.py`, TD-0241):
+    một trường bị khai lại mà KHÔNG nằm trong bảng đối chiếu vẫn nằm ngoài
+    tầm canh bốn ngày liền, dù mọi test hỏi "bốn cái kia có khớp không".
+    Câu phải hỏi là "có ĐÚNG BẤY NHIÊU cái không" — kiểm bằng tập khoá,
+    không phải bằng loại trừ."""
+
+    KHOA_BAT_BUOC = frozenset(
+        {
+            "loai",
+            "nguon",
+            "ts",
+            "trade_id",
+            "tranche",
+            "sl_price",
+            "sl_qty_old",
+            "sl_qty_new",
+            "sl_order_id_old",
+            "sl_order_id_new",
+            "gap_ms",
+        }
+    )
+
+    def test_ban_ghi_co_dung_khoa_khong_thieu_khong_thua(self):
+        """Chín trường bắt buộc của spec §8.3 (dòng 2669-2671:
+        ts/trade_id/tranche/sl_price/sl_qty_old/sl_qty_new/sl_order_id_old/
+        sl_order_id_new/gap_ms) cộng `loai`/`nguon` (TD-0144/TD-0201, cửa
+        ghi Decision Log đòi hai trường này để dựng khoá + phân loại
+        nguồn) — ĐÚNG mười một, không hơn không kém."""
+        huy_luc = T0 + timedelta(seconds=1)
+        tao_lai_luc = huy_luc + timedelta(seconds=2)
+        lenh_sl = [
+            _lenh("SL1", "canceled", 10.0, T0, order_update_date=huy_luc),
+            _lenh("SL2", "open", 20.0, tao_lai_luc),
+        ]
+        ket_qua = sinh_ban_ghi_doi_sl(
+            lenh_sl=lenh_sl, moc_khop_entry=[T0], trade_id=1,
+            sl_price=100.0, nguon="live",
+        )
+        assert len(ket_qua) == 1
+        assert set(ket_qua[0].keys()) == self.KHOA_BAT_BUOC
+
+
 class TestGoiLaiKhongSinhKhacBiet:
     """Bất biến khiến việc KHÔNG giữ trạng thái tiến trình an toàn (né hình
     dạng lỗi MT-40/MT-41): gọi lại với cùng đầu vào phải cho cùng bản ghi
