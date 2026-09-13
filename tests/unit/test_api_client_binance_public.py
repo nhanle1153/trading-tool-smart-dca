@@ -29,8 +29,11 @@ from tool_d.api_client.binance_public import (
     _sign,
     _tran_goi_theo_phut,
     dat_lai_trang_thai_mang_cho_kiem,
+    get_account_info,
     get_exchange_info,
+    get_force_orders,
     get_open_interest_hist,
+    get_position_risk,
     KhoLuuTruError,
     NenThangKhongCoError,
     doc_quote_volume_1d_thang,
@@ -761,3 +764,76 @@ class TestValidateCredentialsForLive:
         monkeypatch.setenv(ENV_BINANCE_API_SECRET, "bi-mat-that-gia-lap")
         api_key, api_secret = validate_credentials_for_live()
         assert (api_key, api_secret) == ("khoa-that-gia-lap", "bi-mat-that-gia-lap")
+
+
+class TestGetAccountInfoPositionRiskForceOrders:
+    """TD-0241 (DR-D11-03) — ba endpoint KÝ mới cho Risk Supervisor đọc
+    margin/vị thế/thanh lý. Phải đi qua ĐÚNG cùng breaker/giãn nhịp với các
+    hàm public khác — khác `latency_samples_ms` (đứng ngoài có chủ đích)."""
+
+    def setup_method(self) -> None:
+        dat_lai_trang_thai_mang_cho_kiem()
+
+    def test_get_account_info_goi_dung_url_va_ky(self) -> None:
+        payload = {"totalMarginBalance": "100.0"}
+        with patch("time.sleep"), patch(
+            "tool_d.api_client.binance_public.urllib.request.urlopen"
+        ) as mock_urlopen:
+            mock_urlopen.return_value = _fake_response(payload)
+            result = get_account_info(api_key="k", api_secret="s")
+        assert result == payload
+        req = mock_urlopen.call_args[0][0]
+        assert req.full_url.startswith(f"{BASE_URL}/fapi/v2/account?")
+        assert "signature=" in req.full_url
+        assert req.headers.get("X-mbx-apikey") == "k"
+
+    def test_get_position_risk_goi_dung_url(self) -> None:
+        payload = [{"symbol": "BTCUSDT", "liquidationPrice": "0"}]
+        with patch("time.sleep"), patch(
+            "tool_d.api_client.binance_public.urllib.request.urlopen"
+        ) as mock_urlopen:
+            mock_urlopen.return_value = _fake_response(payload)
+            result = get_position_risk(api_key="k", api_secret="s")
+        assert result == payload
+        assert "/fapi/v2/positionRisk?" in mock_urlopen.call_args[0][0].full_url
+
+    def test_get_force_orders_luon_truyen_autoclosetype_liquidation(self) -> None:
+        with patch("time.sleep"), patch(
+            "tool_d.api_client.binance_public.urllib.request.urlopen"
+        ) as mock_urlopen:
+            mock_urlopen.return_value = _fake_response([])
+            get_force_orders(api_key="k", api_secret="s")
+        url = mock_urlopen.call_args[0][0].full_url
+        assert "autoCloseType=LIQUIDATION" in url
+        assert "/fapi/v1/forceOrders?" in url
+
+    def test_get_force_orders_truyen_start_time_khi_co(self) -> None:
+        with patch("time.sleep"), patch(
+            "tool_d.api_client.binance_public.urllib.request.urlopen"
+        ) as mock_urlopen:
+            mock_urlopen.return_value = _fake_response([])
+            get_force_orders(api_key="k", api_secret="s", start_time_ms=123456)
+        assert "startTime=123456" in mock_urlopen.call_args[0][0].full_url
+
+    def test_loi_http_ghi_nhan_vao_breaker_giong_endpoint_cong_khai(self) -> None:
+        """Kiểm-có-răng: 5 lỗi 429 liên tiếp phải mở breaker — đúng hành vi
+        đã canh cho `_goi_json_cong_khai`, chứng minh endpoint KÝ đi qua
+        CÙNG một điểm nghẽn, không phải một đường riêng đứng ngoài canh."""
+        with patch("tool_d.api_client.binance_public.urllib.request.urlopen") as mock_urlopen:
+            mock_urlopen.side_effect = HTTPError(
+                url="x", code=429, msg="rate limit", hdrs=None, fp=None
+            )
+            for _ in range(5):
+                with pytest.raises(BinancePrivateApiError):
+                    get_account_info(api_key="k", api_secret="s")
+        with pytest.raises(BinanceBreakerMoError):
+            get_account_info(api_key="k", api_secret="s")
+
+    def test_json_hong_raise_khong_tra_du_lieu_rac(self) -> None:
+        cm = MagicMock()
+        cm.__enter__.return_value.read.return_value = b"khong phai json"
+        with patch("time.sleep"), patch(
+            "tool_d.api_client.binance_public.urllib.request.urlopen", return_value=cm
+        ):
+            with pytest.raises(BinancePrivateApiError):
+                get_account_info(api_key="k", api_secret="s")

@@ -241,6 +241,16 @@ def _ghi_nhan_that_bai(*, http_status: int) -> None:
     )
 
 
+def trang_thai_breaker_hien_tai() -> TrangThaiBreaker:
+    """TD-0241 (`DR-D11-03`) — đọc (KHÔNG sửa) trạng thái breaker hiện tại
+    của tiến trình. Breaker ở đây là biến MODULE, sống trong RAM của MỘT
+    tiến trình (đúng comment ở `dat_lai_trang_thai_mang_cho_kiem`) — tầng
+    gọi cần BỀN VỮNG HOÁ nó qua khởi động lại (bài học `MT-40`/`MT-41`)
+    phải tự đọc bằng hàm này rồi ghi ra đĩa (`risk_supervisor.luu_trang_thai`),
+    vì module này không tự ghi file — không phải việc của R1/R2/R3/R4."""
+    return _trang_thai_breaker
+
+
 def dat_lai_trang_thai_mang_cho_kiem() -> None:
     """CHỈ dùng trong test — đưa breaker/nhịp gọi về sạch giữa các ca,
     tránh một ca rò trạng thái sang ca sau. State sống ở cấp MODULE (không
@@ -341,6 +351,77 @@ def _signed_path(path: str, api_secret: str, extra_params: dict[str, str] | None
     params["timestamp"] = str(int(time.time() * 1000))
     params["recvWindow"] = "5000"
     return f"{path}?{urllib.parse.urlencode(params)}&signature={_sign(params, api_secret)}"
+
+
+def _goi_json_ky(
+    path: str,
+    *,
+    api_key: str,
+    api_secret: str,
+    extra_params: dict[str, str] | None = None,
+    base_url: str = BASE_URL,
+    timeout: float = DEFAULT_TIMEOUT_S,
+) -> Any:
+    """TD-0241 (DR-D11-03) — điểm nghẽn cho các GET KÝ đọc margin/vị thế/
+    thanh lý (Risk Supervisor, §6.6). Đi qua ĐÚNG cùng breaker/giãn nhịp/
+    phân loại lỗi với `_goi_json_cong_khai` (R1/R2/R3/R4) — KHÁC
+    `latency_samples_ms`, hàm đó CỐ Ý đứng ngoài vì đo RTT thuần (xem
+    docstring của nó). Đọc margin/vị thế là traffic VẬN HÀNH thật, không
+    phải một phép đo latency, nên không được đứng ngoài breaker/rate-limit.
+    """
+    _kiem_tra_breaker()
+    _cho_nhip_goi()
+    url = f"{base_url}{_signed_path(path, api_secret, extra_params)}"
+    req = urllib.request.Request(url, headers={"X-MBX-APIKEY": api_key})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310
+            du_lieu = json.loads(resp.read())
+    except HTTPError as exc:
+        _ghi_nhan_that_bai(http_status=exc.code)
+        raise BinancePrivateApiError(f"gọi {path} thất bại: {exc}") from exc
+    except (URLError, TimeoutError, json.JSONDecodeError) as exc:
+        # Không có http_status để phân loại (đứt mạng/DNS/timeout trước khi
+        # có phản hồi) — không ghi nhận vào breaker, cùng chữ `_goi_json_cong_khai`.
+        raise BinancePrivateApiError(f"gọi {path} thất bại: {exc}") from exc
+    _ghi_nhan_thanh_cong()
+    return du_lieu
+
+
+def get_account_info(*, api_key: str, api_secret: str, timeout: float = DEFAULT_TIMEOUT_S) -> dict:
+    """`GET /fapi/v2/account` — margin/balance tổng (TD-0241, Risk Supervisor
+    §6.6). Trường dùng ở tầng gọi: `totalMarginBalance`, `totalMaintMargin`,
+    `availableBalance`, `positions[].{maintMargin,initialMargin,
+    unrealizedProfit,isolated}` (xác nhận qua tài liệu Binance, `DR-D11-03`).
+    """
+    return _goi_json_ky("/fapi/v2/account", api_key=api_key, api_secret=api_secret, timeout=timeout)
+
+
+def get_position_risk(*, api_key: str, api_secret: str, timeout: float = DEFAULT_TIMEOUT_S) -> list[dict]:
+    """`GET /fapi/v2/positionRisk` — vị thế + giá thanh lý ước tính theo
+    từng symbol (TD-0241)."""
+    return _goi_json_ky("/fapi/v2/positionRisk", api_key=api_key, api_secret=api_secret, timeout=timeout)
+
+
+def get_force_orders(
+    *,
+    api_key: str,
+    api_secret: str,
+    start_time_ms: int | None = None,
+    timeout: float = DEFAULT_TIMEOUT_S,
+) -> list[dict]:
+    """`GET /fapi/v1/forceOrders?autoCloseType=LIQUIDATION` — lệnh bị THANH
+    LÝ thật (TD-0241, đóng TODO #1 của `risk_supervisor.py`). `autoCloseType`
+    là tham số REQUEST lọc phía server, KHÔNG phải trường trong response —
+    bất kỳ phần tử nào trả về ⇒ đã có lệnh bị thanh lý (`DR-D11-03` §2.4,
+    xác nhận qua mã nguồn `ccxt/binance.py:13351` bundled trong image, không
+    đoán qua trang docs render-JS không đọc được).
+    """
+    extra: dict[str, str] = {"autoCloseType": "LIQUIDATION"}
+    if start_time_ms is not None:
+        extra["startTime"] = str(start_time_ms)
+    return _goi_json_ky(
+        "/fapi/v1/forceOrders", api_key=api_key, api_secret=api_secret, extra_params=extra, timeout=timeout
+    )
 
 
 def latency_samples_ms(

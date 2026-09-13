@@ -1,0 +1,11 @@
+{
+  "$schema": "https://schema.freqtrade.io/schema.json",
+  "_comment_scope": "TD-0241 (DR-D11-03). File PHỤ, KHÔNG dùng mặc định — chỉ truyền vào Freqtrade qua tham số `-c` THỨ HAI khi D11 thật sự khởi động một tiến trình bot sống (`freqtrade trade -c config/freqtrade/config.json -c config/freqtrade/config.risk_supervisor.json`). Tách khỏi config.json dùng chung có chủ đích: một khi khoá `api_server` xuất hiện trong BẤT KỲ config nào truyền vào Freqtrade, ba trường `username`/`password`/`jwt_secret_key` trở thành BẮT BUỘC theo schema (không có default hữu dụng) — thêm thẳng vào config.json sẽ làm MỌI lệnh backtest hiện tại (E1-E3, chạy hàng ngày bởi nhiều phiên song song) vỡ nếu thiếu ba biến ENV tương ứng. File này đứng NGOÀI đường chạy đó cho tới khi ai đó chủ động thêm `-c` thứ hai.",
+
+  "api_server": {
+    "enabled": true,
+    "listen_ip_address": "127.0.0.1",
+    "listen_port": 8081
+  },
+  "_comment_api_server": "listen_ip_address PHẢI là 127.0.0.1 — control API của bot (POST /api/v1/stop, DR-D11-03 §2.1) không có lý do gì để nghe ngoài localhost. `username`/`password`/`jwt_secret_key` KHÔNG đặt ở đây (không commit secret) — nạp qua ENV lúc chạy: `FREQTRADE__API_SERVER__USERNAME`, `FREQTRADE__API_SERVER__PASSWORD`, `FREQTRADE__API_SERVER__JWT_SECRET_KEY` (cơ chế env-var override chạy TRƯỚC schema validation — xác nhận bằng đọc mã nguồn `freqtrade/configuration/configuration.py`, DR-D11-03 §2.3). `USERNAME`/`PASSWORD` ở đây PHẢI khớp đúng `FREQTRADE_API_USERNAME`/`FREQTRADE_API_PASSWORD` mà `ops/risk_supervisor_daemon.py` đọc để tự xác thực — hai cặp biến khác tên (một cặp `FREQTRADE__…` do Freqtrade tự đọc, một cặp `FREQTRADE_…` do daemon của ta tự đọc) nhưng PHẢI cùng giá trị, đặt cùng lúc trong cùng một `.env` vận hành."
+}
