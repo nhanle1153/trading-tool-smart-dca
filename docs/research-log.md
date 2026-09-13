@@ -2630,3 +2630,129 @@ spec `:472-473` (*"Muốn thử ML → giả thuyết riêng, **ngân sách riê
 về **quản trị**, không về hạ tầng. Đường thứ ba giải bài toán *kỹ thuật* (ảnh chạy được FreqAI)
 nhưng không giải bài toán *quản trị* (ML không đi trên đường sản xuất của Tool D). Hai câu khác
 nhau, và chỉ câu thứ hai được hỏi.
+
+---
+
+## 13/09/2026 — Phủ sóng theo DỮ LIỆU, không theo số phép kiểm. Và bốn lỗi của chính phiên này.
+
+### 1. `MT-36` — câu thứ tư, chưa ai đặt, và nó đứng trước ba câu đang treo
+
+Đi trả lời ba câu chủ dự án hỏi (`MT-34` · `MT-35` · FreqAI), rà soát bắt được một câu **không nằm
+trong cả ba**: `n = 206` mà `DR-D4-10` §2.1 dẫn **không phải một số lệnh quan sát được**. Nó là **160
+lệnh trên 88 mã EXPLORE** → quy đổi 88→102 → annualize trên **toàn** `[T1,T2]`. Tái lập đúng:
+`325,6 × 231/365,25 = 205,9`, và cùng công thức cho `Z0` = 28, `Z0-T0` = 883.
+
+Mà `folds.py:174-185` (neo gốc) cho ba cửa sổ **test** = `2025-09-04→10-23`, `10-23→12-11`,
+`12-11→2026-01-29` — đoạn **84 ngày đầu là train-only ở CẢ BA fold**, tức test chỉ phủ **147/231 ngày**.
+
+| Phán quyết trên | `n` | `h/√n` | Rào `mean_R` (std 1,25) |
+|---|---|---|---|
+| Toàn cửa sổ | 206 | 0,2144 | 0,368 |
+| Chỉ test | ~131 | 0,2689 | **0,436** |
+
+🔴 **Và không gì buộc chọn vế nào:** `dsr.py:52` nhận `n_trades: int` với ràng buộc **duy nhất**
+`>= 2`; `chay_wfo`/`sinh_folds` **không có người gọi nào** từ `run_ablation.py`. ⇒ `TD-0184` sẽ quyết
+câu này **bằng cách vô tình**, và **không phép kiểm nào của dự án nhìn thấy loại lỗi đó**.
+
+Chốt (chủ dự án, 13/09): báo **cả hai**, phán quyết trên test-only. Và nó đã có **máy** ngay
+(`TD-0232`) thay vì một câu trong DR — vì `MT-08` đã dạy hai lần rằng một chính sách không có máy thì
+sẽ có người phải vá sau.
+
+### 2. 🔴 Lỗi của phiên này: phép kiểm ĐÚNG, áp SAI CHỖ
+
+Dòng `TD-0229` trong `TASKS.md` — **tôi viết hôm qua** — có **6 ô** trong khi header bảng có **5 cột**.
+Markdown bỏ ô vượt, nên toàn bộ khối *"Xác nhận `5b34e1b`: full suite 1673 passed…"* (**2029 ký tự**,
+gồm cả ba phép kiểm-có-răng) **vô hình khi render**. Nội dung vẫn nguyên trong file; chỉ mất ở bản
+render.
+
+🔑 Chi tiết đáng giữ: **cùng ngày hôm nay tôi ĐÃ chạy phép đếm dấu `|` cấu trúc cho
+`back-end-note.md`** (34/34 dòng đúng) rồi commit — nhưng **không** chạy nó trên dòng `TASKS.md` mình
+vừa viết. Phép kiểm đúng, áp sai chỗ. Và nó là **bản THẬT của thứ `MT-18` từng báo động**: `MT-18` là
+báo động **giả** (4/12 dấu `|` đã escape đúng), đây mới là ca thật.
+
+📌 Soát toàn file **theo từng bảng** (không dùng một con số chung — `TASKS.md` có 20 bảng, bảng
+changelog 6 cột là **đúng**): còn **27 dòng khác** lệch cột so với header của chính bảng đó. **Không
+tự sửa** — 27 dòng do nhiều phiên viết qua nhiều ngày, sửa hàng loạt một file trạng thái dùng chung là
+đúng hiểm hoạ `N12`. Phiên `[f5177d]` tự kiểm Khối 17: **0 dòng lệch**, nên không dòng nào của họ.
+
+### 3. 🔑 Bài học lớn nhất: phủ sóng theo DỮ LIỆU, không theo số phép kiểm
+
+`tai_dump_agg_trades()` (TD-0162, đường đo của `DR-015` Bước 2) có một lỗi **sống** từ lúc viết:
+đường dẫn URL dùng symbol **thô**, mà `http.client._encode_request` gọi `request.encode("ascii")` ⇒
+một ký tự ngoài ASCII làm nó raise **trước khi gửi**.
+
+Và sàn **có** mã tên phi ASCII — **một trong số đó nằm trong chính pool 102 mã giao dịch**:
+`币安人生USDT`. Kho lưu trữ/explore còn `我踏马来了USDT` · `牛来USDT` · `龙虾USDT` · `哈基米USDT`.
+
+**Nó không bị bắt bởi một test, cũng không bởi việc đọc lại mã.** Nó bị bắt vì tôi **copy khuôn** sang
+một hàm mới, rồi hàm mới **chạy trên tập rộng hơn** và nổ ở mã thứ ~600/629.
+
+⇒ Ghép với hai mục đã ghi, thành **ba ca cùng một họ**:
+
+| Ngày | Ca | Điểm chung |
+|---|---|---|
+| 08/09 | *"ca sai chỉ đi qua MẪU DỰNG TAY, chưa bao giờ đi qua ĐƯỜNG SẢN XUẤT THẬT"* | lớp canh sắc nhưng chĩa nhầm hướng |
+| 08/09 (TD-0182) | *"bộ sinh dữ liệu LỖI THỜI so với hệ thống nó nuôi"* | không ai viết sai dòng nào |
+| 13/09 | lỗi phi ASCII, bắt bởi **chạy cùng một đường trên nhiều dữ liệu hơn** | — |
+
+**Câu rút ra (phiên `[f5177d]` phát biểu, tôi nhận):** ***phủ sóng theo DỮ LIỆU, không theo số lượng
+phép kiểm.*** Một hàm có 30 test trên 5 mã ASCII vẫn chết ở mã thứ 600.
+
+📌 Và chi tiết biến bản vá từ *phòng xa* thành *chặn một lỗi chắc chắn xảy ra*: mã đó nằm trong pool
+**giao dịch**, không phải chỉ trong kho. Nếu chỉ trong kho thì còn cãi được là ngoài phạm vi.
+
+### 4. 🔴 Lỗi thứ hai của phiên này: lẫn *"không được đụng"* với *"không được xem"*
+
+Tôi viết *"không mở artifact niêm phong để kiểm"* và để một câu ở mức **SUY** (*"nếu lần đó có mã phi
+ASCII thì nó đã phải crash"*). Nhưng kỷ luật niêm phong cấm **SỬA** và cấm **CHẠY LẠI** — **không cấm
+ĐỌC**. Một lệnh đọc đóng hẳn khoảng hở: `dr015-luot-khop-tranche.json` → `_nguon.cap` =
+`['1000BONK/USDT:USDT','1000PEPE/USDT:USDT']`, **91 lượt, 2 cặp, cả hai ASCII**.
+
+🔑 **Thận trọng đặt sai chỗ không bảo vệ gì cả, chỉ hạ chất lượng câu trả lời** — và nó đắt hơn sự bất
+cẩn ở chỗ **nó trông như kỷ luật tốt, nên không ai soi**. Cùng họ *"rác là một kết luận rút từ cái
+tên, không phải một quan sát"* (07/09), ở chiều ngược: lần này tôi **từ chối quan sát vì một cái nhãn**.
+
+📌 Phép đọc đó lộ ra `MT-37`: `Δ_R(LONG) = 0,1612` đo trên **đúng hai cặp**, mà `d3_5_han_che` — bản
+tự khai của chính cổng D3.5 — khai **bốn** hạn chế và **không** khai phạm vi mã (thử tám chuỗi, cả
+tám vắng).
+
+### 5. `TD-0231` — con số, và một lỗi thiết kế bước verify của chính tôi
+
+Dựng lại pool **đúng tại `T1`** bằng `pairlist_point_in_time()` **đã có sẵn từ TD-0096** — kịch bản
+này là **người gọi mà docstring `pool.py:112` đòi suốt và chưa từng tồn tại**.
+
+Tại `T1` (mốc duy nhất chạy vào phán quyết D4): `pool.yaml` **102** · pool đúng **116** · **chung 55**
+· `K = 61` (**52,6%**). Cách đọc viết **TRƯỚC** (commit `ab290eb` trước lượt chạy) đặt ngưỡng ≲10%
+⇒ **gấp hơn năm lần** ⇒ kết cục *"K lớn"*: WFO đang đo **sai rổ** theo chiều PASS.
+
+Phần **không nhiễu**: 24/47 mã của `M` **không tồn tại** tại `T1` ⇒ không thể thuộc pool đúng, bất kể
+volume.
+
+🔴 **Và một lỗi của chính tôi trong bước verify:** phép chạy `pairlist_over_time()` trong artifact
+**không chứng minh gì cả** — tôi nạp cho mỗi mốc **đúng tập pool đúng của mốc đó** với volume giả `2×`
+sàn, nên dĩ nhiên `explore = 0` ở cả ba mốc. Ràng buộc §9c.4b **không được thi hành**. Kế hoạch ghi
+việc đó là một phép kiểm; thi hành xong nó thành một phép kiểm **rỗng**, và chỉ lộ ra khi tôi đọc lại
+đầu ra thay vì tin dòng kế hoạch. Khai ra thay vì để nó trông như một phép kiểm đã chạy.
+
+⚠️ Hạn chế thứ hai, cũng là lỗi artifact: **không lưu volume từng mã** ⇒ không ai định lượng được
+nhiễu ngưỡng volume một-ngày. Kết luận không phụ thuộc nó (52,6% vs 10%) nhưng **tính tái lập thì có**.
+
+### 6. Hai vòng bác một đề xuất, hai lý do khác nhau, không vòng nào thừa
+
+Phiên `[f5177d]` đề xuất thêm một vế fail-closed vào `§4` (`buoc4_hieu_chinh_hai_chieu`) để cưỡng chế
+phạm vi `Δ_R`. Tôi bác bằng **giá**: người gọi ngoài module là **đúng một file và nó là TEST KHOÁ**
+(`test_lz58:39`), nên tham số bắt buộc ⇒ phải sửa `L-Z58` ⇒ ba điều kiện `§7.1`; còn tham số **có mặc
+định** ⇒ **fail-OPEN**, một PASS RỖNG dựng sẵn từ lúc sinh.
+
+Họ định né bằng cách cho hàm **tự đọc** artifact — rồi tự bác lần hai, bằng một lý do **khác hẳn**:
+module đó là **tầng thuần** (0 lời gọi đọc file) và docstring `:6-8` khai thẳng *"§4 cố ý KHÔNG đặt
+ngưỡng phần trăm — **ngưỡng tuỳ tiện là chỗ uốn kết luận sau khi thấy số**"*. ⇒ Đề xuất **sai TẦNG,
+không sai ý**; chỗ đúng là **tầng nuôi `§4`** (bộ chạy ablation), nơi `run_ablation.py` còn ở
+`NotImplementedError` nên **chưa có test khoá nào phải sửa**.
+
+🔑 **Nếu chỉ có vòng bác thứ nhất thì họ đã đi tìm đường né — và đường né vi phạm hai tính chất thiết
+kế mà lúc đó chưa ai biết là có.** Hai vòng, hai lý do độc lập, không vòng nào thừa. Và bài học họ tự
+ghi: **đề xuất một thay đổi cho một module mà chưa đọc docstring của nó**.
+
+📌 Cả hai phương án — cái được chọn và cái bị loại — đều ghi vào `MT-37`, đúng lý do đã ghi hai phép
+kiểm **thất bại** vào `DR-FAI-01` §4b: người sau khỏi đề xuất lại thứ đã bị bác.
