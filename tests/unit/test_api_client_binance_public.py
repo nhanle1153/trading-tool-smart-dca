@@ -19,8 +19,11 @@ import pytest
 
 from tool_d.api_client.binance_public import (
     BASE_URL,
+    ENV_BINANCE_API_KEY,
+    ENV_BINANCE_API_SECRET,
     AggTradesNotFoundError,
     BinanceBreakerMoError,
+    BinanceCredentialsMissingError,
     BinancePrivateApiError,
     BinancePublicApiError,
     _sign,
@@ -34,6 +37,7 @@ from tool_d.api_client.binance_public import (
     latency_samples_ms,
     liet_ke_kho_luu_tru,
     tai_dump_agg_trades,
+    validate_credentials_for_live,
 )
 
 
@@ -693,3 +697,67 @@ class TestMaPhiASCIITrongDuongDan:
         duong_dan = conn.request.call_args[0][1]
         duong_dan.encode("ascii")
         assert "%" in duong_dan
+
+
+class TestValidateCredentialsForLive:
+    """TD-0242 — fail-closed khi thiếu `BINANCE_API_KEY`/`BINANCE_API_SECRET`.
+
+    Dùng `env=` (một `dict` truyền tay) thay vì `monkeypatch.setenv`/`delenv`
+    trên `os.environ` thật — cô lập hoàn toàn khỏi biến môi trường thật của
+    máy chạy test (Docker/host có thể vô tình có sẵn `.env.binance` đã
+    `source`), đúng tinh thần L-Z51 (không để trạng thái ẩn ngoài tầm kiểm).
+    """
+
+    DU: dict[str, str] = {
+        ENV_BINANCE_API_KEY: "khoa-gia-de-test",
+        ENV_BINANCE_API_SECRET: "bi-mat-gia-de-test",
+    }
+
+    def test_du_ca_hai_bien_thi_tra_ve_dung_gia_tri_khong_raise(self) -> None:
+        api_key, api_secret = validate_credentials_for_live(env=self.DU)
+        assert (api_key, api_secret) == (self.DU[ENV_BINANCE_API_KEY], self.DU[ENV_BINANCE_API_SECRET])
+
+    def test_thieu_api_key_raise_fail_closed(self) -> None:
+        env = {ENV_BINANCE_API_SECRET: self.DU[ENV_BINANCE_API_SECRET]}
+        with pytest.raises(BinanceCredentialsMissingError, match=ENV_BINANCE_API_KEY):
+            validate_credentials_for_live(env=env)
+
+    def test_thieu_api_secret_raise_fail_closed(self) -> None:
+        env = {ENV_BINANCE_API_KEY: self.DU[ENV_BINANCE_API_KEY]}
+        with pytest.raises(BinanceCredentialsMissingError, match=ENV_BINANCE_API_SECRET):
+            validate_credentials_for_live(env=env)
+
+    def test_thieu_ca_hai_raise_va_thong_bao_neu_ca_hai_ten_bien(self) -> None:
+        with pytest.raises(BinanceCredentialsMissingError) as exc_info:
+            validate_credentials_for_live(env={})
+        assert ENV_BINANCE_API_KEY in str(exc_info.value)
+        assert ENV_BINANCE_API_SECRET in str(exc_info.value)
+
+    def test_chuoi_rong_tinh_nhu_thieu_khong_phai_hop_le(self) -> None:
+        """Tiêu chí XONG đòi 'thiếu' — rỗng là một cách thiếu phổ biến nhất
+        (`.env.binance` tồn tại, biến có khai nhưng chưa điền giá trị)."""
+        env = {ENV_BINANCE_API_KEY: "", ENV_BINANCE_API_SECRET: ""}
+        with pytest.raises(BinanceCredentialsMissingError):
+            validate_credentials_for_live(env=env)
+
+    def test_thong_bao_khong_phai_loi_mang(self) -> None:
+        """Tiêu chí XONG: 'không phải một lỗi mạng trông giống sự cố sàn' —
+        thông báo phải tự khai rõ đây là lỗi cấu hình cục bộ."""
+        with pytest.raises(BinanceCredentialsMissingError, match="CẤU HÌNH cục bộ"):
+            validate_credentials_for_live(env={})
+        with pytest.raises(BinanceCredentialsMissingError, match="KHÔNG phải sự cố mạng"):
+            validate_credentials_for_live(env={})
+
+    def test_mac_dinh_doc_tu_os_environ_khi_khong_truyen_env(self, monkeypatch) -> None:
+        """Kiểm-có-răng của TD-0242: XOÁ biến môi trường thật ⇒ đúng
+        hàm này (và chỉ hàm này trong lớp test) đỏ — không đọc `env=` giả,
+        mà đọc thẳng `os.environ` như một entrypoint thật sẽ làm."""
+        monkeypatch.delenv(ENV_BINANCE_API_KEY, raising=False)
+        monkeypatch.delenv(ENV_BINANCE_API_SECRET, raising=False)
+        with pytest.raises(BinanceCredentialsMissingError):
+            validate_credentials_for_live()
+
+        monkeypatch.setenv(ENV_BINANCE_API_KEY, "khoa-that-gia-lap")
+        monkeypatch.setenv(ENV_BINANCE_API_SECRET, "bi-mat-that-gia-lap")
+        api_key, api_secret = validate_credentials_for_live()
+        assert (api_key, api_secret) == ("khoa-that-gia-lap", "bi-mat-that-gia-lap")

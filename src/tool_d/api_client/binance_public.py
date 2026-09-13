@@ -29,6 +29,14 @@ CỐ Ý đứng ngoài — nó đo RTT, thêm throttle/breaker sẽ phá chính 
 nó đang làm (đã là ngoại lệ ghi rõ ở trên). `tai_dump_agg_trades()` (host
 khác, không có trần gọi/phút công bố) chỉ nhận phần breaker, không nhận
 phần giãn nhịp theo `tier_c.api_calls_per_min`.
+
+🔴 TD-0242 — `validate_credentials_for_live()` là hàm THUẦN, chưa nối vào
+entrypoint nào (không có entrypoint thật nào đặt lệnh thật hôm nay — 8
+entrypoint E1-E8 hiện có đều KHÔNG cần credential ký; `latency_samples_ms`
+nhận `api_key`/`api_secret` trực tiếp từ tham số, không tự đọc ENV). Đúng
+khuôn đã dùng ở `risk_supervisor.py` (TD-0196): hàm thuần trước, nối vào
+một entrypoint/tiến trình thật là việc SAU khi D10-D12 (live) thật sự
+được viết — có phép kiểm để không bị quên tới lúc đó.
 """
 
 from __future__ import annotations
@@ -38,10 +46,12 @@ import hmac
 import http.client
 import io
 import json
+import os
 import time
 import urllib.parse
 import urllib.request
 import zipfile
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -77,6 +87,68 @@ class BinanceBreakerMoError(BinancePublicApiError):
     HTTP 418, cờ vĩnh viễn cần can thiệp thủ công), hoặc còn trong cửa sổ
     backoff sau nhiều lỗi 429/5xx liên tiếp. KHÔNG gọi mạng khi lỗi này
     xảy ra — gọi tiếp trong lúc đang bị cấm chỉ kéo dài án phạt."""
+
+
+class BinanceCredentialsMissingError(BinancePrivateApiError):
+    """TD-0242 — thiếu `BINANCE_API_KEY`/`BINANCE_API_SECRET` lúc SẮP gọi
+    endpoint KÝ (đặt lệnh thật). Tách riêng khỏi mọi lỗi trên: những lỗi đó
+    xảy ra SAU khi đã gửi request (mạng, HTTP, sàn từ chối chữ ký/tham số);
+    lỗi này xảy ra TRƯỚC khi gửi bất cứ gì — 0 byte ra mạng. Gộp chung hai
+    loại sẽ khiến người vận hành đi kiểm tra trạng thái sàn/mạng thay vì
+    kiểm tra `.env` cục bộ, đúng thứ Tiêu chí XONG của TD-0242 cấm ("không
+    phải một lỗi mạng trông giống sự cố sàn")."""
+
+
+ENV_BINANCE_API_KEY = "BINANCE_API_KEY"
+ENV_BINANCE_API_SECRET = "BINANCE_API_SECRET"
+
+# Exit code riêng cho "thiếu credential lúc cần gọi endpoint ký" — nối tiếp
+# dải exit code riêng của dự án (86 guard · 87 cache · 88-91 lockbox · 92
+# audit · 94-98 các cổng/entrypoint khác) — 99 còn trống. Entrypoint tương
+# lai (D10-D12, chưa viết — không có entrypoint thứ 9, N3) dùng hằng số
+# này khi bắt `BinanceCredentialsMissingError` ở `main()`.
+EXIT_MISSING_API_CREDENTIALS = 99
+
+
+def validate_credentials_for_live(*, env: Mapping[str, str] | None = None) -> tuple[str, str]:
+    """Fail-closed TRƯỚC khi một entrypoint cần đặt lệnh thật (dry_run=false,
+    §6.9.5) gọi endpoint KÝ — gọi hàm này Ở ĐẦU, cùng tinh thần `measurement_
+    guard()` (N5): kiểm TRƯỚC việc tốn thời gian/mạng, không bọc trong
+    decorator để không phải suy luận khi kiểm bằng AST.
+
+    Rỗng tính như thiếu — cùng quy ước đã có ở `latency_samples_ms`
+    (`signed and not (api_key and api_secret)`), không tạo hai chuẩn khác
+    nhau cho cùng một khái niệm "thiếu key" trong cùng module.
+
+    🔴 KHÔNG đọc `tool_d_config.yaml` — đây là bí mật vận hành (N4/§0d.4:
+    "env chỉ cho vận hành, khoá/mở, chế độ, đường dẫn"), không phải tham
+    số Tầng B/C; nguồn duy nhất là biến môi trường thật lúc chạy, không
+    phải file cấu hình đã commit (`config/freqtrade/config.json` CỐ Ý giữ
+    `api_key`/`secret` rỗng — TD-0242, R10).
+
+    Trả về `(api_key, api_secret)` khi đủ cả hai, để bên gọi không phải
+    đọc lại `os.environ` một lần nữa (tránh lệch nếu biến đổi giữa hai lần
+    đọc — dù hiếm, đọc MỘT LẦN vẫn là kỷ luật an toàn hơn).
+    """
+    nguon = env if env is not None else os.environ
+    api_key = nguon.get(ENV_BINANCE_API_KEY, "")
+    api_secret = nguon.get(ENV_BINANCE_API_SECRET, "")
+    thieu = [
+        ten
+        for ten, gia_tri in (
+            (ENV_BINANCE_API_KEY, api_key),
+            (ENV_BINANCE_API_SECRET, api_secret),
+        )
+        if not gia_tri
+    ]
+    if thieu:
+        raise BinanceCredentialsMissingError(
+            f"Thiếu biến môi trường {', '.join(thieu)} — đây là lỗi CẤU HÌNH cục bộ, "
+            "KHÔNG phải sự cố mạng/sàn Binance. Đặt trong `.env.binance` (tên biến xem "
+            "`.env.example`) trước khi chạy entrypoint cần đặt lệnh thật; KHÔNG BAO GIỜ "
+            "commit giá trị thật vào `config/freqtrade/config.json`."
+        )
+    return api_key, api_secret
 
 
 _trang_thai_breaker = TrangThaiBreaker()
