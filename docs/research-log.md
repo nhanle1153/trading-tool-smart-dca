@@ -2887,3 +2887,112 @@ chặn — nó không biết người chạy đang cố ý tái lập `TD-0193` 
   lockbox một lượt chạm · không phán quyết được ở mọi giai đoạn) không phụ thuộc phép đo này; chỉ
   một luận điểm PHỤ phụ thuộc, và luận điểm đó nay **đứng vững**. Viết ra trước để kết quả không bị
   đọc quá tay.
+
+## 14/09/2026 — TD-0246: DG1–DG5 bất động trên arm sản xuất. Và một câu hỏi SAI ĐƠN VỊ với một nửa số tham số.
+
+### 1. 🔴 Phát hiện lớn nhất, và nó không phải về tham số
+
+`arm_switches.py:73-75` khai `ARM_DON_TRANCHE = {Z0, Z1, Z0-T0, Z0-T1, Z0-V1, Z0-S1}` — **sáu
+trong chín arm**. `cong_ap_dung()` (`:255-256`) trả **tuple rỗng** cho cả sáu. Và
+`ZoneAbsorption.py:1006-1007`:
+
+```python
+if cong_ap_dung(self._arm) == ():
+    return None  # arm entry đơn — không bao giờ thêm tranche
+```
+
+đứng **TRƯỚC** lời gọi `danh_gia_tat_ca(...)` ở `:1031`.
+
+⇒ **DG1–DG5 không bao giờ được xét trên sáu arm đó — trong đó có CẢ arm ứng viên sản xuất `Z0-T1`
+và CẢ mốc so `Z0`.** Năm cổng, tức phần *"Smart"* của Smart DCA, là **bất động trên cấu hình sẽ lên
+tiền thật**. Trong bốn arm D4 sắp chạy (`Z0-T1`, `Z0`, `Z0-T0`, `Z3`), chỉ **`Z3`** còn xét chúng.
+
+🔑 Điều này **không phải một lỗi** — mã tự khai đúng ý định (`arm_switches.py:71-72`: *"DG1–DG5 chỉ
+có nghĩa với arm CÓ tranche 2/3"*). Nó là một **hệ quả** của chốt `DR-D4-10` §2.4 (mặc định
+single-entry) mà chưa ai viết ra: chọn single-entry **đồng thời** làm năm cổng và các tham số của
+chúng thành không quan sát được. `TD-0228` đã đo *"DCA không tạo thêm một cơ hội nào"*; đây là vế
+còn lại của cùng một chốt — nó cũng **xoá năm cổng khỏi phạm vi đo**.
+
+### 2. Câu hỏi ban đầu SAI ĐƠN VỊ với 6/12 tham số — và đó là lỗi của chính kế hoạch này
+
+Kế hoạch được duyệt hỏi *"mỗi tham số `tier_b` ràng buộc bao nhiêu **% LỆNH**"*. Đọc mã thì câu đó
+**chỉ có nghĩa với tham số dạng CỔNG**. Ba hạng, và phân biệt này là kết quả đọc mã chứ không phải
+một lựa chọn trình bày:
+
+| Hạng | Số | Nghĩa | Giá trị xuất |
+|---|---|---|---|
+| `CONG` | **2** | có sự kiện chặn/kết thúc đếm được | **% LỆNH** thật |
+| `BAT_KHA_TREN_ARM_NAY` | **4** | cấu trúc **không thể** ràng buộc trên arm này | `0.0` + `ly_do_bang_0` |
+| `DAU_VAO_LIEN_TUC` | **6** | dịch **KẾT QUẢ**, không **CHẶN** lệnh | `pending` + `ly_do_pending` |
+
+🔑 Hai hạng cuối **đều** cho *"0 sự kiện chặn"*, nhưng nghĩa trái ngược: một cái *"không thể xảy
+ra"*, một cái *"đang đếm sai thứ"*. Gộp lại là đúng thứ `N6` cấm — một số 0 không phân biệt được
+với *chưa đo*. Bản chạy đầu của tôi **đã gộp** (xuất `pending` cho cả hai) dù docstring của chính
+nó khai `BAT_KHA → 0% có LÝ DO`; tự bắt và sửa trước khi commit.
+
+⚠️ Hệ quả cho sáu tham số `DAU_VAO_LIEN_TUC`: đo được chúng **cần phân tích độ nhạy**, mà độ nhạy
+là *đánh giá cấu hình* ⇒ **tốn trial**. Nên với một nửa kiểm kê `tier_b`, câu *"nó có gánh việc
+không"* hôm nay **không mua được bằng 0 trial**. Đó là giới hạn thật của Ưu tiên 1, khai ra thay vì
+để bảng trông như đã phủ hết 12.
+
+### 3. 🔴 Đính chính của chính phiên này: **1/4** lời khai sai, KHÔNG phải 2/2
+
+Tôi đã báo chủ dự án — và viết vào ô `TASKS.md` của `TD-0246` — rằng *"cả 2 lời khai đều SAI, lệch
+hai phía ngược nhau"*, gộp `dg7_funding_frac` với `max_hold_bars_4h`. **Sai.** Đọc
+`param_status.yaml:161-164` thì `max_hold_bars_4h` khai **trung thực**:
+
+> *"§4b.3, spec dòng 1476 — chính spec gọi nó là "ỨNG VIÊN CHỐT" kèm dấu [CẦN CALIBRATE], tức tự
+> khai đây là số tạm. Đóng băng nguyên trạng; mở lại cần phân bố thời-gian-tới-kết-cục của lệnh
+> thật."*
+
+Nó **không** khai *"chưa ai chạm"*. Thứ lệch là **hàm ý của spec §10.2** (dải TIME_STOP 5–25%),
+không phải lời khai trong `param_status`. 🔑 Và con số **0%** đo được chính là thứ **điều kiện mở
+lại của nó đòi** — không lệnh nào chạm trần 24 nến.
+
+Kiểm được **bốn** lời khai, **một** sai:
+
+| Tham số | Lời khai | Kiểm |
+|---|---|---|
+| `dg7_funding_frac` | *"DG7 chỉ áp cho SHORT nên chưa có đường chạy nào chạm tới"* | 🔴 **SAI** — kết thúc **19,4%** lệnh `Z0-T1` |
+| `max_hold_bars_4h` | *"ỨNG VIÊN CHỐT, số tạm"* | ✅ trung thực |
+| `dg6d_retrace_frac` | *"chưa có đường chạy nào chạm tới"* | ✅ **ĐÚNG** — short-only (`dg6_early_invalidation.py:98-99`) **và** 0 đường đọc sản xuất |
+| `funding_rate_pct` | khai một **mâu thuẫn nội tại của spec** | ✅ trung thực — ghi nhận, không tự hoà giải |
+
+⇒ **Cùng lớp lỗi tôi đang đi tìm, mắc ngay trong việc đi tìm nó:** *sai ở NHÃN dán lên phép đo,
+không sai ở phép đo*. Con số 19,4% và 0% đều đúng; thứ sai là câu tôi dán lên chúng. Và nó lọt vào
+một **commit** (`16db105`) trước khi bị bắt — bắt được vì tôi đi đọc `frozen_rationale` của
+`max_hold` để viết bảng, không vì một lớp canh nào.
+
+### 4. Cơ chế trôi: lý lẽ kế thừa BẰNG THAM CHIẾU
+
+Phiên `-4e` nêu, tôi kiểm lại và nhận: `dg7_funding_frac` khai *"cùng lý do với
+`dg6d_retrace_frac`"* — và `dg6d` thì khai **ĐÚNG**. **Người viết không bịa: họ trỏ tới một lý lẽ
+THẬT, chỉ trỏ nhầm chỗ.**
+
+⇒ Có một phép quét **rẻ và trúng đích hơn** là đo từng tham số: tìm mọi `frozen_rationale` biện minh
+**bằng tham chiếu** (*"cùng lý do với"*, *"như"*, *"tương tự"*) thay vì bằng một sự kiện kiểm được.
+Mỗi chỗ như vậy là một chỗ lý lẽ **có thể đã đi xa khỏi chữ nó muốn**. Cùng thuốc mà
+`tu-dien-du-lieu.md` (TD-0245) dùng cho cột database: **bắt mọi nghĩa phải có `file:line`**.
+
+### 5. Một khẳng định của tôi hoá ra KHÔNG mới
+
+Tôi trình bày *"`L-Z15` kiểm sự có mặt của lời khai, không kiểm nội dung"* như một phát hiện. Đọc
+`ledger/audit_checks.py:256-262` thì **chính nó đã tự khai**:
+
+> *"'Đạt' ở đây chỉ trả lời **'cả 12 đã KHAI trạng thái chưa?'** — nhưng người đọc sẽ nghe thành
+> **'cả 12 đã được QUYẾT đúng chưa?'**. Hai câu khác nhau, và khoảng cách giữa chúng chính là hình
+> dạng của mọi bẫy PASS RỖNG dự án đã gặp."*
+
+Dự án đã biết khoảng cách đó, và `TD-0190` thêm `chua_calibrate` **đúng để phơi nó ra**. Phần mới
+của TD-0246 **không phải** nhận xét về `L-Z15` — mà là **một thực thể của khoảng cách đó** (`dg7`)
+và **cơ chế** sinh ra nó (§4). Ghi ra vì gán công cho mình ở chỗ dự án đã tự ghi là một cách làm
+loãng chính bài học.
+
+### 6. Giới hạn TỰ KHAI
+
+- **`hang` và `duong_doc` là ĐỌC TAY**, kèm `file:line` để kiểm lại; chỉ `ty_le_lenh` là máy tính
+  từ artifact. Artifact khai nhãn này ở `ranh_gioi` — đừng đọc cả bảng dưới một nhãn *"đo được"*.
+- **EXPLORE, 0 trial, chỉ ĐẾM.** Con số 19,4% là của 88 mã EXPLORE trên WFO, **không** của pool 102.
+- **6/12 tham số vẫn `pending`** và sẽ còn `pending` cho tới khi có ngân sách cho phân tích độ nhạy.
+- **Không** sửa `param_status.yaml`, **không** sửa ô `MT` nào (quy tắc 5 + 11) — chờ *"chuẩn hóa và
+  lưu"*.
