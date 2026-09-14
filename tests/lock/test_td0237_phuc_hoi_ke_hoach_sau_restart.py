@@ -77,11 +77,16 @@ class _ViTheGia:
 def _dung_strategy(ZA):
     s = ZA.ZoneAbsorption(config={"stake_currency": "USDT", "exchange": {"name": "binance"}})
     s._arm = "Z0"
-    # order_filled() còn gọi ba việc KHÔNG thuộc phạm vi TD-0237 (equity/
-    # zone đỉnh/chốt lời) và cần self.dp thật — cô lập, không dựng lại.
+    # order_filled() còn gọi BỐN việc KHÔNG thuộc phạm vi TD-0237 (equity/
+    # zone đỉnh/chốt lời/Decision Log) và cần self.dp thật — cô lập, không
+    # dựng lại. TD-0239 (_ghi_vao_lenh, đọc self.dp.runmode.value) thêm vào
+    # SAU — cùng lý do ba hàm kia đã có: `_LenhGia`/`_ViTheGia` ở trên là
+    # mock TỐI THIỂU cho ĐÚNG kịch bản MT-41, không phải Order/Trade/dp
+    # thật của Freqtrade.
     s._hang_hien_tai = lambda pair: None
     s._zone_dinh_tren = lambda pair, current_time, p_avg: []
     s._cap_nhat_chot_loi = lambda trade, current_time: None
+    s._ghi_vao_lenh = lambda pair, trade, order: None
     return s
 
 

@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -540,12 +541,36 @@ def _sinh_du_lieu(datadir: Path) -> None:
 
 
 def _chay(tmp: Path, chien_luoc: str, *, hai_ma: bool = False) -> dict:
+    """🔴 TD-0239 — CÔ LẬP BẮT BUỘC, đọc trước khi sửa hàm này.
+
+    `DEFAULT_DECISION_LOG_PATH`/`DEFAULT_CONFIG_PATH` (`tool_d/ledger/
+    decision_log.py`, `tool_d/config/loader.py`) và một loạt hằng số
+    tương tự khác (`registry/*.jsonl`, `runs/*`) đều là đường dẫn TƯƠNG
+    ĐỐI — chiến lược mở chúng dựa trên CWD của tiến trình đang chạy nó.
+    Trước `TD-0239` (nối `_ghi_vao_lenh` vào `order_filled()`), chạy
+    subprocess với `cwd=REPO_ROOT` là vô hại vì không có gì ghi ra từ
+    đường chạy backtest test. Sau đó, MỖI LẦN hàm này chạy sẽ ghi THẲNG
+    vào `registry/decision_log.jsonl` CỦA REPO — không phải sandbox.
+    Phát hiện được (phiên `-54` đọc thấy 6 dòng rác trong sổ thật, khớp
+    đúng dữ liệu fixture LTC/XRP của file này) sau khi `TD-0239` đã nối
+    xong và một lượt full suite đã chạy.
+
+    ⇒ Copy TOÀN BỘ `config/` sang `tmp/config/` (một lần, giữa các lần
+    gọi lại cùng `tmp`), chạy subprocess với `cwd=tmp` — mọi đường dẫn
+    tương đối mà chiến lược mở ra đều resolve vào `tmp/`, không đụng
+    một byte nào của repo thật. `--strategy-path`/`REPO_ROOT` vẫn
+    ABSOLUTE (mã chiến lược không cần copy). Cùng khuôn `do_td0193_
+    lenh_nam_explore.py::_yaml_voi_arm` (gợi ý của phiên `-54`).
+    """
     nhan = f"{chien_luoc}{'_2ma' if hai_ma else ''}"
     datadir, userdir = tmp / "data", tmp / f"userdir_{nhan}"
     if not (datadir / "futures").exists():
         _sinh_du_lieu(datadir)
     (userdir / "strategies").mkdir(parents=True, exist_ok=True)
-    cfg = json.loads((REPO_ROOT / "config" / "freqtrade" / "config.json").read_text(encoding="utf-8"))
+    cfg_dir = tmp / "config"
+    if not cfg_dir.exists():
+        shutil.copytree(REPO_ROOT / "config", cfg_dir)
+    cfg = json.loads((cfg_dir / "freqtrade" / "config.json").read_text(encoding="utf-8"))
     cfg["exchange"]["pair_whitelist"] = ["LTC/USDT:USDT", "XRP/USDT:USDT"] if hai_ma else ["LTC/USDT:USDT"]
     cfg["max_open_trades"] = 2 if hai_ma else 1
     cfg["stake_amount"] = 100  # bị custom_stake_amount ghi đè — nếu KHÔNG, ca cỡ lệnh bên dưới đỏ
@@ -559,7 +584,7 @@ def _chay(tmp: Path, chien_luoc: str, *, hai_ma: bool = False) -> dict:
             "--strategy", chien_luoc, "--strategy-path", str(REPO_ROOT / "user_data" / "strategies"),
             "--timerange", TIMERANGE, "--timeframe-detail", "5m", "--cache", "none", "--export", "trades",
         ],
-        capture_output=True, text=True, timeout=900, cwd=REPO_ROOT,
+        capture_output=True, text=True, timeout=900, cwd=tmp,
     )
     assert proc.returncode == 0, f"backtest {chien_luoc} thất bại:\n{proc.stdout[-3000:]}\n{proc.stderr[-3000:]}"
     # 🔴 Freqtrade NUỐT exception từ callback (`strategy_safe_wrapper`: log

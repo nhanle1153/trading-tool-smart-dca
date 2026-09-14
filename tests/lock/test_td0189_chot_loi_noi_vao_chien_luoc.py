@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -217,10 +218,18 @@ def _sinh_du_lieu_rieng(datadir: Path) -> None:
 
 
 def _chay_rieng(tmp: Path) -> dict:
+    """🔴 TD-0239 — CÔ LẬP BẮT BUỘC (xem docstring `test_td0187::_chay`).
+    `DEFAULT_DECISION_LOG_PATH` tương đối ⇒ chạy với `cwd=REPO_ROOT` ghi
+    THẲNG vào `registry/decision_log.jsonl` CỦA REPO kể từ khi `TD-0239`
+    nối `_ghi_vao_lenh` vào `order_filled()`. Copy `config/` sang `tmp/`,
+    chạy với `cwd=tmp`."""
     datadir, userdir = tmp / "data_rieng", tmp / "userdir_rieng"
     t0, t1 = _sinh_du_lieu_rieng(datadir)
     (userdir / "strategies").mkdir(parents=True, exist_ok=True)
-    cfg = json.loads((REPO_ROOT / "config" / "freqtrade" / "config.json").read_text(encoding="utf-8"))
+    cfg_dir = tmp / "config"
+    if not cfg_dir.exists():
+        shutil.copytree(REPO_ROOT / "config", cfg_dir)
+    cfg = json.loads((cfg_dir / "freqtrade" / "config.json").read_text(encoding="utf-8"))
     cfg["exchange"]["pair_whitelist"] = ["LTC/USDT:USDT"]
     cfg["max_open_trades"] = 1
     cfg["stake_amount"] = 100
@@ -234,7 +243,7 @@ def _chay_rieng(tmp: Path) -> dict:
             "--strategy", SAN_XUAT, "--strategy-path", str(REPO_ROOT / "user_data" / "strategies"),
             "--timerange", f"{t0}-{t1}", "--timeframe-detail", "5m", "--cache", "none", "--export", "trades",
         ],
-        capture_output=True, text=True, timeout=900, cwd=REPO_ROOT,
+        capture_output=True, text=True, timeout=900, cwd=tmp,
     )
     assert proc.returncode == 0, f"backtest thất bại:\n{proc.stdout[-3000:]}\n{proc.stderr[-3000:]}"
     log = proc.stdout + proc.stderr

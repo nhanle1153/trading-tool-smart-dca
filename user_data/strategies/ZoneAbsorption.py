@@ -134,6 +134,7 @@ from tool_d.dg6_early_invalidation import dg6_dong_vi_the, dieu_kien_a, dieu_kie
 from tool_d.funding_stop import funding_paid_cumulative, is_funding_stop_triggered
 from tool_d.gap_ms import LenhSl, sinh_ban_ghi_doi_sl
 from tool_d.ledger.decision_log import DEFAULT_DECISION_LOG_PATH, ghi_neu_chua_co
+from tool_d.vao_ra_lenh import sinh_ban_ghi_vao_lenh
 from tool_d.sizing import (
     HeSoMult,
     KeHoachCoLenh,
@@ -841,6 +842,34 @@ class ZoneAbsorption(IStrategy):
         # tức khi tranche 2/3 khớp" — `trade.open_rate` (p_avg THẬT, khác
         # p_avg KẾ HOẠCH đóng băng trong `kh`) chỉ đổi ở đúng những lần này.
         self._cap_nhat_chot_loi(trade, current_time)
+        # TD-0239 — ghi Decision Log VAO_RA_LENH cho lần tranche vừa khớp
+        # này. Đặt CUỐI CÙNG, sau khi custom_data đã ghi xong: Freqtrade
+        # NUỐT exception của callback (`strategy_safe_wrapper`, TD-0187 đã
+        # đo 12 lần SizingError bị nuốt trong im lặng) — nếu bản ghi này
+        # raise (fail-closed, N6), phần logic thiết yếu ở trên (kế hoạch,
+        # TP1) đã hoàn thành SẠCH; chỉ mất một dòng Decision Log, không
+        # mất một lệnh. Đặt fail-closed ở ĐẦU hàm sẽ mất luôn phần logic
+        # phía sau nó — đúng lỗi TD-0187 đã bắt được ở SizingError.
+        self._ghi_vao_lenh(pair, trade, order)
+
+    def _ghi_vao_lenh(self, pair: str, trade, order) -> None:
+        """TD-0239 (§8.3) — một bản ghi `VAO_RA_LENH` cho MỖI lần entry
+        khớp. Chỉ gọi từ nhánh entry của `order_filled()` (đã lọc bằng
+        `order.ft_order_side == trade.entry_side` ở đầu hàm gọi) — hàm
+        này KHÔNG tự kiểm lại điều đó, không phải điểm nghẽn validate
+        (xem docstring `vao_ra_lenh.py`)."""
+        ban_ghi = sinh_ban_ghi_vao_lenh(
+            order_id=order.order_id,
+            ts=order.order_filled_date,
+            trade_id=trade.id,
+            pair=pair,
+            tranche=trade.nr_of_successful_entries,
+            side=order.ft_order_side,
+            price=order.safe_price,
+            amount=order.safe_amount_after_fee,
+            nguon=self.dp.runmode.value,
+        )
+        ghi_neu_chua_co(DEFAULT_DECISION_LOG_PATH, ban_ghi)
 
     def _phuc_hoi_ke_hoach_sau_restart(self, pair: str, trade) -> dict:
         """TD-0237 (MT-41) — phục hồi `cho` (hình `{"co_lenh", "ke_hoach",
