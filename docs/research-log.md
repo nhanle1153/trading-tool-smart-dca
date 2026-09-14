@@ -2756,3 +2756,42 @@ ghi: **đề xuất một thay đổi cho một module mà chưa đọc docstrin
 
 📌 Cả hai phương án — cái được chọn và cái bị loại — đều ghi vào `MT-37`, đúng lý do đã ghi hai phép
 kiểm **thất bại** vào `DR-FAI-01` §4b: người sau khỏi đề xuất lại thứ đã bị bác.
+
+## 14/09/2026 — `decision_log.jsonl` là sổ JSONL DUY NHẤT không có JSON Schema, phát hiện bởi phiên `-4e` khi làm `TD-0245`
+
+Ghi chẩn đoán trước khi nối thêm loại bản ghi vào cửa ghi này (`TD-0239`) — đúng tinh thần
+"đo rẻ hơn đoán" và quy tắc 11 (ghi nhận mâu thuẫn, không tự chọn bên rồi code tiếp).
+
+`ARCHITECTURE.md:259-269` tự phát biểu nguyên tắc: *"Nguồn sự thật hình dạng mỗi sổ là file JSON
+Schema trong `registry/schemas/`, không phải một bảng chép tay trong `.md`"*, và liệt kê đúng BA sổ
+được cưỡng chế: `trial_registry.jsonl` (`trial_event.schema.json`), `idea_queue.jsonl`
+(`idea_queue_entry.schema.json`), `param_change_proposals.jsonl` (`param_change_proposal.schema.json`).
+
+`decision_log.jsonl` (§8.3, mở từ `TD-0144`, mở rộng bởi `TD-0201`/`TD-0244`) là một sổ JSONL cùng
+họ — có `dedup_key()`, cửa ghi append-only, `flock` — nhưng **không** nằm trong bảng đó và **không**
+có schema trong `registry/schemas/`. Xác minh trực tiếp (không tin lời khai của `-4e`):
+
+```
+$ ls registry/schemas/
+arm_result.schema.json  fold_record.schema.json  idea_queue_entry.schema.json
+param_change_proposal.schema.json  trial_event.schema.json
+$ grep -n "schema\|jsonschema" src/tool_d/ledger/decision_log.py
+(0 kết quả)
+```
+
+Xác nhận: cả 5 file schema đều không phải của `decision_log`; module không tham chiếu
+`jsonschema` ở bất kỳ đâu.
+
+**Không phải "0 kiểm gì cả"** — `dedup_key()` đã raise nếu thiếu trường bắt buộc theo `TRUONG_KHOA`
+hoặc `nguon` sai giá trị (TD-0201). Nhưng đó là kiểm THỦ CÔNG, không cưỡng chế kiểu dữ liệu hay chặn
+trường THỪA (`additionalProperties: false`) — khác hẳn `jsonschema.validate` ở cửa ghi của ba sổ kia.
+
+**Phân loại 🟡, không phải 🔴:** rủi ro đã tồn tại từ `TD-0244` (nối `DOI_SL` vào sản xuất), không
+phải cái mới do `TD-0239` tạo ra; và Tool D còn ở D4 (backtest), chưa D10/D11 (dry-run/live) nên dữ
+liệu sai hình dạng gây hại thấp, sửa được trước khi có tiền thật. Nhưng phải xử **trước go-live**:
+càng nối thêm loại bản ghi vào cửa ghi này (`TD-0239` sắp làm), càng nhiều dữ liệu chảy qua một sổ
+không được cưỡng chế hình dạng.
+
+**Không tự viết schema trong lúc làm `TD-0239`** — đó là mở rộng phạm vi ngoài tiêu chí XONG đã ghi
+(quy tắc 4), và ai maintain/additionalProperties chặn gì là quyết định riêng. Nêu ra đây, chờ chủ dự
+án quyết mở mã việc mới, không tự chọn.
