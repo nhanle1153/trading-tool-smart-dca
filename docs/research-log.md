@@ -2795,3 +2795,95 @@ không được cưỡng chế hình dạng.
 **Không tự viết schema trong lúc làm `TD-0239`** — đó là mở rộng phạm vi ngoài tiêu chí XONG đã ghi
 (quy tắc 4), và ai maintain/additionalProperties chặn gì là quyết định riêng. Nêu ra đây, chờ chủ dự
 án quyết mở mã việc mới, không tự chọn.
+
+## 14/09/2026 — TD-0228: `Z0` và `Z3` trùng tập TUYỆT ĐỐI. Và một việc không cần viết dòng mã nào.
+
+### 1. Khoảng hở là thật — xác minh trên đĩa TRƯỚC khi chạy
+
+Ô việc `TASKS.md:379` khai rằng *"`Z0` và `Z3` TRÙNG CỠ (22 = 22) nhưng CHƯA có phép đo nào chứng
+minh TRÙNG TẬP — và `DR-D4-10 §2.4` đang dựa vào giả định đó"*. Kiểm bằng cách liệt kê khoá
+`so_tap_lenh` của **mọi** artifact đã có:
+
+| Artifact | Các cặp đã so |
+|---|---|
+| `td0205-lenh-nam-wfo-explore` | `Z0-T0 vs Z0-T1` · `Z0-T0 vs Z0` · `Z0-T1 vs Z0` |
+| `td0212-ba-arm-sau-va` | y như trên |
+| `td0213-arm-dca-sau-va` | `Z3 vs Z3b` · `Z3 vs Z2` · `Z3b vs Z2` |
+| `td0214-ba-arm-cuoi-sau-va` | `Z1 vs Z0-V1` · `Z1 vs Z0-S1` · `Z0-V1 vs Z0-S1` |
+| `td0215-z1-vs-z0-tap-lenh` | `Z0 vs Z1` |
+
+⇒ **Không lượt nào từng có `Z0` cùng lượt với `Z3`/`Z3b`/`Z2`.** Khoảng hở đúng như ô việc khai.
+
+### 2. Kết quả — cách đọc đã viết TRƯỚC, và điều kiện đã đạt
+
+`docs/du-lieu-do/td0228-z0-vs-dca-tap-lenh.json` — EXPLORE 88 mã, WFO `[T1,T2]`, **0 trial**,
+bốn arm chạy **CÙNG MỘT LƯỢT** (không ghép chéo số giữa hai file khác lượt, tiền lệ
+`TD-0213`/`TD-0215`):
+
+| Cặp | `n_A` | `n_B` | `n_giao` | `chi_co_o_A` | `chi_co_o_B` | Trùng khớp |
+|---|---|---|---|---|---|---|
+| `Z0 vs Z3` | 22 | 22 | **22** | 0 | **0** | ✅ |
+| `Z0 vs Z3b` | 22 | 22 | **22** | 0 | **0** | ✅ |
+| `Z0 vs Z2` | 22 | 22 | **22** | 0 | **0** | ✅ |
+
+Cả **6/6** cặp trùng khớp hoàn toàn. Cách đọc viết trước ở ô việc — *"`chi_co_o_B = 0` và
+`n_giao = 22` ⇒ trùng tập, luận điểm *'chọn `Z0` không mất lệnh nào'* của `DR-D4-10 §2.4` đứng
+vững"* — **đã đạt**, không phải diễn giải sau khi thấy số.
+
+🔑 **Và cơ chế khớp với chính luận điểm, không chỉ con số khớp:** `phan_bo_tranche` của `Z0` là
+`{1: 22}` (100% một tranche) trong khi `Z3`/`Z3b`/`Z2` là `{1: 12, 2: 8, 3: 2}`. **Cùng tập lệnh,
+khác chuyện xảy ra SAU khi vào lệnh** — đúng chữ §2.4: *"DCA không tạo thêm một cơ hội nào"*.
+`exit_reason` cũng khác (`Z0`: 8/6/8 · `Z3`: 7/8/7), tức phép so paired của `DR-D4-09` §2.1 **hợp
+lệ về cấu trúc** cho cặp `Z0 vs Z3` — `n_giao = n_A = n_B`, không có phần không giao phải khai riêng.
+
+**Đối chứng độc lập:** ba cặp `Z3`/`Z3b`/`Z2` trong lượt này **tái lập đúng** số của `td0213`.
+
+### 3. 🟡 Ghi nhận — `DR-D4-10` §2.5 mô tả một khác biệt EXIT bằng ngôn ngữ của khác biệt TẬP LỆNH
+
+§2.5 bảng hạng (2) viết: *"`Z3b` vs `Z3` (**1/22** lệnh)"*, và §2.5 phần dưới viết *"đúng **1/22
+lệnh** (`DG6_EARLY_INVALIDATION` nổ 1 lần)"*. Nhưng artifact **của chính `TD-0213`** ghi
+`Z3 vs Z3b → trung_khop_hoan_toan: true`, và lượt này tái lập y vậy. Thứ khác nhau là
+**`exit_reason`** (`Z3b` có `DG6_EARLY_INVALIDATION: 1` và `trailing_stop_loss: 6`, `Z3` có
+`trailing_stop_loss: 7`) — **cùng một lệnh, thoát khác cách**, không phải một lệnh khác nhau.
+
+Con số `1` **không sai**; cái sai là **NHÃN** dán lên nó. Hệ quả không đổi kết luận nào của §2.5
+(hạng (2) *"biến gần như không tồn tại"* vẫn đúng — một khác biệt exit trên 22 lệnh cũng không phân
+xử được *"vượt ≥ 20%"*), nhưng nó đổi **cách đọc**: `Z3b` **không** là hạng (3) của §2.5 (tập lệnh
+không lệch), và một người đọc §2.5 rồi đi tìm "1 lệnh mồ côi" sẽ không tìm thấy.
+🔴 **Ghi nhận theo quy tắc 5/11, KHÔNG tự sửa `DR-D4-10`** — chờ lệnh *"chuẩn hóa và lưu"* để vào
+mục 7 `back-end-note.md`. Đây đúng lớp lỗi dự án đã trả giá nhiều lần: *sai ở NHÃN dán lên phép đo,
+không sai ở phép đo*.
+
+### 4. 🔑 Bài học về cách làm: việc này KHÔNG cần viết một dòng mã nào
+
+Ô việc đọc như một việc dựng bộ đo mới. Đọc `docs/du-lieu-do/do_td0193_lenh_nam_explore.py` thì
+**mọi thứ đã có**: `--arms` chạy nhiều arm trong **một** lượt, `_so_tap_lenh()` đã tính đủ sáu
+trường cho **từng cặp**, `--tu/--den` đổi cửa sổ, `--ket-qua` ghi file mới, `--nguon`/`--ranh-gioi`
+khai xuất xứ. Thậm chí đã có sẵn **chốt fail-closed** đúng cho ca này (`main()`: *"Đổi cửa sổ mà vẫn
+ghi đè artifact cũ — truyền `--ket-qua`"*).
+
+⇒ TD-0228 là **một lượt chạy đúng tham số**, không phải một bộ đo mới. Ghi ra vì vế đối của nó đắt:
+viết một script thứ hai cho cùng phép so sẽ tạo **hai đường tính** cho cùng một đại lượng — đúng
+hình dạng `TD-0168` (*"33 phép kiểm canh một hàm mà đường sản xuất chưa từng gọi"*), chỉ ở chiều
+sinh ra nó thay vì chiều phát hiện ra nó.
+
+📌 Kèm một chi tiết nhỏ đã kiểm chứ không giả định: `--ranh-gioi` **phải** truyền, vì mặc định của
+script mang **trích dẫn SAI** về `DR-D0PRE-05` §4 (`MT-24`) và script cố ý chỉ **cảnh báo**, không
+chặn — nó không biết người chạy đang cố ý tái lập `TD-0193` hay đang quên cờ.
+
+### 5. Giới hạn TỰ KHAI
+
+- **EXPLORE, không phải pool** — `DR-D0PRE-05` §4: sinh giả thuyết, 0 trial. Con số 22 lệnh /
+  44,8 lệnh/năm quy đổi **không** là con số của pool 102 mã.
+- **Không có 5m trong EXPLORE** ⇒ chạy KHÔNG `--timeframe-detail`, khớp lệnh/TP ở độ phân giải 1H.
+  Đủ để **ĐẾM lệnh**, **không** đủ để nói về TP. Ba cặp tái lập `td0213` nên hạn chế này không mới.
+- **Chỉ ĐẾM** — không expectancy, không PnL. Câu *"`Z3` tốt hơn hay tệ hơn `Z0`"* **không** được
+  trả lời ở đây và không được suy ra từ đây.
+- ⚠️ **Trùng tập trên EXPLORE không chứng minh trùng tập trên pool.** `MT-34` đã ghi: rổ pool là ảnh
+  chụp 09/2026 (`K = 52,6%` so với rổ đúng tại `T1`), và tranh chỗ mở làm việc nới/đổi rổ **vừa
+  thêm vừa đánh bật** lệnh (`MT-33`). Với 22 lệnh trên 88 mã thì gần như không có cạnh tranh chỗ mở;
+  trên một rổ khác thì chưa ai đo.
+- **Dù kết quả thế nào cũng KHÔNG lật `DR-D4-10` §2.4** — ba căn cứ chính của nó (fail-closed ·
+  lockbox một lượt chạm · không phán quyết được ở mọi giai đoạn) không phụ thuộc phép đo này; chỉ
+  một luận điểm PHỤ phụ thuộc, và luận điểm đó nay **đứng vững**. Viết ra trước để kết quả không bị
+  đọc quá tay.
