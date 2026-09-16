@@ -99,6 +99,7 @@ flowchart TD
 tool-d-smart-dca/                  ← git root = E:\Trading Tool_Smart DCA
 ├─ tool-d-smart-dca.md             ← 🔴 SPEC v8, NGUỒN SỰ THẬT, chỉ đọc
 ├─ CLAUDE.md  ARCHITECTURE.md  TASKS.md  back-end-note.md
+├─ tu-dien-du-lieu.md              ← MÁY SINH từ schema SQLite thật (TD-0245), đừng sửa tay
 ├─ template/                       ← khuôn mẫu quy trình, CHỈ ĐỌC
 ├─ .gitattributes                  ← ép LF (xem 3.2)
 ├─ docs/
@@ -116,7 +117,7 @@ tool-d-smart-dca/                  ← git root = E:\Trading Tool_Smart DCA
 ├─ lockbox/                        ← NGOÀI user_data (xem 3.1)
 ├─ registry/                       ← trial_registry.jsonl · idea_queue.jsonl ·
 │                                    param_change_proposals.jsonl · runtime_state.json
-│  └─ schemas/                     ← NGUỒN SỰ THẬT hình dạng 3 sổ (xem mục 7)
+│  └─ schemas/                     ← NGUỒN SỰ THẬT hình dạng: 5 schema (xem mục 7)
 ├─ src/tool_d/
 │  ├─ measurement/  guard · provenance · tri_state · hashing · gitinfo
 │  ├─ config/       loader · dof
@@ -124,6 +125,8 @@ tool-d-smart-dca/                  ← git root = E:\Trading Tool_Smart DCA
 │  ├─ lockbox/      seal · access_log
 │  ├─ gates/        thresholds · dsr
 │  ├─ reporting/    report_model
+│  ├─ tu_dien/      quet_cot · y_nghia_cot · sinh_tu_dien · ghi_tu_dien ·
+│  │                kiem_quy_tac_7 (TD-0245 — Quy tắc 7 thành máy)
 │  ├─ api_client/   binance_public (R1 single egress Binance) ·
 │  │                freqtrade_control (single egress RIÊNG — control API
 │  │                cục bộ của Freqtrade, TD-0241)
@@ -246,6 +249,48 @@ và giả vờ chưa từng chạy.
 
 ## 7. Sơ đồ quan hệ dữ liệu (ERD)
 
+**Cập nhật 14/09/2026 (TD-0245) — ĐÃ CÓ `tu-dien-du-lieu.md`, và nó do MÁY SINH.**
+Điều kiện kích hoạt ở đoạn lịch sử bên dưới chín theo hướng khác dự kiến: không phải testnet ghi
+lệnh, mà là `TD-0238`/`TD-0240` sắp **đọc** cột `trades`/`orders` — Quy tắc 7 chặn cả hai vì từ
+điển chưa tồn tại. Gà-và-trứng của Quy tắc 8 (*"xuất schema từ database thật, sau khi migration đã
+chạy"*, trong khi **không có file `.sqlite` nào trên đĩa**) giải bằng cách gọi chính
+`freqtrade.persistence.init_db()` lên `/tmp` trong container: `models.py:48` chạy `create_all()`
+**rồi** `check_migrate()`, cùng đường mã dry-run sẽ đi. Đo được **6 bảng / 109 cột**
+(`docs/du-lieu-do/td0245-schema-sqlite-freqtrade.json`, Freqtrade 2026.8 · `9f10e35`).
+
+```
+trades ──1:N──> orders              (orders.ft_trade_id → trades.id)
+       └─1:N──> trade_custom_data   (trade_custom_data.ft_trade_id → trades.id)
+
+wallet_history   pairlocks   KeyValueStore    (độc lập, không khoá ngoại)
+```
+
+🔑 **Từ điển không gõ tay một dòng nào.** Kiểu/PK/NOT NULL/khoá ngoại suy thẳng từ `PRAGMA`; chỉ cột
+*Ý nghĩa* do người viết, và phải có `file:line` trong mã nguồn Freqtrade — không có thì ghi
+`⏳ chưa tra cứu` (39/109 cột đã tra lúc khởi tạo). Cột *Dùng bởi* sinh từ phép quét AST mã sản xuất,
+nên **thêm một chỗ đọc DB mới thì phải sinh lại từ điển** (`-m tool_d.tu_dien.ghi_tu_dien`) —
+`tests/lock/test_td0245_tu_dien_soi_schema_that.py` so từng ký tự và đỏ nếu quên. Cùng file đó
+cưỡng chế Quy tắc 7: mã sản xuất đọc một cột chưa tra là đỏ.
+
+**Bảng schema HIỆN HÀNH** (thay bảng 07/09 bên dưới, bảng đó còn lại làm lịch sử):
+
+| Sổ / bản ghi | Schema | Cưỡng chế bởi |
+|---|---|---|
+| `trial_registry.jsonl` | `trial_event.schema.json` | `ledger/registry.py` · L-Z10/11/12 · TD-0130 · TD-0150 |
+| `idea_queue.jsonl` | `idea_queue_entry.schema.json` | `ledger/idea_queue.py` · L-Z16/17 · TD-0119a/b · TD-0120 · TD-0124 |
+| `param_change_proposals.jsonl` | `param_change_proposal.schema.json` | `ledger/param_proposals.py` · L-Z26 |
+| bản ghi ARM (chưa có sổ `.jsonl`) | `arm_result.schema.json` | `gates/arm_record.py` · dùng bởi `gates/d4_gate.py` · TD-0232 · TD-0236 |
+| bản ghi FOLD (chưa có sổ `.jsonl`) | `fold_record.schema.json` | `wfo/fold_record.py` · TD-0146 · ⚠️ chưa có người gọi sản xuất ngoài module |
+| `decision_log.jsonl` | ❌ **CHƯA CÓ** | `ledger/decision_log.py` chỉ cưỡng chế khoá chống trùng + `nguon`, **không** `jsonschema.validate` — lệch nguyên tắc 🔑 bên dưới; đã ghi `docs/research-log.md` 14/09, chưa thành `MT` |
+
+⚠️ **Ngoài phạm vi từ điển:** hình dạng bên trong `trade_custom_data.cd_value` (5 khoá riêng của
+Tool D) chưa có schema nào; và các sổ JSONL vẫn lấy JSON Schema làm nguồn sự thật, **không** chép
+vào từ điển — đúng ràng buộc đoạn cuối mục này.
+
+*(Đoạn bên dưới giữ nguyên làm lịch sử.)*
+
+🔴 **ĐÍNH CHÍNH 14/09/2026 cho câu ngay dưới:** *"Chưa có"* không còn đúng — xem khối trên.
+
 **Chưa có.** D0-PRE không tạo bảng cơ sở dữ liệu nào — sổ sách là JSONL append-only,
 không phải DB quan hệ. `tu-dien-du-lieu.md` sẽ khởi tạo khi Freqtrade bắt đầu ghi SQLite lệnh
 (sớm nhất là D3.5 testnet). Đây là quyết định có ý thức, không phải bỏ sót.
@@ -281,3 +326,4 @@ mô tả cả ba sổ JSONL này thì phải **sinh/kiểm tự động từ sch
 | 06/09/2026 | Khởi tạo | — | Cây thư mục + 3 bất biến + luồng một lần chạy | Giai đoạn 2 của quy trình vibe-code |
 | 07/09/2026 | Sổ thứ ba + hai cửa GHI | `LEDGER` có 2 sổ JSONL; `entrypoints/` 8 file, tất cả chỉ ĐỌC sổ | Thêm `param_change_proposals.jsonl` + `registry/schemas/` vào sơ đồ và cây thư mục; `ledger/` thêm `idea_queue` · `param_proposals`; mục 7 ghi rõ schema là nguồn sự thật hình dạng sổ | TD-0124 + TD-0125 (OQ-13): hai kênh nhập liệu có luật nhưng không có máy canh. 🔑 Cửa ghi đặt làm **cờ trên E6**, KHÔNG phải entrypoint thứ 9 — `entrypoints/` vẫn **đúng 8 file** (§0d.2 dòng 664, L-Z36). Phương án “CLI nằm ngoài `entrypoints/`” bị loại có ý thức: không vi phạm *chữ* của L-Z36 nhưng mở đúng lỗ hổng danh sách đóng tồn tại để bịt |
 | 07/09/2026 | `trial_event.schema.json` biết thêm 2 trường **chỉ dành cho dòng CTRL**: `reproduces_trial_id` (dạng *tái lập*) và `ctrl_output_whitelist` (dạng *đo thước*, khai luôn danh sách CHO PHÉP + `minItems: 1` + `uniqueItems`) | Sự kiện RESERVE có 15 khoá; dòng CTRL không khai được vì sao nó được miễn kế toán | Thêm 2 khoá tuỳ chọn; lời khai CTRL nằm TRONG sổ để audit tự đối chiếu lại được | TD-0130 (MT-08): CTRL đứng ngoài ngân sách N nên *khai CTRL* là đặc quyền — không thể nhận lời khai suông. **Không thêm bảng CSDL nào** → quyết định hoãn `tu-dien-du-lieu.md` tới D3.5 **giữ nguyên**, nguồn sự thật vẫn là schema trên đĩa. Ràng buộc liên-dòng (hash khớp bản ghi gốc) cố ý **không** nhân đôi vào schema — nó ở cửa ghi, một chỗ |
+| 14/09/2026 | Khởi tạo `tu-dien-du-lieu.md` + ERD 6 bảng + module `src/tool_d/tu_dien/`; bảng schema hiện hành 3 → 5 schema + 1 sổ chưa có schema | Mục 7 ghi *"Chưa có"* ERD; từ điển **hoãn** tới khi Freqtrade ghi SQLite lệnh; bảng schema liệt kê 3 (thiếu `arm_result`, `fold_record`) | ERD `trades` 1:N `orders` · 1:N `trade_custom_data`, ba bảng độc lập; từ điển **máy sinh** từ artifact đo thật; cột *Ý nghĩa* ba trạng thái; Quy tắc 7 có test khoá | TD-0245. Quy tắc 7 chặn `TD-0238`/`TD-0240`. 🔑 Không file `.sqlite` nào trên đĩa ⇒ gọi `init_db()` của chính Freqtrade trong container rồi `PRAGMA table_info` (đúng chữ Quy tắc 8). Lời khai *"6 bảng / 109 cột"* lưu hành trước đó không có xuất xứ — **đo lại mới nhận**, và khớp. Chữ cũ mục 7 giữ nguyên làm lịch sử, gắn đính chính |
