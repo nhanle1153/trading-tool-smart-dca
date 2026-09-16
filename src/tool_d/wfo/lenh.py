@@ -16,8 +16,9 @@ TD-0184 còn 🔓). Đường đọc fill đó là việc của lõi bộ chạy
 🔴 Không có bộ chuyển `chay_mot_fold` ở đây: một lượt chạy toàn cửa sổ đọc dữ
 liệu tới `T2`, mà `chay_wfo` → `kiem_pham_vi_du_lieu` tầng (b) (TD-0148) đòi
 `observed_end ≤ test_end − 1 ngày` của TỪNG fold. Bộ chuyển chỉ qua được bằng
-cách KHAI ngày giả — đúng bẫy "lời khai" TD-0148 sinh ra để chặn. Chờ chủ dự
-án chốt (`DR-D9-01` §5 đính chính).
+cách KHAI ngày giả — đúng bẫy "lời khai" TD-0148 sinh ra để chặn. ✅ Chủ dự án
+chốt 17/09/2026 (`DR-D9-01` §5.1): D9 KHÔNG đi qua `chay_wfo`; cắt lát bằng module
+này, L-Z55 tầng (a) + L-Z47 kiểm trên cả lượt.
 """
 
 from __future__ import annotations
