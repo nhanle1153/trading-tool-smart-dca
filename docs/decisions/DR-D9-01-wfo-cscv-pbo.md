@@ -256,6 +256,26 @@ mỗi cấu hình trong tập §2:
 - `chay_wfo` coi một fold dưới sàn là cả chuỗi `unreadable` (`MT-36` phần còn mở) — **giữ nguyên**, không
   sửa trong khối này.
 
+### 5.1 🔴 ĐÍNH CHÍNH 17/09/2026 — D9 KHÔNG đi qua `chay_wfo` (chữ gạch dưới đây giữ làm lịch sử)
+
+> ~~`chay_mot_fold` của `wfo/orchestrator.py` trở thành **bộ cắt lát** trên một lượt chạy~~
+
+**Vì sao câu đó sai — lộ ra khi viết TD-0283, trước dòng mã nào của bộ chuyển:** `chay_wfo` gọi
+`kiem_pham_vi_du_lieu()` tầng (b) (TD-0148) cho TỪNG fold, đòi `observed_end ≤ test_end − 1 ngày` của chính
+fold đó. Một lượt toàn cửa sổ đọc tới `T2` ⇒ fold 1 và fold 2 bị từ chối. Bộ chuyển chỉ qua được bằng cách
+**khai** ngày giả — đúng bẫy "lời khai" TD-0148 sinh ra để chặn. Hai quyết định chạm nhau (quy tắc 11):
+§5 (một lượt, cắt lát) và TD-0148 (L-Z55 tầng b theo fold).
+
+✅ **Chủ dự án chốt 17/09/2026: giữ "một lượt, cắt lát"; D9 KHÔNG đi qua `chay_wfo`.**
+- D9 cắt lát trực tiếp bằng `wfo/lenh.py` (`cat_lat_theo_fold`, `cat_lat_theo_khoi`).
+- **L-Z55 tầng (a)** (biên WFO `[T1, T2]`) và **L-Z47** kiểm trên **cả lượt**, ngày đọc từ dataframe thật.
+- Không ghép đường vốn theo fold (một lượt đã là một đường vốn liên tục).
+- `chay_wfo` và tầng (b) **giữ nguyên, không nới** — vẫn đúng cho thiết kế mỗi-fold-một-backtest.
+- **Vì sao bỏ tầng (b) ở D9 là an toàn, không phải nới:** tầng (b) chặn rò dữ liệu tương lai giữa các fold
+  khi fold SAU dùng kết quả KHỚP trên fold TRƯỚC. D9 không khớp tham số nào theo fold (`DR-D3-01` §2), và
+  backtest nhân quả (H4-D; `lookahead-analysis` thật ở TD-0106) ⇒ lệnh trong đoạn test không đọc được nến sau nó. Tức mối đe doạ tầng (b)
+  canh không tồn tại trên đường này. 🔴 Nếu D9 về sau khớp bất kỳ thứ gì theo fold, lập luận này hết đúng.
+
 ---
 
 ## 6. Cổng D9
@@ -366,7 +386,7 @@ luật hoà · chạy lại một cấu hình *"vì nghi ngờ"* bằng B1.
 | `TD-0280` | DR này | — |
 | `TD-0281` | Khoá `tier_c.cscv` trong YAML (N4) + đối chiếu khối băm §4.5 + DOF | §4.5 |
 | `TD-0282` | `gates/cscv.py` hàm thuần `tinh_pbo` | §2 gộp · §4 |
-| `TD-0283` | `wfo/lenh.py` bản ghi từng lệnh + cắt lát fold/khối; bộ chuyển `chay_mot_fold` | §5 |
+| `TD-0283` | `wfo/lenh.py` bản ghi từng lệnh + cắt lát fold/khối (không có bộ chuyển `chay_mot_fold` — §5.1) | §5 · §5.1 |
 | `TD-0284` | Cửa B1 `dataset = WFO` tại `reserve()` — nhãn (a) `B1` + `dataset`, sửa `ung_vien.py:185` + `audit_checks.py:275` | §3 · §3.1 · §6.1 |
 | `TD-0285` | `evaluate_branch1(..., pbo_chan)` + `gates/d9_gate.py` | §6.2 · §7 |
 | `TD-0286` | Bộ chạy D9 trên E2 `run_wfo.py` | §5 · §6.1 |
