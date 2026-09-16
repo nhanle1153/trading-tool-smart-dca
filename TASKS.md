@@ -627,6 +627,48 @@
 
 ---
 
+## Khối 23 — D9: Walk-forward đủ phân hoạch + PBO/CSCV nâng lên P0 (mở 17/09/2026 theo yêu cầu chủ dự án)
+
+> 🔴 **Spec KHÔNG có đặc tả D9.** Căn cứ duy nhất: `spec:4287-4288` (PBO ≤ 0,5 qua CSCV), `:4326` *"nâng lên P0
+> ở GATE TOOL D (D9), nơi WFO đã sinh đủ cặp IS/OOS để CSCV có power"*, `:4349` (H18), `:4526-4531` (② → ③).
+> Mở lại phần D9 của quyết định *"HOÃN đặc tả D5–D9"* 13/09 (`DR-D5-01` §0, `MT-48`). Nguồn sự thật:
+> **`DR-D9-01`** (TD-0280). D6–D8 thuộc `DR-D6D8-01` (phiên `-01`); fold/PBO/CSCV **chỉ** ở `DR-D9-01`.
+>
+> ✅ **Chủ dự án đã chốt 17/09/2026** (phiên `-33`, qua câu hỏi khi lập kế hoạch):
+> 1. **Làm phần 0 trial ngay**; lượt chạy WFO thật chờ cổng vào (`d5_complete`, cộng cổng D6–D8 khi
+>    `DR-D6D8-01` chốt — đính chính `DR-D9-01` §6.1 tại chỗ, không ghi trước khoá chưa tồn tại).
+> 2. **Tập CSCV = các biến thể D5** đã CONSUMED trên CALIB (mốc · giá trị thử · xác nhận ghép; ≤ 16), mỗi cái
+>    chạy lại **một lần** trên WFO. Không dùng arm D4 (`Z0` ≡ `Z3`; lựa chọn cuối trước D9 là của D5).
+> 3. **Ngân sách = phần B1 còn dư**, chuyển giao **tường minh** ≤ 16 suất (tiền lệ `DR-D4-01:113` *"không tự
+>    động"*). `N` đăng ký không tăng; rào DSR của D9 **không ghim 114** (DR-007 union có thể đổi `N`).
+>    Cửa `ung_vien.py:149` (TD-0253) **không nới** — nhánh WFO **thêm vào, chặt hơn**.
+> 4. **CSCV tách khỏi fold, S = 8** khối 693 giờ trên `[T1,T2)`, C(8,4) = 70 tổ hợp. 3 fold `DR-D3-01` giữ
+>    nguyên cho phán quyết Nhánh 1 (test-only, `MT-36`). `DR-D3-01` **không** mở lại.
+> 5. **Một backtest toàn cửa sổ mỗi cấu hình, rồi cắt lát** theo `open_date` cho cả 3 đoạn test lẫn 8 khối —
+>    một cấu hình, một tập lệnh.
+>
+> ⏳ **Chờ chủ dự án trước khi commit `DR-D9-01`:** (i) **nhãn sổ** cho suất WFO — (a) `B1` + `dataset`
+> (nghiêng) hay (b) `B1W`, bảng rủi ro ở `DR-D9-01` §3.1; (ii) đơn vị xếp hạng CSCV = `R_trien_khai` (khớp
+> `DR-D4-12` §1) thay vì `R_realized` như kế hoạch ghi; (iii) cổng vào tạm chỉ `d5_complete`.
+>
+> ⚠️ Quy tắc gốc 1: TD-0280 là giấy tờ; **TD-0281…TD-0288 chỉ bắt đầu khi chủ dự án gõ "bắt đầu code"**.
+> Dãy mã `DR-D9-01` + `TD-0280…TD-0288` + `MT-51…MT-53` đã nhắn `-30`/`-01` trước khi ghi (N12 mục 6); va
+> chạm dãy `TD-0260…` với `-01` giải bằng cách `-33` dời mã.
+
+| Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
+|---|---|---|---|---|
+| TD-0280 | 🚪 **`DR-D9-01` — WFO đủ phân hoạch + PBO/CSCV P0.** Tài liệu quyết định, **0 trial**, commit **RIÊNG và TRƯỚC** mọi dòng mã của khối. Chốt 5 điểm ở đoạn mở khối + khối băm cấu hình CSCV + sàn mẫu 70/70 + tiêu chí cổng D9 + hạn chế khai trước + khai mở lại quyết định HOÃN 13/09 và `OQ-11` | 🔒 | — | File `docs/decisions/DR-D9-01-*.md` commit riêng, **sau** khi chủ dự án trả lời ba câu ⏳; khối băm §4.5 kiểm lại bằng `bam_chuan_hoa`; `MT-51…MT-53` soạn sẵn cho lệnh "chuẩn hóa và lưu" |
+| TD-0281 | **Khoá `tier_c.cscv` trong `config/tool_d_config.yaml`** (N4), FROZEN, ngoài `tier_b` | 🔓 | TD-0280 | Đọc qua `loader.py`; S lẻ/≤ 0 ⇒ lỗi; khớp khối băm `DR-D9-01` §4.5; `N = 114`, `\|tier_b\| = 12` không đổi; chạy RIÊNG `test_lz29_*` |
+| TD-0282 | **`src/tool_d/gates/cscv.py` — `tinh_pbo()` hàm THUẦN** | 🔓 | TD-0280, TD-0281 | Test đáp án tính tay: PBO = 1 (IS-best luôn đội sổ) · PBO = 0 (thứ hạng bền) · ca S = 4 tính từng λ · hoà đỉnh IS ⇒ trung bình λ · dưới sàn ⇒ `unreadable` (không `0.0`) · lệnh ngoài `[T1,T2)` ⇒ raise · gộp cấu hình trùng. Kiểm-có-răng: đảo dấu λ ⇒ đỏ; bỏ sàn ⇒ đỏ. Qua `L-Z46`/`L-Z48c` |
+| TD-0283 | **`src/tool_d/wfo/lenh.py` — bản ghi từng lệnh + cắt lát** theo fold và theo khối; bộ chuyển `chay_mot_fold` cắt lát trên một lượt chạy | 🔓 | TD-0280 | **Dùng lại** đường trích lệnh/`R_trien_khai` đang có (TD-0232), không viết đường thứ hai; `chay_wfo` giữ nguyên hành vi sàn fold (`MT-36`); schema bản ghi (nếu lưu) đối chiếu **đầu ra thật** (TD-0149/0150) |
+| TD-0284 | 🔴 **Cửa B1 `dataset = WFO` tại `reserve()`** — chuyển giao ≤ 16 suất B1 dư | 🔓 | TD-0280 (**cả nhãn sổ §3.1**), TD-0253 ✅ | Nhánh CALIB + mọi ca `test_td0253_*` giữ nguyên. Từ chối: thiếu cổng vào · cấu hình không khớp suất CALIB CONSUMED · trùng · vượt trần = số suất CALIB CONSUMED. Kiểm-có-răng hai chiều theo phương án được chọn (`DR-D9-01` §3.1); nếu (b): sửa cả ba phép so nhãn **trước** khi mở enum |
+| TD-0285 | **PBO: ghi ở D4, chặn ở D9** (`MT-51`) — `evaluate_branch1(..., pbo_chan)` bắt buộc khai + `src/tool_d/gates/d9_gate.py` | 🔓 | TD-0280, TD-0282 | `test_lz35_*`: ca cũ giữ **nguyên** khẳng định 7 tiêu chí dưới `pbo_chan=True`; thêm ca `False` ⇒ 6. `danh_gia_cong_d9()` đọc `N` từ nguồn kế toán, không hằng 114. Kiểm-có-răng: bỏ `pbo_chan` ⇒ đỏ |
+| TD-0286 | **Bộ chạy D9 trên E2 `run_wfo.py`** — không thêm entrypoint (`L-Z36`) | 🔓 | TD-0283, TD-0284, TD-0285, **TD-0184**, **TD-0255** | Guard dòng đầu (N5); thiếu cổng vào ⇒ exit từ chối **trước** khi đọc dữ liệu, sổ 0 dòng mới; `reserve()` trước dữ liệu (`L-Z52`); đổi file phủ ⇒ tập lệnh thật đổi (`MT-23`); không mock đường sản xuất (`L-Z51`) |
+| TD-0287 | 🚪 **GATE D9** — `close_d9_gate()` trong E6 (`--close-d9-gate`), khuôn `close_d3_5_gate()` | 🔓 | TD-0282…TD-0285 (dựng) · TD-0288 (đóng) | Đòi cổng vào; cây sạch TRƯỚC suite; chạy RIÊNG từng file lõi, PASS ≥ 1; gọi **cùng** `danh_gia_cong_d9()` với E2; ghi `d9_complete` + `d9_ket_cuc` + `d9_han_che` (`DR-D9-01` §9); chạy lại ⇒ exit 94. Thử khi chưa có cổng vào ⇒ từ chối, `runtime_state.json` không đổi |
+| TD-0288 | **Chạy D9 thật** | 🔓 | cổng vào `DR-D9-01` §6.1, TD-0286, TD-0287, TD-0274 (ngưỡng lockbox commit **trước** suất WFO đầu tiên) | Số suất WFO CONSUMED = số cấu hình CSCV; E6 sổ thật exit 0; kết quả vào YAML/`param_status.yaml` chỉ sau "chuẩn hóa và lưu" (N9) |
+
+---
+
 ## Việc đã biết là sẽ có, chưa mở
 
 | Giai đoạn | Nội dung | Chặn bởi |
@@ -637,6 +679,7 @@
 | ~~D3.5~~ ✅ **ĐÃ ĐÓNG 08/09/2026** (tag `d3-5-complete`) | 🚪 Cổng sai lệch thước đo (DR-015) — **chặn D4** → **Khối 15** bên trên (TD-0160…TD-0166). 🔴 Chữ "cần testnet" ở đây là đóng khung SAI, xem DR-D35-01 | — |
 | ~~D4~~ ✅ **ĐÃ MỞ 08/09/2026** | 🔴 Ablation D0.9, 9 cấu hình × 2 hướng — **blocker B4** → **Khối 16** bên trên (TD-0180…TD-0186). Cả hai điều kiện chặn đã gỡ. 🔴 Phần lớn D4 là **DỰNG arm**, không phải chạy arm — DG1–DG5 chưa có dòng code nào | — |
 | ~~D6–D8~~ **ĐÃ MỞ 17/09/2026 (đặc tả NHÁP)** | Niêm phong ứng viên + H2/H5/H14 (D6) · hardening tồn vong H9/H10 + thang drawdown (D7) · tiền đăng ký lockbox + nợ trước go-live (D8) → **Khối 20–22** bên trên (TD-0260…TD-0279), nguồn `DR-D6D8-01` | TD-0260 (chốt DR) |
+| ~~D9~~ **ĐÃ MỞ 17/09/2026 (phần 0 trial)** | WFO đủ phân hoạch + PBO/CSCV P0 (H18) → **Khối 23** bên trên (TD-0280…TD-0288), nguồn `DR-D9-01` | TD-0280 (chốt DR) · cổng vào `DR-D9-01` §6.1 |
 | D9.5 | Lockbox chạm **đúng một lần** | D9 |
 | D10–D12 | Testnet quy mô đầy đủ → dry-run → live vốn nhỏ. 🔴 **Rà soát 09/09/2026 (đối chiếu key learning "tắt liên tục" của Tool A) bổ sung việc phải xong TRƯỚC khi có tiến trình chạy dài đầu tiên/lệnh thật:** (1) rate-limit + circuit breaker cho `binance_public.py` → **TD-0197** (Khối 16, đang code); (2) heartbeat/cảnh báo khi tiến trình Freqtrade ở trạng thái `stopped`/idle mà không ai biết (khác Risk Supervisor §6.6 — giám sát margin/thanh lý, không giám sát "tiến trình có đang chạy") → **TD-0209**; (3) validate fail-closed khi thiếu `BINANCE_API_KEY`/`BINANCE_API_SECRET` lúc entrypoint cần đặt lệnh thật — cảnh báo rõ thay vì bị chặn âm thầm không ai hay — ✅ **TD-0242** (`bbf16f1`, 13/09/2026; hàm thuần, chưa nối entrypoint vì D10-D12 chưa mở). ⚠️ **Ràng buộc cho launcher tương lai** (phiên `-3f`/`-80` nêu 13/09/2026, sau khi `DR-D11-02` đổi D10 sang lệnh LIVE TỐI THIỂU): `validate_credentials_for_live()` phải gọi ở `main()` của entrypoint, KHÔNG BAO GIỜ trong một callback chiến lược (`strategy_safe_wrapper` nuốt exception — `MT-16` vii); và việc nối nó phải **kèm một phép kiểm AST** kiểu `L-Z36`/`guard_ast_check.py` xác nhận vị trí gọi, không chỉ dựa lời khai docstring — nợ đã khai, không phải nợ ẩn. 🔑 **Thiết kế đã phác sẵn** (docstring `validate_credentials_for_live()`, `binance_public.py`, phiên `-3f` 13/09/2026 chỉ đúng tiền lệ `ZoneAbsorption.py:224` — cùng hình dạng "lời khai, không phải bằng chứng"): ALLOW-list (xác nhận nằm trong `main`) chứ không phải deny-list tên callback (bài học MT-08), kiểm-có-răng bằng nguồn giả qua `ast.parse` — KHÔNG cần entrypoint/strategy thật, viết được ĐỘC LẬP với việc launcher tồn tại hay chưa | D9.5 |
 
@@ -670,3 +713,4 @@
 | TD-0259 | ➕ Thêm mới | — | Việc sửa test lỗi thời `test_idea_queue_van_rong_chua_mo` (cuối Khối 18) | Phiên `-df` chạy full suite 16/09/2026 ra 1 failed; truy ra test ghim trạng thái *"sổ ý tưởng rỗng"* đã hết đúng từ TD-0226 (`1a00c66`). Chủ dự án duyệt hướng sửa. Mã 0259 thay vì khe 0248/0249 để không giẫm mã có thể đang được dành | 16/09/2026 |
 | TD-0253 · TD-0258 · đoạn mở Khối 19 | ♻️ Sửa đổi | Chốt 1–8; TD-0253 *"từ chối ở `registry.reserve()`"*; TD-0258 không phụ thuộc TD-0247 | Thêm chốt 9 (mẫu nhỏ: hai đường hợp lệ rồi chạy mặc định) + chốt 10 (chặn tại cửa, đổi helper 12 file test); TD-0258 phụ thuộc thêm TD-0247 | Chủ dự án hỏi *"mẫu nhỏ thì tăng mẫu được không"* và chốt chỗ chặn khi lập kế hoạch đợt code (16/09/2026) | 16/09/2026 |
 | TD-0260…TD-0279 | ➕ Thêm mới | — | **Khối 20 (D6) · 21 (D7) · 22 (D8)** — 20 việc, đặc tả NHÁP `DR-D6D8-01` | Chủ dự án yêu cầu phân tích và đề xuất D6–D8 (spec `:4492` không có dòng nào), duyệt kế hoạch 17/09/2026, chốt Long-only tới live + D7 dùng kịch bản tổng hợp + CTRL. Mở lại phần D6–D8 của quyết định *"HOÃN đặc tả D5–D9"* 13/09. Va chạm mã với phiên `-33` (D9) giải trước khi ghi: `-33` dời sang Khối 23 / `TD-0280…` | 17/09/2026 |
+| TD-0280…TD-0288 | ➕ Thêm mới | — | **Khối 23 (D9)** — 9 việc, nguồn `DR-D9-01` | Chủ dự án yêu cầu triển khai D9 (*"WFO đủ fold + PBO/CSCV nâng lên P0"*, spec `:4326`/`:4349` không có đặc tả), duyệt kế hoạch 17/09/2026 với 5 chốt ở đoạn mở khối. Mở lại phần D9 của quyết định *"HOÃN đặc tả D5–D9"* 13/09. Va chạm dãy `TD-0260…` với phiên `-01` (D6–D8) giải trước khi ghi: `-33` dời sang `TD-0280…`/`MT-51…` | 17/09/2026 |
