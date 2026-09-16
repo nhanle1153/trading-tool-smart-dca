@@ -260,12 +260,24 @@ G  xác nhận  ⟺  Δ − h·SE > 0
 
 ---
 
-## 8. Chưa chốt — trình chủ dự án
+## 8. `MT-18` — kích hoạt phương án (b) ở D5
 
-**`MT-18` phương án (b) có kích hoạt ở D5 không?** `L-Z29` canh SỐ ĐẾM `|tier_b|`, không canh DANH TÍNH.
-D5 là lần đầu tham số `tier_b` đổi trạng thái hàng loạt. Đề xuất nhẹ hơn (b) nguyên bản: một test khoá ghim
-**đúng tập 12 tên** khoá `tier_b` (không đổi hình dạng `dof_inventory.yaml`). Chưa chốt ⇒ `TD-0256` chỉ làm
-phần `TUNED ⇒ trial_id` đã duyệt.
+**Câu đã trình:** `L-Z29` canh SỐ ĐẾM `|tier_b|`, không canh DANH TÍNH; D5 là lần đầu tham số `tier_b`
+đổi trạng thái hàng loạt — có thêm phép kiểm tên không?
+
+✅ **Chủ dự án chốt 16/09/2026 (sau khi commit `492b559`, ghi bổ sung tại chỗ): LÀM ĐỦ PHƯƠNG ÁN (b)** —
+`dof_inventory.yaml` mang **TÊN khoá** `tier_b` cho mọi dòng `dof_v6 = 1`, và `L-Z29` so **TẬP HỢP tên**
+với khoá thật trong `tool_d_config.yaml`, không chỉ so số đếm. Phương án nhẹ hơn (test ghim 12 tên, không
+đổi hình dạng file kiểm kê) đã được đề xuất và **không** được chọn — ghi để không ai đọc ngược.
+
+- Mở lại quyết định `MT-18` ngày 09/09/2026 (phương án (a) *"vá từng ca"*, (b) *"hoãn có ý thức"*). Lý do
+  hoãn khi đó — *"không có gì đang chảy máu ép phải làm ngay"* — hết đúng khi D5 bắt đầu chuyển trạng thái.
+- Thi hành gộp vào **`TD-0256`** (cùng tầng *"trạng thái tham số có bằng chứng"*). Đổi hình dạng
+  `dof_inventory.yaml` chạm ít nhất 5 file test đang đọc nó (`test_lz29_dof_accounting.py`,
+  `test_td0169_*`, `test_td0189_*`, `test_td0191_*`, `test_td0195_*`) ⇒ phải chạy RIÊNG từng file sau khi đổi.
+- **Bất biến giữ nguyên:** `N = 114`, rào `3,0777`, `dof_goc = 28` — đây là đổi **cách kiểm**, không đổi
+  **con số**. Kiểm-có-răng: tráo `dg7_funding_frac` lấy một khoá `tier_frozen` (giữ `|tier_b| = 12`) ⇒ đỏ.
+- Ô trạng thái `MT-18` trong `back-end-note.md` mục 7 chờ lệnh **"chuẩn hóa và lưu"** (N9).
 
 ---
 
@@ -298,7 +310,7 @@ phần `TUNED ⇒ trial_id` đã duyệt.
 | `TD-0253` | Máy kế toán B1: trần 16 · ứng viên khớp khối §3.3 + băm · 7 tham số | §3.3, §4 |
 | `TD-0254` | `chon_gia_tri.py` thuần: §5.1 · §5.2 · §5.3 · kết cục *"bỏ (c)"* tường minh | §5, §3.1 |
 | `TD-0255` | Bộ chạy trên E1, file cấu hình phủ, kiểm tập lệnh thật sự đổi | §6.4 |
-| `TD-0256` | `L-Z15`: TUNED ⇒ `trial_id` B1 CONSUMED | §2 |
+| `TD-0256` | `L-Z15`: TUNED ⇒ `trial_id` B1 CONSUMED · `L-Z29` so TẬP TÊN `tier_b` (`MT-18` b) | §2, §8 |
 | `TD-0257` | `close_d5_gate()` + `d5_han_che` | §7 |
 | `TD-0258` | Chạy ≤ 16 suất | §4, §6 |
 
