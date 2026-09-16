@@ -172,12 +172,16 @@ class TestPhepKiemTranB3:
         assert check_lz27_tran_b3(reg).is_fail
 
     def test_dong_khong_phai_b3_khong_bi_dem_vao_tran(self, tmp_path: Path) -> None:
-        """Trần B3 áp lên pool tái sinh, không áp lên B1/B2 (spec 3488)."""
+        """Trần B3 áp lên pool tái sinh, không áp lên B1/B2 (spec 3488).
+
+        Đối chứng âm dùng B2, không dùng B1: từ TD-0253 dòng B1 bị cửa
+        `reserve()` chỉ nhận các suất của `DR-D5-01` (trần 16), không đặt được
+        `B3_TRAN + 5` suất tuỳ ý. B2 vẫn là "một dòng KHÁC B3" — đúng thứ ca này hỏi."""
         reg = tmp_path / "reg.jsonl"
         ledger = TrialLedger(reg)
         for _ in range(B3_TRAN + 5):
             ledger.seal(
-                ledger.reserve(**_kw(budget_line="B1", n_dang_ky=200)), seal_path="runs/td/metrics.seal"
+                ledger.reserve(**_kw(budget_line="B2", n_dang_ky=200)), seal_path="runs/td/metrics.seal"
             )
 
         assert check_lz27_tran_b3(reg).ok

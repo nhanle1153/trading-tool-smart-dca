@@ -31,7 +31,7 @@ def _prov() -> dict:
 
 def _reserve(ledger: TrialLedger, **overrides) -> str:
     kwargs = dict(
-        n_dang_ky=114, budget_line="B1", hypothesis_slot="A-03", direction="LONG",
+        n_dang_ky=114, budget_line="B3", hypothesis_slot="A-03", direction="LONG",  # TD-0253
         dataset="CALIB", param_under_test="zss_threshold", param_value=0.55,
         params_frozen_hash="fh", config_hash="ch", code_commit="abc123",
         provenance=_prov(), contribution=1,

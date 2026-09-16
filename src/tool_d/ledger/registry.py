@@ -23,10 +23,29 @@ from typing import Any
 
 import jsonschema
 
+from tool_d.calibration.ung_vien import (
+    BUDGET_LINE_B1,
+    DEFAULT_DR_D5_01_PATH,
+    UngVienError,
+    doc_bang_ung_vien,
+    kiem_dat_cho_b1,
+)
+from tool_d.gates.d0_pre import DEFAULT_RUNTIME_STATE_PATH
 from tool_d.ledger.budget import REFUND_CAP_PER_HYPOTHESIS, HypothesisKey
 from tool_d.ledger import budget as _budget
 
 DEFAULT_REGISTRY_PATH = Path("registry/trial_registry.jsonl")
+
+
+def _doc_d4_complete(runtime_state_path: Path) -> bool:
+    """`d4_complete` theo `DR-D4-11` (cổng đóng bằng hiện vật, ghi bởi một lần
+    chạy thật). Thiếu file / JSON hỏng / thiếu khoá / khác `true` ⇒ False —
+    cùng khuôn fail-closed `gates/d0_pre.is_d0_pre_complete()`."""
+    try:
+        data = json.loads(runtime_state_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+    return isinstance(data, dict) and data.get("d4_complete") is True
 
 CTRL_BUDGET_LINE = "CTRL"
 
@@ -58,6 +77,12 @@ class UnknownTrialError(LedgerError):
 
 class BudgetExhaustedError(LedgerError):
     """Khả dụng < contribution — TỪ CHỐI khởi động, KHÔNG chạm dữ liệu (L-Z52)."""
+
+
+class B1Error(LedgerError):
+    """TD-0253 — một lần đặt chỗ B1 không thuộc `DR-D5-01` (sai giá trị thử, vượt
+    trần, cổng D4 chưa đóng…). Từ chối TẠI CỬA, trước khi ghi dòng nào: suất B1
+    đã vào sổ là đã chạm CALIB, sổ append-only không lùi được."""
 
 
 class CtrlClaimError(LedgerError):
@@ -197,8 +222,19 @@ def _utcnow_iso() -> str:
 
 
 class TrialLedger:
-    def __init__(self, path: Path = DEFAULT_REGISTRY_PATH) -> None:
+    def __init__(
+        self,
+        path: Path = DEFAULT_REGISTRY_PATH,
+        *,
+        dr_d5_path: Path = DEFAULT_DR_D5_01_PATH,
+        runtime_state_path: Path = DEFAULT_RUNTIME_STATE_PATH,
+    ) -> None:
+        """`dr_d5_path` / `runtime_state_path` chỉ dùng cho cửa B1 (TD-0253), tiêm
+        được cùng khuôn `path` của sổ — mặc định là đường THẬT. Không có tham số
+        nào TẮT cửa B1: tắt được là một đường vòng, không phải một cấu hình."""
         self._path = path
+        self._dr_d5_path = dr_d5_path
+        self._runtime_state_path = runtime_state_path
         if not self._path.exists():
             self._path.parent.mkdir(parents=True, exist_ok=True)
             self._path.touch()
@@ -400,6 +436,25 @@ class TrialLedger:
                 f"Chỉ cho phép {sorted(CTRL_OUTPUT_ALLOWED)} (spec dòng 3605-3607)"
             )
 
+    def _kiem_cua_b1(
+        self, *, dataset: str, direction: str, param_under_test: str, param_value: Any
+    ) -> None:
+        """TD-0253 — cửa B1. Mọi lỗi (DR đọc không được, băm lệch, runtime_state
+        hỏng, suất không hợp lệ) đều thành `B1Error`: fail-closed."""
+        try:
+            bang = doc_bang_ung_vien(self._dr_d5_path)
+            kiem_dat_cho_b1(
+                self.projections().values(),
+                bang=bang,
+                d4_complete=_doc_d4_complete(self._runtime_state_path),
+                dataset=dataset,
+                direction=direction,
+                param_under_test=param_under_test,
+                param_value=param_value,
+            )
+        except UngVienError as e:
+            raise B1Error(f"TỪ CHỐI đặt chỗ B1 — {e}") from e
+
     def reserve(
         self,
         *,
@@ -438,6 +493,13 @@ class TrialLedger:
                 config_hash=config_hash,
             )
         else:
+            if budget_line == BUDGET_LINE_B1:
+                self._kiem_cua_b1(
+                    dataset=dataset,
+                    direction=direction,
+                    param_under_test=param_under_test,
+                    param_value=param_value,
+                )
             khadung = self.available(
                 n_dang_ky=n_dang_ky, so_lenh_da_dong=so_lenh_da_dong
             )

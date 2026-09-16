@@ -27,7 +27,7 @@ from tool_d.ledger.registry import TrialLedger
 ledger = TrialLedger(Path(sys.argv[1]))
 tid = ledger.reserve(
     n_dang_ky=114,
-    budget_line="B1",
+    budget_line="B3",
     hypothesis_slot="A-03",
     direction="LONG",
     dataset="CALIB",
@@ -111,7 +111,7 @@ class TestGietTienTrinhSauKhiSeal:
         ledger = TrialLedger(reg_path)
         tid = ledger.reserve(
             n_dang_ky=114,
-            budget_line="B1",
+            budget_line="B3",
             hypothesis_slot="A-03",
             direction="LONG",
             dataset="CALIB",

@@ -30,7 +30,7 @@ def _prov() -> dict:
 def _reserve_kwargs(**overrides) -> dict:
     kwargs = dict(
         n_dang_ky=114,
-        budget_line="B1",
+        budget_line="B3",  # TD-0253: B1 chỉ nhận suất DR-D5-01
         hypothesis_slot="A-03",
         direction="LONG",
         dataset="CALIB",

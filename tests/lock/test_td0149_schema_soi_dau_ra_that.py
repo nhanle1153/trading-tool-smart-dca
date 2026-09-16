@@ -72,7 +72,7 @@ def _reserve(so: TrialLedger, **doi) -> str:
         "n_dang_ky": 114,
         "so_lenh_da_dong": 0,
         "tool_id": "D",
-        "budget_line": "B1",
+        "budget_line": "B3",  # TD-0253: B1 chỉ nhận suất DR-D5-01
         "hypothesis_slot": "A-01",
         "direction": "LONG",
         "dataset": "CALIB",

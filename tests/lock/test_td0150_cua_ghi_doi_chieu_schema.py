@@ -60,7 +60,7 @@ def _prov() -> dict[str, Any]:
 def _reserve(so: TrialLedger, **thay) -> str:
     kw: dict[str, Any] = dict(
         n_dang_ky=114,
-        budget_line="B1",
+        budget_line="B3",  # TD-0253: B1 chỉ nhận suất DR-D5-01
         hypothesis_slot="A-01",
         direction="LONG",
         dataset="CALIB",

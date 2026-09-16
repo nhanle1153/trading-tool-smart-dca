@@ -46,7 +46,7 @@ def _prov() -> dict:
 def _kw(**overrides) -> dict:
     kwargs = dict(
         n_dang_ky=114,
-        budget_line="B1",
+        budget_line="B3",  # TD-0253: B1 chỉ nhận suất DR-D5-01
         hypothesis_slot="A-03",
         direction="LONG",
         dataset="CALIB",
@@ -78,7 +78,7 @@ def _so_dai(path: Path) -> int:
 
 
 def _tieu_het(ledger: TrialLedger, n_dang_ky: int) -> None:
-    """Tiêu sạch ngân sách bằng các trial THẬT (B1), để dựng đúng tình
+    """Tiêu sạch ngân sách bằng các trial THẬT (B3), để dựng đúng tình
     huống MT-08 mô tả: N cạn đúng lúc cần chạy điểm kiểm soát nhất."""
     for _ in range(n_dang_ky):
         tid = ledger.reserve(**_kw(n_dang_ky=n_dang_ky))
@@ -90,7 +90,7 @@ def _tieu_het(ledger: TrialLedger, n_dang_ky: int) -> None:
 
 class TestCtrlDungNgoaiN:
     def test_ctrl_consumed_khong_cong_vao_n_used(self, tmp_path: Path) -> None:
-        """1 trial B1 + 1 trial CTRL đều CONSUMED → n_used() == 1."""
+        """1 trial thường (B3) + 1 trial CTRL đều CONSUMED → n_used() == 1."""
         ledger = TrialLedger(tmp_path / "reg.jsonl")
         t_that = ledger.reserve(**_kw())
         t_ctrl = ledger.reserve(**_ctrl_do_thuoc())
