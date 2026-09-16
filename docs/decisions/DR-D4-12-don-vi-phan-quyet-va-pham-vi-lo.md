@@ -185,6 +185,39 @@ thay vì 13,4 tháng nếu chạy `Z0`.
 
 ## 3. QUYẾT ĐỊNH 3 — Rổ pool (`MT-34`): khai hạn chế CÓ SỐ, không khai bằng chữ
 
+> 🔴 **ĐÍNH CHÍNH 16/09/2026 — TOÀN BỘ §3 DƯỚI ĐÂY KHÔNG CÒN HIỆU LỰC. Giữ nguyên chữ cũ làm lịch
+> sử (khuôn dự án: không xoá, gắn đính chính tại chỗ).** Xem `MT-45` (`back-end-note.md` mục 7).
+>
+> **Quyết định đang hiệu lực là `MT-34`: ĐƯỜNG A-ĐẦY-ĐỦ** — dựng lại rổ point-in-time có xuất xứ
+> **TRƯỚC** D4. Chủ dự án chốt nó **ngày 13/09/2026**, *"sau khi thấy đề xuất A-tối-thiểu … và chọn
+> khác — ghi nhận để không ai đọc ngược"*, và **xác nhận lại ngày 16/09/2026**.
+>
+> ⇒ Ba chỗ trong §3 dưới đây **SAI**:
+> 1. §3.2 *"Chốt: khai hạn chế CÓ SỐ"* — **không phải** quyết định; quyết định là A-đầy-đủ.
+> 2. §3.3 xếp **(3a) "Dựng pool point-in-time đầy đủ trước D4"** vào bảng *"Phương án đã LOẠI"* —
+>    đó **chính là** phương án chủ dự án đã chốt. Lý do loại ghi ở đó (`build_pool.py` từ chối ghi
+>    đè · spec `:4338` làm mọi số cũ mất hiệu lực) là **giá phải trả** của A-đầy-đủ, **không** phải
+>    lý do loại nó — và `MT-34` đã ghi đủ ba giá đó lúc chốt.
+> 3. Lựa chọn **(3b″)** (55 mã phần chung, 0 lượt tải) mà một bản kế hoạch làm việc hôm 14/09 ghi
+>    lại là **VÔ HIỆU** — nó sinh ra từ việc đọc thiếu, không từ thông tin mới.
+>
+> 🔑 **Cơ chế, khai thẳng vì đây là lỗi của phiên viết DR này:** phiên đó đọc `MT-34` bằng một lệnh
+> **cắt ~1.500 ký tự đầu dòng**, thấy *"Ba đường, chưa chọn"* rồi dừng. Quyết định nằm ở khoảng
+> **ký tự 9.500+ của cùng một dòng**. Nên câu rổ pool được trình lại như **chưa chốt**, và DR này
+> ghi lựa chọn phát sinh từ đó. Bắt được khi thi hành lệnh *"chuẩn hoá và lưu"*: N9 + quy tắc 3 buộc
+> đọc lại file cũ, và lần đọc ấy đi tới **cuối** dòng.
+>
+> 🔴 **HỆ QUẢ CHO D4 — nói thẳng:** `TD-0184` **không được tiêu một suất `B2` nào** cho tới khi rổ
+> point-in-time đúng dựng xong. `MT-34` tự khai đây là *"hạng mục nhiều tuần"* và *"VẪN CHƯA CÓ MÃ
+> VIỆC NÀO"*. Đo được lúc đính chính: **52/61** mã của `K` **không có dữ liệu ở bất kỳ đâu**
+> (`user_data/data/binance/` 0/61, `explore/` 9/61) ⇒ A-đầy-đủ kéo theo tải dữ liệu cho ~52 mã + một
+> thư mục dữ liệu thứ ba + backfill lại. Và vì spec `:4338` làm **mọi số quy đổi sang pool** mất
+> hiệu lực, các con số `325,6` · `n = 206` · `44,8` mà **§4 của chính DR này** dựa vào sẽ phải **đo
+> lại** trên rổ mới — tức §4 (chọn 4/9 arm) **vẫn đứng về nguyên tắc** (căn cứ cắt là ma trận thiết
+> kế, không phải cỡ `n`), nhưng mọi con số `n` trong bảng §4.1 là số của rổ cũ.
+>
+> ⚠️ **§1, §2, §4 KHÔNG bị đính chính này đụng tới** — chúng không phụ thuộc lựa chọn rổ.
+
 ### 3.1 Hai kênh, KHÔNG cùng mức nguy — và phân biệt này đổi hẳn hành động
 
 | Kênh | Đo được | Chạm cửa sổ WFO (nơi `Z0-T1` được phán quyết)? |
@@ -408,3 +441,4 @@ ghim QUAN HỆ thay vì ghim số: `18` lỗi thời sau 24 giờ, `9` lỗi th�
 | 14/09/2026 | `TD-0228` (`0edac03`): `Z0` vs `Z3`/`Z3b`/`Z2` **trùng tập TUYỆT ĐỐI** (6/6 cặp, `n_giao` 22/22) ⇒ luận điểm *"chọn `Z0` không mất lệnh nào"* của `DR-D4-10` §2.4 **đứng vững**; và §2.5 dòng *"`Z3b` vs `Z3` đúng 1/22 lệnh"* hoá ra là một khác biệt **`exit_reason`**, không phải khác biệt tập lệnh — ghi nhận, **không tự sửa DR** (quy tắc 11) |
 | 14/09/2026 | `TD-0226` (`1a00c66`): DCA vào Idea Queue, `IQ-0001`, nhãn *"chưa từng được đo, không phải đã thất bại"*, điều kiện mở lại `n ≥ 319` |
 | 14/09/2026 | **Chủ dự án chốt bốn câu — DR này.** Bốn đính chính đi kèm, cả bốn do đọc mã/đọc artifact/nghe phiên khác chứ không do lập luận: (a) `λ` **đổi theo từng lệnh** (`trade_plan.py:73-74`) nên *"rào nhẹ đi đúng hai lần"* là XẤP XỈ, và DR **không ghim `λ`**; (b) *"mở `CTRL_OUTPUT_ALLOWED` cho **nhóm** trường"* là **SAI** — phải liệt kê đích danh, nếu không nó thôi là danh sách CHO PHÉP; (c) *"`Z3` khác `Z0` về `pnl_abs`"* là **SUY LUẬN** từ `exit_reason`, **chưa đo** — artifact `td0228` không có một trường PnL nào; (d) Decision Log của `TD-0239` **không** mang `tp_source`/`tp_zone_age_bars` (chỉ phủ chiều VÀO lệnh) nên `chi_so_h4()` phải đọc `custom_data` — bản nháp kế hoạch đã giả định ngược lại |
+| 16/09/2026 | 🔴 **ĐÍNH CHÍNH §3 — `DR-D4-12` §3 nói NGƯỢC một quyết định đã chốt.** §3.3 xếp A-đầy-đủ vào *“đã LOẠI”* trong khi `MT-34` ghi chủ dự án chốt đúng đường đó từ 13/09. Nguyên nhân: đọc `MT-34` bằng lệnh cắt đầu dòng, quyết định nằm ở ký tự 9.500+. Chủ dự án xác nhận **A-đầy-đủ vẫn đứng**; (3b″) vô hiệu; **D4 bị chặn** tới khi rổ point-in-time xong. Ghi thành `MT-45` (✅ đã giải). §1/§2/§4 không đổi |
