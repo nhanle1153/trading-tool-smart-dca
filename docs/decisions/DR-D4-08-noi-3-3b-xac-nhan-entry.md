@@ -88,6 +88,12 @@ Vì thế sau khi nối, **trước khi `TD-0184` đặt chỗ**, chạy một p
 zone vào lệnh của A; phân bố `wait_bars`; tỉ lệ `(a∧c)` vs `(b)`; NO_FILL. **Nếu lệnh/năm quy đổi
 pool < 150 ⇒ dừng, trình chủ dự án** — không tự nới, không tự chạy tiếp.
 
+> 🔄 **ĐÍNH CHÍNH 16/09/2026 — giữ nguyên chữ cũ làm lịch sử (`MT-24`, `DR-D4-13` §0/§1).** Cụm
+> *"chỉ đếm, không PnL, đúng ranh giới `DR-D0PRE-05` §4"* **không phải** chữ của `DR-D0PRE-05` §4 —
+> điều khoản đó không nói gì về PnL. Spec §9c.4b cho EXPLORE *"Phân tích KHÔNG giới hạn, 0 trial"*,
+> chỉ cấm dùng nó để validate. Phép đo ở đoạn trên **chọn** chỉ đếm vì chỉ cần đếm, không phải vì bị
+> cấm. Câu paraphrase không đánh dấu này là mắt xích đầu của chuỗi dẫn tới một trích dẫn bịa.
+
 ## 7. Điều DR này KHÔNG chốt
 
 - Không chốt `v_min`/`wick_close_upper_frac` là đúng — cả hai FROZEN chưa calibrate (DR-D4-03, TD-0190).

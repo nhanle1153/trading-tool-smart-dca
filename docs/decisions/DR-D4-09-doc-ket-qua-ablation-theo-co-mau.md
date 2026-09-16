@@ -157,6 +157,10 @@ DR này thành *"đã sửa xong vấn đề power"*.
 - **Không** chốt `std_R` — con số 1,25 dùng xuyên suốt là GIẢ ĐỊNH minh hoạ. Đo `std_R` thật cần
   chạm PnL; trên EXPLORE thì vướng `DR-D0PRE-05` §4, trên pool thì vướng DR-014 (tốn trial) và
   MT-19. **Cần một quyết định riêng**, không gộp vào đây.
+  🔄 **ĐÍNH CHÍNH 16/09/2026 — giữ chữ cũ (`MT-24`, `DR-D4-13` §1.6):** vế *"trên EXPLORE thì vướng
+  `DR-D0PRE-05` §4"* **SAI** — điều khoản đó không cấm PnL; spec §9c.4b cho phân tích không giới hạn,
+  0 trial. `std_R` đo được trên EXPLORE, nhưng **chỉ** để lên kế hoạch cỡ mẫu, **không** làm căn cứ
+  phán quyết (`DR-D4-13` §1.2). Vế pool (DR-014, MT-19) không đổi.
 - **Không** chốt chạy bao nhiêu arm (việc 3/4 của gói), không chốt bật Short, không đụng
   `DR-D4-01` (Long-only, 9 trial) — chỉ đổi **cách đọc** kết quả.
 - **Không** đổi ngưỡng nào: `0,10 R`, `≥ 20%`, `150 lệnh/năm`, `N = 114` giữ nguyên.
@@ -170,6 +174,10 @@ không đánh giá cấu hình nào, chỉ định nghĩa cách đọc.
 
 1. `std_R` đo được (qua một quyết định riêng ở §5) và **lệch > 30%** so với 1,25 ⇒ tính lại toàn bộ
    bảng §1.2/§1.3/§4; kết luận định tính (*"nhóm C không thể PASS"*) chỉ đổi nếu `std_R < 0,5`.
+   🔄 **ĐÍNH CHÍNH ĐƠN VỊ 16/09/2026 — giữ chữ cũ (`MT-25`, `DR-D4-13` §2):** `std_R` ở điều này là
+   `std(R_trien_khai)` (`DR-D4-12` §1.4). `1,25` và `0,5` giữ nguyên, áp trực tiếp. 🔴 **Cấm** quy đổi
+   ngưỡng bằng một `λ` (`0,5×λ`, `0,5/λ`) khi chỉ có `std(R_ngan_sach)` — `λ` đổi theo từng lệnh
+   (`DR-D4-12` §1.3); phải tính lại `std` trên `R_trien_khai` từ bản ghi arm.
 2. `ρ` đo được **< 0,5** ⇒ lợi ích của paired nhỏ hơn bảng §1.3, phải ghi lại vào `d4_han_che`.
 3. `n_giao` đo được **khác `n_A`/`n_B` quá 5%** ⇒ giả định "cùng tập entry" của §2.1 sai với nhóm
    đang xét, phải chuyển nhóm đó sang phép so KHÔNG paired.
