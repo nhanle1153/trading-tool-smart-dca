@@ -127,11 +127,26 @@ def _thuoc(v: Any, tap: Iterable[Any]) -> bool:
     return any(cung_gia_tri(v, x) for x in tap)
 
 
+def _la_calib(p: Any) -> bool:
+    """Bản chiếu thiếu `dataset` tính là CALIB — đếm THỪA vào trần D5 (chặn thừa, an toàn)
+    chứ không bao giờ được nhận làm bằng chứng WFO (`DR-D9-01` §3.1 bảng, phương án a)."""
+    return getattr(p, "dataset", None) in (None, "CALIB")
+
+
+def _con_hieu_luc_b1(projections: Iterable[Any]) -> list[Any]:
+    return [
+        p for p in projections
+        if getattr(p, "budget_line", None) == BUDGET_LINE_B1
+        and getattr(getattr(p, "state", None), "value", None) != "REFUNDED"
+    ]
+
+
 def kiem_dat_cho_b1(
     projections: Iterable[Any],
     *,
     bang: BangUngVien,
     d4_complete: bool,
+    d5_complete: bool,
     dataset: str,
     direction: str,
     param_under_test: str,
@@ -142,10 +157,20 @@ def kiem_dat_cho_b1(
     Điều kiện, theo thứ tự rẻ → đắt: `d4_complete` (`DR-D5-01` §6.1, định nghĩa
     `DR-D4-11`) · `dataset == CALIB` · hướng khớp DR · tham số thuộc 7 khoá hoặc
     MỐC/XÁC NHẬN · giá trị thuộc danh sách · không trùng suất chưa hoàn trả ·
-    MỐC ≤ 1, XÁC NHẬN ≤ 1 · tổng B1 chưa hoàn trả (RESERVED + CONSUMED) < trần.
+    MỐC ≤ 1, XÁC NHẬN ≤ 1 · tổng B1 CALIB chưa hoàn trả (RESERVED + CONSUMED) < trần.
+
+    `dataset = WFO` (TD-0284, `DR-D9-01` §3/§3.1, phương án a — nhãn `B1` + `dataset`):
+    nhánh RIÊNG, chặt hơn, xem `_kiem_dat_cho_b1_wfo()`. Nhánh CALIB giữ nguyên.
     """
     if d4_complete is not True:
         raise UngVienError("cổng D4 chưa đóng (`d4_complete` ≠ true) — KHÔNG đặt chỗ B1 (DR-D5-01 §6.1)")
+    projections = list(projections)
+    if dataset == "WFO":
+        _kiem_dat_cho_b1_wfo(
+            projections, bang=bang, d5_complete=d5_complete, direction=direction,
+            param_under_test=param_under_test, param_value=param_value,
+        )
+        return
     if dataset != "CALIB":
         raise UngVienError(f"B1 chỉ chạy trên CALIB (DR-D5-01 §1), nhận {dataset!r}")
     if direction != bang.huong:
@@ -180,11 +205,8 @@ def kiem_dat_cho_b1(
                 "Giá trị mốc đi bằng suất D5_MOC, không đặt chỗ riêng."
             )
 
-    con_hieu_luc = [
-        p for p in projections
-        if getattr(p, "budget_line", None) == BUDGET_LINE_B1
-        and getattr(getattr(p, "state", None), "value", None) != "REFUNDED"
-    ]
+    # Trần 16 của D5 chỉ đếm suất CALIB — suất WFO của D9 có trần riêng (DR-D9-01 §3).
+    con_hieu_luc = [p for p in _con_hieu_luc_b1(projections) if _la_calib(p)]
     for p in con_hieu_luc:
         if p.param_under_test != param_under_test:
             continue
@@ -198,6 +220,57 @@ def kiem_dat_cho_b1(
     if len(con_hieu_luc) >= bang.tran_suat:
         raise UngVienError(
             f"B1 đã có {len(con_hieu_luc)} suất chưa hoàn trả, trần DR-D5-01 là {bang.tran_suat}"
+        )
+
+
+
+def _kiem_dat_cho_b1_wfo(
+    projections: list[Any],
+    *,
+    bang: BangUngVien,
+    d5_complete: bool,
+    direction: str,
+    param_under_test: str,
+    param_value: Any,
+) -> None:
+    """TD-0284 — suất B1 trên WFO cho D9 (`DR-D9-01` §3, §3.1, §6.1).
+
+    Chuyển giao TƯỜNG MINH ≤ 16 suất B1 dư cho D9 (tiền lệ `DR-D4-01:113`: không
+    tự động). Mỗi suất WFO phải chạy lại ĐÚNG một cấu hình đã CONSUMED trên CALIB:
+    cổng vào `d5_complete` · hướng khớp DR · `(tham số, giá trị)` khớp một suất
+    B1/CALIB/CONSUMED · không trùng suất WFO chưa hoàn trả · tổng WFO chưa hoàn
+    trả < số suất CALIB đã CONSUMED.
+    """
+    if d5_complete is not True:
+        raise UngVienError(
+            "cổng vào D9 chưa mở (`d5_complete` ≠ true) — KHÔNG đặt chỗ B1 trên WFO (DR-D9-01 §6.1)"
+        )
+    if direction != bang.huong:
+        raise UngVienError(f"B1/WFO đợt này chỉ hướng {bang.huong} (DR-D9-01 §1), nhận {direction!r}")
+    calib = [
+        p for p in projections
+        if getattr(p, "budget_line", None) == BUDGET_LINE_B1
+        and getattr(p, "dataset", None) == "CALIB"
+        and getattr(getattr(p, "state", None), "value", None) == "CONSUMED"
+    ]
+    if not any(
+        p.param_under_test == param_under_test and cung_gia_tri(p.param_value, param_value) for p in calib
+    ):
+        raise UngVienError(
+            f"{param_under_test} = {param_value!r} không khớp suất B1 CALIB CONSUMED nào — tập CSCV là "
+            "đúng các cấu hình D5 đã chạy (DR-D9-01 §2), không thêm cấu hình mới"
+        )
+    wfo = [p for p in _con_hieu_luc_b1(projections) if getattr(p, "dataset", None) == "WFO"]
+    for p in wfo:
+        if p.param_under_test == param_under_test and cung_gia_tri(p.param_value, param_value):
+            raise UngVienError(
+                f"trùng suất WFO chưa hoàn trả {p.trial_id} cho {param_under_test} = {param_value!r} — "
+                "mỗi cấu hình đúng 1 suất WFO; chạy lại vì lỗi đi B3 (DR-D9-01 §3)"
+            )
+    if len(wfo) >= len(calib):
+        raise UngVienError(
+            f"B1/WFO đã có {len(wfo)} suất chưa hoàn trả, trần = số suất B1 CALIB CONSUMED = {len(calib)} "
+            "(DR-D9-01 §3)"
         )
 
 

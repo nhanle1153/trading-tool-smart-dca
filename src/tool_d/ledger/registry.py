@@ -47,6 +47,15 @@ def _doc_d4_complete(runtime_state_path: Path) -> bool:
         return False
     return isinstance(data, dict) and data.get("d4_complete") is True
 
+
+def _doc_d5_complete(runtime_state_path: Path) -> bool:
+    """`d5_complete` — cổng vào D9 (`DR-D9-01` §6.1). Cùng khuôn fail-closed `_doc_d4_complete`."""
+    try:
+        data = json.loads(runtime_state_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+    return isinstance(data, dict) and data.get("d5_complete") is True
+
 CTRL_BUDGET_LINE = "CTRL"
 
 CTRL_OUTPUT_ALLOWED = frozenset({"price_delta", "tranche_index", "direction"})
@@ -134,6 +143,7 @@ class TrialProjection:
     hypothesis_slot: str
     param_under_test: str
     param_value: Any
+    dataset: str  # TD-0284 — B1 mang hai tập (CALIB của D5, WFO của D9), phân biệt bằng trường này
     sealed: bool = False
     outcome_written: bool = False
     outcome: dict[str, Any] | None = field(default=None)
@@ -277,6 +287,9 @@ class TrialLedger:
                     hypothesis_slot=e["hypothesis_slot"],
                     param_under_test=e["param_under_test"],
                     param_value=e["param_value"],
+                    # Không .get(): RESERVE thiếu `dataset` phải NỔ (schema đòi trường này),
+                    # không lặng lẽ thành một tập nào đó rồi lọt qua cửa B1/WFO.
+                    dataset=e["dataset"],
                 )
             elif kind == "SEAL":
                 result[tid].sealed = True
@@ -447,6 +460,7 @@ class TrialLedger:
                 self.projections().values(),
                 bang=bang,
                 d4_complete=_doc_d4_complete(self._runtime_state_path),
+                d5_complete=_doc_d5_complete(self._runtime_state_path),
                 dataset=dataset,
                 direction=direction,
                 param_under_test=param_under_test,

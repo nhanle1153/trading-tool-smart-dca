@@ -272,8 +272,12 @@ def check_lz15_calibrate_params_have_status(
                 p = proj.get(tid)
                 if p is None:
                     vi_pham.append(f"{ten}: trial_ids chứa {tid!r} không có trong sổ")
-                elif p.budget_line != "B1" or p.state is not TrialState.CONSUMED:
-                    vi_pham.append(f"{ten}: {tid} là {p.budget_line}/{p.state.value}, phải là B1/CONSUMED")
+                elif p.budget_line != "B1" or p.dataset != "CALIB" or p.state is not TrialState.CONSUMED:
+                    # TD-0284: suất B1 trên WFO (D9) KHÔNG phải bằng chứng calibrate — nó chạy lại
+                    # một giá trị đã chọn, không chọn giá trị (DR-D9-01 §3.1, phương án a).
+                    vi_pham.append(
+                        f"{ten}: {tid} là {p.budget_line}/{p.dataset}/{p.state.value}, phải là B1/CALIB/CONSUMED"
+                    )
                 elif not (
                     (p.param_under_test == ten and cung_gia_tri(p.param_value, gia_tri))
                     or (
