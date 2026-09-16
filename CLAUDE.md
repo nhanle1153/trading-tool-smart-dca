@@ -133,6 +133,9 @@ Trước khi ghi `back-end-note.md` / `ARCHITECTURE.md` / `tu-dien-du-lieu.md`, 
 **trong chat**: (1) mục nào giữ nguyên 100%, (2) mục nào đổi và đổi gì, (3) có mục nào bị xoá không và vì sao.
 Câu lệnh kích hoạt ghi: **"chuẩn hóa và lưu"**.
 
+⚠️ **Ngoại lệ hẹp cho `tu-dien-du-lieu.md` — xem N13:** phần do MÁY SINH (cột *"nơi đọc"*) được sinh
+lại cùng commit code, không cần lệnh trên. Phần NGHĨA của cột vẫn theo N9.
+
 ### N10 — Chẩn đoán: "bot sai" hay "tầng đo sai"?
 
 §0d.7. Khi thấy chỉ số bất thường, câu hỏi **ĐẦU TIÊN** — trước khi mở code chiến lược — là:
@@ -260,6 +263,26 @@ với dòng phiên kia đang gõ dở cùng lúc — đã gây ít nhất 3 lầ
    TD-0119/TD-0120 của project Tool D: **phía nào có ĐỊNH DANH MÁY ĐỌC được (đường dẫn file bằng
    chứng, tên hàm/biến code đã trỏ tới) thì phía đó không đổi** — phía kia gộp nội dung vào rồi
    xoá, không giữ cả hai.
+
+### N13 — `tu-dien-du-lieu.md`: phần máy sinh đi cùng code, phần nghĩa đi qua người
+
+Chủ dự án chốt 17/09/2026 (phiên `-33`, phương án do phiên `-30` nêu). **Vì sao:** từ TD-0245 từ điển là
+**sản phẩm máy sinh**, và test `test_td0245_…::test_khop_tung_ky_tu_voi_ban_sinh_lai` so file trên đĩa với
+bản sinh lại **từng ký tự**. Bộ sinh quét `src/tool_d/**/*.py` để dựng cột *"nơi đọc"*, nên **mọi commit hợp
+lệ thêm một chỗ đọc cột DB Freqtrade đều làm suite đỏ** cho tới khi sinh lại. Nếu áp N9 cho cả file thì
+suite đỏ theo nhịp code D9–D11, rồi *"N failed"* thành bình thường và một ca đỏ thật lẫn vào (đúng chuyện
+ca `idea_queue` đỏ ~2,5 ngày không ai nhận, 14–16/09).
+
+1. **Cột "nơi đọc" = chỉ mục dẫn xuất.** Code mới làm lệch cột này thì chạy
+   `docker compose -f docker/docker-compose.yml run --rm freqtrade -m tool_d.tu_dien.ghi_tu_dien`
+   và commit file sinh lại **cùng đợt với code gây ra nó**, không cần "chuẩn hóa và lưu".
+2. **Trước khi commit, đọc `git diff -- tu-dien-du-lieu.md`.** Diff chỉ được đổi ô *"nơi đọc"*. Có bất kỳ
+   thay đổi nào khác (nghĩa, kiểu, cột mới/mất) ⇒ **dừng**, quay về N9.
+3. 🔴 **Điều kiện bắt buộc, không phải trang trí:** một chỗ đọc mới chỉ hợp lệ khi cột đó **đã có nghĩa được
+   duyệt** trong `src/tool_d/tu_dien/y_nghia_cot.py`. Máy đã thi hành: `kiem_quy_tac_7()` báo
+   `DOC-COT-CHUA-TRA` (test `TestBQuyTac7CoMay::test_khong_co_vi_pham`). Ca đó đỏ thì **không** được sinh lại
+   cho xanh. Thêm nghĩa cho một cột vẫn là việc của N9 + Quy tắc 7.
+4. Đo lại schema, Freqtrade nâng cấp, đổi `y_nghia_cot.py`: **vẫn theo N9**, không thuộc ngoại lệ này.
 
 ---
 
