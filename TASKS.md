@@ -507,20 +507,27 @@
 > ✅ **Chủ dự án đã chốt 16/09/2026** (phiên `-24`, qua câu hỏi khi lập kế hoạch):
 > 1. **KHÔNG tiêu suất B1 nào trước `d4_complete`** — định nghĩa cổng theo **`DR-D4-11`** (hiện vật), không
 >    theo `OQ-11` (đếm 18 trial, đã bị thay). Khối này làm phần **0 trial** trước.
-> 2. **Arm = `Z0-T1`, chỉ LONG** (DR-D4-12 §2.3; Short hoãn theo DR-D4-01). **8 tham số** có đường chạy trên
->    arm đó: `zss_threshold` · `buf_sl_atr` · `wick_close_upper_frac` · `v_min` · `tp1_haircut_pct` ·
->    `mult_corr_thresholds` · `dg7_funding_frac` · `max_hold_bars_4h`. Bốn tham số **cấu trúc không thể tác
->    động** giữ FROZEN: `dg4_bars_1h` · `dg6a_atr_ratio` · `dg6d_retrace_frac` · `funding_rate_pct`
->    (căn cứ là **đường đọc mã**, `td0246` — không phải số đếm EXPLORE, `DR-D4-13` §1.2 mục 3).
+> 2. **Arm = `Z0-T1`, chỉ LONG** (DR-D4-12 §2.3; Short hoãn theo DR-D4-01). **7 tham số** calibrate:
+>    `zss_threshold` · `wick_close_upper_frac` · `v_min` (nhóm LỌC LỆNH) · `buf_sl_atr` · `tp1_haircut_pct` ·
+>    `dg7_funding_frac` · `max_hold_bars_4h` (nhóm KẾT CỤC). **Năm tham số giữ FROZEN:** bốn **cấu trúc không
+>    thể tác động** — `dg4_bars_1h` · `dg6a_atr_ratio` · `dg6d_retrace_frac` · `funding_rate_pct` (căn cứ
+>    **đường đọc mã**, không phải số đếm EXPLORE, `DR-D4-13` §1.2 mục 3) — và `mult_corr_thresholds` (chỉ
+>    đổi cỡ lệnh, mà thước `R` bất biến với cỡ lệnh ⇒ chỉ đo được tác dụng phụ; `DR-D5-01` §2.2).
 > 3. **Cách tiêu suất:** 1 lần chạy MỐC CHUNG (giá trị hiện tại) + 2 giá trị thử/tham số + 1 lần XÁC NHẬN
->    cấu hình ghép ⇒ **18 suất**, dưới trần 24. Ghép không thắng mốc rõ ràng ⇒ giữ nguyên toàn bộ.
-> 4. **Luật chọn:** ứng viên không vượt thuế nhiễu ⇒ **giữ giá trị hiện tại**.
+>    cấu hình ghép ⇒ **trần 16 suất** (15 nếu bỏ `max_hold_bars_4h = 32`, `DR-D5-01` §4). Ghép không thắng
+>    mốc rõ ràng ⇒ giữ nguyên toàn bộ.
+> 4. **Luật chọn:** ứng viên không vượt thuế nhiễu ⇒ **giữ giá trị hiện tại**. Ngưỡng *"thắng rõ"* = **> 0 sau
+>    khi trừ nhiễu** (`h = 3,0777`, không thêm con số mới). Nhóm KẾT CỤC so cặp trên tập giao; nhóm LỌC LỆNH
+>    **đo riêng nhóm lệnh bị thêm/bớt** (so cặp cho `d ≡ 0` với bộ lọc — hình `MT-21`). Chi tiết `DR-D5-01` §5.
 > 5. **`v_min` ứng viên `0` / `1.0` / `1.5`** — `0` = tắt điều kiện (c) trên đúng `Z0-T1`, thay điều kiện
 >    *"`Z0` thắng `Z0-V1`"* của `DR-D4-03` §5 (không thể thoả: `Z0-V1` bị cắt ở `DR-D4-12` §4, và arm sản xuất
 >    đã đổi). Không phân biệt được ⇒ **giữ `1.0`**. ⇒ `DR-D5-01` phải khai là **mở lại `DR-D4-03` §5**.
 > 6. **`wick_close_upper_frac` ứng viên `0.5` / `0.6` / `0.67`** — chỉ phía chặt: dưới 0,5 vế đóng cửa không
 >    còn là "nửa trên", tức đổi định nghĩa §3.3b chứ không hiệu chỉnh.
 > 7. **FreqAI:** D5 đi trước, độc lập; `DR-D5-01` ghi điều kiện xem lại nếu FreqAI đổi tín hiệu vào lệnh.
+> 8. **Giá trị thử còn lại** (duyệt nguyên bảng): `zss_threshold` 0,4/0,6 · `buf_sl_atr` 0,3/0,5 ·
+>    `tp1_haircut_pct` 10/30 · `dg7_funding_frac` 0,2/0,4 · `max_hold_bars_4h` 20/32. Danh sách băm trong
+>    `DR-D5-01` §3.3 (`sha256 8f22faf3…`). ✅ `DR-D5-01` đã commit `492b559`.
 >
 > ⚠️ **Hai bất biến không được vô tình phá:** FROZEN→TUNED **tại chỗ**, không chuyển khoá nào ra khỏi `tier_b`
 > (`|tier_b|` 12→11 ⇒ `N` 114→108, rào DSR 3,0777→3,0601 — nới chuẩn của chính mình); và `L-Z29` chỉ canh
@@ -532,15 +539,15 @@
 
 | Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
 |---|---|---|---|---|
-| TD-0250 | 🚪 **`DR-D5-01` — phạm vi, ứng viên, luật chọn của D5.** Tài liệu quyết định, **0 trial**, commit **RIÊNG và TRƯỚC** mọi dòng mã của khối. Ghi bảy chốt ở đoạn mở khối + ba ứng viên cho **sáu tham số còn lại** (chờ chủ dự án duyệt, lý do không lấy từ dữ liệu) + thứ tự thử cố định + điều kiện DỪNG + khai mở lại quyết định HOÃN 13/09 và `DR-D4-03` §5 + câu `MT-18` (b) | 🔒 | — | File `docs/decisions/DR-D5-01-*.md` commit riêng; danh sách ứng viên có **băm** trong DR (TD-0253 đối chiếu). Luật INCONCLUSIVE viết **sau** TD-0251 (biết `n`) và **trước** khi tồn tại bất kỳ `mean_R` nào trên CALIB. Ngưỡng `DR-D4-12` §2.4 không đổi (`N = 114`, rào 3,0777, `\|tier_b\| = 12`) |
+| TD-0250 | 🚪 **`DR-D5-01` — phạm vi, ứng viên, luật chọn của D5.** Tài liệu quyết định, **0 trial**, commit **RIÊNG và TRƯỚC** mọi dòng mã của khối. Ghi các chốt ở đoạn mở khối + ứng viên cho **mọi tham số calibrate** (lý do không lấy từ dữ liệu) + thứ tự thử cố định + điều kiện DỪNG + khai mở lại quyết định HOÃN 13/09 và `DR-D4-03` §5 + câu `MT-18` (b) | 🔒 | — | File `docs/decisions/DR-D5-01-*.md` commit riêng; danh sách ứng viên có **băm** trong DR (TD-0253 đối chiếu). Luật INCONCLUSIVE viết **sau** TD-0251 (biết `n`) và **trước** khi tồn tại bất kỳ `mean_R` nào trên CALIB. Ngưỡng `DR-D4-12` §2.4 không đổi (`N = 114`, rào 3,0777, `\|tier_b\| = 12`) |
 | TD-0251 | **Đếm cỡ mẫu `Z0-T1` trên CALIB [T0,T1] — CHỈ ĐẾM, không một chỉ số hiệu năng nào** (DR-014 §2) | 🔓 | TD-0250 (phần phạm vi), TD-0247, TD-0252 | Dòng `CTRL` theo đường đã chốt ở `MT-19`; `n_used()` không đổi; artifact `docs/du-lieu-do/td0251-*.json` chỉ chứa số lệnh (tổng, theo nhánh xác nhận `ac`/`b`) + xuất xứ. Kết quả là đầu vào cho luật INCONCLUSIVE của TD-0250 |
 | TD-0252 | **Dữ liệu 5m cho CALIB [T0,T1].** Đo 16/09/2026: file 5m sớm nhất **2024-06-01**, `T0` = **2024-04-09** ⇒ thiếu ~2 tháng cho mọi mã, nhiều mã bắt đầu muộn hơn ⇒ `--timeframe-detail 5m` (H5, P0) không phủ CALIB | 🔓 | TD-0200 ✅, TD-0247 (rổ tại `T0`) | Tải qua E8 với snapshot H19 (kiểm file đáp xuống đích — TD-0203); `assert_dataset_timerange()`/L-Z55 xác nhận nằm trọn khoảng (bẫy TD-0093: `download-data --timerange` không dừng đúng mốc cuối); bảng độ phủ theo mã ghi artifact |
-| TD-0253 | 🔴 **Máy kế toán B1 — hiện CHỈ B3 có trần (`L-Z27`), B1 không có dòng nào.** Từ chối ghi (fail-closed) ở `registry.reserve()`: vượt trần B1 của `DR-D5-01` · quá số suất mỗi `(tham số, hướng)` · giá trị thử KHÔNG thuộc danh sách ứng viên đã băm · tham số ngoài 8 mục đã chốt | 🔓 | TD-0250 | Phép kiểm mới cùng khuôn `check_lz27` + test khoá mới trong `tests/lock/`. Kiểm-có-răng phá THẬT: bỏ trần ⇒ đỏ; ứng viên ngoài danh sách ⇒ đỏ; tham số bất khả (`dg4_bars_1h`) ⇒ đỏ. Docker full suite xanh, số ca cộng đúng |
+| TD-0253 | 🔴 **Máy kế toán B1 — hiện CHỈ B3 có trần (`L-Z27`), B1 không có dòng nào.** Từ chối ghi (fail-closed) ở `registry.reserve()`: vượt trần B1 của `DR-D5-01` · quá số suất mỗi `(tham số, hướng)` · giá trị thử KHÔNG thuộc danh sách ứng viên đã băm · tham số ngoài 7 mục đã chốt | 🔓 | TD-0250 | Phép kiểm mới cùng khuôn `check_lz27` + test khoá mới trong `tests/lock/`. Kiểm-có-răng phá THẬT: bỏ trần ⇒ đỏ; ứng viên ngoài danh sách ⇒ đỏ; tham số bất khả (`dg4_bars_1h`) hoặc `mult_corr_thresholds` ⇒ đỏ. Docker full suite xanh, số ca cộng đúng |
 | TD-0254 | **Tầng chọn giá trị — hàm THUẦN** `src/tool_d/calibration/chon_gia_tri.py` | 🔓 | TD-0250, TD-0199 ✅ | **Dùng lại** `phan_loai_ket_cuc()` + `so_paired()`, không tính lại. Test đơn vị: thắng rõ ⇒ chọn · không phân biệt được ⇒ **giữ mốc** · thiếu mẫu ⇒ `pending` (N6, cấm `0.0`) · `v_min`: `0` thắng rõ ⇒ trả kết cục *"bỏ điều kiện (c)"* tường minh, không lặng lẽ ghi `0.0` vào YAML · xác nhận ghép thua/hoà mốc ⇒ giữ toàn bộ |
 | TD-0255 | **Bộ chạy calibration trên E1 `run_backtest.py`** (hiện `NotImplementedError`, `:65`) — **không** thêm entrypoint thứ 9 (`L-Z36`) | 🔓 | **TD-0184** (lõi đặt chỗ→niêm phong→chạy→tiêu thụ), TD-0253 | Giá trị thử truyền bằng **file cấu hình phủ** sinh từ `config/tool_d_config.yaml` (N4), băm vào `params_effective`; **không** qua env (`L-Z39`), không qua cơ chế tham số Freqtrade (`L-Z37`). `measurement_guard()` dòng đầu sau parse (N5). Test: đổi giá trị trong file phủ ⇒ tập lệnh **thật sự đổi** (bài học `MT-23`: sổ ghi CẤU HÌNH, không ghi TẬP LỆNH) |
 | TD-0256 | 🔴 **Siết `L-Z15`: `status: TUNED` phải trỏ tới `trial_id` CONSUMED thật ở B1** — hôm nay nó chỉ kiểm *có lời khai* (TD-0246) | 🔓 | TD-0253 | Test khoá: TUNED không `trial_id` ⇒ đỏ · `trial_id` không tồn tại / chưa CONSUMED / khác dòng B1 ⇒ đỏ · `\|tier_b\|` vẫn 12 sau chuyển trạng thái |
 | TD-0257 | 🚪 **GATE D5** — `close_d5_gate()` trong E6 (`--close-d5-gate`), khuôn `close_d3_5_gate()` | 🔓 | TD-0250…TD-0256, TD-0258 | Đòi `d4_complete`; kiểm cây sạch TRƯỚC suite; chạy RIÊNG từng file test lõi, PASS ≥ 1; ghi `runtime_state.json.d5_complete` + `d5_han_che` nói rõ: **chỉ LONG** · bốn tham số không calibrate và vì sao · tham số nào INCONCLUSIVE giữ mốc. Chạy lại ⇒ exit từ chối ghi đè |
-| TD-0258 | **Chạy B1 — 18 suất** theo thứ tự `DR-D5-01`: mốc chung → 16 thử → xác nhận ghép | 🔓 | **`d4_complete`** (`DR-D4-11`), TD-0251, TD-0252, TD-0254, TD-0255 | Mỗi trial đặt chỗ TRƯỚC khi chạm CALIB (L-Z52); kết quả qua TD-0254; cập nhật `tool_d_config.yaml` + `param_status.yaml` (FROZEN→TUNED kèm `trial_id`, tại chỗ) **chỉ sau lệnh "chuẩn hóa và lưu"** (N9). E6 sổ thật exit 0; sổ B1 đúng 18 suất CONSUMED |
+| TD-0258 | **Chạy B1 — tối đa 16 suất** theo thứ tự `DR-D5-01`: mốc chung → 14 thử → xác nhận ghép | 🔓 | **`d4_complete`** (`DR-D4-11`), TD-0251, TD-0252, TD-0254, TD-0255 | Mỗi trial đặt chỗ TRƯỚC khi chạm CALIB (L-Z52); kết quả qua TD-0254; cập nhật `tool_d_config.yaml` + `param_status.yaml` (FROZEN→TUNED kèm `trial_id`, tại chỗ) **chỉ sau lệnh "chuẩn hóa và lưu"** (N9). E6 sổ thật exit 0; sổ B1 ≤ 16 suất CONSUMED, khớp đúng số suất `DR-D5-01` §4 cho phép |
 
 ---
 
@@ -581,3 +588,4 @@
 | TD-0230…TD-0234 | ➕ Thêm mới | — | Năm việc của `MT-34`/`MT-36`/`MT-37`: đo độ lệch sống sót của pool · dựng lại pool ĐÚNG tại `T1` · schema bản ghi arm · phép kiểm cột bảng `.md` · khai phạm vi `Δ_R` | Bảng changelog dừng ở 12/09 nên toàn bộ việc 12–13/09 không có dòng nào — ghi bù. Con số nặng nhất của đợt: tại `T1`, `pool.yaml` 102 mã vs pool ĐÚNG 116, **chung chỉ 55**, `K = 61` (**52,6%**) so với ngưỡng ≲10% viết TRƯỚC khi chạy ⇒ WFO đang đo **sai rổ theo chiều PASS** | 13/09/2026 |
 | TD-0235…TD-0244 | ➕ Thêm mới | — | **Khối 18 — Đường tới D11 (Dry-run)** (10 việc) | Chủ dự án yêu cầu rà soát hệ thống và lập danh sách việc pending tới D11. Rà soát ra hai câu chưa ai ghi: **(1)** chạy dry-run hôm nay sinh **0 chỉ số đọc được** — E5 để 22/22 ở `pending` bằng một HẰNG SỐ và Decision Log có **0 người gọi sản xuất**; **(2)** **cổng D4 không bao giờ đóng được** (`MT-38`) vì khoá `d4_complete` đòi 18 trial `B2` CONSUMED mà `DR-D4-01` chỉ cấp 9. Năm mâu thuẫn mới `MT-38`…`MT-42` ghi theo quy tắc 11, **không tự chọn bên**; chủ dự án chốt ghi `MT` và mở mã việc, **CHƯA sửa mã** | 13/09/2026 |
 | TD-0250…TD-0258 | ➕ Thêm mới | — | **Khối 19 — D5: Calibration, ngân sách B1** (9 việc) | Chủ dự án yêu cầu triển khai D5 và duyệt kế hoạch 16/09/2026; mở lại quyết định *"HOÃN đặc tả D5–D9"* ngày 13/09. Bảy chốt ghi ở đoạn mở khối (0 trial trước `d4_complete`, `Z0-T1` LONG, 8 tham số, 18 suất, giữ mốc khi hoà, ứng viên `v_min`/`wick_close_upper_frac`, FreqAI độc lập) | 16/09/2026 |
+| TD-0250…TD-0258 | ♻️ Sửa đổi | Đoạn mở Khối 19: **8** tham số (gồm `mult_corr_thresholds`), **18** suất; TD-0253 *"8 mục"*; TD-0258 *"18 suất"* | **7** tham số, `mult_corr_thresholds` sang FROZEN; **trần 16** suất; thêm chốt thước đo/ngưỡng/giá trị thử (chốt 4 mở rộng, chốt 8 mới) | Chủ dự án chốt thêm ba câu khi soạn `DR-D5-01` (16/09/2026): loại `mult_corr_thresholds` (thước `R` không nhìn thấy cỡ lệnh), đo nhóm lọc lệnh bằng nhóm lệnh bị thêm/bớt, ngưỡng > 0 sau trừ nhiễu; duyệt bảng giá trị thử | 16/09/2026 |
