@@ -17,6 +17,7 @@ from typing import Any
 
 import yaml
 
+from tool_d.calibration.ung_vien import PARAM_XAC_NHAN, cung_gia_tri
 from tool_d.config.loader import DEFAULT_CONFIG_PATH, load_tool_d_config
 from tool_d.ledger import budget as _budget
 from tool_d.ledger.registry import DEFAULT_REGISTRY_PATH, TrialLedger, TrialState
@@ -160,6 +161,7 @@ def check_lz12_no_duplicate_config_hash_different_outcome(
 def check_lz15_calibrate_params_have_status(
     config_path: Path = DEFAULT_CONFIG_PATH,
     status_path: Path = DEFAULT_PARAM_STATUS_PATH,
+    registry_path: Path = DEFAULT_REGISTRY_PATH,
 ) -> CheckResult:
     """Mọi tham số [CẦN CALIBRATE] phải có TRẠNG THÁI tường minh —
     `TUNED` (có trial) hoặc `FROZEN` (có `frozen_rationale`). Thiếu mặt,
@@ -248,6 +250,43 @@ def check_lz15_calibrate_params_have_status(
                 f"{ten}: TUNED_PENDING nhưng đã có giá trị {cfg.tier_b.get(ten)!r} — "
                 "phải là TUNED (có trial) hoặc FROZEN (có frozen_rationale)"
             )
+
+    # (3) 🆕 TD-0256 — `TUNED` phải trỏ tới BẰNG CHỨNG, không chỉ là một chữ.
+    #
+    # Trước đây phép kiểm chấp nhận `status: TUNED` như một lời khai: không ai
+    # hỏi trial nào đã tune nó. Đúng hình dạng TD-0246 bắt được — lớp canh kiểm
+    # SỰ CÓ MẶT của lời khai, không kiểm NỘI DUNG. Nay mỗi mục TUNED phải có
+    # `trial_ids` không rỗng, và mỗi id là một suất B1 CONSUMED thật trong sổ,
+    # mang ĐÚNG khoá + ĐÚNG giá trị đang chạy trong `tool_d_config.yaml` (suất
+    # thử riêng, hoặc suất XÁC NHẬN GHÉP chứa khoá đó — `DR-D5-01` §4).
+    tuned = sorted(t for t in declared if ((khai_bao.get(t) or {}).get("status") or "").strip() == "TUNED")
+    if tuned:
+        proj = TrialLedger(registry_path).projections() if registry_path.exists() else {}
+        for ten in tuned:
+            ids = (khai_bao.get(ten) or {}).get("trial_ids") or []
+            if not isinstance(ids, list) or not ids:
+                vi_pham.append(f"{ten}: TUNED nhưng không có trial_ids — lời khai không có bằng chứng")
+                continue
+            gia_tri = cfg.tier_b.get(ten)
+            for tid in ids:
+                p = proj.get(tid)
+                if p is None:
+                    vi_pham.append(f"{ten}: trial_ids chứa {tid!r} không có trong sổ")
+                elif p.budget_line != "B1" or p.state is not TrialState.CONSUMED:
+                    vi_pham.append(f"{ten}: {tid} là {p.budget_line}/{p.state.value}, phải là B1/CONSUMED")
+                elif not (
+                    (p.param_under_test == ten and cung_gia_tri(p.param_value, gia_tri))
+                    or (
+                        p.param_under_test == PARAM_XAC_NHAN
+                        and isinstance(p.param_value, dict)
+                        and ten in p.param_value
+                        and cung_gia_tri(p.param_value[ten], gia_tri)
+                    )
+                ):
+                    vi_pham.append(
+                        f"{ten}: {tid} thử {p.param_under_test}={p.param_value!r}, "
+                        f"không phải {ten}={gia_tri!r} đang chạy trong config"
+                    )
 
     if vi_pham:
         return CheckResult("L-Z15", Measured.ok(False), evidence="; ".join(vi_pham))

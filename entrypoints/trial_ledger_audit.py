@@ -166,7 +166,7 @@ def run_audit(
         check_lz10_registered_before_executed(registry_path),
         check_lz11_n_used_le_n_dang_ky(registry_path, n_dang_ky=n_dang_ky),
         check_lz12_no_duplicate_config_hash_different_outcome(registry_path),
-        check_lz15_calibrate_params_have_status(config_path, status_path),
+        check_lz15_calibrate_params_have_status(config_path, status_path, registry_path),
         check_lz16_idea_queue_filter_and_tool_d_results(idea_queue_path),
         check_lz17_budget_a_slots_per_quarter(idea_queue_path),
         check_td0119_selected_du_phep_thu(idea_queue_path),

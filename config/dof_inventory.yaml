@@ -29,6 +29,7 @@ rows:
     v5: 1
     xu_ly_v6: "tunable #1 (tier_b.zss_threshold)"
     dof_v6: 1
+    khoa_tier_b: zss_threshold # TD-0256 / MT-18 (b): L-Z29 so TẬP TÊN, không chỉ số đếm
   - muc: "§2.3"
     ten: "tuổi trend"
     v5: 1
@@ -44,6 +45,7 @@ rows:
     v5: 1
     xu_ly_v6: "tunable #2 (tier_b.buf_sl_atr)"
     dof_v6: 1
+    khoa_tier_b: buf_sl_atr # TD-0256 / MT-18 (b): L-Z29 so TẬP TÊN, không chỉ số đếm
   - muc: "§3.3"
     ten: "zone_width min"
     v5: 1
@@ -54,11 +56,13 @@ rows:
     v5: 1
     xu_ly_v6: "tunable #3 (tier_b.wick_close_upper_frac)"
     dof_v6: 1
+    khoa_tier_b: wick_close_upper_frac # TD-0256 / MT-18 (b): L-Z29 so TẬP TÊN, không chỉ số đếm
   - muc: "§3.3b"
     ten: "v_min"
     v5: 1
     xu_ly_v6: "tunable #4 (tier_b.v_min)"
     dof_v6: 1
+    khoa_tier_b: v_min # TD-0256 / MT-18 (b): L-Z29 so TẬP TÊN, không chỉ số đếm
   - muc: "§3.3c"
     ten: "số nến khung 15 phút"
     v5: 1
@@ -74,16 +78,19 @@ rows:
     v5: 1
     xu_ly_v6: "tunable #6 (tier_b.dg6d_retrace_frac)"
     dof_v6: 1
+    khoa_tier_b: dg6d_retrace_frac # TD-0256 / MT-18 (b): L-Z29 so TẬP TÊN, không chỉ số đếm
   - muc: "§4"
     ten: "DG4"
     v5: 1
     xu_ly_v6: "tunable #7 (tier_b.dg4_bars_1h)"
     dof_v6: 1
+    khoa_tier_b: dg4_bars_1h # TD-0256 / MT-18 (b): L-Z29 so TẬP TÊN, không chỉ số đếm
   - muc: "§4.1"
     ten: "DG6-A tỉ lệ ATR"
     v5: 1
     xu_ly_v6: "tunable #8 (tier_b.dg6a_atr_ratio)"
     dof_v6: 1
+    khoa_tier_b: dg6a_atr_ratio # TD-0256 / MT-18 (b): L-Z29 so TẬP TÊN, không chỉ số đếm
   - muc: "§4.1"
     ten: "DG6-B số nến"
     v5: 1
@@ -94,11 +101,13 @@ rows:
     v5: 1
     xu_ly_v6: "tunable #5, gộp với §3.3d (tier_b.funding_rate_pct)"
     dof_v6: 1
+    khoa_tier_b: funding_rate_pct # TD-0256 / MT-18 (b): L-Z29 so TẬP TÊN, không chỉ số đếm
   - muc: "§5.1"
     ten: "TP1 trừ hao"
     v5: 1
     xu_ly_v6: "tunable #9 (tier_b.tp1_haircut_pct)"
     dof_v6: 1
+    khoa_tier_b: tp1_haircut_pct # TD-0256 / MT-18 (b): L-Z29 so TẬP TÊN, không chỉ số đếm
   - muc: "§5.1"
     ten: "TP2 trail"
     v5: 1
@@ -114,6 +123,7 @@ rows:
     v5: 1
     xu_ly_v6: "tunable #10 (tier_b.mult_corr_thresholds)"
     dof_v6: 1
+    khoa_tier_b: mult_corr_thresholds # TD-0256 / MT-18 (b): L-Z29 so TẬP TÊN, không chỉ số đếm
   - muc: "§6.2"
     ten: "hệ số 4 — mult_dd"
     v5: 1
@@ -124,6 +134,7 @@ rows:
     v5: 1
     xu_ly_v6: "tunable #11 (tier_b.max_hold_bars_4h)"
     dof_v6: 1
+    khoa_tier_b: max_hold_bars_4h # TD-0256 / MT-18 (b): L-Z29 so TẬP TÊN, không chỉ số đếm
 
 # 🔴 Ghi chú đối chiếu funding: bảng DR-010 liệt kê "§3.3d funding rate"
 # (v5=1) VÀ "§4.1 DG6-C/D funding" (v5=1) là HAI dòng riêng, nhưng v6 gộp
@@ -140,6 +151,7 @@ bo_sot:
     v5_dung_ra: 1
     xu_ly_v6: "tunable #12 (tier_b.dg7_funding_frac)"
     dof_v6: 1
+    khoa_tier_b: dg7_funding_frac # TD-0256 / MT-18 (b): L-Z29 so TẬP TÊN, không chỉ số đếm
   - muc: "§3.1"
     ten: "w tranche"
     v5_dung_ra: 1

@@ -41,14 +41,25 @@ class DofReport:
     tier_b_declared_count: int  # từ tool_d_config.yaml thật (tunable_param_names)
     tier_b_from_table_sum: int  # từ tổng cột dof_v6 trong dof_inventory.yaml
     n_dang_ky_computed: int
+    # 🆕 TD-0256 / MT-18 (b) — DANH TÍNH, không chỉ SỐ ĐẾM.
+    tier_b_ten_that: frozenset[str] = frozenset()  # khoá thật trong tool_d_config.yaml
+    tier_b_ten_bang: frozenset[str] = frozenset()  # `khoa_tier_b` các mục dof_v6 = 1
+    loi_khoa_bang: tuple[str, ...] = ()  # mục dof_v6 = 1 thiếu khoá / dof_v6 = 0 có khoá / khoá trùng
 
     @property
     def dof_goc_ok(self) -> bool:
         return self.dof_goc_declared == self.dof_goc_from_v5_sum
 
     @property
+    def tier_b_ten_ok(self) -> bool:
+        """MT-18 (b), chủ dự án chốt 16/09/2026 (`DR-D5-01` §8): tráo một khoá
+        `tier_b` lấy một khoá khác mà giữ nguyên SỐ ĐẾM thì `N = 114` và rào DSR
+        đứng im trong khi thứ đang được tune đã đổi. So TẬP TÊN đóng lỗ đó."""
+        return not self.loi_khoa_bang and self.tier_b_ten_that == self.tier_b_ten_bang
+
+    @property
     def tier_b_ok(self) -> bool:
-        return self.tier_b_declared_count == self.tier_b_from_table_sum
+        return self.tier_b_declared_count == self.tier_b_from_table_sum and self.tier_b_ten_ok
 
     def render(self) -> str:
         lines = [
@@ -57,7 +68,8 @@ class DofReport:
             f"  {'✅' if self.dof_goc_ok else '❌ LỆCH'}",
             f"tier_b thật trong tool_d_config.yaml: {self.tier_b_declared_count}",
             f"tier_b tính từ tổng dof_v6 trong bảng: {self.tier_b_from_table_sum}"
-            f"  {'✅' if self.tier_b_ok else '❌ LỆCH'}",
+            f"  {'✅' if self.tier_b_declared_count == self.tier_b_from_table_sum else '❌ LỆCH'}",
+            f"TÊN tier_b khớp giữa config và bảng (MT-18 b): {'✅' if self.tier_b_ten_ok else '❌ LỆCH'}",
             f"N_ĐĂNG_KÝ tính từ công thức L-Z29(c): {self.n_dang_ky_computed}",
         ]
         return "\n".join(lines)
@@ -86,9 +98,26 @@ def dof_report(
     dof_v6_bo_sot = sum(r["dof_v6"] for r in inv["bo_sot"])
     tier_b_from_table_sum = dof_v6_main + dof_v6_bo_sot
 
-    tier_b_declared_count = len(tunable_param_names(cfg))
+    ten_that = tunable_param_names(cfg)
+    tier_b_declared_count = len(ten_that)
 
     n_dang_ky_computed = 4 + 3 * tier_b_declared_count * 2 + ARM_B2_COUNT * 2 + 20
+
+    ten_bang: list[str] = []
+    loi: list[str] = []
+    for nhom in ("rows", "bo_sot"):
+        for r in inv[nhom]:
+            khoa = r.get("khoa_tier_b")
+            nhan = f"{nhom}/{r.get('muc')} {r.get('ten')!r}"
+            if r["dof_v6"] == 1:
+                if not khoa:
+                    loi.append(f"{nhan}: dof_v6 = 1 nhưng thiếu khoa_tier_b")
+                else:
+                    ten_bang.append(khoa)
+            elif khoa:
+                loi.append(f"{nhan}: dof_v6 = {r['dof_v6']} nhưng khai khoa_tier_b = {khoa!r}")
+    trung = sorted({k for k in ten_bang if ten_bang.count(k) > 1})
+    loi += [f"khoa_tier_b {k!r} khai ở hơn một mục" for k in trung]
 
     return DofReport(
         dof_goc_declared=inv["dof_goc"],
@@ -96,6 +125,9 @@ def dof_report(
         tier_b_declared_count=tier_b_declared_count,
         tier_b_from_table_sum=tier_b_from_table_sum,
         n_dang_ky_computed=n_dang_ky_computed,
+        tier_b_ten_that=frozenset(ten_that),
+        tier_b_ten_bang=frozenset(ten_bang),
+        loi_khoa_bang=tuple(loi),
     )
 
 
@@ -112,6 +144,13 @@ def assert_dof_or_block(
         raise DofMismatchError(
             f"DOF_gốc khai báo ({report.dof_goc_declared}) != tổng v5 tính "
             f"được ({report.dof_goc_from_v5_sum}) — kiểm lại config/dof_inventory.yaml"
+        )
+    if not report.tier_b_ten_ok:
+        raise DofMismatchError(
+            "TÊN tier_b lệch giữa tool_d_config.yaml và dof_inventory.yaml (MT-18 b) — "
+            f"chỉ ở config: {sorted(report.tier_b_ten_that - report.tier_b_ten_bang)} · "
+            f"chỉ ở bảng: {sorted(report.tier_b_ten_bang - report.tier_b_ten_that)} · "
+            f"lỗi khai: {list(report.loi_khoa_bang)}"
         )
     if not report.tier_b_ok:
         raise DofMismatchError(
