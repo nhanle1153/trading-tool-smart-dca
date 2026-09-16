@@ -237,6 +237,22 @@ G  xác nhận  ⟺  Δ − h·SE > 0
    **hiệu ứng nhỏ nhất phát hiện được** `h·std_R/√n`, với `std_R` lấy từ EXPLORE **chỉ để lập kế hoạch**
    (`DR-D4-13` §1.6). **Chủ dự án xác nhận đi/không đi** trước khi đặt chỗ suất đầu tiên.
    `n < 30` (mốc DR-011, không phải số mới) ⇒ **DỪNG**, không trình.
+
+   🔴 **ĐÍNH CHÍNH 16/09/2026 — chủ dự án chốt thay câu *"Chủ dự án xác nhận đi/không đi"* ở trên (giữ chữ cũ
+   làm lịch sử).** Câu hỏi của chủ dự án: *"mẫu nhỏ thì tăng mẫu được không?"*
+   - **Hai đường tăng mẫu HỢP LỆ, bắt buộc xong TRƯỚC suất 1:** (a) dữ liệu 5m phủ trọn CALIB (`TD-0252` — đo
+     16/09 thiếu 09/04–01/06/2024 ≈ 12% độ dài CALIB); (b) rổ point-in-time gồm cả mã đã huỷ niêm yết từng tồn
+     tại trong CALIB (`TD-0247`/`DR-D1-02`; `TD-0230` đếm 15 mã như vậy).
+   - **Các đường KHÔNG dùng:** dời `T0` sớm hơn — `DR-D0PRE-07` §7 *"mốc ngày là bất biến sau niêm phong"*, và
+     `T0` sớm nhất từng trình (02/09/2023) đẩy LOCKBOX xuống đúng sàn 20% của `DR-011` (a); mượn WFO (dữ liệu
+     kiểm tra của D4/D9); EXPLORE (`DR-D4-13` §1.2); LOCKBOX (chạm một lần); thêm mã ngoài rổ (`DR-D0PRE-05`).
+   - **Sau (a)+(b): `n ≥ 30` ⇒ CHẠY MẶC ĐỊNH.** Vẫn báo `n` và hiệu ứng nhỏ nhất phát hiện được; chủ dự án
+     giữ quyền dừng, nhưng không còn là cổng bắt buộc. Căn cứ: suất B1 không dùng **không chuyển** sang dòng
+     khác (`DR-D4-01:113`) và **không hạ** rào DSR (`N` đăng ký); với mẫu nhỏ kết cục mặc định là **giữ mốc**
+     (§5), và rào `h = 3,0777` khiến chọn nhầm một giá trị *"thắng do may"* rất khó xảy ra. Mẫu nhỏ chủ yếu tốn
+     thời gian máy; không chạy thì chắc chắn không học được gì.
+   - **Đường "thêm mẫu" đã thiết kế sẵn là dữ liệu LIVE:** tham số giữ mốc vì không phân biệt được được xem lại
+     tại điểm quyết định §12c (mỗi 100 lệnh đóng), không phải bằng cách mở rộng CALIB.
 3. **Mốc (suất 1) sinh 0 lệnh hoặc lỗi kỹ thuật** ⇒ DỪNG D5; chạy lại đi đường B3.
 4. **Phát hiện một tham số trong §2.1 KHÔNG đổi tập lệnh hay kết cục nào** giữa mốc và ứng viên (hai lượt
    trùng từng lệnh) ⇒ đó là **lỗi nối**, không phải kết quả: DỪNG các suất còn lại của tham số đó, mở việc
