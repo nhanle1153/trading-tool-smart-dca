@@ -130,6 +130,15 @@ tier_c: # 🔒 KHOÁ — KHÔNG có ô nhập, ghi ở đây
     train_khoi_tao_tuan: 12
     test_tuan: 7
     san_lenh_moi_fold: 30 # dưới sàn -> chỉ số fold = `unreadable`, KHÔNG ghi số (N6)
+  cscv: # 🆕 TD-0281 — ✅ DR-D9-01 §4 (TD-0280), niêm phong TRƯỚC mọi dòng code CSCV.
+    # PBO qua CSCV cho D9 (H18 nâng P0). Tách khỏi `wfo_folds`: 3 fold không bao
+    # giờ đạt "≥ 8 phân hoạch" (spec :4326) trong 33 tuần [t1, t2).
+    # FROZEN, KHÔNG thuộc tier_b (không tune, không vào N) — cùng hạng `wfo_folds`.
+    # Sàn lệnh DÙNG LẠI `wfo_folds.san_lenh_moi_fold`, ngưỡng PBO là
+    # `gates/thresholds.PBO_MAX` — không nhân đôi con số (DR-D9-01 §4.4).
+    # Đổi số này sau khi đã có bất kỳ λ nào = CẤM (DR-D9-01 §8); `cscv_cau_hinh.py`
+    # đối chiếu khối băm của DR mỗi lần đọc.
+    so_khoi: 8 # 693 giờ/khối trên [t1, t2) = 231 ngày; C(8,4) = 70 tổ hợp
   arm_ablation: # 🆕 TD-0187 — công tắc arm D0.9 cho chiến lược SẢN XUẤT `ZoneAbsorption` (DR-D4-04)
     # Đọc qua `resolve(cfg, "tier_c.arm_ablation.arm")` (N4), KHÔNG từ env (L-Z39).
     # Một trong chín cấu hình `arm_switches.ARM_HOP_LE`; `Z0-T2` KHÔNG phải arm (= Z0).
