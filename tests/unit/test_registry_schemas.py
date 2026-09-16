@@ -114,16 +114,29 @@ class TestFileRegistryThatHopLe:
     Idea Queue, OQ-07 chưa chốt tiêu chí chọn). Kiểm bằng schema thay vì
     kiểm rỗng — đúng bản chất "sổ SẼ có nội dung theo thời gian", không
     phải "sổ mãi mãi rỗng ở D0-PRE".
+
+    Cập nhật 16/09/2026 (TD-0259): câu "`idea_queue.jsonl` vẫn rỗng" ở trên
+    hết đúng — OQ-07 đã đóng 07/09 (`DR-Q3-2026`, cửa NỘP mở) và `1a00c66`
+    (TD-0226) nộp hợp lệ `IQ-0001`. Ca "sổ ý tưởng phải rỗng" vì thế đỏ từ
+    14/09; thay bằng đúng khuôn của `trial_registry` ngay dưới: sổ thật
+    không rỗng + mọi dòng khớp schema.
     """
 
     def test_hai_file_jsonl_ton_tai(self) -> None:
         assert (REPO_ROOT / "registry/trial_registry.jsonl").exists()
         assert (REPO_ROOT / "registry/idea_queue.jsonl").exists()
 
-    def test_idea_queue_van_rong_chua_mo(self) -> None:
-        # OQ-07: tiêu chí chọn ý tưởng của quý phải commit TRƯỚC khi mở
-        # queue (spec dòng 4935) — chưa chốt, nên vẫn phải rỗng.
-        assert (REPO_ROOT / "registry/idea_queue.jsonl").read_text(encoding="utf-8") == ""
+    def test_idea_queue_that_moi_dong_hop_le_theo_schema(self) -> None:
+        # Chốt `len > 0` KHÔNG phải trang trí: thiếu nó thì sổ rỗng cho vòng
+        # `for` chạy 0 lần ⇒ PASS RỖNG. Và nó không lỗi thời được như ca cũ
+        # (TD-0259): sổ append-only chỉ lớn lên — ghim QUAN HỆ, không ghim `== 1`.
+        entries = _load_jsonl(REPO_ROOT / "registry/idea_queue.jsonl")
+        assert len(entries) > 0, (
+            "idea_queue trống — IQ-0001 (TD-0226, 1a00c66) đã bị xoá nhầm? "
+            "Sổ append-only không được co lại."
+        )
+        for e in entries:
+            jsonschema.validate(e, IDEA_QUEUE_SCHEMA)
 
     def test_trial_registry_that_moi_dong_hop_le_theo_schema(self) -> None:
         events = _load_jsonl(REPO_ROOT / "registry/trial_registry.jsonl")
