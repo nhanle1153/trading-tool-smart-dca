@@ -246,7 +246,7 @@ số. Chọn chặn vì suất B1 dư có hạn, còn thời gian thì không ph
 | §4.3 danh sách tên CTRL | Lý do thoát lệnh và tỉ lệ lỗ/ngân sách có được coi là "mô tả" không? | Chỉ cho `hold_duration_bars` + `liq_buffer_ratio` + tỉ lệ `TIME_STOP`/DG7/DG6 **gộp một số** (không tách SL/TP). Tiêu chí 1.15 kiểm trên kịch bản tổng hợp |
 | §4.2 `MT-40` | Đỉnh equity reset khi nào (không bao giờ · sau ABORT · khi nạp vốn)? | Chỉ reset khi **nạp/rút vốn có ghi sổ**, còn lại không bao giờ. Không phải tham số tune được, xếp Cấp C |
 | §6 điều kiện vào D9 | D9 đợi D6–D8, hay chạy song song rồi chấp nhận rủi ro chạy lại? | Đợi (lý do ở §6) |
-| D6.1 ngưỡng DR-007 | `> 50%` (`spec:2822`) hay `≥ 50%` (`spec:2851`, `:4267`)? | Xem §9, `MT-50` |
+| D6.1 ngưỡng DR-007 | `> 50%` (`spec:2821`) hay `≥ 50%` (`spec:2854`, `:4267`)? | Xem §9, `MT-50` |
 
 ---
 
@@ -256,7 +256,7 @@ số. Chọn chặn vì suất B1 dư có hạn, còn thời gian thì không ph
   *"lần chạm duy nhất ở D9"*. Spec viết `D9.5 — LOCKBOX: chạm ĐÚNG MỘT LẦN` (`:4493`), `L-Z13` *"cho tới
   sau D9"* (`:3876`). Chữ spec và cổng `L-Z13` đều nghiêng D9.5; không tự chọn bên. Hệ quả nếu đọc theo
   `DR-D0PRE-07`: `DR-D9-01` có thể tưởng lockbox nằm trong phạm vi của nó.
-- **`MT-50` 🟡 — ngưỡng DR-007 là `> 50%` hay `≥ 50%`?** `spec:2822` *"overlap > 50%"*, còn `spec:2851` và
+- **`MT-50` 🟡 — ngưỡng DR-007 là `> 50%` hay `≥ 50%`?** `spec:2821` *"overlap > 50%"*, còn `spec:2854` và
   `:4267` *"≥ 50%"*. Chỉ khác nhau đúng ở ca overlap = 50,0%. Rẻ nếu chốt **trước** khi đo (D6.1), đắt nếu
   chốt sau.
 
