@@ -36,7 +36,7 @@ SKEWNESS_DIFF_VS_Z1_MAX: float = 0.5  # "không âm hơn Z1 quá 0.5"
 TRADES_PER_YEAR_MIN: float = 150.0  # SÀN, không phải trần
 TIME_STOP_RATIO_BAND: tuple[float, float] = (0.05, 0.25)
 TP_FALLBACK_RATIO_MAX: float = 0.40  # > 40% -> L2, không vào live
-PBO_MAX: float = 0.5  # 🟡 P1 ở lần chạy đầu — không chặn D0.9, nâng P0 ở D9
+PBO_MAX: float = 0.5  # H18: D4 chỉ GHI (pbo_chan=False), D9 CHẶN (pbo_chan=True) — DR-D9-01 §7, MT-51
 
 # Nhánh 2 (§10.2, chỉ chạy nếu Nhánh 1 PASS) — cùng loại "đã có số".
 BRANCH2_DCA_BEATS_Z0_MIN_PCT: float = 20.0
@@ -59,8 +59,16 @@ class GateResult:
         return "FAIL — " + ", ".join(self.failed_criteria)
 
 
-def evaluate_branch1(metrics: Mapping[str, float]) -> GateResult:
+def evaluate_branch1(metrics: Mapping[str, float], *, pbo_chan: bool) -> GateResult:
     """Kiểm các tiêu chí SỐ của Nhánh 1 (spec dòng 4257-4276).
+
+    `pbo_chan` — BẮT BUỘC khai, KHÔNG có mặc định (`DR-D9-01` §7, `MT-51`):
+    spec :4326/:4349 cho PBO là P1 ở D4 (chỉ ghi) và P0 ở D9 (chặn). Trước
+    TD-0285 hàm này chặn PBO ở MỌI nơi gọi, trái chữ spec. Một mặc định sẽ
+    lặng lẽ chọn một phía cho người quên khai — nên người gọi phải nói.
+      • `False` (D4): PBO không vào `failed_criteria`; giá trị vẫn ở
+        `metrics` để bản ghi báo cạnh bên.
+      • `True`  (D9): PBO thiếu ⇒ `+inf` ⇒ FAIL tiêu chí, như mọi tiêu chí khác.
 
     KHÔNG kiểm các tiêu chí dạng "PASS/FAIL của bộ test khác" (H4-D,
     L-Z10→L-Z33, phân bố hold_duration/funding báo cáo) — đó là việc của
@@ -83,8 +91,11 @@ def evaluate_branch1(metrics: Mapping[str, float]) -> GateResult:
         "trades_per_year": metrics.get("trades_per_year", -math.inf) >= TRADES_PER_YEAR_MIN,
         "tp_fallback_ratio": metrics.get("tp_fallback_ratio", math.inf)
         <= TP_FALLBACK_RATIO_MAX,
-        "pbo": metrics.get("pbo", math.inf) <= PBO_MAX,
     }
+    if not isinstance(pbo_chan, bool):
+        raise TypeError(f"pbo_chan phải là bool tường minh, nhận {pbo_chan!r}")
+    if pbo_chan:
+        checks["pbo"] = metrics.get("pbo", math.inf) <= PBO_MAX
     failed = tuple(name for name, ok in checks.items() if not ok)
     return GateResult(
         verdict=Verdict.PASS if not failed else Verdict.FAIL,
