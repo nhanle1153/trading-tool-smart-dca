@@ -9,10 +9,18 @@ cho rào DSR luôn nhỏ hơn nhiều "lệnh/năm" — ví dụ 150/năm → n 
 trên lệnh THẬT (CALIB/WFO/EXPLORE), mà:
   - CALIB/WFO: tính là "chạm dữ liệu" (DR-014 §2, đánh giá cấu hình),
     tiêu 1 trial — chính là việc TD-0184 định làm, đang bị chặn.
-  - EXPLORE: `DR-D0PRE-05` §4 cấm THẲNG — "KHÔNG expectancy, KHÔNG PnL
-    theo arm" (dùng để SINH giả thuyết, không kiểm định).
-Không có đường vòng hợp lệ nào để có `std_R`/`mean_R` thật MÀ KHÔNG tiêu
-trial hoặc phạm ranh giới EXPLORE — nên file này KHÔNG cố lấy nó, chỉ
+  - EXPLORE: 🔄 ĐÍNH CHÍNH 16/09/2026 (`MT-24`, `DR-D4-13`). Bản đầu của
+    docstring này đặt trong ngoặc kép, như trích nguyên văn, một câu gán
+    cho `DR-D0PRE-05` §4 là cấm expectancy/PnL theo arm. Điều khoản đó
+    KHÔNG chứa câu ấy — đó là một TRÍCH DẪN BỊA (bản cũ còn trong git).
+    Chữ thật: spec §9c.4b cho EXPLORE "Phân tích KHÔNG giới hạn, 0 trial";
+    ràng buộc cứng là (a) không dùng để validate, (b) mã EXPLORE không
+    bao giờ sang pool. ⇒ `std_R` ĐO ĐƯỢC trên EXPLORE, 0 trial, nhưng
+    CHỈ để lên kế hoạch cỡ mẫu, KHÔNG làm căn cứ phán quyết
+    (`DR-D4-13` §1.2).
+File này vẫn KHÔNG lấy `std_R`/`mean_R` thật — không phải vì bị cấm, mà
+vì câu hỏi của nó trả lời được bằng bảng độ nhạy (bản đầu viết lý do là
+"không có đường vòng hợp lệ"; lý do đó SAI theo đính chính trên) — nên chỉ
 dựng BẢNG ĐỘ NHẠY: ứng với mỗi giả định `std_R`, cần `mean_R` bao nhiêu
 để qua rào ở các `n` khác nhau. Không có ô nào trong bảng là "sự thật
 đo được" — mọi cột `std_R` đều là ĐIỀU KIỆN GIẢ ĐỊNH, ghi rõ để không ai
