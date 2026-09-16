@@ -557,6 +557,76 @@
 
 ---
 
+## Khối 20 — D6: Niêm phong ứng viên & xác minh đúng hệ thống cuối (mở 17/09/2026, đặc tả NHÁP)
+
+> 🔴 **Vì sao ba khối 20–22 tồn tại, và chúng MỞ LẠI một quyết định.** Ngày 13/09/2026 chủ dự án chốt
+> *"dựng testnet trước, HOÃN đặc tả D5–D9"* (đoạn mở Khối 18). `DR-D5-01` đã mở lại phần D5. Ngày
+> 17/09/2026 chủ dự án yêu cầu phân tích và đề xuất D6–D8 rồi duyệt kế hoạch. Nguồn sự thật:
+> **`docs/decisions/DR-D6D8-01-dac-ta-pha-d6-d8.md`**. Bản đó **còn là NHÁP**: các dòng dưới đây trỏ
+> § sang DR, không chép nội dung.
+>
+> 🔴 **Spec KHÔNG có đặc tả D6–D8.** `tool-d-smart-dca.md:4492` chỉ ghi `D5–D9 (giữ nguyên)`; bản tài
+> liệu gốc chưa bao giờ nằm trong git. Neo còn lại: `spec:279` *"B7 chặn D7"* · `:2932` *"D9 (Walk-forward
+> + GATE)"* · `:4526-4530` (② → ③) · §11 (**H2, H5, H9/H10, H14 chưa gán pha nào**).
+>
+> ⚠️ **Bẫy ký hiệu:** D6/D7/D8 ở ba khối này là **PHA**. Spec §9b.2 dùng cùng ký hiệu cho **GIẢ ĐỊNH**
+> (giả định D6 = giá mở nến, giả định D7 = `custom_data`). Không liên quan.
+>
+> **Hai chốt của chủ dự án 17/09/2026:** (1) **Long-only tới live**; Short thành chu trình riêng với
+> lockbox MỚI. Giá phải trả: lần chạm lockbox `[T2,T3]` tiêu luôn cho Short (`DR-011` `spec:3335-3337`).
+> (2) **D7 dùng kịch bản tổng hợp + dòng CTRL** theo đường (c) của `MT-19` (dạng *đo mô tả*), **không**
+> nới `CTRL_OUTPUT_ALLOWED`.
+>
+> 🔑 **Nguyên tắc chung (`DR-D6D8-01` §2):** **0 trial** · không chạm WFO `[T1,T2]` (thuộc D9, phiên
+> `-33`) · không chạm LOCKBOX · không thêm biến thể cấu hình (ablation DG8, Short, FreqAI đều ngoài) ·
+> lỗi code sửa theo DR-012 Hạng 1, **giá trị tham số không đổi** · mỗi pha một cổng máy trên E6.
+> Đã nhắn `-33`/`-30` dãy mã trước khi mở (N12 mục 6); D9 dùng Khối 23 / `TD-0280…`.
+
+| Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
+|---|---|---|---|---|
+| TD-0260 | 🚪 **`DR-D6D8-01` — chốt bản đặc tả D6–D8.** Bản nháp đã viết 17/09/2026; còn 5 ô `__CHUA_DIEN__` (§8: biên độ kịch bản stress · danh sách tên CTRL *đo mô tả* · `MT-40` đỉnh equity reset khi nào · D9 đợi D6–D8 hay chạy song song · ngưỡng DR-007 `>`/`≥` 50%) | 🔓 | — | Không còn `__CHUA_DIEN__`; bỏ nhãn NHÁP; commit **RIÊNG và TRƯỚC** mọi dòng mã Khối 20–22 (kiểm bằng `git merge-base --is-ancestor`, không bằng mắt). Nhắn phiên `-33` để đính chính điều kiện vào D9 trong `DR-D9-01` §6.1 |
+| TD-0261 | **H14 + DR-007 — đo overlap pool, chốt N của D9 TRƯỚC D9** (`DR-D6D8-01` D6.1). Hiện **chưa từng đo** | 🔓 | TD-0260 (ngưỡng `MT-50`), TD-0247 | Overlap rổ Tool D (sau TD-0247) với pool Tool A, kèm xuất xứ, trong `docs/du-lieu-do/`; áp DR-007 **máy móc**; N của D9 ghi research-log; **không** đổi tiêu chí pool; 0 trial |
+| TD-0262 | **Kiểm kê DOF sau D4/D5 — CHỈ GHI** (D6.2): DG5 chết khi bỏ DCA, DG1–DG5 không được xét trên `Z0-T1` (`MT-44`) | 🔓 | `d5_complete` | Mục research-log liệt kê từng bậc tự do đã chết kèm bằng chứng code; **N của D9 không đổi** (`spec:4314-4316`) |
+| TD-0263 | **`MT-30` có chạm `Z0-T1` không — ĐO, không suy** (D6.3) | 🔓 | `d5_complete` | EXPLORE, 0 trial: đếm lệnh `Z0-T1` mà danh sách zone đối diện ở lúc đóng băng ≠ lúc xét TP1. Bằng 0 ⇒ ghi `MT-30` N/A cho arm sản xuất (vẫn là nợ của DCA); > 0 ⇒ sửa Hạng 1 + test đỏ khi bỏ bản sửa |
+| TD-0264 | **H5 — `timeframe-detail 5m` trên cấu hình cuối** (D6.4) | 🔓 | TD-0252, `d5_complete` | EXPLORE, 0 trial: so tập lệnh có/không detail; mỗi lệnh lệch được soi nguyên nhân; kết luận *swing 4H có lệch do intrabar không* kèm artifact |
+| TD-0265 | **H2 — cổng danh mục có ràng buộc thật không** (D6.5): §6.8f · `mult_corr` · `mult_deploy` | 🔓 | TD-0247, `d5_complete` | EXPLORE, 0 trial: số lần mỗi cổng ràng buộc, phân bố số vị thế đồng thời, tỉ lệ lệnh bị từ chối vì danh mục; **kiểm có răng**: phá cổng ⇒ số lệnh đổi |
+| TD-0266 | **Niêm phong cấu hình ứng viên `d6_ung_vien`** (D6.6) | 🔓 | `d5_complete`, TD-0263, TD-0265 | `config_hash` + `params_frozen_hash` + git sha của `Z0-T1` LONG giá trị D5 trong `runtime_state.json`; từ chối ghi đè (khuôn `lockbox/seal.py`); test khoá |
+| TD-0267 | 🚪 **GATE D6** — `close_d6_gate()` trong E6 (`--close-d6-gate`), khuôn `close_d3_5_gate()` | 🔓 | TD-0260…TD-0266 | Đòi `d5_complete`; kiểm cây sạch TRƯỚC suite; chạy RIÊNG từng file test lõi, PASS ≥ 1; ghi `d6_complete` + tag `d6-complete`; chạy lại ⇒ từ chối |
+
+## Khối 21 — D7: Hardening tồn vong — "B7 chặn D7" (mở 17/09/2026, đặc tả NHÁP)
+
+> Mục tiêu (`DR-D6D8-01` §4): chứng minh mọi cầu dao Cấp C (§12c.3) **thật sự nổ** ở `L_exchange = 3`
+> trên `d6_ung_vien`. D7 **không** hỏi *"lời bao nhiêu"*. Kịch bản làm vỡ tiêu chí là **phát hiện**, xử
+> theo §11b.1; **không** tinh chỉnh tham số trong D7. Mọi phép kiểm phải chạy qua **đường sản xuất**,
+> không qua mẫu dựng tay.
+
+| Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
+|---|---|---|---|---|
+| TD-0268 | **Danh sách tên đầu ra CTRL *đo mô tả* cho D7** (§4.3) — mỗi tên kèm một câu vì-sao-không-phải-chỉ-số-hiệu-năng; chủ dự án quyết lý do thoát lệnh / tỉ lệ lỗ-ngân sách có được tính là "mô tả" không | 🔓 | TD-0260, code dạng CTRL thứ ba của `MT-19` (hiện 0 dòng; TD-0251 cần trước) | Danh sách đóng trong DR; allowlist trong code liệt kê đích danh; test: ghi tên ngoài danh sách ⇒ cửa ghi từ chối; `n_used()` không đổi |
+| TD-0269 | **H9/H10 — stress thanh lý bằng kịch bản tổng hợp** (§4.1) theo dải `R_eff` **đo lại** trên `d6_ung_vien` (không dùng dải thiết kế 0,9–3,0%) | 🔓 | `d6_complete`, TD-0260 (biên độ kịch bản) | Mọi kịch bản báo `liq_buffer_ratio` và `max_single_trade_loss / risk_budget` so với 8 và 1.15; artifact có xuất xứ §0d.5; 0 trial, không chạm dữ liệu |
+| TD-0270 | **Thang drawdown 5/8/20% chạy lại trên equity tổng hợp** (§4.2) qua `_dd_pct()` + `equity_peak.py` + Risk Supervisor: HALT · khởi động lại · nửa size · trần 3 HALT/100 lệnh · ABORT | 🔓 | `d6_complete`, TD-0260 (`MT-40`) | Mỗi bậc có test qua đường sản xuất, đỏ khi vô hiệu hoá; `MT-40` có kết luận (reset đỉnh khi nào, xếp Cấp C) |
+| TD-0271 | **DG6/DG7/DG8 trên CALIB — dòng CTRL *đo mô tả*** (§4.3) + ghi `BAT_KHA` DG1–DG5 cho `Z0-T1` (`MT-44`) + sửa lời khai `dg7_funding_frac` (`MT-46` (1), không sửa giá trị) | 🔓 | TD-0268, `d6_complete` | Dòng CTRL trong sổ, đầu ra đúng danh sách TD-0268; tỉ lệ kích hoạt từng cổng; `n_used()` không đổi; `param_status.yaml` hết lời khai "chỉ áp cho SHORT" |
+| TD-0272 | **Sự cố vận hành — kiểm có răng** (§4.4): restart giữa vị thế (TD-0237/0238) · 418/429 (TD-0241) · thiếu key (TD-0242) · LIQUIDATED dừng toàn hệ thống | 🔓 | `d6_complete` | Mỗi ca một test **phá-thật-chạy-lại** đỏ; ca nào chưa có thì viết |
+| TD-0273 | 🚪 **GATE D7** — `close_d7_gate()` trong E6 (`--close-d7-gate`) | 🔓 | TD-0267, TD-0268…TD-0272 | Đòi `d6_complete`; khuôn TD-0267; ghi `d7_complete` + `d7_han_che` (chỉ LONG · kịch bản tổng hợp không phải lịch sử · cầu dao nào chỉ kiểm trên mẫu) + tag `d7-complete` |
+
+## Khối 22 — D8: Tiền đăng ký lockbox (D9.5) & dọn nợ trước go-live (mở 17/09/2026, đặc tả NHÁP)
+
+> Chỉ giấy tờ, **không chạm dữ liệu** (`DR-D6D8-01` §5). **Soạn được ngay, song song D5–D7**, nhưng
+> ngưỡng lockbox phải commit **trước khi thấy số WFO**. 🔴 **Ngoài phạm vi, thuộc `DR-D9-01` (phiên
+> `-33`):** fold WFO, PBO/CSCV, tập cấu hình CSCV, sàn lệnh/năm và thuế nhiễu của D9. Không lặp lại ở
+> đây: một ý, một file (N12 mục 6).
+
+| Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
+|---|---|---|---|---|
+| TD-0274 | 🚪 **Quy tắc lockbox — điền ô `......` của DR-011** (`spec:3328-3343`) **trừ ô "cấu hình"** (điền sau D9 theo luật). Kèm câu *"Short không được đánh giá; lần chạm này tiêu lockbox cho Short"* | 🔓 | TD-0260 | DR riêng commit **trước suất WFO đầu tiên của D9** (kiểm bằng thứ tự commit); ngưỡng LONG bằng SỐ; không ô trống |
+| TD-0275 | **Điều kiện chất lượng lockbox (c) — ≥ 30 lệnh dự kiến** trên rổ pool mới | 🔓 | TD-0247, TD-0251 | Ước lượng = tốc độ lệnh đếm trên CALIB (TD-0251, CTRL chỉ đếm) × độ dài `[T2,T3]`; **không** đếm trên lockbox; dưới 30 ⇒ trình chủ dự án trước D9 |
+| TD-0276 | **Hệ quả Long-only cho Short** — bổ sung **một đoạn** vào `DR-D4-01` §2b: Short cần lockbox MỚI | 🔓 | TD-0260 | Đoạn bổ sung có ngày, giữ nguyên chữ cũ; **không** tạo DR Short thứ hai |
+| TD-0277 | **Đóng nợ trước go-live**: `MT-26` câu 2 · `MT-27` · `MT-28` · `MT-33` (🔴) · `MT-46`; rà `OQ-10`/`OQ-12`/`OQ-13` | 🔓 | — | Mỗi MT có quyết định chủ dự án, ghi qua "chuẩn hóa và lưu" (N9); hoặc quyết định *"mang theo có ý thức"* có lý do |
+| TD-0278 | **Ghi `MT-49` + `MT-50`** (`DR-D6D8-01` §9): `DR-D0PRE-07:85-87` *"chạm thật là D9"* vs spec **D9.5**; ngưỡng DR-007 `spec:2822` *"> 50%"* vs `:2851`/`:4267` *"≥ 50%"* | 🔓 | — | Hai mục trong `back-end-note.md` mục 7 sau lệnh "chuẩn hóa và lưu"; `MT-50` phải chốt **trước** TD-0261 |
+| TD-0279 | 🚪 **GATE D8** — `close_d8_gate()` trong E6 (`--close-d8-gate`) | 🔓 | TD-0274…TD-0278 | Không cần `d7_complete` (giấy tờ song song); kiểm: file DR lockbox tồn tại + không còn `__CHUA_DIEN__` + các MT ở TD-0277/0278 có trạng thái; ghi `d8_complete` + tag `d8-complete` |
+
+---
+
 ## Việc đã biết là sẽ có, chưa mở
 
 | Giai đoạn | Nội dung | Chặn bởi |
@@ -566,6 +636,7 @@
 | ~~D3~~ ✅ **ĐÃ ĐÓNG 08/09/2026** | H3-D walk-forward orchestrator → **Khối 14** bên trên (TD-0140…TD-0148), tag `d3-complete`. 🔴 Cổng chứng nhận **bộ điều phối** đúng, **không** chứng nhận đã có kết quả WFO — chưa có bộ chạy backtest thật | — |
 | ~~D3.5~~ ✅ **ĐÃ ĐÓNG 08/09/2026** (tag `d3-5-complete`) | 🚪 Cổng sai lệch thước đo (DR-015) — **chặn D4** → **Khối 15** bên trên (TD-0160…TD-0166). 🔴 Chữ "cần testnet" ở đây là đóng khung SAI, xem DR-D35-01 | — |
 | ~~D4~~ ✅ **ĐÃ MỞ 08/09/2026** | 🔴 Ablation D0.9, 9 cấu hình × 2 hướng — **blocker B4** → **Khối 16** bên trên (TD-0180…TD-0186). Cả hai điều kiện chặn đã gỡ. 🔴 Phần lớn D4 là **DỰNG arm**, không phải chạy arm — DG1–DG5 chưa có dòng code nào | — |
+| ~~D6–D8~~ **ĐÃ MỞ 17/09/2026 (đặc tả NHÁP)** | Niêm phong ứng viên + H2/H5/H14 (D6) · hardening tồn vong H9/H10 + thang drawdown (D7) · tiền đăng ký lockbox + nợ trước go-live (D8) → **Khối 20–22** bên trên (TD-0260…TD-0279), nguồn `DR-D6D8-01` | TD-0260 (chốt DR) |
 | D9.5 | Lockbox chạm **đúng một lần** | D9 |
 | D10–D12 | Testnet quy mô đầy đủ → dry-run → live vốn nhỏ. 🔴 **Rà soát 09/09/2026 (đối chiếu key learning "tắt liên tục" của Tool A) bổ sung việc phải xong TRƯỚC khi có tiến trình chạy dài đầu tiên/lệnh thật:** (1) rate-limit + circuit breaker cho `binance_public.py` → **TD-0197** (Khối 16, đang code); (2) heartbeat/cảnh báo khi tiến trình Freqtrade ở trạng thái `stopped`/idle mà không ai biết (khác Risk Supervisor §6.6 — giám sát margin/thanh lý, không giám sát "tiến trình có đang chạy") → **TD-0209**; (3) validate fail-closed khi thiếu `BINANCE_API_KEY`/`BINANCE_API_SECRET` lúc entrypoint cần đặt lệnh thật — cảnh báo rõ thay vì bị chặn âm thầm không ai hay — ✅ **TD-0242** (`bbf16f1`, 13/09/2026; hàm thuần, chưa nối entrypoint vì D10-D12 chưa mở). ⚠️ **Ràng buộc cho launcher tương lai** (phiên `-3f`/`-80` nêu 13/09/2026, sau khi `DR-D11-02` đổi D10 sang lệnh LIVE TỐI THIỂU): `validate_credentials_for_live()` phải gọi ở `main()` của entrypoint, KHÔNG BAO GIỜ trong một callback chiến lược (`strategy_safe_wrapper` nuốt exception — `MT-16` vii); và việc nối nó phải **kèm một phép kiểm AST** kiểu `L-Z36`/`guard_ast_check.py` xác nhận vị trí gọi, không chỉ dựa lời khai docstring — nợ đã khai, không phải nợ ẩn. 🔑 **Thiết kế đã phác sẵn** (docstring `validate_credentials_for_live()`, `binance_public.py`, phiên `-3f` 13/09/2026 chỉ đúng tiền lệ `ZoneAbsorption.py:224` — cùng hình dạng "lời khai, không phải bằng chứng"): ALLOW-list (xác nhận nằm trong `main`) chứ không phải deny-list tên callback (bài học MT-08), kiểm-có-răng bằng nguồn giả qua `ast.parse` — KHÔNG cần entrypoint/strategy thật, viết được ĐỘC LẬP với việc launcher tồn tại hay chưa | D9.5 |
 
@@ -598,3 +669,4 @@
 | TD-0256 | ♻️ Sửa đổi | Chỉ siết `L-Z15` (TUNED ⇒ `trial_id`) | Thêm phần (ii): `MT-18` phương án (b) — `dof_inventory.yaml` mang tên khoá, `L-Z29` so tập hợp tên | Chủ dự án chốt làm đủ (b) khi `DR-D5-01` §8 trình câu (16/09/2026); gộp vào TD-0256 thay vì mở mã mới để giữ trong dải `TD-0250…TD-0258` đã báo các phiên | 16/09/2026 |
 | TD-0259 | ➕ Thêm mới | — | Việc sửa test lỗi thời `test_idea_queue_van_rong_chua_mo` (cuối Khối 18) | Phiên `-df` chạy full suite 16/09/2026 ra 1 failed; truy ra test ghim trạng thái *"sổ ý tưởng rỗng"* đã hết đúng từ TD-0226 (`1a00c66`). Chủ dự án duyệt hướng sửa. Mã 0259 thay vì khe 0248/0249 để không giẫm mã có thể đang được dành | 16/09/2026 |
 | TD-0253 · TD-0258 · đoạn mở Khối 19 | ♻️ Sửa đổi | Chốt 1–8; TD-0253 *"từ chối ở `registry.reserve()`"*; TD-0258 không phụ thuộc TD-0247 | Thêm chốt 9 (mẫu nhỏ: hai đường hợp lệ rồi chạy mặc định) + chốt 10 (chặn tại cửa, đổi helper 12 file test); TD-0258 phụ thuộc thêm TD-0247 | Chủ dự án hỏi *"mẫu nhỏ thì tăng mẫu được không"* và chốt chỗ chặn khi lập kế hoạch đợt code (16/09/2026) | 16/09/2026 |
+| TD-0260…TD-0279 | ➕ Thêm mới | — | **Khối 20 (D6) · 21 (D7) · 22 (D8)** — 20 việc, đặc tả NHÁP `DR-D6D8-01` | Chủ dự án yêu cầu phân tích và đề xuất D6–D8 (spec `:4492` không có dòng nào), duyệt kế hoạch 17/09/2026, chốt Long-only tới live + D7 dùng kịch bản tổng hợp + CTRL. Mở lại phần D6–D8 của quyết định *"HOÃN đặc tả D5–D9"* 13/09. Va chạm mã với phiên `-33` (D9) giải trước khi ghi: `-33` dời sang Khối 23 / `TD-0280…` | 17/09/2026 |
