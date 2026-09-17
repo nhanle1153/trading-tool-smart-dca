@@ -114,3 +114,48 @@ bị lọc, nhưng bộ sinh vẫn áp và ghi số mã bị lọc (0 cũng ghi)
   khi biết cách loại EXPLORE đúng).
 - **`MT-54`** (chờ lệnh "chuẩn hóa và lưu"): ràng buộc (b) §9c.4b thi hành theo **dữ liệu đã dùng**,
   xét tại `T1`, lệch chữ *"mọi coin trượt tiêu chí"*; kèm đính chính con số 9 của `DR-D1-02`.
+
+---
+
+## 4. PHỤ LỤC 17/09/2026 — dữ liệu `[T0,T2]` cho rổ `T1` (chủ dự án chốt, viết TRƯỚC code)
+
+Bộ sinh chạy thật ra **107 mã** (`config/pool_t1.yaml`, `a62540b`), khít `TD-0231`. Đếm file
+(0 trial, chỉ tên file) và hỏi `exchangeInfo` sống:
+
+| Nhóm | Số mã | Cách có dữ liệu |
+|---|---|---|
+| Đã có đủ 6 loại file trong `user_data/data/binance/futures/` | 55 | **Sao chép nguyên byte** sang thư mục rổ, không tải lại |
+| Thiếu, **đang giao dịch** | 45 | `freqtrade download-data` (quy trình TD-0093/TD-0200 + cắt ≤ `T2`) |
+| Thiếu, **đã huỷ niêm yết** (6 `SETTLING`: DEGO, FLM, ICX, MKR, OM, TON; 1 vắng: AERGO) | 7 | **Nhập từ kho `data.binance.vision`** — Freqtrade không tải được mã không còn trên sàn |
+
+**Chủ dự án chốt (hai câu hỏi trực tiếp):**
+
+1. **7 mã đã huỷ niêm yết: viết đường nhập từ kho lưu trữ.** Bỏ chúng đi là tái tạo lệch sống sót
+   theo chiều PASS, đúng thứ `TD-0247` sinh ra để sửa.
+2. **`user_data/data/pool_t1/futures/` chứa đủ 107 mã.** Freqtrade chỉ đọc một thư mục dữ liệu mỗi
+   lần backtest. 55 mã có sẵn thì sao chép.
+
+**Thi hành, không phải quyết định mới:**
+
+- **Phạm vi thời gian theo đúng quy ước file hiện có** (đo 17/09): `1h`/`4h`/`1d`-futures, `1h-mark`,
+  `1h-funding_rate` từ `T0`; `5m`-futures từ `T1`. Mọi file cắt `date ≤ T2 00:00 UTC`. Mã niêm yết sau
+  mốc thì bắt đầu từ lúc niêm yết; mã huỷ trước `T2` thì kết thúc lúc huỷ.
+- **Khớp định dạng đã CHỨNG MINH bằng đối chiếu, không suy luận.** AAVE (đang giao dịch), tháng
+  05/2024 và 09/2025, kho so với file Freqtrade thật:
+  - nến `1h`/`4h`/`1d`/`5m` và `mark`: **0 ô lệch, 0 mốc chỉ-một-bên**;
+  - `funding`: lần đầu lệch mốc vì `calc_time` của kho mang jitter **1–7 ms** (`1714665600002`), còn
+    Freqtrade ghi tròn giờ. Sau khi làm tròn xuống giờ (từ chối nếu lệch ≥ 60 giây): **93/93 và 90/90
+    hàng, 0 ô lệch**.
+  - Script đối chiếu commit kèm artifact.
+- 🔴 **Ngoại lệ có ý thức với docstring E8** *"E8 không tự tải — lớp gác không được phụ thuộc vào
+  chính thứ nó giám sát"*. Đường nhập kho là một **cờ riêng** trên E8 (không thêm entrypoint thứ 9,
+  `L-Z36`).
+  - Ý của câu docstring vẫn giữ: `--snapshot-before`/`--verify-after` **không gọi** đường nhập, và
+    đường nhập **không gọi** lớp gác.
+  - Đường nhập **từ chối ghi đè** mọi file đã tồn tại. Thư mục rổ là thư mục mới, nên không có nến cũ
+    nào để mất.
+- **Tháng thiếu giữa khoảng tồn tại** (404 ở một tháng nằm giữa `thang_dau` và `thang_cuoi` theo
+  `TD-0230`) ⇒ **từ chối**, không lấp, không bỏ qua (N6).
+- **Kiểm đủ rổ bằng máy** trước khi coi `TD-0247` xong. Cờ E8 kiểm từng mã trong
+  `config/pool_t1.yaml`: đủ 6 file, không rỗng, không có nến sau `T2`, bắt đầu đúng mốc, kết thúc đúng
+  mốc (hoặc đúng tháng huỷ niêm yết).
