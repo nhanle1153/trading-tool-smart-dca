@@ -1,0 +1,95 @@
+{
+  "nguon": "TD-0291 — DR-SONG-CON-01 (dd76a61 + §8 ed25bbd), luật song_con §8, EXPLORE, 0 trial",
+  "chay_luc_utc": "2026-09-17T06:32:41Z",
+  "git_sha": "91b985249758f9f82106860be1bcc03341403ec5",
+  "cay_do_ban": [],
+  "ranh_gioi": "Cổng DỪNG, không phải phán quyết cổng (DR-D4-13 §1.2). Số KHÔNG vào YAML, KHÔNG chọn tham số, KHÔNG xếp hạng arm, KHÔNG làm bằng chứng PASS. EXPLORE ngoài sổ ngân sách (DR-014 §2). Người quyết ĐÃ nhìn thấy số này (DR-009).",
+  "han_che": [
+    "Không có dữ liệu 5m ⇒ không --timeframe-detail; thứ tự chạm SL/TP trong nến 1H là xấp xỉ, chiều lệch chưa biết",
+    "EXPLORE ≠ pool: lợi thế trên 88 mã EXPLORE không chứng minh lợi thế trên 102 mã pool",
+    "CHỈ CALIB [T0,T1) (§8): WFO KHÔNG đo — không rò câu trả lời D4; mẫu nhỏ hơn",
+    "Luật 3 TRUNG TÍNH (§8): 'không có lý do dừng' KHÔNG phải bằng chứng ủng hộ Z0-T1, cấm trích cho D4",
+    "Tập lệnh sau TD-0294 (0afbc70) — số đếm EXPLORE cũ (TD-0193/0205/0212) không so trực tiếp",
+    "KHAI DR-009: TRƯỚC khi §8 chốt, một lượt THỬ MÁY 3 mã (--max-coins 3, runs/, không phải artifact) đã IN số trên cả CALIB lẫn WFO (n = 12 tổng, trước TD-0294) — phiên -33 đã nhìn thấy; quá ít để kết luận, không dùng ở đâu",
+    "Một cấu hình (Z0-T1, tham số hiện hành, chưa calibrate)",
+    "N = 114; DR-007 union chưa đo (TD-0261)"
+  ],
+  "tham_so_luat": {
+    "timerange": "20240409-20250612",
+    "cua_so": "CALIB [T0,T1) — DR-SONG-CON-01 §8",
+    "so_ma_explore": 65,
+    "ma_nam_explore": 49.2778,
+    "so_ma_pool": 102,
+    "nam_test": 0.40274,
+    "N": 114
+  },
+  "Z0-T1": {
+    "arm": "Z0-T1",
+    "vai_tro": "UNG_VIEN — áp luật §4",
+    "so_lenh": 162,
+    "calib": {
+      "n": 162,
+      "mean": -0.00145,
+      "std": 1.142644,
+      "ktc95_duoi": -0.177408,
+      "ktc95_tren": 0.174508
+    },
+    "ty_le_lenh_loi": 0.463,
+    "tong_pnl_abs_usdt": -0.7842,
+    "exit_reason": {
+      "FUNDING_STOP": 30,
+      "trailing_stop_loss": 73,
+      "TP2_TRAIL": 58,
+      "TIME_STOP": 1
+    },
+    "phan_bo_tranche": {
+      "1": 162
+    },
+    "r_realized": {
+      "trang_thai": "pending",
+      "ly_do": "file xuất backtest không mang custom_data (planned_risk_usdt)"
+    },
+    "exception_bi_nuot": 0,
+    "giay": 31.6,
+    "luat": {
+      "ket_luan": "KHONG_TIEU_SUAT",
+      "ly_do": "mean = -0.0015 < M = 0.4026 (luật 4)",
+      "n_cong": 135.048,
+      "M_can_N": 0.402619,
+      "N": 114,
+      "M_union": {
+        "trang_thai": "pending",
+        "ly_do": "TD-0261 (overlap H14 / DR-007) chưa đo — luật 3 (nếu ra) chưa tính DR-007"
+      }
+    }
+  },
+  "Z0-T0": {
+    "arm": "Z0-T0",
+    "vai_tro": "CHẨN ĐOÁN — chỉ mô tả, KHÔNG áp luật",
+    "so_lenh": 631,
+    "calib": {
+      "n": 631,
+      "mean": -0.060064,
+      "std": 1.262538,
+      "ktc95_duoi": -0.158575,
+      "ktc95_tren": 0.038448
+    },
+    "ty_le_lenh_loi": 0.4184,
+    "tong_pnl_abs_usdt": -25.1251,
+    "exit_reason": {
+      "FUNDING_STOP": 79,
+      "trailing_stop_loss": 334,
+      "TP2_TRAIL": 210,
+      "TIME_STOP": 8
+    },
+    "phan_bo_tranche": {
+      "1": 631
+    },
+    "r_realized": {
+      "trang_thai": "pending",
+      "ly_do": "file xuất backtest không mang custom_data (planned_risk_usdt)"
+    },
+    "exception_bi_nuot": 0,
+    "giay": 75.6
+  }
+}
