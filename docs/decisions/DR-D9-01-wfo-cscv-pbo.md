@@ -314,6 +314,14 @@ fold đó. Một lượt toàn cửa sổ đọc tới `T2` ⇒ fold 1 và fold 
   tường minh chặt hơn chữ, không trái chữ.
 - **Không thành cổng-không-bao-giờ-mở:** ba khoá mới đều có việc sinh ra chúng trong `TASKS.md` (Khối 20–22).
   Trong lúc chờ, cửa từ chối với lý do đọc được, sổ không thêm dòng nào — đó là hành vi ĐÚNG của "đợi".
+- 🔴 **Đọc đúng tiến độ (phiên `-30`):** cửa B1/WFO xong **không** có nghĩa D9 sắp chạy được. Đường găng thật
+  là **năm hàm đóng cổng xếp nối tiếp, ngày 17/09 chưa hàm nào tồn tại**: `close_d4_gate` (TD-0186) →
+  `close_d5_gate` (TD-0257) → `close_d6_gate` (TD-0267) → `close_d7_gate` (TD-0273) + `close_d8_gate` (TD-0279).
+- 🔴 **CẤM ghi tay bất kỳ khoá `d5…d8_complete` nào vào `registry/runtime_state.json`** để gỡ chặn — kể cả
+  "tạm", kể cả "chỉ để thử bộ chạy". Mỗi khoá chỉ được sinh bởi hàm `close_dN_gate` tương ứng, và hàm đó
+  **phải kiểm tiêu chí máy trước khi ghi** (cây sạch, pytest thật, PASS ≥ 1 — khuôn `close_d3_5_gate`). Lý do
+  chính là cảnh báo của `OQ-11`: một hàm chỉ ghi `true` khi được gọi, hay một dòng JSON gõ tay, là *"lời khai
+  của người trông như bằng chứng máy"*. Test bộ chạy dùng `runtime_state` giả trong `tmp_path`, không dùng file thật.
 - **`MT-49` chốt:** lockbox chạm ở **D9.5**, khớp §1 *"Không thuộc D9: chạm LOCKBOX"* (đính chính tại chỗ ở
   `DR-D0PRE-07` mục 6, phiên `-01`).
 
