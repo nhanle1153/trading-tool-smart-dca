@@ -46,6 +46,19 @@ class KeHoachTranche:
         return cls(**d)
 
 
+def sl_kieu_zone(*, zone_low: float, atr_4h: float, buf_sl_he_so: float) -> float:
+    """SL kiểu ZONE §3.1 (case LONG) — NGUỒN DUY NHẤT của công thức (TD-0294).
+
+    Hai nơi dùng PHẢI gọi đúng hàm này: `tinh_ke_hoach()` (SL thật của lệnh) và
+    `ZoneAbsorption._xac_nhan_3_3b` (cắt cửa sổ + chặn xác nhận đã thủng SL). Bảo
+    đảm *"xác nhận đòi close(C) > sl_zone ⇒ p1 > kh.sl"* chỉ đứng được khi hai
+    phía là MỘT công thức; `buf_sl_he_so` là tunable #2 mà D5 calibrate — viết
+    hai lần thì sửa một phía là lệnh dưới SL quay lại mà không phép kiểm nào đỏ.
+    """
+    buf_sl = buf_sl_he_so * atr_4h / zone_low
+    return zone_low * (1 - buf_sl)
+
+
 def tinh_ke_hoach(
     *,
     zone_low: float,
@@ -68,8 +81,7 @@ def tinh_ke_hoach(
     p1 = min(zone_high, gia_dong_cua)
     p2 = (zone_high + zone_low) / 2
     p3 = zone_low
-    buf_sl = buf_sl_he_so * atr_4h / zone_low
-    sl = zone_low * (1 - buf_sl)
+    sl = sl_kieu_zone(zone_low=zone_low, atr_4h=atr_4h, buf_sl_he_so=buf_sl_he_so)
     p_avg = (p1 + p2 + p3) / 3  # TRONG_SO_TRANCHE bằng nhau cả ba
     r_eff_plan = (p_avg - sl) / p_avg
     return KeHoachTranche(

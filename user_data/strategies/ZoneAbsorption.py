@@ -158,7 +158,7 @@ from tool_d.take_profit import (
     tp2_muc_trail,
 )
 from tool_d.time_stop import is_time_stop_triggered
-from tool_d.trade_plan import KeHoachTranche
+from tool_d.trade_plan import KeHoachTranche, sl_kieu_zone
 from tool_d.trend_context import trend_dir_tai, tuoi_trend_nen
 from tool_d.zone_detection import K_XAC_NHAN, la_diem_swing, zone_da_bi_huy
 from tool_d.zone_strength import (
@@ -453,7 +453,7 @@ class ZoneAbsorption(IStrategy):
         ke_hoach = [""] * n1
         phan_thuc_b = [False] * n1
         lan_cham_b = [0] * n1
-        so_zone = so_a = so_b = trung_nen = 0
+        so_zone = so_a = so_b = trung_nen = thung_sl = 0
 
         if n1 == 0 or inf4.empty or not inf4["zone_valid"].any():
             self._ghi_cot_3_3b(df1, xac_nhan, ke_hoach, phan_thuc_b, lan_cham_b)
@@ -489,7 +489,7 @@ class ZoneAbsorption(IStrategy):
             # ĐÓNG DƯỚI SL kiểu zone). SL huỷ zone là SL kiểu ZONE (§3.1), độc
             # lập arm — Z1 không được sống lâu hơn Z0 trên cùng zone.
             den = min(n1, k_start + NGUONG_TUOI_ZONE_TOI_DA * NEN_1H_MOI_NEN_4H)
-            sl_zone = zl * (1.0 - self._buf_sl_he_so * atr4[j] / zl)
+            sl_zone = sl_kieu_zone(zone_low=zl, atr_4h=atr4[j], buf_sl_he_so=self._buf_sl_he_so)  # TD-0294: MỘT công thức với kh.sl
             for m in range(j + 1, len(dong4)):
                 if dong4[m] < sl_zone:
                     den = min(den, int(np.searchsorted(ngay1, dong_cua4[m])))
@@ -518,6 +518,19 @@ class ZoneAbsorption(IStrategy):
             c = kq.nen_xac_nhan_that
             if c is None:
                 continue
+            # TD-0294 — nến xác nhận ĐÃ ĐÓNG ≤ SL kiểu zone ⇒ KHÔNG phải xác nhận.
+            # `den` (#5) chỉ cắt khi nến 4H ĐÓNG dưới SL, còn C quét ở 1H ⇒ trong
+            # lòng một nến 4H chưa đóng, C có thể đã thủng SL. Đo EXPLORE 17/09:
+            # 20/2.102 xác nhận như thế — một phần mở lệnh DƯỚI SL (p_avg ba tranche
+            # che R_eff âm), phần còn lại SizingError bị Freqtrade nuốt. So với
+            # `sl_zone` (độc lập arm, #5), KHÔNG so `kh.sl`: Z1 có sl = p1 − 2,2×ATR
+            # luôn < p1 nên sẽ vẫn xác nhận trên zone đã thủng. `continue` TRƯỚC khi
+            # gán `xac_nhan[c]` ⇒ xác nhận ma không chiếm chỗ của zone lành; đứng
+            # TRƯỚC kiểm `xac_nhan[c]` chỉ để ĐẾM đúng (thủng SL không bị ghi nhầm
+            # thành `trung_nen`). Không quét lại C khác — cửa sổ mở MỘT lần (MT-22 A).
+            if dong[c] <= sl_zone:
+                thung_sl += 1
+                continue
             if xac_nhan[c]:
                 trung_nen += 1  # zone xác nhận SỚM hơn giữ chỗ (DR-D4-08 §3, chi tiết 1)
                 continue
@@ -543,8 +556,8 @@ class ZoneAbsorption(IStrategy):
 
         # Dấu vết trên ĐƯỜNG CHẠY THẬT — test khoá grep dòng này (bài học TD-0168/TD-0188).
         logger.info(
-            "XAC_NHAN_3_3B %s zone=%d A=%d B=%d trung_nen=%d arm=%s c=%s",
-            pair, so_zone, so_a, so_b, trung_nen, self._arm, self._bat_dieu_kien_c,
+            "XAC_NHAN_3_3B %s zone=%d A=%d B=%d trung_nen=%d thung_sl=%d arm=%s c=%s",
+            pair, so_zone, so_a, so_b, trung_nen, thung_sl, self._arm, self._bat_dieu_kien_c,
         )
         self._ghi_cot_3_3b(df1, xac_nhan, ke_hoach, phan_thuc_b, lan_cham_b)
 
