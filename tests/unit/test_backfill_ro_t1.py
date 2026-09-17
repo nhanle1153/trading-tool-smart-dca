@@ -156,3 +156,90 @@ def test_ghi_moc_ngung_t0_vao_file_rieng(tmp_path: Path, monkeypatch) -> None:
     E8._ghi_moc_ngung("FTMUSDT", {"moc_ngung": "2025-01-13T08:00:00+00:00"}, "t0")
     assert rieng.is_file() and not chung.exists()
     assert set(E8._doc_moc_ngung("t0")) == {"FTMUSDT"} and E8._doc_moc_ngung("t1") == {}
+
+
+# ─── TD-0252 (DR-D1-05 §3b) — cờ --chi-loai / --ro-con-thieu / --ro-do-phu ───
+
+
+def test_chi_loai_khung_la_thi_TU_CHOI_khong_thanh_tap_rong() -> None:
+    """Khung không có trong kế hoạch phải TỪ CHỐI. Nếu nó lặng lẽ thành tuple rỗng thì mọi thao
+    tác chạy xong trên 0 file và in dấu thành công — đúng hình PASS RỖNG."""
+    from tool_d.data.pool_t1_du_lieu import DuLieuRoError
+
+    with pytest.raises(DuLieuRoError, match="không có trong kế hoạch"):
+        E8._loai_file_cho("t0", "15m")
+    loai, moc_cuoi = E8._loai_file_cho("t0", "5m")
+    assert len(loai) == 1 and loai[0].khung == "5m" and loai[0].tu_moc == "t0" and moc_cuoi == "t1"
+    assert len(E8._loai_file_cho("t0", None)[0]) == 6
+
+
+def test_chi_loai_khung_la_qua_cac_ham_thi_exit_98(tmp_path: Path, monkeypatch) -> None:
+    ro_yaml = tmp_path / "pool_t0.yaml"
+    ro_yaml.write_text("moc_t0: x\ntrading:\n- AUSDT\n", encoding="utf-8")
+    td0230 = tmp_path / "td0230.json"
+    td0230.write_text('{"khoang_ton_tai": {"AUSDT": {"thang_dau": "2023-01", "thang_cuoi": "2026-08"}}}', encoding="utf-8")
+    monkeypatch.setitem(E8.CAU_HINH_RO, "t0", (tmp_path / "d", ro_yaml, tmp_path / "moc.json", ()))
+    monkeypatch.setattr(E8, "NGUON_TD0230", td0230)
+    assert E8.do_ro_con_thieu("t0", "15m") == E8.EXIT_RO_T1_LOI
+    assert E8.do_ro_sao_chep("t0", "15m") == E8.EXIT_RO_T1_LOI
+    assert E8.do_ro_kiem("t0", "15m") == E8.EXIT_RO_T1_LOI
+    assert not (tmp_path / "d").exists()
+
+
+def test_nhap_kho_chi_loai_ma_VANG_artifact_moc_ngung_thi_exit_98(tmp_path: Path, monkeypatch, capsys) -> None:
+    """🔴 Chặn cứng: thiếu artifact thì 18 mã đã ngừng giao dịch trong CALIB bị cắt tại T1 và
+    nhận đuôi nến phẳng volume 0 — và nhánh mã-có-mốc-ngừng của kiem_du_lieu_ro() không chạy,
+    nên không phép kiểm nào báo đỏ. Phải dừng TRƯỚC khi gọi mạng."""
+    ro_yaml = tmp_path / "pool_t0.yaml"
+    ro_yaml.write_text("moc_t0: x\ntrading:\n- AUSDT\n", encoding="utf-8")
+    td0230 = tmp_path / "td0230.json"
+    td0230.write_text('{"khoang_ton_tai": {"AUSDT": {"thang_dau": "2023-01", "thang_cuoi": "2026-08"}}}', encoding="utf-8")
+    vang = tmp_path / "khong-ton-tai.json"
+    monkeypatch.setitem(E8.CAU_HINH_RO, "t0", (tmp_path / "d", ro_yaml, vang, ()))
+    monkeypatch.setattr(E8, "NGUON_TD0230", td0230)
+
+    # 🔴 Ca này TỪNG là PASS vì lý do khác: bỏ chặn đi thì code chạy tiếp, gọi mạng, lỗi ở đó
+    # và CŨNG trả exit 98 — phá thật không làm nó đỏ. Phải khẳng định KHÔNG một lời gọi mạng nào
+    # xảy ra, đó mới là thứ phân biệt "chặn trước" với "chết dọc đường".
+    import tool_d.api_client.binance_public as bp
+
+    da_goi: list[tuple] = []
+
+    def _cam(**kw):
+        da_goi.append(tuple(sorted(kw)))
+        raise AssertionError("KHÔNG được gọi mạng khi thiếu artifact mốc ngừng")
+
+    monkeypatch.setattr(bp, "doc_csv_thang_kho", _cam)
+    ma_thoat = E8.do_ro_nhap_kho("t0", "AUSDT", "5m")
+    ra = capsys.readouterr().out
+    assert ma_thoat == E8.EXIT_RO_T1_LOI
+    assert da_goi == []  # chặn TRƯỚC khi chạm mạng
+    assert "artifact mốc ngừng giao dịch" in ra
+    assert not (tmp_path / "d").exists()
+
+
+def test_ro_con_thieu_chi_doc_khong_ghi(tmp_path: Path, monkeypatch, capsys) -> None:
+    from tool_d.data.pool_t1_du_lieu import LOAI_5M_T0, ten_file
+
+    dich = tmp_path / "d"
+    dich.mkdir()
+    (dich / ten_file("AUSDT", LOAI_5M_T0)).write_bytes(b"x")
+    ro_yaml = tmp_path / "pool_t0.yaml"
+    ro_yaml.write_text("moc_t0: x\ntrading:\n- AUSDT\n- BUSDT\n", encoding="utf-8")
+    td0230 = tmp_path / "td0230.json"
+    td0230.write_text('{"khoang_ton_tai": {}}', encoding="utf-8")
+    monkeypatch.setitem(E8.CAU_HINH_RO, "t0", (dich, ro_yaml, tmp_path / "moc.json", ()))
+    monkeypatch.setattr(E8, "NGUON_TD0230", td0230)
+    truoc = sorted(p.name for p in dich.iterdir())
+    assert E8.do_ro_con_thieu("t0", "5m") == 0
+    ra = capsys.readouterr().out
+    assert "BUSDT" in ra and "AUSDT" not in ra.split("\n")[-2]
+    assert sorted(p.name for p in dich.iterdir()) == truoc  # không ghi gì
+
+
+def test_cac_co_moi_di_SAU_guard_va_gate_d0_pre() -> None:
+    src = inspect.getsource(E8.main)
+    vi_tri_guard = src.index("measurement_guard(")
+    vi_tri_co = min(src.index("args.ro_con_thieu"), src.index("args.ro_do_phu"))
+    assert vi_tri_guard < vi_tri_co
+    assert "--chi-loai chỉ đi kèm" in src
