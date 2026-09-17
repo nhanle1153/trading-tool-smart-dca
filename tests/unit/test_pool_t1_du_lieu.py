@@ -245,24 +245,41 @@ class TestKiemMocNgung:
         assert any("nến chết chưa khai" in x for x in loi)
 
 
-# ─── TD-0301 (DR-D1-05) — rổ T0: 5 loại file, mốc cuối T1 ───
+# ─── TD-0301 (DR-D1-05) — rổ T0, mốc cuối T1. TD-0252 (§3b.1): thêm 5m tính từ T0 ───
 
 
 class TestRoT0:
-    def test_nhap_kho_t0_khong_5m_va_cat_tai_T1(self, tmp_path: Path) -> None:
-        from tool_d.data.pool_t1_du_lieu import NAM_LOAI_FILE_T0
+    def test_nhap_kho_t0_co_5m_tu_T0_va_cat_tai_T1(self, tmp_path: Path) -> None:
+        """TD-0252 đảo vế của ca cũ (`…khong_5m`, len == 5): rổ T0 nay SÁU loại, và 5m tính từ
+        `T0` chứ không phải `T1` — đó mới là bất biến bị lật."""
+        from tool_d.data.pool_t1_du_lieu import SAU_LOAI_FILE_T0
 
         doc, goi = _csv_gia()
+        kq = nhap_ma_tu_kho(
+            "AUSDT", dich=tmp_path, khoang={"thang_dau": "2023-01", "thang_cuoi": "2026-08"}, moc=MOC,
+            doc_csv=doc, loai_file=SAU_LOAI_FILE_T0, moc_cuoi="t1",
+        )
+        assert len(kq.so_hang) == 6 and any("5m" in k for k in kq.so_hang)
+        assert max(t[2:] for t in goi) == (2025, 6)  # không tải tháng sau T1
+        # 5m phải được tải từ THÁNG CỦA T0 (2024-04), không phải từ T1 — vế này là TD-0252.
+        thang_5m = [t[2:] for t in goi if t[1] == "5m"]
+        assert min(thang_5m) == (2024, 4)
+        for lf in SAU_LOAI_FILE_T0:
+            assert pd.read_feather(tmp_path / ten_file("AUSDT", lf))["date"].max() <= pd.Timestamp("2025-06-12", tz="UTC")
+        # Kho giả chỉ có 1 nến/tháng (ngày 15) nên nến cuối ≤ T1 là 15/05 ⇒ bị coi là mốc ngừng; mã thật
+        # có nến tới sát T1. Ca này chỉ khoá: 6 loại file, 5m từ T0, không tháng sau T1, không nến sau T1.
+
+    def test_ke_hoach_nam_loai_cu_van_dung_duoc(self, tmp_path: Path) -> None:
+        """Giữ ca cũ dưới dạng khẳng định về `NAM_LOAI_FILE_T0` — hằng đó vẫn mô tả 715 file mà
+        TD-0301 đã đặt trên đĩa, và vẫn là đầu vào để tính "còn thiếu những loại nào"."""
+        from tool_d.data.pool_t1_du_lieu import NAM_LOAI_FILE_T0
+
+        doc, _ = _csv_gia()
         kq = nhap_ma_tu_kho(
             "AUSDT", dich=tmp_path, khoang={"thang_dau": "2023-01", "thang_cuoi": "2026-08"}, moc=MOC,
             doc_csv=doc, loai_file=NAM_LOAI_FILE_T0, moc_cuoi="t1",
         )
         assert len(kq.so_hang) == 5 and not any("5m" in k for k in kq.so_hang)
-        assert max(t[2:] for t in goi) == (2025, 6)  # không tải tháng sau T1
-        for lf in NAM_LOAI_FILE_T0:
-            assert pd.read_feather(tmp_path / ten_file("AUSDT", lf))["date"].max() <= pd.Timestamp("2025-06-12", tz="UTC")
-        # Kho giả chỉ có 1 nến/tháng (ngày 15) nên nến cuối ≤ T1 là 15/05 ⇒ bị coi là mốc ngừng; mã thật
-        # có nến tới sát T1. Ca này chỉ khoá: 5 loại file, không tháng sau T1, không nến sau T1.
 
     def test_ke_hoach_khong_bat_dau_bang_1h_futures_thi_tu_choi(self, tmp_path: Path) -> None:
         from tool_d.data.pool_t1_du_lieu import NAM_LOAI_FILE_T0
@@ -274,13 +291,38 @@ class TestRoT0:
                 doc_csv=doc, loai_file=tuple(reversed(NAM_LOAI_FILE_T0)), moc_cuoi="t1",
             )
 
-    def test_kiem_t0_lan_T1_bao_loi_va_khong_doi_5m(self, tmp_path: Path) -> None:
-        from tool_d.data.pool_t1_du_lieu import NAM_LOAI_FILE_T0
+    def test_kiem_t0_lan_T1_bao_loi_va_DOI_5m(self, tmp_path: Path) -> None:
+        """TD-0252 đảo vế cũ (`not any("5m" in x …)`): kế hoạch rổ T0 nay ĐÒI 5m, nên thiếu nó
+        phải thành một dòng lỗi."""
+        from tool_d.data.pool_t1_du_lieu import NAM_LOAI_FILE_T0, SAU_LOAI_FILE_T0
 
-        for lf in NAM_LOAI_FILE_T0:
+        for lf in NAM_LOAI_FILE_T0:  # cố ý ghi 5 loại cũ, CHƯA có 5m
             _df_nen("2024-04-09", "2025-06-14", "1D").to_feather(tmp_path / ten_file("AUSDT", lf))
         khoang = {"AUSDT": {"thang_dau": "2023-01", "thang_cuoi": "2026-08"}}
-        loi = kiem_du_lieu_ro(tmp_path, ["AUSDT"], khoang, MOC, loai_file=NAM_LOAI_FILE_T0, moc_cuoi="t1")
-        assert any("sau T1" in x for x in loi) and not any("5m" in x for x in loi)
+        loi = kiem_du_lieu_ro(tmp_path, ["AUSDT"], khoang, MOC, loai_file=SAU_LOAI_FILE_T0, moc_cuoi="t1")
+        assert any("sau T1" in x for x in loi)
+        assert any("5m" in x and "THIẾU" in x for x in loi)
         cat_den_moc(tmp_path, MOC["t1"])
-        assert kiem_du_lieu_ro(tmp_path, ["AUSDT"], khoang, MOC, loai_file=NAM_LOAI_FILE_T0, moc_cuoi="t1") == []
+        # Bổ sung nốt 5m ⇒ sạch.
+        _df_nen("2024-04-09", "2025-06-11", "1D").to_feather(
+            tmp_path / ten_file("AUSDT", SAU_LOAI_FILE_T0[-1])
+        )
+        assert kiem_du_lieu_ro(tmp_path, ["AUSDT"], khoang, MOC, loai_file=SAU_LOAI_FILE_T0, moc_cuoi="t1") == []
+
+    def test_kiem_t0_bat_5m_bat_dau_tai_T1_la_THIEU_DAU(self, tmp_path: Path) -> None:
+        """🔴 Ca VÀNG — hình dạng THẬT của 65/66 file 5m đang nằm trên đĩa: chúng bắt đầu đúng
+        tại `T1`. Chép nguyên vào rổ T0 rồi cắt `≤ T1` còn đúng một nến, mà file một nến KHÔNG
+        rỗng nên `cat_den_moc()` không raise. Chốt duy nhất bắt được là phép kiểm "bắt đầu muộn
+        hơn cần", và nó chỉ chạy khi 5m mang `tu_moc = "t0"` (DR-D1-05 §3b.2)."""
+        from tool_d.data.pool_t1_du_lieu import NAM_LOAI_FILE_T0, SAU_LOAI_FILE_T0
+
+        for lf in NAM_LOAI_FILE_T0:
+            _df_nen("2024-04-09", "2025-06-11", "1D").to_feather(tmp_path / ten_file("AUSDT", lf))
+        # 5m "chép nhầm từ rổ T1": bắt đầu đúng tại T1.
+        _df_nen("2025-06-12", "2025-06-12", "1D").to_feather(
+            tmp_path / ten_file("AUSDT", SAU_LOAI_FILE_T0[-1])
+        )
+        khoang = {"AUSDT": {"thang_dau": "2023-01", "thang_cuoi": "2026-08"}}
+        loi = kiem_du_lieu_ro(tmp_path, ["AUSDT"], khoang, MOC, loai_file=SAU_LOAI_FILE_T0, moc_cuoi="t1")
+        assert any("5m" in x and "muộn hơn cần" in x for x in loi)
+        assert not any("5m" in x and "THIẾU" in x for x in loi)  # file CÓ, chỉ là thiếu phần đầu

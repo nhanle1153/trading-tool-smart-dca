@@ -64,25 +64,40 @@ def test_cat_den_t2_doi_data_dir_tuong_minh() -> None:
 
 
 def test_cau_hinh_ro_t0_t1() -> None:
-    from tool_d.data.pool_t1_du_lieu import KE_HOACH_THEO_RO, NAM_LOAI_FILE_T0, SAU_LOAI_FILE
+    from tool_d.data.pool_t1_du_lieu import (
+        KE_HOACH_THEO_RO,
+        LOAI_5M_T0,
+        NAM_LOAI_FILE_T0,
+        SAU_LOAI_FILE,
+        SAU_LOAI_FILE_T0,
+    )
 
     assert set(E8.CAU_HINH_RO) == {"t0", "t1"}
     assert E8.CAU_HINH_RO["t0"][0] == Path("user_data/data/pool_t0/futures")
     assert E8.CAU_HINH_RO["t0"][1] == Path("config/pool_t0.yaml")
     assert E8.CAU_HINH_RO["t0"][2] != E8.MOC_NGUNG_JSON  # artifact mốc ngừng RIÊNG cho rổ T0
     assert E8.CAU_HINH_RO["t0"][3] == (E8.DEFAULT_DATA_DIR, E8.POOL_T1_DATA_DIR)
-    assert KE_HOACH_THEO_RO["t0"] == (NAM_LOAI_FILE_T0, "t1")
+    # TD-0252 (DR-D1-05 §3b.1): rổ T0 nay SÁU loại, 5m tính từ T0.
+    assert KE_HOACH_THEO_RO["t0"] == (SAU_LOAI_FILE_T0, "t1")
     assert KE_HOACH_THEO_RO["t1"] == (SAU_LOAI_FILE, "t2")
+    assert LOAI_5M_T0.khung == "5m" and LOAI_5M_T0.tu_moc == "t0"
+    assert LOAI_5M_T0 in SAU_LOAI_FILE_T0 and len(SAU_LOAI_FILE_T0) == 6
+    # Vế cũ VẪN ĐÚNG và vẫn có nghĩa: NAM_LOAI_FILE_T0 mô tả 715 file TD-0301 đã đặt trên đĩa.
     assert all(lf.khung != "5m" for lf in NAM_LOAI_FILE_T0) and len(NAM_LOAI_FILE_T0) == 5
+    # 🔴 Bất biến giữ cho 107 mã rổ T1 KHỎI phải tải lại: 5m của rổ T1 vẫn tính từ T1.
+    assert next(lf for lf in SAU_LOAI_FILE if lf.khung == "5m").tu_moc == "t1"
+    # 1h futures vẫn đứng đầu MỌI kế hoạch — nhap_ma_tu_kho() đo mốc ngừng bằng phần tử 0.
+    for ke_hoach, _ in KE_HOACH_THEO_RO.values():
+        assert (ke_hoach[0].khung, ke_hoach[0].hau_to) == ("1h", "futures")
 
 
 def test_sao_chep_t0_uu_tien_nguon_dau_va_tu_choi_mot_phan(tmp_path: Path, monkeypatch) -> None:
-    from tool_d.data.pool_t1_du_lieu import NAM_LOAI_FILE_T0, ten_file
+    from tool_d.data.pool_t1_du_lieu import SAU_LOAI_FILE_T0, ten_file
 
     n1, n2, dich = tmp_path / "binance", tmp_path / "pool_t1", tmp_path / "pool_t0"
     for d in (n1, n2):
         d.mkdir()
-    for lf in NAM_LOAI_FILE_T0:
+    for lf in SAU_LOAI_FILE_T0:
         (n1 / ten_file("AUSDT", lf)).write_bytes(b"n1-A")
         (n2 / ten_file("AUSDT", lf)).write_bytes(b"n2-A")
         (n2 / ten_file("BUSDT", lf)).write_bytes(b"n2-B")
@@ -93,17 +108,38 @@ def test_sao_chep_t0_uu_tien_nguon_dau_va_tu_choi_mot_phan(tmp_path: Path, monke
     monkeypatch.setitem(E8.CAU_HINH_RO, "t0", (dich, ro_yaml, tmp_path / "moc.json", (n1, n2)))
     monkeypatch.setattr(E8, "NGUON_TD0230", td0230)
     assert E8.do_ro_sao_chep("t0") == 0
-    assert (dich / ten_file("AUSDT", NAM_LOAI_FILE_T0[0])).read_bytes() == b"n1-A"  # nguồn ĐẦU thắng
-    assert (dich / ten_file("BUSDT", NAM_LOAI_FILE_T0[0])).read_bytes() == b"n2-B"
-    assert not any(dich.glob("*5m*"))
+    assert (dich / ten_file("AUSDT", SAU_LOAI_FILE_T0[0])).read_bytes() == b"n1-A"  # nguồn ĐẦU thắng
+    assert (dich / ten_file("BUSDT", SAU_LOAI_FILE_T0[0])).read_bytes() == b"n2-B"
+    # TD-0252: đảo vế cũ (`not any(dich.glob("*5m*"))`) — rổ T0 nay CÓ 5m trong kế hoạch.
+    assert (dich / ten_file("AUSDT", SAU_LOAI_FILE_T0[-1])).is_file()
+    assert len(list(dich.glob("*-5m-futures.feather"))) == 2
     # Mã có MỘT PHẦN file ở nguồn đầu ⇒ từ chối, không lấy nguồn sau.
-    (n1 / ten_file("CUSDT", NAM_LOAI_FILE_T0[0])).write_bytes(b"le")
-    for lf in NAM_LOAI_FILE_T0:
+    (n1 / ten_file("CUSDT", SAU_LOAI_FILE_T0[0])).write_bytes(b"le")
+    for lf in SAU_LOAI_FILE_T0:
         (n2 / ten_file("CUSDT", lf)).write_bytes(b"n2-C")
     dich2 = tmp_path / "pool_t0_b"
     monkeypatch.setitem(E8.CAU_HINH_RO, "t0", (dich2, ro_yaml, tmp_path / "moc.json", (n1, n2)))
     assert E8.do_ro_sao_chep("t0") == E8.EXIT_RO_T1_LOI
     assert not dich2.exists()
+
+
+def test_sao_chep_t0_thieu_dung_5m_o_nguon_thi_TU_CHOI(tmp_path: Path, monkeypatch) -> None:
+    """TD-0252 — ca THẬT của dữ liệu trên đĩa: 66 mã có đủ 5 loại cũ ở nguồn nhưng KHÔNG có 5m
+    kỷ nguyên CALIB. Phải rơi nhánh "một phần", không được lặng lẽ chép 5 file rồi báo thành công."""
+    from tool_d.data.pool_t1_du_lieu import NAM_LOAI_FILE_T0, ten_file
+
+    nguon, dich = tmp_path / "binance", tmp_path / "pool_t0"
+    nguon.mkdir()
+    for lf in NAM_LOAI_FILE_T0:  # đúng 5 loại, thiếu 5m
+        (nguon / ten_file("AUSDT", lf)).write_bytes(b"x")
+    ro_yaml = tmp_path / "pool_t0.yaml"
+    ro_yaml.write_text("moc_t0: x\ntrading:\n- AUSDT\n", encoding="utf-8")
+    td0230 = tmp_path / "td0230.json"
+    td0230.write_text('{"khoang_ton_tai": {}}', encoding="utf-8")
+    monkeypatch.setitem(E8.CAU_HINH_RO, "t0", (dich, ro_yaml, tmp_path / "moc.json", (nguon,)))
+    monkeypatch.setattr(E8, "NGUON_TD0230", td0230)
+    assert E8.do_ro_sao_chep("t0") == E8.EXIT_RO_T1_LOI
+    assert not dich.exists()
 
 
 def test_co_chung_doi_moc_tuong_minh_va_co_t1_khong_nhan_moc_t0() -> None:

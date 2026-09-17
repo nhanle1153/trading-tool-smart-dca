@@ -28,6 +28,11 @@ import pandas as pd
 
 from tool_d.api_client.binance_public import NenThangKhongCoError
 from tool_d.data.kho_luu_tru import funding_tu_kho, nen_tu_kho
+from tool_d.ledger.timerange import (
+    DatasetBoundary,
+    TimerangeViolationError,
+    assert_dataset_timerange,
+)
 
 
 @dataclass(frozen=True)
@@ -48,13 +53,25 @@ SAU_LOAI_FILE: tuple[LoaiFile, ...] = (
     LoaiFile("1h", "funding_rate", "fundingRate", "t0"),
 )
 
-#: `DR-D1-05` §3 — rổ `T0` (CALIB): bỏ 5m (việc của `TD-0252`, đang ⏸).
+#: `DR-D1-05` §3 — năm loại của rổ `T0` TRƯỚC `TD-0252` (không 5m). Giữ lại vì `TD-0301` đã
+#: chép/nhập 715 file theo đúng kế hoạch này: nó là mô tả của thứ ĐANG NẰM trên đĩa, và là
+#: đầu vào cho đường bổ sung ở `nhap_them_loai_file()`.
 NAM_LOAI_FILE_T0: tuple[LoaiFile, ...] = tuple(lf for lf in SAU_LOAI_FILE if lf.khung != "5m")
+
+#: `DR-D1-05` §3b.1 (`TD-0252`) — 5m của rổ `T0` bắt đầu từ `t0`, KHÁC 5m của rổ `T1` (từ `t1`).
+#: Hai rổ cần hai mốc bắt đầu khác nhau cho cùng một khung, nên đây là `LoaiFile` RIÊNG chứ không
+#: phải sửa trường `tu_moc` của `SAU_LOAI_FILE` — sửa tại chỗ sẽ làm 107 mã rổ `T1` (đã đủ 6 file,
+#: 5m phủ `[T1,T2]`) bị `kiem_du_lieu_ro()` coi là "thiếu đầu" và phải tải lại toàn bộ.
+LOAI_5M_T0: LoaiFile = LoaiFile("5m", "futures", "klines", "t0")
+
+#: `DR-D1-05` §3b.1 — kế hoạch đầy đủ của rổ `T0`. 5m đặt CUỐI: `nhap_ma_tu_kho()` đòi phần tử 0
+#: là 1h futures (dùng để đo mốc ngừng giao dịch).
+SAU_LOAI_FILE_T0: tuple[LoaiFile, ...] = NAM_LOAI_FILE_T0 + (LOAI_5M_T0,)
 
 #: Theo tên rổ: (kế hoạch file, tên mốc CUỐI của dữ liệu). File đầu tiên PHẢI là 1h futures
 #: (dùng để đo mốc ngừng giao dịch).
 KE_HOACH_THEO_RO: dict[str, tuple[tuple[LoaiFile, ...], str]] = {
-    "t0": (NAM_LOAI_FILE_T0, "t1"),
+    "t0": (SAU_LOAI_FILE_T0, "t1"),
     "t1": (SAU_LOAI_FILE, "t2"),
 }
 
@@ -150,6 +167,50 @@ def sao_chep_ma_co_san(
     return [dst.name for _, dst in viec]
 
 
+def _dung_khung(
+    *,
+    symbol: str,
+    lf: LoaiFile,
+    khoang: Mapping[str, str],
+    moc: Mapping[str, date],
+    doc_csv: Callable[..., list[list[str]]],
+    thang_cuoi: tuple[int, int],
+) -> pd.DataFrame:
+    """Dựng MỘT khung của một mã từ các file tháng của kho, cắt về `>= moc[lf.tu_moc]`.
+
+    Tách khỏi `nhap_ma_tu_kho()` (TD-0252) để `nhap_them_loai_file()` dùng lại **cùng một**
+    đường dựng — không chép luật ra chỗ thứ hai. Không cắt mốc CUỐI: người gọi cắt, vì mốc
+    cuối hiệu dụng phụ thuộc mốc ngừng giao dịch mà chỉ người gọi biết.
+    """
+    bat_dau = max(moc[lf.tu_moc], _dau_thang(khoang["thang_dau"]))
+    phan: list[pd.DataFrame] = []
+    for nam, thang in cac_thang(_thang(bat_dau), thang_cuoi):
+        try:
+            hang = doc_csv(
+                loai=lf.loai_kho,
+                symbol=symbol,
+                nam=nam,
+                thang=thang,
+                khung=None if lf.loai_kho == "fundingRate" else lf.khung,
+            )
+        except NenThangKhongCoError as exc:
+            raise DuLieuRoError(
+                f"{symbol} {lf.khung}-{lf.hau_to}: kho thiếu tháng {nam:04d}-{thang:02d} nằm "
+                f"TRONG khoảng cần tải (trước mốc cuối hiệu dụng) — không lấp"
+            ) from exc
+        phan.append(
+            funding_tu_kho(hang)
+            if lf.loai_kho == "fundingRate"
+            else nen_tu_kho(hang, la_mark=lf.loai_kho == "markPriceKlines")
+        )
+    if not phan:
+        raise DuLieuRoError(f"{symbol} {lf.khung}-{lf.hau_to}: 0 tháng trong khoảng cần")
+    df = pd.concat(phan, ignore_index=True).sort_values("date").reset_index(drop=True)
+    if df["date"].duplicated().any():
+        raise DuLieuRoError(f"{symbol} {lf.khung}-{lf.hau_to}: trùng mốc giữa hai tháng liền kề")
+    return df[df["date"] >= _moc_ts(moc[lf.tu_moc])].reset_index(drop=True)
+
+
 def nhap_ma_tu_kho(
     symbol: str,
     *,
@@ -175,33 +236,9 @@ def nhap_ma_tu_kho(
             raise DuLieuRoError(f"file đích đã tồn tại, không ghi đè: {dich / ten_file(symbol, lf)}")
 
     def _dung(lf: LoaiFile, thang_cuoi: tuple[int, int]) -> pd.DataFrame:
-        bat_dau = max(moc[lf.tu_moc], _dau_thang(khoang["thang_dau"]))
-        phan: list[pd.DataFrame] = []
-        for nam, thang in cac_thang(_thang(bat_dau), thang_cuoi):
-            try:
-                hang = doc_csv(
-                    loai=lf.loai_kho,
-                    symbol=symbol,
-                    nam=nam,
-                    thang=thang,
-                    khung=None if lf.loai_kho == "fundingRate" else lf.khung,
-                )
-            except NenThangKhongCoError as exc:
-                raise DuLieuRoError(
-                    f"{symbol} {lf.khung}-{lf.hau_to}: kho thiếu tháng {nam:04d}-{thang:02d} nằm "
-                    f"TRONG khoảng cần tải (trước mốc cuối hiệu dụng) — không lấp"
-                ) from exc
-            phan.append(
-                funding_tu_kho(hang)
-                if lf.loai_kho == "fundingRate"
-                else nen_tu_kho(hang, la_mark=lf.loai_kho == "markPriceKlines")
-            )
-        if not phan:
-            raise DuLieuRoError(f"{symbol} {lf.khung}-{lf.hau_to}: 0 tháng trong khoảng cần")
-        df = pd.concat(phan, ignore_index=True).sort_values("date").reset_index(drop=True)
-        if df["date"].duplicated().any():
-            raise DuLieuRoError(f"{symbol} {lf.khung}-{lf.hau_to}: trùng mốc giữa hai tháng liền kề")
-        return df[df["date"] >= _moc_ts(moc[lf.tu_moc])].reset_index(drop=True)
+        return _dung_khung(
+            symbol=symbol, lf=lf, khoang=khoang, moc=moc, doc_csv=doc_csv, thang_cuoi=thang_cuoi
+        )
 
     thang_cuoi_kho = min(_thang(t2), _thang(_dau_thang(khoang["thang_cuoi"])))
     nen_1h = _dung(loai_file[0], thang_cuoi_kho)
@@ -225,6 +262,113 @@ def nhap_ma_tu_kho(
         so_hang[dst.name] = len(df)
     nen_cuoi_giu = nen_1h[nen_1h["date"] <= moc_cuoi]
     return KetQuaNhap(so_hang=so_hang, moc_ngung=moc_ngung, gia_dong_cuoi=float(nen_cuoi_giu["close"].iloc[-1]))
+
+
+def nhap_them_loai_file(
+    symbol: str,
+    *,
+    dich: Path,
+    khoang: Mapping[str, str],
+    moc: Mapping[str, date],
+    doc_csv: Callable[..., list[list[str]]],
+    loai_file: Sequence[LoaiFile],
+    moc_cuoi: str = "t1",
+    moc_ngung: pd.Timestamp | None = None,
+) -> dict[str, int]:
+    """TD-0252 (`DR-D1-05` §3b) — nhập THÊM các loại file còn thiếu cho một mã ĐÃ có sẵn các
+    loại khác trong `dich`. Trả `{tên file: số hàng}`.
+
+    Khác `nhap_ma_tu_kho()` ở đúng một điểm, và điểm đó là lý do hàm này tồn tại: nó **không đo**
+    mốc ngừng giao dịch. Mốc do người gọi cấp (`moc_ngung`), đọc từ artifact đã ghi lúc nhập
+    lần đầu. Đo lại trên khung khác có thể ra mốc khác mốc của file `1h` cùng mã ⇒ hai file cùng
+    mã kết thúc lệch nhau ⇒ `kiem_du_lieu_ro()` báo đỏ. Vì thế hàm này cũng KHÔNG ghi artifact.
+
+    Fail-closed, theo thứ tự kiểm:
+      • `loai_file` rỗng ⇒ từ chối (không im lặng làm 0 file rồi báo thành công);
+      • bất kỳ file đích nào đã tồn tại ⇒ từ chối, **không ghi file nào** (không ghi đè);
+      • `moc_ngung` muộn hơn mốc cuối của rổ ⇒ từ chối (cấp nhầm artifact của rổ khác);
+      • dựng xong HẾT rồi mới ghi (tất-cả-hoặc-không);
+      • cắt xong mà rỗng ⇒ từ chối (không ghi file rỗng).
+    """
+    if not loai_file:
+        raise DuLieuRoError(f"{symbol}: danh sách loại file cần nhập thêm rỗng — không có gì để làm")
+    moc_cuoi_ro = _moc_ts(moc[moc_cuoi])
+    if moc_ngung is not None and moc_ngung > moc_cuoi_ro:
+        raise DuLieuRoError(
+            f"{symbol}: mốc ngừng {moc_ngung} muộn hơn mốc cuối của rổ ({moc_cuoi_ro}) — "
+            f"artifact mốc ngừng có phải của rổ này không?"
+        )
+    for lf in loai_file:
+        if (dich / ten_file(symbol, lf)).exists():
+            raise DuLieuRoError(f"file đích đã tồn tại, không ghi đè: {dich / ten_file(symbol, lf)}")
+
+    moc_hieu_dung = moc_ngung if moc_ngung is not None else moc_cuoi_ro
+    thang_cuoi = min(
+        _thang(_dau_thang(khoang["thang_cuoi"])), (moc_hieu_dung.year, moc_hieu_dung.month)
+    )
+
+    khung_ghi: list[tuple[Path, pd.DataFrame]] = []
+    for lf in loai_file:
+        df = _dung_khung(
+            symbol=symbol, lf=lf, khoang=khoang, moc=moc, doc_csv=doc_csv, thang_cuoi=thang_cuoi
+        )
+        df = df[df["date"] <= moc_hieu_dung].reset_index(drop=True)
+        if df.empty:
+            raise DuLieuRoError(
+                f"{symbol} {lf.khung}-{lf.hau_to}: rỗng sau khi cắt về "
+                f"[{moc[lf.tu_moc]}, {moc_hieu_dung}]"
+            )
+        khung_ghi.append((dich / ten_file(symbol, lf), df))
+
+    dich.mkdir(parents=True, exist_ok=True)
+    so_hang: dict[str, int] = {}
+    for dst, df in khung_ghi:
+        df.to_feather(dst)
+        so_hang[dst.name] = len(df)
+    return so_hang
+
+
+def kiem_pham_vi_dataset(
+    thu_muc: Path,
+    ro: Sequence[str],
+    loai_file: Sequence[LoaiFile],
+    *,
+    dataset: str,
+    boundary: DatasetBoundary,
+) -> list[str]:
+    """TD-0252 — nối `assert_dataset_timerange()` (L-Z55) vào dữ liệu rổ THẬT trên đĩa.
+    Trả danh sách lỗi (rỗng = không vi phạm).
+
+    Hai vế KHÁC nguồn, đúng điều kiện `DatasetBoundary` đòi: `observed_*` đọc từ chính file
+    feather; `boundary` đến từ `tool_d_config.yaml` qua `dataset_boundaries_from_config()`.
+
+    🔴 **Phạm vi, đừng đọc quá tay:** `DatasetBoundary` mang kiểu `date`, nên phép kiểm này chỉ
+    phân giải tới NGÀY — một nến `2025-06-12 00:05` vẫn lọt qua đây. Phép kiểm theo MỐC là
+    `kiem_du_lieu_ro()` (vế *"có nến sau T1"*). Hàm này **bổ sung**, không **thay thế** hàm đó.
+    """
+    loi: list[str] = []
+    for s in ro:
+        for lf in loai_file:
+            f = thu_muc / ten_file(s, lf)
+            if not f.is_file():
+                continue  # THIẾU là việc của kiem_du_lieu_ro(); ở đây không nhân đôi phép kiểm
+            try:
+                df = pd.read_feather(f, columns=["date"])
+            except Exception as exc:
+                loi.append(f"{f.name}: KHÔNG ĐỌC ĐƯỢC ({type(exc).__name__}: {exc})")
+                continue
+            if df.empty:
+                continue
+            try:
+                assert_dataset_timerange(
+                    dataset=dataset,
+                    observed_start=df["date"].min().date(),
+                    observed_end=df["date"].max().date(),
+                    boundary=boundary,
+                )
+            except TimerangeViolationError as exc:
+                loi.append(f"{f.name}: {exc}")
+    return loi
 
 
 def cat_den_moc(thu_muc: Path, moc_cuoi: date) -> dict[str, int]:
@@ -278,7 +422,11 @@ def kiem_du_lieu_ro(
             if not f.is_file():
                 loi.append(f"{f.name}: THIẾU")
                 continue
-            df = pd.read_feather(f, columns=["date"])
+            try:
+                df = pd.read_feather(f, columns=["date"])
+            except Exception as exc:  # feather hỏng (đứt khi ghi) — một dòng lỗi, không traceback
+                loi.append(f"{f.name}: KHÔNG ĐỌC ĐƯỢC ({type(exc).__name__}: {exc})")
+                continue
             if df.empty:
                 loi.append(f"{f.name}: RỖNG")
                 continue
@@ -293,7 +441,10 @@ def kiem_du_lieu_ro(
                 if dau > _moc_ts(bat_dau_can) + pd.Timedelta(days=31):
                     loi.append(f"{f.name}: bắt đầu {dau.date()} muộn hơn cần ({bat_dau_can} + 31 ngày)")
                 continue
-            if lf is loai_file[0]:
+            # TD-0252: so khung/hậu tố TƯỜNG MINH, không dựa vào VỊ TRÍ phần tử. Với kế hoạch
+            # đã lọc (vd chỉ 5m, đường `--chi-loai`), `loai_file[0]` KHÔNG còn là 1h futures và
+            # `duoi_nen_chet()` sẽ đếm đuôi volume 0 trên nến 5m — báo động giả.
+            if lf.khung == "1h" and lf.hau_to == "futures":
                 duoi = duoi_nen_chet(pd.read_feather(f, columns=["volume"]))
                 if duoi >= NEN_CHET_TOI_THIEU:
                     loi.append(f"{f.name}: đuôi {duoi} nến 1h volume = 0 — nến chết chưa khai mốc ngừng giao dịch")
