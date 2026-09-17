@@ -85,6 +85,66 @@ Khảo sát 17/09/2026 (0 trial, đọc mã + tài liệu):
 - **Nguồn chép, theo thứ tự:** `binance/futures` rồi `pool_t1/futures`, chỉ 5 loại. Cắt `≤ T1` ở
   **thư mục đích**, không đụng thư mục nguồn.
 
+## 3b. ĐÍNH CHÍNH 18/09/2026 — TD-0252 được triển khai: rổ `T0` có **sáu** loại file
+
+> Chữ §3 ở trên **giữ nguyên làm lịch sử** (tiền lệ §4b, `DR-D0PRE-06`). Mục này là phần thi hành.
+> **Người quyết:** chủ dự án, 18/09/2026, ba câu hỏi trực tiếp khi duyệt kế hoạch TD-0252. **0 trial.**
+> Commit RIÊNG và TRƯỚC mọi dòng mã của TD-0252 (`git merge-base --is-ancestor`).
+
+**Câu *"`TD-0252` đang ⏸ cùng D5"* ở §3 và §5 là SUY RỘNG, không phải chữ của `DR-IQ-01`.** Bảng §1
+của DR đó liệt kê đích danh: TD-0184 · cổng D4 (TD-0185/0186) · **`D5 chạy B1 (TD-0258)`** · D9
+(TD-0286…0288) · TD-0289 · D6–D8. **Không dòng nào nêu TD-0251 hay TD-0252**, và cùng bảng xếp *"hạ
+tầng đo"* vào ▶ giữ nguyên. Chủ dự án chốt: **TD-0252 làm tiếp**; TD-0257/TD-0258 vẫn ⏸.
+
+### 3b.1 Kế hoạch file rổ `T0`: 5 → 6 loại
+
+`KE_HOACH_THEO_RO["t0"]` thêm `5m` futures **mang mốc bắt đầu `t0`**, khác `5m` của rổ `T1` (mốc
+`t1`). `SAU_LOAI_FILE` — kế hoạch của rổ `T1` — **không đổi một ký tự**, nên 107 mã rổ `T1` không
+phải tải lại gì. Đây là bất biến có test khoá canh.
+
+### 3b.2 🔴 Đường "chép 5m có sẵn" KHÔNG dùng được — đo, không suy
+
+**65/66** file `5m` sẵn có của mã rổ `T0` bắt đầu **đúng tại `T1`** (61 ở `pool_t1/`, 5 ở
+`binance/`; đúng 1 file bắt đầu `2024-06-01`). Chép vào rổ `T0` rồi cắt `≤ T1` còn lại **đúng một
+nến** — và file một nến **không rỗng**, nên `cat_den_moc()` không raise. Chốt duy nhất bắt được là
+`kiem_du_lieu_ro()`, và **chỉ khi** `5m` mang `tu_moc = "t0"` (§3b.1). ⇒ **143/143 mã lấy mới.**
+
+### 3b.3 Nguồn: kho `data.binance.vision` cho **cả 143 mã**, một xuất xứ đồng nhất
+
+Không dùng `freqtrade download-data` cho mã còn giao dịch — khác `DR-D1-03` §4 và khác TD-0301. Lý do
+là **khử bằng cấu tạo**, không phải phòng bằng kỷ luật:
+
+- bẫy TD-0093 (`--timerange` không dừng đúng mốc cuối, tái diễn ở TD-0182 và TD-0200) — kho trả file
+  theo THÁNG, cắt bằng mã, nên bẫy không tồn tại trên đường này;
+- bẫy TD-0200 (`download-data -t 5m` ở futures **luôn** kéo thêm `1h-mark` + `1h-funding_rate`, ghi đè
+  hai file đã cắt đúng mốc của rổ `T0`) — đường kho chỉ ghi đúng một file mỗi mã.
+
+🚪 **Giá phải trả, là một cổng chặn:** `td0247-doi-chieu-kho-freqtrade.json` chỉ đối chiếu `5m` ở
+`2025-09`, tức **kỷ nguyên micro-giây**; `kho_luu_tru._moc()` đổi đơn vị theo ngưỡng `1e14`, còn
+`2024-05` là **milli-giây** và `5m` **chưa từng được đối chiếu** ở kỷ nguyên đó. Phải chứng minh kho
+khớp từng ô với file Freqtrade trong cửa sổ CALIB **trước khi nhập một byte nào**; đỏ ⇒ dừng.
+
+### 3b.4 Tiêu chí "đủ 5m" — chốt TRƯỚC khi chạy, không phải sau khi nhìn số
+
+**Không một giờ 1H nào thiếu nến `5m` tương ứng, ở mọi mã trong rổ.** Chặt hơn một bậc so với câu mà
+`backtesting.py:1739` hỏi (`and pair in self.detail_data`), vì câu đó chỉ thấy mã **vắng mặt hẳn**,
+không thấy lỗ hổng GIỮA chuỗi của một mã đã có mặt. Đo bằng `history.load_data(..., startup_candles=0)`
+— đúng bộ tham số `Backtesting._load_bt_data_detail()` truyền — **không** đếm file trên đĩa. Mã lệch ⇒
+hỏi lại sàn bằng `--probe-gap` trước khi kết luận nguyên nhân (H19/LD-28).
+
+Thiếu `5m` **không làm backtest đỏ**: mã thiếu lặng lẽ chạy ở 1H trong khi mã khác chạy `5m`, và
+không cột nào trong bảng kết quả nói ra. Vì vậy chốt là **đủ hoặc từ chối chạy**, không có mức giữa.
+
+### 3b.5 18 mã ngừng giao dịch trong CALIB: cắt `≤ mốc ngừng`, khai bất đối xứng
+
+Mốc ngừng là giờ **MỞ** của nến 1h cuối có `volume > 0`, nên cắt `≤ mốc` giữ đúng **1/12** số nến
+`5m` của giờ đó — **mất 11 nến `5m` cuối** mỗi mã trong 18 mã. Chấp nhận, ghi ra artifact và
+`research-log`. **Không** cắt tới `mốc + 55m`: làm thế phải **nới** `kiem_du_lieu_ro()` (đang đòi mọi
+file kết thúc trong `[mốc − 1 ngày, mốc]`), tức đổi một lớp canh đang chặn để làm đẹp 11 nến.
+
+Mốc ngừng **đọc từ** `docs/du-lieu-do/td0301-moc-ngung-giao-dich-t0.json`, **không đo lại** — đo lại
+trên nến `5m` có thể ra mốc khác mốc của file `1h`, và artifact đó là **chỉ đọc** suốt TD-0252.
+
 ## 4. Đính chính: khối `explore:` có 426 mã, không phải 430
 
 - **Đếm lại 17/09/2026:** `trading` 102 · `explore` **426** · `b0_trial_ids` 4.
