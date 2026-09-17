@@ -3124,3 +3124,40 @@ họ với *"sáu lần phát biểu vượt quá phạm vi đã đo"* (09/09) �
 
 **Quy tắc rút ra:** tổng quát hoá một hàm theo tham số thì phải soát cả **tên khoá đầu ra**, không chỉ
 đường tính — và phép kiểm nên canh **dạng của khoá**, vì canh giá trị không bao giờ thấy nhãn sai.
+
+## 18/09/2026 — Cùng nguồn KHÁC phép thì kiểm chéo được; cùng nguồn CÙNG phép thì không. Và hai lần dán nhãn sai lên cùng một phép đo
+
+Trao đổi giữa phiên `-01` và `-93` khi chuẩn bị chốt đối chiếu cho rổ `T2` (việc lockbox của `-a2`).
+**0 trial**, mọi con số đo trên artifact đã commit và tự kiểm lại ở cả hai phiên.
+
+**1. Ranh giới thật của bài học "hai vế cùng nguồn" (`L-Z55`).**
+- `so_khoa` vs `thang_dau`/`thang_cuoi` của `td0230`: **cùng nguồn, KHÁC phép** (một bên ĐẾM khoá, một
+  bên lấy BIÊN của cùng danh sách) ⇒ vẫn bắt được lỗ thiếu tháng ở GIỮA. Đo: **864/864 mã có
+  `so_khoa` = đúng 2 × số tháng**, 0 lệch.
+- Phép ĐO LẠI đời sống mã (`TD-0306`) vs `td0231` nếu **cùng đọc kho `/1d/`**: **cùng nguồn, CÙNG
+  phép** ⇒ không phân biệt được gì. Với mã bị kho cắt mất tháng CUỐI, cả hai cùng kết luận "đã chết",
+  mã vắng ở CẢ HAI phía ⇒ chốt *"tập chỉ-ở-mới phải rỗng"* **XANH GIẢ**.
+- ⇒ Chốt cần **nguồn độc lập với kho**: mã bị kết luận chết mà còn `TRADING` trong `exchangeInfo` ⇒
+  DỪNG; và với nhóm **kho NGỪNG sinh nến** (31 mã `thang_cuoi < 2026-08`) thì hỏi API lịch sử — API
+  còn dữ liệu sau mốc kho ⇒ kho cụt, không phải mã chết. Nhóm **kho VẪN sinh nến** (833 mã) không cần
+  API: đo `volume > 0` là đủ.
+
+**2. Hai lần dán nhãn sai lên cùng một phép đo, trong một lượt trao đổi.**
+- `-93` đo *"AERGO ∈ rổ T1"* rồi viết thành *"ca chết-trong-`[T2,T3]` trên đường sản xuất"*.
+- `-01` viết *"cùng một mã còn sống ở rổ T1 và chết giữa chừng ở dữ liệu lockbox"* mà **không kiểm nó
+  có thuộc rổ `T2` không**.
+- Đo lại: **AERGO KHÔNG thuộc `pool_dung_tai_t2`** (94 mã) — tại `T2` nó đã trượt tiêu chí. Và
+  `kho-cụt ∩ rổ T2 = rỗng`.
+- 🔑 Cả hai phép đo đều ĐÚNG; cái sai là **nhãn** dán lên chúng. Cùng họ với *"sáu lần phát biểu vượt
+  quá phạm vi đã đo"* (09/09) và với lỗi nhãn `_tai_t1` cùng ngày hôm nay.
+
+**3. Hệ quả dùng được cho `TD-0306`/`TD-0308`:** ca test thật cho việc cắt dữ liệu lockbox phải là mã
+**thuộc rổ `T2`** và chết trong `[T2,T3]`; mã như vậy nằm trong nhóm 833 mã kho vẫn sinh nến
+`volume = 0` — tức là **sản phẩm của `TD-0306`, không tra ra trước được**. Nếu danh sách đó ra **rỗng**
+thì đáng NGHI, không đáng mừng: rổ `T0` đo được **18/143 mã chết ngay trong CALIB** (12,6% trong 14
+tháng, `td0301-moc-ngung-giao-dich-t0.json`), nên 0 mã chết trong 7 tháng lockbox là con số phải giải
+thích được.
+
+⚠️ **Phạm vi:** mọi con số trên chỉ đúng cho kho `/1d/` tại ảnh chụp `TD-0230` (12/09/2026), và số 94
+của `pool_dung_tai_t2` dựng bằng chính `khoang_ton_tai` mà `MT-59` nói là sai — phải tính lại sau
+`TD-0306`, không được đóng băng thành *"đã kiểm"*.
