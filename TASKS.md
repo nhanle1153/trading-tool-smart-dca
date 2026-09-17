@@ -798,6 +798,39 @@
 
 ---
 
+## Khối 27 — Lõi bộ chạy backtest thật + nối `ro_cho_tap()` vào đường sản xuất (mở 18/09/2026, thi hành `DR-BC-01`)
+
+> **Vì sao mở khối này, và vì sao nó KHÔNG phải là nối lại đường ống đang ⏸.**
+> `ro_cho_tap()` (TD-0299 ✅, `src/tool_d/pool_giai_doan.py:44`) là hàm chọn rổ theo giai đoạn, có 11
+> test khoá, và **chưa có một lời gọi sản xuất nào** — `docs/research-log.md:3095` khai thẳng lý do:
+> E1/E2/E3 chưa có bộ chạy backtest thật. Hệ quả: 143 mã rổ `T0` + 107 mã rổ `T1` và 1.357 file dữ
+> liệu của Khối 25 **không chảy vào phép đo nào**, và người viết bộ chạy sau này rất dễ tự đọc thẳng
+> một file rổ — đúng thứ `DR-D1-05` §1 sinh ra để cấm.
+>
+> 🔴 **Phạm vi, chủ dự án chốt 18/09/2026:** chỉ dựng **lõi hạ tầng đo** + nối **E1**. Căn cứ là chính
+> bảng `DR-IQ-01` §1, dòng ▶ *"Hạ tầng đo … không phụ thuộc chiến lược"* — lõi này phục vụ bất kỳ
+> chiến lược nào thắng suất (d), không riêng Zone Absorption. **KHÔNG** viết bộ chạy ablation E3
+> (TD-0184 ⏸), **KHÔNG** nối `chay_mot_fold` vào E2 (TD-0286 ⏸ tường minh), **KHÔNG** chạy `--chay`
+> trên `pool_t0`/`pool_t1` (đó là *đánh giá cấu hình trên CALIB/WFO* = chạm = tiêu 1 suất trong 114,
+> và `seal()` làm nó không hoàn lại được — L-Z53). Toàn khối **0 suất trial**.
+>
+> 🔑 **Hai quyết định kèm theo, đều đã chốt trong `DR-BC-01`, không phải mặc định lặng lẽ:**
+> (1) đặt chỗ trial tính theo **một CẤU HÌNH**, không phải một suất mỗi fold — trái chữ đang có ở
+> `entrypoints/run_wfo.py:21-24` và `src/tool_d/wfo/orchestrator.py:24-28`, nên hai docstring đó phải
+> sửa; (2) **băm dữ liệu ≠ chạm dữ liệu**, để dòng `RESERVE` mang đủ 7 khoá xuất xứ mà vẫn giữ L-Z52.
+>
+> **N12 mục 6:** mã `TD-0311`…`TD-0313` + tên `DR-BC-01` đã nhắn phiên `-93` và được xác nhận còn
+> trống (18/09/2026). Nhân lần nhắn đó chặn được một va chạm: `-93` định mở `DR-D1-06` + TD-0304/0305
+> cho việc mà Khối 26 đã phủ — họ đã rút và gỡ file chưa commit.
+
+| Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
+|---|---|---|---|---|
+| TD-0311 | 🚪 **`DR-BC-01`** — phạm vi lõi bộ chạy + kế toán suất + `băm ≠ chạm` + `budget_line` không mặc định | ✅ `a15e5c1` | — | Commit **RIÊNG và TRƯỚC** mọi dòng mã (tiền lệ `DR-D4-08`). Phải khai tường minh: cái gì vẫn ⏸; nó sửa chữ nào ở `run_wfo.py`/`orchestrator.py`; giá phải trả của việc nới định nghĩa "chạm" chỉ đúng cho *đọc byte để băm*, không mở cho việc đọc nào khác |
+| TD-0312 | 🔒 **Lõi `src/tool_d/bo_chay/`** — `yeu_cau.py` · `moi_truong.py` · `doc_ket_qua.py` · `chay.py` | 🔒 | TD-0311 | `L-Z36` giữ đúng 8 file `entrypoints/`. `ro_cho_tap()` là cửa DUY NHẤT lấy rổ — `YeuCauChay` **không có** trường đường dẫn rổ nào ⇒ "bộ chạy tự đọc file rổ" **không biểu diễn được**. `observed_start`/`observed_end` đọc THẬT từ `backtest_start_ts`/`backtest_end_ts` trong zip, **không** từ `timerange` (ngày dự kiến — bẫy TD-0148) và **không** từ `.meta.json` (đơn vị GIÂY vs mili-giây trong zip). Fail-closed khi xin `--timeframe-detail 5m` mà thư mục không có 5m (`pool_t0`: 0 file, `pool_t1`: 107 — đo thật). Cấu hình phủ bằng **thay dòng văn bản**, không `yaml.dump` (dump xoá chú thích và làm `cfg.sha256` không truy được về file đã commit) |
+| TD-0313 | 🔒 **Nối E1 `run_backtest.py`** (hiện `NotImplementedError`, `:65`) + sửa 2 docstring nói ngược `DR-BC-01` §2 | 🔒 | TD-0312 | 6 cổng cũ (`measurement_guard` → `require_d0_pre_complete` → `assert_cache_none` → `run_audit` → `verify_all_seals`) **không đụng một chữ**; `measurement_guard()` vẫn là lệnh đầu sau parse (N5, không decorator). `--tap` là MỘT chuỗi nuôi ba chỗ (`ro_cho_tap` · `dataset_boundaries_from_config` · `reserve(dataset=)`) ⇒ ba thứ không lệch nhau mà không ai thấy. Mặc định **không chạy**: thiếu `--chay` ⇒ in kế hoạch rồi thoát mã riêng, sổ trial **bất biến từng byte**. Thứ tự AST có test ghim: `reserve` < `chay_mot_luot` < `seal` < `consume` |
+
+---
+
 ## Việc đã biết là sẽ có, chưa mở
 
 | Giai đoạn | Nội dung | Chặn bởi |
