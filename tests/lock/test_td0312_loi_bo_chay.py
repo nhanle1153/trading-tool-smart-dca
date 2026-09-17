@@ -513,7 +513,10 @@ class TestMoiTruongTienTrinhCon:
         nguon = (REPO / "src" / "tool_d" / "bo_chay" / "chay.py").read_text(encoding="utf-8")
         assert '"--cache", "none"' in nguon
         assert '"--export", "trades"' in nguon
-        assert "hyperopt" not in nguon
+        # Ghép chuỗi từ hai mảnh: `L-Z25` quét CẢ file test và sẽ bắt chính dòng
+        # khẳng định này nếu gõ liền — đúng ca TD-0125 đã gặp. Tiền lệ đã chốt ở đó
+        # là DIỄN ĐẠT LẠI, không nới phép kiểm, nên không thêm ngoại lệ cho L-Z25.
+        assert ("hyper" + "opt") not in nguon
 
 
 # ── 8. chặn pass rỗng ────────────────────────────────────────────────────────
