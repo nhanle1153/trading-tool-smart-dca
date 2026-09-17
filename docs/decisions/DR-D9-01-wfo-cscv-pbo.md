@@ -100,6 +100,8 @@ vì thế là **cận trên thô** cho rủi ro chọn quá tay của D5, không
   ≥ 50% (H14) ⇒ DR-007 ⇒ **N là UNION**. Phiên `-01` đặt câu đó vào D6 (`DR-D6D8-01`, nháp). D9 đọc `N` từ
   nguồn kế toán hiện hành (`gates/dsr.py::effective_n` hoặc hàm thay thế nếu D6 chốt union) — **không**
   viết hằng số 114 ở tầng D9. Hôm nay nguồn đó trả 114, rào 3,0777.
+  ✅ **`MT-50` chốt 17/09/2026 (`DR-D6D8-01`, `7428678`): ngưỡng DR-007 là `≥ 50%`.** Overlap đo ở TD-0261 (D6)
+  `≥ 50%` ⇒ `N` của D9 là UNION với Tool A; `danh_gia_cong_d9(n_trials=…)` nhận đúng số đó, không sửa mã.
 - 🟡 **Lệch chữ spec, khai thẳng (`MT-52`):** `:3291` gắn WFO với B2 (dùng chung ablation). B2 = `9 × 2`;
   D4 giữ 9 Long; nửa còn lại *"không tự động thuộc về Short"* (`DR-D4-01:113`) nhưng chỉ đủ 9 < 16. Chủ dự
   án chọn **B1 dư** thay vì B2 (không đủ suất) hay mở rộng `N` (nâng rào DSR, sửa mọi chỗ ghim 114).
@@ -291,6 +293,29 @@ fold đó. Một lượt toàn cửa sổ đọc tới `T2` ⇒ fold 1 và fold 
   đầu tiên.
 - Bất kỳ thay đổi tham số nào **sau** khi D9 đã tiêu suất (D6–D8, DR-012 Hạng 1 đổi số) ⇒ kết quả D9 hết
   hiệu lực; chạy lại bằng **suất mới** (không hoàn trả, DR-014).
+
+#### 6.1.1 🔴 ĐÍNH CHÍNH 17/09/2026 — cổng vào là `d5` + `d6` + `d7` + `d8` (các gạch trên giữ làm lịch sử)
+
+> ~~✅ Chủ dự án chốt 17/09/2026: tạm chỉ `d5_complete`.~~ — đúng tại thời điểm viết, hết hiệu lực theo
+> chính điều kiện mở lại ghi ở gạch đầu dòng trên.
+
+`DR-D6D8-01` đã **CHỐT** (`7428678`, §6 dòng 236 + §8): chủ dự án chọn **ĐỢI** — loại *"chạy song song"* và
+*"chỉ đợi D6"*. Cổng vào D9 từ nay:
+
+| Khoá | Sinh bởi | Vì sao chặn D9 |
+|---|---|---|
+| `d5_complete` | TD-0257 | Tập CSCV là các cấu hình D5 đã CONSUMED (§2) |
+| `d6_complete` | TD-0267 | D6 sửa `MT-30` (đổi số) và đo overlap H14 ⇒ `N` của D9 (§3) |
+| `d7_complete` | TD-0273 (đòi `d6_complete`) | Hardening tồn vong — lỗi Hạng 1 lộ ra ở D7 đổi số |
+| `d8_complete` | TD-0279 | Ngưỡng lockbox commit **trước** suất WFO đầu tiên |
+
+- **Máy kiểm CẢ BỐN khoá tại cửa `reserve()`** (nhánh WFO, TD-0284 bổ sung). `DR-D6D8-01` viết *"`d7` ngụ ý
+  `d6`"* — đúng theo chuỗi cổng TD-0273 → TD-0267, nhưng cửa sổ trial **không tin một hàm ý**: kiểm `d6`
+  tường minh chặt hơn chữ, không trái chữ.
+- **Không thành cổng-không-bao-giờ-mở:** ba khoá mới đều có việc sinh ra chúng trong `TASKS.md` (Khối 20–22).
+  Trong lúc chờ, cửa từ chối với lý do đọc được, sổ không thêm dòng nào — đó là hành vi ĐÚNG của "đợi".
+- **`MT-49` chốt:** lockbox chạm ở **D9.5**, khớp §1 *"Không thuộc D9: chạm LOCKBOX"* (đính chính tại chỗ ở
+  `DR-D0PRE-07` mục 6, phiên `-01`).
 
 ### 6.2 Tiêu chí phán quyết
 
