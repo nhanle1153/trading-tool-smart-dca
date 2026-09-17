@@ -1,0 +1,35 @@
+{
+  "nguon": "TD-0291 — DR-SONG-CON-01 (dd76a61), luật 79eaa0b, EXPLORE, 0 trial",
+  "chay_luc_utc": "2026-09-17T05:24:53Z",
+  "git_sha": "0c474ed54990b07901e7f0e8d229221b1c268272",
+  "cay_do_ban": [],
+  "ranh_gioi": "Cổng DỪNG, không phải phán quyết cổng (DR-D4-13 §1.2). Số KHÔNG vào YAML, KHÔNG chọn tham số, KHÔNG xếp hạng arm, KHÔNG làm bằng chứng PASS. EXPLORE ngoài sổ ngân sách (DR-014 §2). Người quyết ĐÃ nhìn thấy số này (DR-009).",
+  "han_che": [
+    "Không có dữ liệu 5m ⇒ không --timeframe-detail; thứ tự chạm SL/TP trong nến 1H là xấp xỉ, chiều lệch chưa biết",
+    "EXPLORE ≠ pool: lợi thế trên 88 mã EXPLORE không chứng minh lợi thế trên 102 mã pool",
+    "Cửa sổ WFO đã được D4 nhìn qua ĐẾM lệnh (TD-0193/0205/0212), chưa PnL",
+    "Một cấu hình (Z0-T1, tham số hiện hành, chưa calibrate)",
+    "N = 114; DR-007 union chưa đo (TD-0261)"
+  ],
+  "tham_so_luat": {
+    "timerange": "20240409-20260129",
+    "T1": "2025-06-12",
+    "so_ma_explore": 88,
+    "ma_nam_explore": 99.4019,
+    "so_ma_pool": 102,
+    "nam_test": 0.40274,
+    "N": 114
+  },
+  "Z0-T1": {
+    "arm": "Z0-T1",
+    "trang_thai": "unreadable",
+    "ly_do": "3 exception bị Freqtrade nuốt (MT-16 vii) — lệnh có thể đã mất im lặng",
+    "giay": 65.1
+  },
+  "Z0-T0": {
+    "arm": "Z0-T0",
+    "trang_thai": "unreadable",
+    "ly_do": "4 exception bị Freqtrade nuốt (MT-16 vii) — lệnh có thể đã mất im lặng",
+    "giay": 205.3
+  }
+}
