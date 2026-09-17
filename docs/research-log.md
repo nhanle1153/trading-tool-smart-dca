@@ -3368,3 +3368,123 @@ từ chối và nêu `MT-60`; hai cửa cho một luật là hai nguồn sự th
 4. **Hai tập lệnh cho cùng một cấu hình** — E2 qua `chay_wfo` chạy 3 lượt/fold (bắt buộc bởi
    `kiem_pham_vi_du_lieu` tầng (b)); `wfo/lenh.py:16-21` + `DR-D9-01` §5.1 chạy 1 lượt rồi cắt lát. Không phải
    lỗi, nhưng là **hai nguồn số** ⇒ phải khai bản nào nuôi cổng nào. Ghi thành `MT-61`.
+
+---
+
+## 18/09/2026 — TD-0252: 5m cho CALIB. Đường "chép" chết vì một nến, và tôi tự tạo một PASS RỖNG rồi tự bắt
+
+Phiên `-ef`. **0 trial** (tải dữ liệu — `DR-014` §2 chỉ tính *đánh giá cấu hình*; tiền lệ TD-0093 /
+TD-0182 / TD-0200 / TD-0301).
+
+**Kết quả:** rổ `T0` từ 715 lên **858 file = 143 mã × 6 loại**. 5m phủ `[T0,T1]`, **16.555.667 nến**,
+**0 giờ 1H nào thiếu nến 5m** trên cả 143 mã. Full suite **2382 passed, 0 failed**.
+
+### 1. Quyết định nguồn: kho cho CẢ 143 mã, không `download-data`
+
+`DR-D1-05` §3b.3 (`1092246`, commit **TRƯỚC** mọi dòng mã) chốt lấy 5m từ kho `data.binance.vision`
+cho toàn bộ 143 mã — khác `DR-D1-03` §4 và khác chính TD-0301 vừa làm hôm qua. Lý do là **khử bằng
+cấu tạo**, không phải phòng bằng kỷ luật: đường kho trả file theo THÁNG và cắt bằng mã, nên bẫy
+TD-0093 (`--timerange` không dừng đúng mốc) và bẫy TD-0200 (`download-data -t 5m` kéo theo
+`1h-mark` + `1h-funding_rate`, ghi đè file đã cắt) **không tồn tại trên đường đó**. Khẳng định này
+được kiểm chứ không được tin: `--cat-den-t1` chạy sau khi nhập xong cho **0 file lấn, 0 hàng bỏ**.
+
+Cái giá là một cổng phải mở trước: artifact `td0247-doi-chieu-kho-freqtrade.json` chỉ đối chiếu 5m ở
+`2025-09` — **kỷ nguyên micro-giây**; `kho_luu_tru._moc()` đổi đơn vị theo ngưỡng `1e14`, còn CALIB là
+**milli-giây** và 5m chưa từng đối chiếu ở đó. Cổng (`7d93ae1`): `1000BONK`/`1000PEPE`, tháng `2024-06`
+và `2024-07`, **35.136 nến, lệch 0 ở mọi cột**. Hai mã đó là hai mã DUY NHẤT có 5m Freqtrade thật phủ
+được kỷ nguyên ấy (tải ở TD-0115) — không có chúng thì không đối chiếu được, chỉ còn cách tin.
+
+### 2. 🔴 Đường "chép 5m có sẵn" chết, và nó chết theo kiểu không ai nhìn thấy
+
+Kế hoạch đầu định chép 5m từ `binance/` và `pool_t1/` như TD-0301 đã làm với 5 loại kia. Đo trước khi
+viết: **65/66** file 5m sẵn có bắt đầu **đúng tại `T1`** (đúng 1 file bắt đầu `2024-06-01`).
+
+Chép vào rổ `T0` rồi cắt `≤ T1` sẽ còn lại **đúng một nến**. Và file một nến **không rỗng**, nên
+`cat_den_moc()` không raise — nó chỉ raise khi cắt xong còn 0 hàng. Tức 143 file "hợp lệ về hình thức"
+chứa 1/123.553 lượng dữ liệu cần có, và **không lớp canh nào trên đường đó báo gì**. Thứ duy nhất bắt
+được là vế *"bắt đầu muộn hơn cần"* của `kiem_du_lieu_ro()`, và nó chỉ chạy khi 5m mang `tu_moc =
+"t0"` — tức chỉ sau khi ta đã làm đúng việc khác. Đã ghim thành một ca test dựng đúng hình dạng thật
+đó (`test_kiem_t0_bat_5m_bat_dau_tai_T1_la_THIEU_DAU`).
+
+🔑 Bài học không phải *"kiểm mốc bắt đầu"* — mà là: **một phép cắt chỉ báo lỗi ở ca BIÊN (rỗng) sẽ im
+lặng ở mọi ca GẦN biên.** `cat_den_moc()` đúng theo đặc tả của nó; chỗ hở nằm giữa "rỗng" và "đủ".
+
+### 3. 🔴 PASS RỖNG trong chính lớp canh tôi vừa viết — mảnh thứ tư của họ lỗi hôm nay
+
+`--ro-do-phu` là phép đo *quyết định* của việc này (tiêu chí §3b.4: không một giờ 1H nào thiếu nến
+5m). Lượt chạy đầu in:
+
+```
+📊 Nạp được khung chính 1h: 0/143 mã · 5m: 0 mã
+✅ Không một giờ khung chính nào thiếu nến 5m, trên toàn bộ 0 mã nạp được.
+```
+
+và **trả exit 0**.
+
+Tầng dưới là một lỗi tầm thường: `history.load_data` với `candle_type=FUTURES` **tự nối `futures/`**
+vào `datadir`, nên `.../pool_t0/futures` thành `.../pool_t0/futures/futures/`. Đo ra cơ chế thay vì
+suy: cùng một lời gọi, `datadir='.../pool_t0/futures'` → **0 mã**; `datadir='.../pool_t0'` → 1 mã,
+123.553 nến.
+
+Phần đáng ghi là tầng trên. `cho_thieu_khung_chi_tiet({}, {})` trả rỗng — **đúng đặc tả** — và người
+gọi đọc "rỗng" thành "đủ". Tập rỗng làm mọi khẳng định phổ quát thành đúng-vô-nghĩa. **Hàm thuần
+không sai; chốt thiếu nằm ở người gọi.** Đây đúng hình TD-0182 (*fixture 0 lệnh ⇒ mọi khẳng định về
+lệnh đều đúng-vô-nghĩa*), nhưng lần này nó nằm trong một lớp canh vừa được viết ra để chặn chính
+loại lỗi đó.
+
+Vá (`f9222d6`): fail-closed **trước mọi khẳng định** — 0 mã nạp được ⇒ *"KHÔNG ĐO ĐƯỢC"*, không in
+`✅`, exit ≠ 0; và mã đã qua `--ro-kiem` mà `load_data` không nạp được ⇒ từ chối, vì đó là mâu thuẫn
+giữa hai đường đọc, không được lặng lẽ thu nhỏ mẫu số rồi báo "đủ". Ca khoá thứ nhất khẳng định
+`"✅" not in ra` — vì **lỗi cũ không nằm ở mã thoát mà nằm ở chữ in ra**. Phá thật ⇒ đúng 1 ca đỏ.
+
+🔑 **Nó chỉ lộ ra vì tôi ĐỌC output, không nhìn mã thoát.** Nếu chỉ kiểm exit code thì bước này đã
+"xanh" và toàn bộ TD-0252 sẽ đứng trên một phép đo chưa bao giờ chạy. Đây là mảnh thứ tư của họ lỗi
+mà `-13` đã gom trong mục *"Khối 27"* cùng ngày — *phép kiểm đúng, nhưng không phân biệt được thứ cần
+phân biệt*; xem mục đó, không chép lại. `-13` soi lại lõi của họ sau khi nhận tin và tìm được **cùng
+hình dạng đó có thật** trong `chay_mot_luot()` (`ma_gioi_han=()` ⇒ cổng 5m nói "đủ" trên 0 mã), đã vá
+ở `d2f169a`.
+
+### 4. Bẫy PASS RỖNG thứ hai, tự tạo rồi tự bắt trong cùng đợt
+
+Ca khoá *"kế hoạch chỉ 5m thì không đếm đuôi nến chết"* bản đầu dựng đuôi **1** nến `volume = 0`,
+trong khi `NEN_CHET_TOI_THIEU = 24`. Phép kiểm **không thể kích hoạt**, nên phá thật file sản xuất
+(trả `lf.khung == "1h"` về `lf is loai_file[0]`) **không làm nó đỏ** — nó chưa bao giờ canh gì. Vá
+bằng đuôi dài hơn ngưỡng **và** đặt `assert duoi_nen_chet(df) > NEN_CHET_TOI_THIEU` ngay trong ca, để
+lần sau ai đổi ngưỡng thì ca này **đỏ** chứ không lặng lẽ thành **rỗng**.
+
+### 5. Ba quyết định nhỏ, ghi để cãi lại được
+
+1. **`5m` của rổ `T0` là một `LoaiFile` RIÊNG** (`LOAI_5M_T0`, `tu_moc="t0"`), không sửa trường
+   `tu_moc` của `SAU_LOAI_FILE`. Sửa tại chỗ sẽ làm 107 mã rổ `T1` (đã đủ 6 file, 5m phủ `[T1,T2]`)
+   bị `kiem_du_lieu_ro()` coi là thiếu đầu và **phải tải lại toàn bộ**. Có ca khoá riêng cho bất biến
+   này.
+2. **Mốc ngừng giao dịch ĐỌC từ artifact TD-0301, không đo lại.** Đo lại trên 5m có thể ra mốc khác
+   mốc của file `1h` cùng mã ⇒ hai file cùng mã kết thúc lệch nhau ⇒ `kiem_du_lieu_ro()` đỏ. Máy thi
+   hành: thiếu artifact ⇒ exit 98 **trước khi chạm mạng**, và `sha256` artifact không đổi suốt đợt.
+   Hệ quả đã khai: 18 mã cắt `≤ mốc ngừng` (mốc MỞ của nến 1h cuối) nên **mất 11 nến 5m cuối mỗi mã**
+   — chấp nhận có ý thức, thay vì nới `kiem_du_lieu_ro()` để làm đẹp 11 nến.
+3. **`kiem_du_lieu_ro()` so khung/hậu tố tường minh thay vì vị trí phần tử.** Với kế hoạch đã lọc còn
+   mỗi 5m thì `loai_file[0]` LÀ file 5m, và `duoi_nen_chet()` sẽ đếm đuôi volume 0 trên nến 5m — báo
+   động giả. Bỏ giả định về THỨ TỰ phần tử cũng làm phần rổ `T2` của `-a2` an toàn hơn.
+
+### 6. Giới hạn đã biết — đọc kèm
+
+1. **Đây là dữ liệu, KHÔNG phải một phép đo chiến lược nào.** TD-0252 gỡ **một** trong hai điều kiện
+   *"bắt buộc trước suất B1 đầu tiên"* (`DR-D5-01` §6.2). D5 (TD-0257/TD-0258) **vẫn ⏸** theo
+   `DR-IQ-01`; không một dòng backtest nào chạy trong đợt này.
+2. **L-Z55 nối vào rổ thật (`kiem_pham_vi_dataset`) phân giải tới NGÀY**, vì `DatasetBoundary` mang
+   kiểu `date` — một nến `2025-06-12 00:05` vẫn lọt. Phép kiểm theo MỐC là `kiem_du_lieu_ro()`. Đã
+   ghi thẳng trong docstring: **bổ sung, không thay thế** — không viết ra là dựng lại đúng bẫy TD-0148
+   (*"lớp canh trông như đang canh"*).
+3. **LOCKBOX vẫn KHÔNG có 5m.** `lockbox_seal_1.json` băm 510 file = 102 mã × 5 loại, `'-5m-'` xuất
+   hiện **0 lần**; `lockbox/data/` cũng 0 file 5m (ba phiên đo độc lập cùng kết quả). Sau TD-0252:
+   CALIB có 5m, WFO có 5m, **LOCKBOX không** — và niêm phong không sửa được. Cổng phán quyết cuối
+   (D9.5, chạm đúng một lần) sẽ chạy ở 1H trong khi mọi phép đo dẫn tới nó chạy 5m, đúng hình *"thước
+   đã đổi giữa hai lần đo"* (§11b.1, L2). 🔑 **Không mở `MT` riêng**: `-a2` đã ghi đúng vấn đề này
+   thành **câu hỏi (9) của `DR-LOCKBOX-01`** và commit trước (`da3c670`) — hai bên thống nhất phía có
+   định danh trên đĩa thì phía đó giữ (tiêu chí TD-0119/TD-0120), tránh hai nguồn sự thật cho một
+   quyết định.
+4. **Tốc độ nhập bị chặn bởi `api_calls_per_min = 30`** ⇒ 2 giây/file tháng, ~2.000 file ⇒ ~3 giờ.
+   Không đổi tham số để chạy nhanh: đó là nới một chốt bảo vệ vì tiện.
+5. **Log container im suốt lượt chạy dài** (stdout buffer khi không có tty) — tiến độ phải đo bằng
+   đếm file trên đĩa. *"Không thấy output"* không suy ra được *"không chạy"*.
