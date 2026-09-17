@@ -1,0 +1,116 @@
+{
+  "td": "TD-0293",
+  "cau_hoi": "thời hạn MỖI lời gọi git trong gitinfo._run_git",
+  "cong_thuc": "max(10, lam_tron_len_5(2 × max_mot_lenh(hai_suite)))",
+  "max_mot_lenh_hai_suite_s": 1.5289498109996202,
+  "thoi_han_de_xuat_s": 10,
+  "ket_luan": "Thời hạn giữ 10 s — công thức viết trước ra đúng giá trị cũ, KHÔNG đổi mã. Ca đỏ gốc (test_td0143 quá hạn 10 s, 17/09/2026) KHÔNG tái hiện được bằng tải full suite, kể cả hai lượt chồng: nguyên nhân CHƯA BIẾT. Đừng đọc file này là 'đã giải thích ca đỏ'.",
+  "cac_muc": {
+    "nhan": {
+      "nguon": "td0293-tre-git-nhan.json",
+      "ghi_chu_tai": "khong co suite; nen: ",
+      "thong_ke": {
+        "rev_parse": {
+          "n": 40,
+          "min": 0.023943753000025936,
+          "p50": 0.025423066999991306,
+          "p90": 0.02637000699999703,
+          "p99": 0.029793474880029293,
+          "max": 0.03134244100004935,
+          "ghi_chu_phan_vi": "nội suy tuyến tính giữa hai mẫu kề (kiểu numpy 'linear')"
+        },
+        "status": {
+          "n": 40,
+          "min": 1.1985602009999639,
+          "p50": 1.2731787810000128,
+          "p90": 1.295372199000019,
+          "p99": 1.321990319320006,
+          "max": 1.3233256060000258,
+          "ghi_chu_phan_vi": "nội suy tuyến tính giữa hai mẫu kề (kiểu numpy 'linear')"
+        },
+        "get_git_info_tong": {
+          "n": 40,
+          "min": 1.224004974999957,
+          "p50": 1.2984089170000175,
+          "p90": 1.320700331200004,
+          "p99": 1.3477610529400055,
+          "max": 1.3496770660000266,
+          "ghi_chu_phan_vi": "nội suy tuyến tính giữa hai mẫu kề (kiểu numpy 'linear')"
+        }
+      }
+    },
+    "mot_suite": {
+      "nguon": "td0293-tre-git-mot_suite.json",
+      "ghi_chu_tai": "1 luot full suite (service tests), khoi dong cung luc bo do; nen: phien -01 thao tac du lieu/commit docs TD-0247",
+      "thong_ke": {
+        "rev_parse": {
+          "n": 79,
+          "min": 0.01623560699954396,
+          "p50": 0.02602106299946172,
+          "p90": 0.02715655420015537,
+          "p99": 0.0395147692797036,
+          "max": 0.04951466100010293,
+          "ghi_chu_phan_vi": "nội suy tuyến tính giữa hai mẫu kề (kiểu numpy 'linear')"
+        },
+        "status": {
+          "n": 79,
+          "min": 0.6412947490007355,
+          "p50": 1.3477512159997787,
+          "p90": 1.3850952718001281,
+          "p99": 1.4262578214594577,
+          "max": 1.5023329320001721,
+          "ghi_chu_phan_vi": "nội suy tuyến tính giữa hai mẫu kề (kiểu numpy 'linear')"
+        },
+        "get_git_info_tong": {
+          "n": 79,
+          "min": 0.66732113100079,
+          "p50": 1.367185678000169,
+          "p90": 1.4141184154001167,
+          "p99": 1.452686620639397,
+          "max": 1.5290876690005462,
+          "ghi_chu_phan_vi": "nội suy tuyến tính giữa hai mẫu kề (kiểu numpy 'linear')"
+        }
+      }
+    },
+    "hai_suite": {
+      "nguon": "td0293-tre-git-hai_suite.json",
+      "ghi_chu_tai": "2 luot full suite chong nhau (service tests), khoi dong cung luc bo do; nen: phien -01 thao tac du lieu/commit docs TD-0247",
+      "thong_ke": {
+        "rev_parse": {
+          "n": 72,
+          "min": 0.017766732000382035,
+          "p50": 0.02542048299983435,
+          "p90": 0.029449519700483505,
+          "p99": 0.06316490333999382,
+          "max": 0.09465059600006498,
+          "ghi_chu_phan_vi": "nội suy tuyến tính giữa hai mẫu kề (kiểu numpy 'linear')"
+        },
+        "status": {
+          "n": 72,
+          "min": 0.7369711350002035,
+          "p50": 1.3285972999997284,
+          "p90": 1.4883697456995832,
+          "p99": 1.5264859008395069,
+          "max": 1.5289498109996202,
+          "ghi_chu_phan_vi": "nội suy tuyến tính giữa hai mẫu kề (kiểu numpy 'linear')"
+        },
+        "get_git_info_tong": {
+          "n": 72,
+          "min": 0.765279303999705,
+          "p50": 1.3509796104999623,
+          "p90": 1.5277083801000118,
+          "p99": 1.5540218264406849,
+          "max": 1.5585743009996804,
+          "ghi_chu_phan_vi": "nội suy tuyến tính giữa hai mẫu kề (kiểu numpy 'linear')"
+        }
+      }
+    }
+  },
+  "file_loai": {
+    "td0293-tre-git-mot_suite-ban1-tron-muc.json": "KHÔNG dùng: lấy theo số mẫu cố định, 15/45 mẫu rơi sau khi suite đã xong (trộn mức nhàn)"
+  },
+  "han_che": [
+    "Mức tải là chạy full suite thật, không phải tải tổng hợp; tải nền của phiên khác ghi ở ghi_chu_tai.",
+    "Một máy, một ngày; 'hai suite chồng' chưa phải cận trên của tải có thể xảy ra — vì thế có HE_SO."
+  ]
+}
