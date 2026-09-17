@@ -1,7 +1,8 @@
 """TD-0291 — Cổng sống còn (`DR-SONG-CON-01`): Zone Absorption LONG trên EXPLORE, 0 trial.
 
 Câu hỏi DUY NHẤT: *có đáng tiêu suất đo vào Zone Absorption LONG không?* Luật viết
-TRƯỚC ở `DR-SONG-CON-01` §4 (`dd76a61`), thi hành ở `gates/song_con.py` (`79eaa0b`).
+TRƯỚC ở `DR-SONG-CON-01` §4 (`dd76a61`), ĐÍNH CHÍNH §8 (`ed25bbd`, trước khi có số):
+CHỈ CALIB `[T0, T1)` + luật 3 trung tính. Thi hành ở `gates/song_con.py`.
 Script này KHÔNG quyết gì: nó chạy backtest, trích `R_trien_khai` từng lệnh, rồi gọi
 đúng hàm luật đó.
 
@@ -12,7 +13,8 @@ xếp hạng arm, KHÔNG làm bằng chứng PASS ở cổng nào. EXPLORE ngoà
 Đo:
   • `Z0-T1` (arm ứng viên) — áp luật.
   • `Z0-T0` — CHẨN ĐOÁN, chỉ mô tả, không áp luật.
-  • EXPLORE 88 mã, MỘT lượt backtest `[T0, T2)`, cắt theo `open_date` thành CALIB `[T0,T1)` · WFO `[T1,T2)`.
+  • EXPLORE 88 mã, MỘT lượt backtest CALIB `[T0, T1)` (§8 — KHÔNG đo WFO `[T1, T2)`: PnL trên mã
+    tương quan là nhìn trước câu trả lời D4). Lệnh nào mở ≥ T1 ⇒ raise.
   • `R_trien_khai = profit_abs / Σ amount·(giá khớp − sl)` trên lệnh vào ĐÃ KHỚP
     (`DR-D4-12` §1.4, qua `wfo.lenh.rui_ro_da_trien_khai_usdt`). `profit_abs` của Freqtrade
     futures đã trừ phí và cộng/trừ funding (`trade_model.py`, nhánh FUTURES) = `pnl_abs` DR-013.
@@ -61,8 +63,8 @@ _spec.loader.exec_module(td0193)
 
 KET_QUA = REPO / "docs" / "du-lieu-do" / "td0291-song-con-explore.json"
 DR = "DR-SONG-CON-01"
-DR_SHA = "dd76a61"
-LUAT_SHA = "79eaa0b"
+DR_SHA = "dd76a61 + §8 ed25bbd"
+LUAT_SHA = "song_con §8"
 
 
 class TrichLenhError(RuntimeError):
@@ -132,7 +134,7 @@ def _tk_dict(tk: ThongKe) -> dict:
     return {"n": tk.n, "mean": m(tk.mean), "std": m(tk.std), "ktc95_duoi": m(tk.ci_duoi), "ktc95_tren": m(tk.ci_tren)}
 
 
-def do_arm(ma: list[str], arm: str, *, t1: pd.Timestamp, ap_luat: bool, ma_nam: float,
+def do_arm(ma: list[str], arm: str, *, t0: pd.Timestamp, t1: pd.Timestamp, ap_luat: bool, ma_nam: float,
            so_ma_pool: int, nam_test: float, n_trials: int) -> dict:
     t0 = time.time()
     try:
@@ -141,18 +143,18 @@ def do_arm(ma: list[str], arm: str, *, t1: pd.Timestamp, ap_luat: bool, ma_nam: 
         if nuot:
             raise TrichLenhError(f"{nuot} exception bị Freqtrade nuốt (MT-16 vii) — lệnh có thể đã mất im lặng")
         dong = [_r_trien_khai(t) for t in trades]
+        ngoai = [od for od, _, _r in dong if not (t0 <= od < t1)]
+        if ngoai:
+            raise TrichLenhError(f"{len(ngoai)} lệnh mở ngoài CALIB [T0,T1) (vd {ngoai[0]}) — §8 cấm đọc WFO")
     except TrichLenhError as e:
         return {"arm": arm, "trang_thai": "unreadable", "ly_do": str(e), "giay": round(time.time() - t0, 1)}
 
-    r_calib = [r for od, _, r in dong if od < t1]
-    r_wfo = [r for od, _, r in dong if od >= t1]
+    r_calib = [r for _od, _, r in dong]
     ra: dict = {
         "arm": arm,
         "vai_tro": "UNG_VIEN — áp luật §4" if ap_luat else "CHẨN ĐOÁN — chỉ mô tả, KHÔNG áp luật",
         "so_lenh": len(trades),
         "calib": _tk_dict(thong_ke(r_calib)),
-        "wfo": _tk_dict(thong_ke(r_wfo)),
-        "gop": _tk_dict(thong_ke(r_calib + r_wfo)),
         "ty_le_lenh_loi": round(sum(1 for _, p, _r in dong if p > 0) / len(dong), 4) if dong else None,
         "tong_pnl_abs_usdt": round(sum(p for _, p, _r in dong), 4),
         "exit_reason": dict(Counter(t["exit_reason"] for t in trades)),
@@ -163,7 +165,7 @@ def do_arm(ma: list[str], arm: str, *, t1: pd.Timestamp, ap_luat: bool, ma_nam: 
     }
     if ap_luat:
         kq = danh_gia_song_con(
-            r_calib=r_calib, r_wfo=r_wfo, ma_nam=ma_nam, so_ma_pool=so_ma_pool, nam_test=nam_test, n_trials=n_trials,
+            r_calib=r_calib, ma_nam=ma_nam, so_ma_pool=so_ma_pool, nam_test=nam_test, n_trials=n_trials,
         )
         ra["luat"] = {
             "ket_luan": kq.ket_luan.value,
@@ -171,7 +173,7 @@ def do_arm(ma: list[str], arm: str, *, t1: pd.Timestamp, ap_luat: bool, ma_nam: 
             "n_cong": round(kq.n_cong.value, 3) if kq.n_cong.is_ok() else {"trang_thai": kq.n_cong.status.value, "ly_do": kq.n_cong.note},
             "M_can_N": round(kq.m_can.value, 6) if kq.m_can.is_ok() else {"trang_thai": kq.m_can.status.value, "ly_do": kq.m_can.note},
             "N": kq.n_trials,
-            "M_union": {"trang_thai": "pending", "ly_do": "TD-0261 (overlap H14 / DR-007) chưa đo — kết luận ĐI (nếu có) chưa tính DR-007"},
+            "M_union": {"trang_thai": "pending", "ly_do": "TD-0261 (overlap H14 / DR-007) chưa đo — luật 3 (nếu ra) chưa tính DR-007"},
         }
     print(f"[{arm}] {json.dumps(ra, ensure_ascii=False)}", flush=True)
     return ra
@@ -194,8 +196,12 @@ def main() -> int:
 
     cfg = load_tool_d_config(REPO / "config" / "tool_d_config.yaml")
     b = dataset_boundaries_from_config(cfg)
-    t0, t1, t2 = pd.Timestamp(b["CALIB"].start), pd.Timestamp(b["WFO"].start), pd.Timestamp(b["WFO"].end)
-    assert f"{t0:%Y%m%d}-{t2:%Y%m%d}" == td0193.TIMERANGE, "cửa sổ td0193 lệch data_split niêm phong"
+    t0, t1 = pd.Timestamp(b["CALIB"].start), pd.Timestamp(b["CALIB"].end)
+    assert pd.Timestamp(b["WFO"].start) == t1
+    assert f"{t0:%Y%m%d}" == f"{td0193.T0:%Y%m%d}", "T0 của td0193 lệch data_split niêm phong"
+    # §8 — cắt cửa sổ TẠI MODULE td0193 để CẢ backtest (`TIMERANGE`) lẫn mã-năm (`_nam_phu`) dùng [T0, T1).
+    td0193.T2 = pd.Timestamp(t1, tz="UTC")
+    td0193.TIMERANGE = f"{td0193.T0:%Y%m%d}-{td0193.T2:%Y%m%d}"
     folds = sinh_folds(cfg)
     nam_test = sum((f.test_end - f.test_start).days for f in folds) / 365
     so_ma_pool = len(td0193._ten_pool())
@@ -221,17 +227,20 @@ def main() -> int:
         "han_che": [
             "Không có dữ liệu 5m ⇒ không --timeframe-detail; thứ tự chạm SL/TP trong nến 1H là xấp xỉ, chiều lệch chưa biết",
             "EXPLORE ≠ pool: lợi thế trên 88 mã EXPLORE không chứng minh lợi thế trên 102 mã pool",
-            "Cửa sổ WFO đã được D4 nhìn qua ĐẾM lệnh (TD-0193/0205/0212), chưa PnL",
+            "CHỈ CALIB [T0,T1) (§8): WFO KHÔNG đo — không rò câu trả lời D4; mẫu nhỏ hơn",
+            "Luật 3 TRUNG TÍNH (§8): 'không có lý do dừng' KHÔNG phải bằng chứng ủng hộ Z0-T1, cấm trích cho D4",
+            "Tập lệnh sau TD-0294 (0afbc70) — số đếm EXPLORE cũ (TD-0193/0205/0212) không so trực tiếp",
+            "KHAI DR-009: TRƯỚC khi §8 chốt, một lượt THỬ MÁY 3 mã (--max-coins 3, runs/, không phải artifact) đã IN số trên cả CALIB lẫn WFO (n = 12 tổng, trước TD-0294) — phiên -33 đã nhìn thấy; quá ít để kết luận, không dùng ở đâu",
             "Một cấu hình (Z0-T1, tham số hiện hành, chưa calibrate)",
             "N = 114; DR-007 union chưa đo (TD-0261)",
         ],
         "tham_so_luat": {
-            "timerange": td0193.TIMERANGE, "T1": f"{t1:%Y-%m-%d}",
+            "timerange": td0193.TIMERANGE, "cua_so": "CALIB [T0,T1) — DR-SONG-CON-01 §8",
             "so_ma_explore": len(ma), "ma_nam_explore": round(ma_nam, 4),
             "so_ma_pool": so_ma_pool, "nam_test": round(nam_test, 6), "N": n_trials,
         },
-        "Z0-T1": do_arm(ma, "Z0-T1", t1=t1, ap_luat=True, ma_nam=ma_nam, so_ma_pool=so_ma_pool, nam_test=nam_test, n_trials=n_trials),
-        "Z0-T0": do_arm(ma, "Z0-T0", t1=t1, ap_luat=False, ma_nam=ma_nam, so_ma_pool=so_ma_pool, nam_test=nam_test, n_trials=n_trials),
+        "Z0-T1": do_arm(ma, "Z0-T1", t0=t0, t1=t1, ap_luat=True, ma_nam=ma_nam, so_ma_pool=so_ma_pool, nam_test=nam_test, n_trials=n_trials),
+        "Z0-T0": do_arm(ma, "Z0-T0", t0=t0, t1=t1, ap_luat=False, ma_nam=ma_nam, so_ma_pool=so_ma_pool, nam_test=nam_test, n_trials=n_trials),
     }
     ket_qua.write_text(json.dumps(kq, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"→ {ket_qua}")
