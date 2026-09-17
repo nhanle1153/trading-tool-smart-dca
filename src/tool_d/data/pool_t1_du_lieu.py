@@ -48,6 +48,16 @@ SAU_LOAI_FILE: tuple[LoaiFile, ...] = (
     LoaiFile("1h", "funding_rate", "fundingRate", "t0"),
 )
 
+#: `DR-D1-05` §3 — rổ `T0` (CALIB): bỏ 5m (việc của `TD-0252`, đang ⏸).
+NAM_LOAI_FILE_T0: tuple[LoaiFile, ...] = tuple(lf for lf in SAU_LOAI_FILE if lf.khung != "5m")
+
+#: Theo tên rổ: (kế hoạch file, tên mốc CUỐI của dữ liệu). File đầu tiên PHẢI là 1h futures
+#: (dùng để đo mốc ngừng giao dịch).
+KE_HOACH_THEO_RO: dict[str, tuple[tuple[LoaiFile, ...], str]] = {
+    "t0": (NAM_LOAI_FILE_T0, "t1"),
+    "t1": (SAU_LOAI_FILE, "t2"),
+}
+
 
 class DuLieuRoError(RuntimeError):
     """Thao tác dữ liệu rổ không thể hoàn tất mà không đoán — fail-closed."""
@@ -117,13 +127,15 @@ class KetQuaNhap:
     gia_dong_cuoi: float  # giá đóng nến 1h CUỐI được giữ (nến giao dịch cuối nếu có mốc ngừng)
 
 
-def sao_chep_ma_co_san(nguon: Path, dich: Path, ma: Sequence[str]) -> list[str]:
-    """Chép nguyên byte 6 file của từng mã; kiểm sha256 sau chép. Trả tên file đã chép.
+def sao_chep_ma_co_san(
+    nguon: Path, dich: Path, ma: Sequence[str], *, loai_file: Sequence[LoaiFile] = SAU_LOAI_FILE
+) -> list[str]:
+    """Chép nguyên byte các file `loai_file` của từng mã; kiểm sha256 sau chép. Trả tên file đã chép.
 
     Từ chối (trước khi chép file nào) nếu: thiếu file nguồn, hoặc file đích đã tồn tại."""
     viec: list[tuple[Path, Path]] = []
     for s in ma:
-        for lf in SAU_LOAI_FILE:
+        for lf in loai_file:
             src, dst = nguon / ten_file(s, lf), dich / ten_file(s, lf)
             if not src.is_file():
                 raise DuLieuRoError(f"thiếu file nguồn {src}")
@@ -145,6 +157,8 @@ def nhap_ma_tu_kho(
     khoang: Mapping[str, str],
     moc: Mapping[str, date],
     doc_csv: Callable[..., list[list[str]]],
+    loai_file: Sequence[LoaiFile] = SAU_LOAI_FILE,
+    moc_cuoi: str = "t2",
 ) -> KetQuaNhap:
     """Nhập 6 file cho một mã từ kho. `khoang = {"thang_dau", "thang_cuoi"}` (TD-0230);
     `moc = {"t0", "t1", "t2"}`.
@@ -153,8 +167,10 @@ def nhap_ma_tu_kho(
     dụng = mốc ngừng (nếu có) hoặc `T2`. Tháng cần tải = giao của [mốc bắt đầu, mốc cuối]
     với [thang_dau, thang_cuoi]; MỌI tháng đó phải có file — 404 ⇒ từ chối (N6).
     Chỉ ghi khi cả 6 loại đã dựng xong."""
-    t2 = moc["t2"]
-    for lf in SAU_LOAI_FILE:
+    if loai_file[0] != SAU_LOAI_FILE[0]:
+        raise DuLieuRoError("kế hoạch file phải bắt đầu bằng 1h futures (đo mốc ngừng giao dịch)")
+    t2 = moc[moc_cuoi]  # mốc CUỐI của dữ liệu rổ (tên biến giữ từ bản T1)
+    for lf in loai_file:
         if (dich / ten_file(symbol, lf)).exists():
             raise DuLieuRoError(f"file đích đã tồn tại, không ghi đè: {dich / ten_file(symbol, lf)}")
 
@@ -188,15 +204,15 @@ def nhap_ma_tu_kho(
         return df[df["date"] >= _moc_ts(moc[lf.tu_moc])].reset_index(drop=True)
 
     thang_cuoi_kho = min(_thang(t2), _thang(_dau_thang(khoang["thang_cuoi"])))
-    nen_1h = _dung(SAU_LOAI_FILE[0], thang_cuoi_kho)
+    nen_1h = _dung(loai_file[0], thang_cuoi_kho)
     nen_1h = nen_1h[nen_1h["date"] <= _moc_ts(t2)].reset_index(drop=True)
     moc_ngung = moc_ngung_giao_dich(nen_1h, t2)
     moc_cuoi = moc_ngung if moc_ngung is not None else _moc_ts(t2)
     thang_cuoi = min(thang_cuoi_kho, (moc_cuoi.year, moc_cuoi.month))
 
     khung_ghi: list[tuple[Path, pd.DataFrame]] = []
-    for lf in SAU_LOAI_FILE:
-        df = nen_1h if lf is SAU_LOAI_FILE[0] else _dung(lf, thang_cuoi)
+    for lf in loai_file:
+        df = nen_1h if lf is loai_file[0] else _dung(lf, thang_cuoi)
         df = df[df["date"] <= moc_cuoi].reset_index(drop=True)
         if df.empty:
             raise DuLieuRoError(f"{symbol} {lf.khung}-{lf.hau_to}: rỗng sau khi cắt về [{moc[lf.tu_moc]}, {moc_cuoi}]")
@@ -233,6 +249,9 @@ def kiem_du_lieu_ro(
     khoang: Mapping[str, Mapping[str, str]],
     moc: Mapping[str, date],
     moc_ngung: Mapping[str, pd.Timestamp] | None = None,
+    *,
+    loai_file: Sequence[LoaiFile] = SAU_LOAI_FILE,
+    moc_cuoi: str = "t2",
 ) -> list[str]:
     """Trả danh sách lỗi (rỗng = đủ). Với mỗi mã × 6 loại file:
 
@@ -246,14 +265,15 @@ def kiem_du_lieu_ro(
         ≥ `NEN_CHET_TOI_THIEU` nến `volume = 0` ⇒ lỗi "đuôi nến chết chưa khai".
     """
     moc_ngung = moc_ngung or {}
-    t2 = _moc_ts(moc["t2"])
+    t2 = _moc_ts(moc[moc_cuoi])
+    NHAN = moc_cuoi.upper()
     loi: list[str] = []
     for s in ro:
         if s not in khoang:
             loi.append(f"{s}: không có khoảng tồn tại TD-0230")
             continue
         k = khoang[s]
-        for lf in SAU_LOAI_FILE:
+        for lf in loai_file:
             f = thu_muc / ten_file(s, lf)
             if not f.is_file():
                 loi.append(f"{f.name}: THIẾU")
@@ -264,7 +284,7 @@ def kiem_du_lieu_ro(
                 continue
             dau, cuoi = df["date"].min(), df["date"].max()
             if cuoi > t2:
-                loi.append(f"{f.name}: có nến sau T2 ({cuoi})")
+                loi.append(f"{f.name}: có nến sau {NHAN} ({cuoi})")
             if s in moc_ngung:
                 ngung = moc_ngung[s]
                 if cuoi > ngung or cuoi < ngung - pd.Timedelta(days=1):
@@ -273,16 +293,16 @@ def kiem_du_lieu_ro(
                 if dau > _moc_ts(bat_dau_can) + pd.Timedelta(days=31):
                     loi.append(f"{f.name}: bắt đầu {dau.date()} muộn hơn cần ({bat_dau_can} + 31 ngày)")
                 continue
-            if lf is SAU_LOAI_FILE[0]:
+            if lf is loai_file[0]:
                 duoi = duoi_nen_chet(pd.read_feather(f, columns=["volume"]))
                 if duoi >= NEN_CHET_TOI_THIEU:
                     loi.append(f"{f.name}: đuôi {duoi} nến 1h volume = 0 — nến chết chưa khai mốc ngừng giao dịch")
             bat_dau_can = max(moc[lf.tu_moc], _dau_thang(k["thang_dau"]))
             if dau > _moc_ts(bat_dau_can) + pd.Timedelta(days=31):
                 loi.append(f"{f.name}: bắt đầu {dau.date()} muộn hơn cần ({bat_dau_can} + 31 ngày)")
-            if _thang(_dau_thang(k["thang_cuoi"])) > _thang(moc["t2"]):
+            if _thang(_dau_thang(k["thang_cuoi"])) > _thang(moc[moc_cuoi]):
                 if cuoi < t2 - pd.Timedelta(days=1):
-                    loi.append(f"{f.name}: kết thúc {cuoi} sớm hơn T2 − 1 ngày dù mã còn sống")
+                    loi.append(f"{f.name}: kết thúc {cuoi} sớm hơn {NHAN} − 1 ngày dù mã còn sống")
             elif cuoi < _moc_ts(_dau_thang(k["thang_cuoi"])):
                 loi.append(f"{f.name}: kết thúc {cuoi.date()} trước tháng huỷ niêm yết {k['thang_cuoi']}")
     return loi

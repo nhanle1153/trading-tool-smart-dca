@@ -243,3 +243,44 @@ class TestKiemMocNgung:
         khoang = {"AUSDT": {"thang_dau": "2023-01", "thang_cuoi": "2026-08"}}
         loi = kiem_du_lieu_ro(tmp_path, ["AUSDT"], khoang, MOC)
         assert any("nến chết chưa khai" in x for x in loi)
+
+
+# ─── TD-0301 (DR-D1-05) — rổ T0: 5 loại file, mốc cuối T1 ───
+
+
+class TestRoT0:
+    def test_nhap_kho_t0_khong_5m_va_cat_tai_T1(self, tmp_path: Path) -> None:
+        from tool_d.data.pool_t1_du_lieu import NAM_LOAI_FILE_T0
+
+        doc, goi = _csv_gia()
+        kq = nhap_ma_tu_kho(
+            "AUSDT", dich=tmp_path, khoang={"thang_dau": "2023-01", "thang_cuoi": "2026-08"}, moc=MOC,
+            doc_csv=doc, loai_file=NAM_LOAI_FILE_T0, moc_cuoi="t1",
+        )
+        assert len(kq.so_hang) == 5 and not any("5m" in k for k in kq.so_hang)
+        assert max(t[2:] for t in goi) == (2025, 6)  # không tải tháng sau T1
+        for lf in NAM_LOAI_FILE_T0:
+            assert pd.read_feather(tmp_path / ten_file("AUSDT", lf))["date"].max() <= pd.Timestamp("2025-06-12", tz="UTC")
+        # Kho giả chỉ có 1 nến/tháng (ngày 15) nên nến cuối ≤ T1 là 15/05 ⇒ bị coi là mốc ngừng; mã thật
+        # có nến tới sát T1. Ca này chỉ khoá: 5 loại file, không tháng sau T1, không nến sau T1.
+
+    def test_ke_hoach_khong_bat_dau_bang_1h_futures_thi_tu_choi(self, tmp_path: Path) -> None:
+        from tool_d.data.pool_t1_du_lieu import NAM_LOAI_FILE_T0
+
+        doc, _ = _csv_gia()
+        with pytest.raises(DuLieuRoError):
+            nhap_ma_tu_kho(
+                "AUSDT", dich=tmp_path, khoang={"thang_dau": "2023-01", "thang_cuoi": "2026-08"}, moc=MOC,
+                doc_csv=doc, loai_file=tuple(reversed(NAM_LOAI_FILE_T0)), moc_cuoi="t1",
+            )
+
+    def test_kiem_t0_lan_T1_bao_loi_va_khong_doi_5m(self, tmp_path: Path) -> None:
+        from tool_d.data.pool_t1_du_lieu import NAM_LOAI_FILE_T0
+
+        for lf in NAM_LOAI_FILE_T0:
+            _df_nen("2024-04-09", "2025-06-14", "1D").to_feather(tmp_path / ten_file("AUSDT", lf))
+        khoang = {"AUSDT": {"thang_dau": "2023-01", "thang_cuoi": "2026-08"}}
+        loi = kiem_du_lieu_ro(tmp_path, ["AUSDT"], khoang, MOC, loai_file=NAM_LOAI_FILE_T0, moc_cuoi="t1")
+        assert any("sau T1" in x for x in loi) and not any("5m" in x for x in loi)
+        cat_den_moc(tmp_path, MOC["t1"])
+        assert kiem_du_lieu_ro(tmp_path, ["AUSDT"], khoang, MOC, loai_file=NAM_LOAI_FILE_T0, moc_cuoi="t1") == []

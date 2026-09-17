@@ -168,6 +168,20 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help=f"Kiểm đủ rổ T1 trong {POOL_T1_DATA_DIR}: 6 file/mã, không rỗng, không lấn T2, đúng mốc đầu/cuối.",
     )
+    # TD-0301 / DR-D1-05 — cùng các thao tác, theo MỐC rổ (t0 = CALIB, t1 = WFO).
+    parser.add_argument(
+        "--moc",
+        choices=sorted(CAU_HINH_RO),
+        help="Rổ theo giai đoạn cho --ro-sao-chep / --ro-nhap-kho / --ro-kiem (bắt buộc với ba cờ đó).",
+    )
+    parser.add_argument("--ro-sao-chep", action="store_true", help="Chép nguyên byte mã rổ --moc đã đủ file từ các thư mục nguồn (không ghi đè).")
+    parser.add_argument("--ro-nhap-kho", metavar="PAIRS", help="Nhập từ kho data.binance.vision cho mã ĐÃ HUỶ niêm yết của rổ --moc.")
+    parser.add_argument("--ro-kiem", action="store_true", help="Kiểm đủ dữ liệu rổ --moc.")
+    parser.add_argument(
+        "--cat-den-t1",
+        action="store_true",
+        help="Cắt mọi nến sau T1 trong --data-dir (bắt buộc --data-dir tường minh) — dữ liệu rổ T0/CALIB.",
+    )
     return parser
 
 
@@ -177,22 +191,43 @@ NGUON_TD0230 = Path("docs/du-lieu-do/td0230-lech-song-sot-pool.json")
 MOC_NGUNG_JSON = Path("docs/du-lieu-do/td0247-moc-ngung-giao-dich.json")
 EXIT_RO_T1_LOI = 98
 
+#: `DR-D1-05` — mốc rổ → (thư mục dữ liệu, file rổ, artifact mốc ngừng, các thư mục NGUỒN để chép).
+#: Kế hoạch file + mốc cuối lấy từ `pool_t1_du_lieu.KE_HOACH_THEO_RO` (một nguồn).
+CAU_HINH_RO: dict[str, tuple[Path, Path, Path, tuple[Path, ...]]] = {
+    "t0": (
+        Path("user_data/data/pool_t0/futures"),
+        Path("config/pool_t0.yaml"),
+        Path("docs/du-lieu-do/td0301-moc-ngung-giao-dich-t0.json"),
+        (DEFAULT_DATA_DIR, POOL_T1_DATA_DIR),
+    ),
+    "t1": (POOL_T1_DATA_DIR, POOL_T1_YAML, MOC_NGUNG_JSON, (DEFAULT_DATA_DIR,)),
+}
 
-def _doc_moc_ngung() -> dict:
+
+def _duong_moc_ngung(moc: str) -> Path:
+    # t1 đọc hằng module lúc GỌI (test monkeypatch `MOC_NGUNG_JSON`).
+    return MOC_NGUNG_JSON if moc == "t1" else CAU_HINH_RO[moc][2]
+
+
+def _doc_moc_ngung(moc: str = "t1") -> dict:
     """`DR-D1-03` §5 — {mã: {"moc_ngung": iso, ...}} đã đo khi nhập kho. Chưa có file = rỗng."""
-    if not MOC_NGUNG_JSON.is_file():
+    duong = _duong_moc_ngung(moc)
+    if not duong.is_file():
         return {}
-    return json.loads(MOC_NGUNG_JSON.read_text(encoding="utf-8"))["ma"]
+    return json.loads(duong.read_text(encoding="utf-8"))["ma"]
 
 
-def _ghi_moc_ngung(symbol: str, ban_ghi: dict) -> None:
+def _ghi_moc_ngung(symbol: str, ban_ghi: dict, moc: str = "t1") -> None:
     """Gộp một mã vào artifact; mã đã có với mốc KHÁC ⇒ từ chối (không ghi đè im lặng)."""
+    duong = _duong_moc_ngung(moc)
+    moc_cuoi = "T2" if moc == "t1" else "T1"
     du_lieu = (
-        json.loads(MOC_NGUNG_JSON.read_text(encoding="utf-8"))
-        if MOC_NGUNG_JSON.is_file()
+        json.loads(duong.read_text(encoding="utf-8"))
+        if duong.is_file()
         else {
-            "nguon": "TD-0247 / DR-D1-03 §5 — mốc ngừng giao dịch đo khi nhập kho: nến 1h futures CUỐI có "
-            "volume > 0 (sớm hơn T2 − 1 giờ). Sau mốc, kho sinh nến phẳng giá thanh toán, volume 0. 0 trial.",
+            "nguon": f"TD-0247/TD-0301 / DR-D1-03 §5, DR-D1-05 — rổ {moc.upper()}: mốc ngừng giao dịch đo khi nhập kho: "
+            f"nến 1h futures CUỐI có volume > 0 (sớm hơn {moc_cuoi} − 1 giờ). Sau mốc, kho sinh nến phẳng giá "
+            "thanh toán, volume 0. 0 trial.",
             "ma": {},
         }
     )
@@ -200,7 +235,7 @@ def _ghi_moc_ngung(symbol: str, ban_ghi: dict) -> None:
     if cu is not None and cu["moc_ngung"] != ban_ghi["moc_ngung"]:
         raise RuntimeError(f"{symbol}: artifact đã ghi mốc {cu['moc_ngung']}, lần đo này ra {ban_ghi['moc_ngung']} — không ghi đè")
     du_lieu["ma"][symbol] = ban_ghi
-    MOC_NGUNG_JSON.write_text(json.dumps(du_lieu, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    duong.write_text(json.dumps(du_lieu, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
 
 
 def _moc_phan_vung() -> dict:
@@ -212,54 +247,85 @@ def _moc_phan_vung() -> dict:
     return {k: date.fromisoformat(str(v)) for k, v in tho.items()}
 
 
-def _ro_t1_va_khoang() -> tuple[list[str], dict]:
+def _ro_va_khoang(moc: str) -> tuple[list[str], dict]:
     import yaml
 
-    ro = list(yaml.safe_load(POOL_T1_YAML.read_text(encoding="utf-8"))["trading"])
+    ro = list(yaml.safe_load(CAU_HINH_RO[moc][1].read_text(encoding="utf-8"))["trading"])
     khoang = json.loads(NGUON_TD0230.read_text(encoding="utf-8"))["khoang_ton_tai"]
     return ro, khoang
 
 
-def do_ro_t1_sao_chep() -> int:
-    from tool_d.data.pool_t1_du_lieu import SAU_LOAI_FILE, DuLieuRoError, sao_chep_ma_co_san, ten_file
+def _ro_t1_va_khoang() -> tuple[list[str], dict]:
+    return _ro_va_khoang("t1")
 
-    ro, _ = _ro_t1_va_khoang()
-    du, thieu_mot_phan = [], []
+
+def do_ro_sao_chep(moc: str) -> int:
+    """Chép mã đã đủ file theo THỨ TỰ nguồn: mã đủ ở nguồn đầu thì lấy nguồn đầu; mã có một PHẦN
+    file ở bất kỳ nguồn nào mà không đủ ở nguồn trước đó ⇒ từ chối, không đoán."""
+    from tool_d.data.pool_t1_du_lieu import KE_HOACH_THEO_RO, DuLieuRoError, sao_chep_ma_co_san, ten_file
+
+    thu_muc, _, _, cac_nguon = CAU_HINH_RO[moc]
+    loai_file, _ = KE_HOACH_THEO_RO[moc]
+    ro, _ = _ro_va_khoang(moc)
+    theo_nguon: dict[Path, list[str]] = {n: [] for n in cac_nguon}
+    thieu_mot_phan: list[str] = []
+    con_lai = 0
     for s in ro:
-        co = [(DEFAULT_DATA_DIR / ten_file(s, lf)).is_file() for lf in SAU_LOAI_FILE]
-        if all(co):
-            du.append(s)
-        elif any(co):
-            thieu_mot_phan.append(s)
+        chon = None
+        for nguon in cac_nguon:
+            co = [(nguon / ten_file(s, lf)).is_file() for lf in loai_file]
+            if all(co):
+                chon = nguon
+                break
+            if any(co):
+                thieu_mot_phan.append(f"{s} @ {nguon}")
+                break
+        if chon is not None:
+            theo_nguon[chon].append(s)
+        else:
+            con_lai += 1
     if thieu_mot_phan:
-        print(f"🛑 {len(thieu_mot_phan)} mã có MỘT PHẦN file ở {DEFAULT_DATA_DIR} — không đoán nên chép hay tải: {thieu_mot_phan}")
+        print(f"🛑 {len(thieu_mot_phan)} mã có MỘT PHẦN file ở nguồn — không đoán nên chép hay tải: {thieu_mot_phan}")
         return EXIT_RO_T1_LOI
     try:
-        da_chep = sao_chep_ma_co_san(DEFAULT_DATA_DIR, POOL_T1_DATA_DIR, du)
+        tong = 0
+        for nguon, ma in theo_nguon.items():
+            if ma:
+                tong += len(sao_chep_ma_co_san(nguon, thu_muc, ma, loai_file=loai_file))
     except DuLieuRoError as exc:
         print(f"🛑 {exc}")
         return EXIT_RO_T1_LOI
-    print(f"✅ Đã chép {len(du)} mã ({len(da_chep)} file, sha256 khớp) -> {POOL_T1_DATA_DIR}. Còn {len(ro) - len(du)} mã phải tải/nhập.")
+    chi_tiet = " · ".join(f"{len(m)} mã từ {n}" for n, m in theo_nguon.items())
+    print(f"✅ Rổ {moc.upper()}: đã chép {tong} file ({chi_tiet}, sha256 khớp) -> {thu_muc}. Còn {con_lai} mã phải tải/nhập.")
     return 0
 
 
-def do_ro_t1_nhap_kho(pairs: str) -> int:
+def do_ro_t1_sao_chep() -> int:
+    return do_ro_sao_chep("t1")
+
+
+def do_ro_nhap_kho(moc: str, pairs: str) -> int:
     from tool_d.api_client.binance_public import KhoLuuTruError, doc_csv_thang_kho
     from tool_d.data.kho_luu_tru import DuLieuKhoError
-    from tool_d.data.pool_t1_du_lieu import DuLieuRoError, nhap_ma_tu_kho
+    from tool_d.data.pool_t1_du_lieu import KE_HOACH_THEO_RO, DuLieuRoError, nhap_ma_tu_kho
 
-    ro, khoang = _ro_t1_va_khoang()
+    thu_muc = CAU_HINH_RO[moc][0]
+    loai_file, moc_cuoi = KE_HOACH_THEO_RO[moc]
+    ro, khoang = _ro_va_khoang(moc)
     ma = [x.strip() for x in pairs.split(",") if x.strip()]
     ngoai = [s for s in ma if s not in ro or s not in khoang]
     if not ma or ngoai:
-        print(f"🛑 mã không thuộc rổ T1 hoặc không có khoảng tồn tại TD-0230: {ngoai or '(rỗng)'}")
+        print(f"🛑 mã không thuộc rổ {moc.upper()} hoặc không có khoảng tồn tại TD-0230: {ngoai or '(rỗng)'}")
         return EXIT_RO_T1_LOI
-    moc = _moc_phan_vung()
+    moc_ngay = _moc_phan_vung()
     for s in ma:
         try:
-            kq = nhap_ma_tu_kho(s, dich=POOL_T1_DATA_DIR, khoang=khoang[s], moc=moc, doc_csv=doc_csv_thang_kho)
+            kq = nhap_ma_tu_kho(
+                s, dich=thu_muc, khoang=khoang[s], moc=moc_ngay, doc_csv=doc_csv_thang_kho,
+                loai_file=loai_file, moc_cuoi=moc_cuoi,
+            )
         except (DuLieuRoError, DuLieuKhoError, KhoLuuTruError) as exc:
-            print(f"🛑 {s}: {exc} — DỪNG, các mã trước đã ghi đủ 6 file, mã này không ghi file nào")
+            print(f"🛑 {s}: {exc} — DỪNG, các mã trước đã ghi đủ file, mã này không ghi file nào")
             return EXIT_RO_T1_LOI
         if kq.moc_ngung is not None:
             _ghi_moc_ngung(
@@ -269,50 +335,70 @@ def do_ro_t1_nhap_kho(pairs: str) -> int:
                     "gia_dong_nen_cuoi": kq.gia_dong_cuoi,
                     "so_hang_1h_futures": kq.so_hang[f"{s[:-4]}_USDT_USDT-1h-futures.feather"],
                 },
+                moc,
             )
-        ngung = f" · NGỪNG GIAO DỊCH {kq.moc_ngung} (đã cắt, ghi {MOC_NGUNG_JSON})" if kq.moc_ngung is not None else ""
+        ngung = (
+            f" · NGỪNG GIAO DỊCH {kq.moc_ngung} (đã cắt, ghi {_duong_moc_ngung(moc)})" if kq.moc_ngung is not None else ""
+        )
         print(f"✅ {s}: " + ", ".join(f"{k} {v} hàng" for k, v in kq.so_hang.items()) + ngung)
     return 0
 
 
-def do_cat_den_t2(data_dir: Path) -> int:
+def do_ro_t1_nhap_kho(pairs: str) -> int:
+    return do_ro_nhap_kho("t1", pairs)
+
+
+def do_cat_den_moc(data_dir: Path, ten_moc: str) -> int:
     from tool_d.data.pool_t1_du_lieu import DuLieuRoError, cat_den_moc
 
     if not data_dir.is_dir():
         print(f"🛑 {data_dir} không tồn tại.")
         return EXIT_RO_T1_LOI
-    t2 = _moc_phan_vung()["t2"]
+    moc_ngay = _moc_phan_vung()[ten_moc]
     try:
-        da_cat = cat_den_moc(data_dir, t2)
+        da_cat = cat_den_moc(data_dir, moc_ngay)
     except DuLieuRoError as exc:
         print(f"🛑 {exc}")
         return EXIT_RO_T1_LOI
-    print(f"✅ Cắt về ≤ {t2} 00:00 UTC: {len(da_cat)} file có nến lấn, bỏ tổng {sum(da_cat.values())} hàng.")
+    print(f"✅ Cắt về ≤ {moc_ngay} 00:00 UTC: {len(da_cat)} file có nến lấn, bỏ tổng {sum(da_cat.values())} hàng.")
     for k, v in sorted(da_cat.items())[:20]:
         print(f"  - {k}: bỏ {v}")
     return 0
 
 
-def do_ro_t1_kiem() -> int:
-    from tool_d.data.pool_t1_du_lieu import kiem_du_lieu_ro
+def do_cat_den_t2(data_dir: Path) -> int:
+    return do_cat_den_moc(data_dir, "t2")
 
-    ro, khoang = _ro_t1_va_khoang()
+
+def do_ro_kiem(moc: str) -> int:
     import pandas as pd
 
-    moc_ngung = {k: pd.Timestamp(v["moc_ngung"]) for k, v in _doc_moc_ngung().items()}
-    loi = kiem_du_lieu_ro(POOL_T1_DATA_DIR, ro, khoang, _moc_phan_vung(), moc_ngung)
+    from tool_d.data.pool_t1_du_lieu import KE_HOACH_THEO_RO, kiem_du_lieu_ro
+
+    thu_muc = CAU_HINH_RO[moc][0]
+    loai_file, moc_cuoi = KE_HOACH_THEO_RO[moc]
+    ro, khoang = _ro_va_khoang(moc)
+    moc_ngung = {k: pd.Timestamp(v["moc_ngung"]) for k, v in _doc_moc_ngung(moc).items()}
+    loi = kiem_du_lieu_ro(
+        thu_muc, ro, khoang, _moc_phan_vung(), moc_ngung, loai_file=loai_file, moc_cuoi=moc_cuoi
+    )
+    NHAN, CUOI = moc.upper(), moc_cuoi.upper()
     if loi:
-        print(f"🛑 Rổ T1 CHƯA đủ dữ liệu — {len(loi)} lỗi:")
+        print(f"🛑 Rổ {NHAN} CHƯA đủ dữ liệu — {len(loi)} lỗi:")
         for x in loi[:40]:
             print(f"  - {x}")
         if len(loi) > 40:
             print(f"  … và {len(loi) - 40} lỗi nữa")
         return EXIT_RO_T1_LOI
     print(
-        f"✅ Rổ T1 đủ dữ liệu: {len(ro)} mã × 6 file, không lấn T2, đúng mốc đầu/cuối; "
-        f"{len(moc_ngung)} mã ngừng giao dịch trước T2 đã cắt đúng mốc: {sorted(moc_ngung)}."
+        f"✅ Rổ {NHAN} đủ dữ liệu: {len(ro)} mã × {len(loai_file)} file, không lấn {CUOI}, đúng mốc đầu/cuối; "
+        f"{len(moc_ngung)} mã ngừng giao dịch trước {CUOI} đã cắt đúng mốc: {sorted(moc_ngung)}."
     )
     return 0
+
+
+def do_ro_t1_kiem() -> int:
+    return do_ro_kiem("t1")
 
 
 def do_snapshot_before(*, data_dir: Path, backup_root: Path, out_path: Path) -> int:
@@ -487,19 +573,34 @@ def main(argv: list[str] | None = None) -> int:
             range_to=args.range_to,
         )
 
-    if args.ro_t1_sao_chep or args.ro_t1_nhap_kho or args.cat_den_t2 or args.ro_t1_kiem:
+    if (
+        args.ro_t1_sao_chep or args.ro_t1_nhap_kho or args.cat_den_t2 or args.ro_t1_kiem
+        or args.ro_sao_chep or args.ro_nhap_kho or args.ro_kiem or args.cat_den_t1
+    ):
         gate_exit = require_d0_pre_complete(ENTRYPOINT)
         if gate_exit is not None:
             return gate_exit
+        if (args.ro_t1_sao_chep or args.ro_t1_nhap_kho or args.ro_t1_kiem) and args.moc not in (None, "t1"):
+            print("🛑 cờ --ro-t1-* chỉ cho rổ T1; dùng --ro-sao-chep/--ro-nhap-kho/--ro-kiem với --moc.")
+            return EXIT_RO_T1_LOI
+        if (args.ro_sao_chep or args.ro_nhap_kho or args.ro_kiem) and args.moc is None:
+            print("🛑 --ro-sao-chep/--ro-nhap-kho/--ro-kiem cần --moc TƯỜNG MINH (t0 = CALIB, t1 = WFO).")
+            return EXIT_RO_T1_LOI
         if args.ro_t1_sao_chep:
             return do_ro_t1_sao_chep()
         if args.ro_t1_nhap_kho:
             return do_ro_t1_nhap_kho(args.ro_t1_nhap_kho)
-        if args.cat_den_t2:
+        if args.ro_sao_chep:
+            return do_ro_sao_chep(args.moc)
+        if args.ro_nhap_kho:
+            return do_ro_nhap_kho(args.moc, args.ro_nhap_kho)
+        if args.cat_den_t2 or args.cat_den_t1:
             if not any(x == "--data-dir" or x.startswith("--data-dir=") for x in argv):
-                print("🛑 --cat-den-t2 cần --data-dir TƯỜNG MINH (không cắt thư mục mặc định do vô ý).")
+                print("🛑 --cat-den-t1/--cat-den-t2 cần --data-dir TƯỜNG MINH (không cắt thư mục mặc định do vô ý).")
                 return EXIT_RO_T1_LOI
-            return do_cat_den_t2(Path(args.data_dir))
+            return do_cat_den_moc(Path(args.data_dir), "t2" if args.cat_den_t2 else "t1")
+        if args.ro_kiem:
+            return do_ro_kiem(args.moc)
         return do_ro_t1_kiem()
 
     if args.snapshot_before or args.verify_after:
