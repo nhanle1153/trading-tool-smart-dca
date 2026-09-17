@@ -95,6 +95,30 @@ Khảo sát 17/09/2026 (0 trial, đọc mã + tài liệu):
   - docstring `src/tool_d/pool_t1.py`: sửa (TD-0303);
   - ô `MT-54` của `back-end-note.md`: nối thêm (chờ "chuẩn hóa và lưu").
 
+## 4b. ĐÍNH CHÍNH 18/09/2026 — `config/pool_t0.yaml` mang hai nhãn của mốc `T1`
+
+`config/pool_t0.yaml` (`e538518`) ghi trong khối `dem`:
+
+```
+ung_vien_song_tai_t1: 285
+du_tieu_chi_tai_t1: 164
+```
+
+**Đúng ra là `..._tai_t0`.** Hai CON SỐ không sai: 285 mã sống tại `T0`, 164 mã đủ tiêu chí tại `T0`
+(khít `td0231["pool_dung_tai_t0"]`). Chỉ TÊN KHOÁ sai.
+
+- **Nguyên nhân:** bộ sinh ghi cứng hậu tố `_t1` ở ba khoá đầu ra. Bản `5954e14` sửa **một** khoá
+  (`thieu_hang_dung_ngay`), bỏ sót hai khoá của `dem`; phiên `-93` bắt được 18/09.
+- **Đã sửa bộ sinh** (`4d3ab99`) + mở rộng test hồi quy: mọi khoá trong `dem` và `khong_do_duoc` phải
+  mang đúng tên mốc, và không khoá nào được kết thúc bằng `_t1` khi sinh rổ `T0`.
+- **Chủ dự án chốt 18/09/2026: ĐÍNH CHÍNH TẠI CHỖ, KHÔNG xoá file đã commit.** `pool_t0.yaml` giữ
+  nguyên; mọi bộ đọc phải hiểu hai khoá đó theo mốc của chính file (`moc_t0`), không theo hậu tố.
+  Sinh lại file sẽ phải xoá một rổ đã commit — đường mà `build_pool.py` mô tả là *"xoá thủ công + ghi
+  DR mới"* — quá đắt cho một lỗi nhãn.
+- 🔑 **Bài học, đã lặp HAI lần trong hai ngày:** tổng quát hoá một hàm theo tham số thì phải soát cả
+  **tên khoá đầu ra**, không chỉ đường tính. Lần một: `thieu_hang_dung_ngay_t1` (17/09). Lần hai:
+  `dem.*_tai_t1` (18/09) — cùng hàm, cùng lớp lỗi, khác khoá.
+
 ## 5. Ngoài phạm vi
 
 - **Không đụng:** `config/pool.yaml`, `lockbox/`, `registry/trial_registry.jsonl`.
