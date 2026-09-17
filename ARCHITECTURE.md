@@ -111,9 +111,17 @@ tool-d-smart-dca/                  ← git root = E:\Trading Tool_Smart DCA
 ├─ config/
 │  ├─ tool_d_config.yaml           ← §6.9.5 — NGUỒN SỰ THẬT tham số
 │  ├─ dof_inventory.yaml           ← nuôi L-Z29
+│  ├─ pool.yaml                    ← pool SẢN XUẤT (E7 --commit, TD-0083), trading + explore
+│  ├─ pool_t1.yaml                 ← rổ ĐÚNG TẠI T1, 107 mã (E7 --ro-t1 --ghi, TD-0247,
+│  │                                  DR-D1-03) — CHƯA thay pool.yaml (DR-D1-02 §6)
 │  └─ freqtrade/config.json
 ├─ user_data/strategies/           ← RỖNG ở D0-PRE. Guard canh đúng thư mục này
 ├─ user_data/data/                 ← CALIB · WFO (gitignored)
+│  ├─ binance/futures/             ← pool 102 mã (TD-0093)
+│  ├─ explore/futures/             ← EXPLORE 100 mã — mã có file ở đây bị loại VĨNH VIỄN
+│  │                                  khỏi mọi rổ giao dịch (DR-D1-03 §1.1)
+│  └─ pool_t1/futures/             ← rổ T1: 107 mã × 6 file [T0,T2], cắt tại mốc ngừng
+│                                     giao dịch (DR-D1-03 §4–§5); E8 --ro-t1-kiem canh
 ├─ lockbox/                        ← NGOÀI user_data (xem 3.1)
 ├─ registry/                       ← trial_registry.jsonl · idea_queue.jsonl ·
 │                                    param_change_proposals.jsonl · runtime_state.json
@@ -121,6 +129,11 @@ tool-d-smart-dca/                  ← git root = E:\Trading Tool_Smart DCA
 ├─ src/tool_d/
 │  ├─ measurement/  guard · provenance · tri_state · hashing · gitinfo
 │  ├─ config/       loader · dof
+│  ├─ pool.py · pool_t1.py         ← chọn pool thuần; pool_t1 dựng rổ tại một mốc
+│  │                                  (TD-0231 đưa về src), loại EXPLORE đã dùng + TRADIFI
+│  ├─ data/         backfill_guard · coverage (H19) · kho_luu_tru (CSV kho
+│  │                data.binance.vision → feather Freqtrade, đã đối chiếu khớp) ·
+│  │                pool_t1_du_lieu (sao chép · nhập kho · cắt T2 · kiểm đủ rổ)
 │  ├─ ledger/       registry · budget · audit_checks · idea_queue · param_proposals
 │  ├─ lockbox/      seal · access_log
 │  ├─ gates/        thresholds · dsr · cscv_cau_hinh · cscv · d9_gate
@@ -336,3 +349,4 @@ mô tả cả ba sổ JSONL này thì phải **sinh/kiểm tự động từ sch
 | 14/09/2026 | Khởi tạo `tu-dien-du-lieu.md` + ERD 6 bảng + module `src/tool_d/tu_dien/`; bảng schema hiện hành 3 → 5 schema + 1 sổ chưa có schema | Mục 7 ghi *"Chưa có"* ERD; từ điển **hoãn** tới khi Freqtrade ghi SQLite lệnh; bảng schema liệt kê 3 (thiếu `arm_result`, `fold_record`) | ERD `trades` 1:N `orders` · 1:N `trade_custom_data`, ba bảng độc lập; từ điển **máy sinh** từ artifact đo thật; cột *Ý nghĩa* ba trạng thái; Quy tắc 7 có test khoá | TD-0245. Quy tắc 7 chặn `TD-0238`/`TD-0240`. 🔑 Không file `.sqlite` nào trên đĩa ⇒ gọi `init_db()` của chính Freqtrade trong container rồi `PRAGMA table_info` (đúng chữ Quy tắc 8). Lời khai *"6 bảng / 109 cột"* lưu hành trước đó không có xuất xứ — **đo lại mới nhận**, và khớp. Chữ cũ mục 7 giữ nguyên làm lịch sử, gắn đính chính |
 | 16/09/2026 | Module `src/tool_d/calibration/` (D5) + cửa B1 trong sổ trial + `L-Z29` so tập tên | `ledger/registry.reserve()` chỉ kiểm ngân sách chung (B0/B1/B2 không có chốt theo dòng); `L-Z29` so **số đếm** `\|tier_b\|` với tổng `dof_v6` | `calibration/ung_vien` đọc danh sách ứng viên + kiểm băm ngay trong `DR-D5-01` §3.3 — **nguồn sự thật là tài liệu quyết định, không chép sang YAML**; `reserve()` nhánh B1 gọi cửa đó TRƯỚC kiểm ngân sách và TRƯỚC `_append()` (phụ thuộc mới `ledger → calibration`, `calibration` không import `ledger` để tránh vòng). `calibration/chon_gia_tri` là tầng THUẦN (khuôn `gates/ket_cuc`). `config/dof_inventory.yaml` thêm `khoa_tier_b` ở 12 mục `dof_v6 = 1`; `DofReport` đòi số đếm VÀ tập tên | `DR-D5-01` (chủ dự án chốt 16/09/2026): chặn suất B1 sai TẠI CỬA vì sổ append-only không lùi được; `MT-18` phương án (b). TD-0253/0254/0256, full suite Docker 2063 passed |
 | 17/09/2026 | D9 (Khối 23): module `gates/cscv_cau_hinh` · `gates/cscv` · `gates/d9_gate` · `wfo/lenh`; cây thư mục bổ sung dòng `wfo/` còn thiếu từ D3 | Cây ghi `gates/` = `thresholds · dsr`, **không có** dòng `wfo/` dù module có từ D3 (H3-D); WFO dự kiến chạy qua `orchestrator.chay_wfo` mỗi fold một backtest | CSCV/PBO là tầng **thuần** tách khỏi fold (S = 8 khối 693 giờ trên `[T1,T2)`); mỗi cấu hình **một** backtest toàn cửa sổ, cắt lát theo `open_date` bằng `wfo/lenh`; L-Z55 tầng (a) + L-Z47 trên cả lượt; `chay_wfo` + tầng (b) TD-0148 **giữ nguyên, không nới** | `DR-D9-01` (`95f3fe1`, §5.1 `83c59b5`): tầng (b) chặn rò giữa fold khi fold sau dùng kết quả KHỚP ở fold trước — D9 không khớp gì theo fold. ⚠️ Dòng `gates/` vẫn **thiếu** `arm_record` · `d4_gate` · `ket_cuc` · `cache_policy` · `d0_pre` (có từ trước D9) — ngoài phạm vi đợt này (quy tắc 4), ghi ra để không ai tưởng cây đã đủ |
+| 17/09/2026 | Rổ pool đúng tại `T1` + dữ liệu `[T0,T2]` (TD-0247, `DR-D1-03`): `config/pool_t1.yaml`, `user_data/data/pool_t1/`, `src/tool_d/data/kho_luu_tru` · `pool_t1_du_lieu`; E7 cờ `--ro-t1 [--ghi]`; E8 cờ `--ro-t1-sao-chep` · `--ro-t1-nhap-kho` · `--cat-den-t2` · `--ro-t1-kiem`; `thay_doi_anh_huong_phep_do` chuyển từ E6 sang `measurement/gitinfo` | Cây không ghi `config/pool.yaml`, `pool.py`, `src/tool_d/data/` (có từ D0-PRE/D1) và chỉ ghi `user_data/data/` một dòng; không có đường nào dựng rổ quá khứ có xuất xứ hay nhập dữ liệu mã đã huỷ niêm yết | Thêm 3 nhóm dòng cây (config · user_data/data · src) + dòng này. **Không thêm entrypoint** (vẫn 8 file, L-Z36): đường nhập kho là cờ E8 — ngoại lệ có ý thức với docstring *"E8 không tự tải"*, lớp gác H19 vẫn không gọi nó và ngược lại (`DR-D1-03` §4) | Lệnh *"chuẩn hóa và lưu"* 17/09/2026, phiên `-01` |
