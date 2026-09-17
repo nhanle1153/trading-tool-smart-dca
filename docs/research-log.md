@@ -3051,3 +3051,46 @@ sắc nhưng chĩa nhầm hướng"*: test canh module dữ liệu, không canh 
 **Phạm vi, đọc cho đúng:** đây là **dữ liệu**, không phải phép đo hiệu năng. Bước *"đo lại phễu / n /
 lệnh-năm"* đã bị chủ dự án bỏ khỏi TD-0247 (Zone Absorption tạm dừng theo `DR-IQ-01`).
 `config/pool.yaml` sản xuất **chưa đổi**; đưa rổ `T1` thành rổ sản xuất là quyết định riêng (`DR-D1-02` §6).
+
+## 17/09/2026 — Khối 25 (`DR-D1-05`): "thay `pool.yaml` bằng rổ T1" hoá ra sai hình; rổ theo giai đoạn + rổ T0 143 mã
+
+Phiên `-01`. **0 trial.**
+
+**1. Yêu cầu đúng chữ không khớp cách dự án chia dữ liệu.** Chủ dự án yêu cầu thi hành `DR-D1-02` §6
+(*"đưa rổ `T1` thành rổ sản xuất"*). Khảo sát trước khi làm tìm ra ba điều:
+- **Không mã nào đọc `config/pool.yaml` khi chạy.** E1/E2/E3 chưa chọn cặp mã; `runs/pool_pairs.json`
+  nằm ngoài git.
+- **CALIB cần rổ tại `T0`** (`DR-D5-01` §1); dùng rổ `T1` là chọn mã bằng thông tin sau khi giai đoạn
+  bắt đầu.
+- **Lockbox đã niêm phong cho 102 mã `pool.yaml`**, đo 09/2026, tức cuối giai đoạn lockbox.
+
+⇒ Chủ dự án chốt: **rổ theo từng giai đoạn** (CALIB→`T0`, WFO→`T1`, LOCKBOX→`T2` ⏸ `MT-60`,
+live→`pool.yaml`), 0 suất. 🔑 Nếu làm đúng chữ yêu cầu thì cả CALIB lẫn lockbox đều lệch sống sót
+theo chiều PASS, và **không phép kiểm nào báo đỏ**, vì `verify_seal()` không xét danh sách pool.
+
+**2. Đính chính của chính tôi:** khối `explore:` có **426** mã, không phải 430. Phép đếm cũ cắt từ
+`explore:` tới hết file nên gộp 4 dòng `b0_trial_ids`. Agent khảo sát bắt được; tôi đếm lại trên đĩa
+trước khi ghi DR.
+
+**3. Rổ `T0`:**
+- 164 mã đủ tiêu chí, **khít TD-0231**; trừ 21 mã có dữ liệu EXPLORE còn **143**.
+- **18/143 mã ngừng giao dịch ngay trong CALIB:** WAVES 2024-06-11 · AGIX/OCEAN 2024-06-25 (gộp token)
+  · RNDR 2024-07-16 · MATIC 2024-09-04 · FTM 2025-01-06 · EOS 2025-05-21…
+- Một rổ chọn "hôm nay" không thể có mã nào trong số đó. Đây là phần CALIB đang bỏ sót nếu dùng
+  `pool.yaml`.
+
+**4. Hai lỗi nhỏ trên đường, cả hai fail-closed:**
+- **(a)** `git status` trong container vượt hạn 10 s đúng một lần (đo lại 1,3–2,3 s) ⇒ E7 in
+  traceback, **không ghi file**. Đã đổi sang trả mã lỗi.
+- **(b)** Bộ sinh ghi cứng khoá `thieu_hang_dung_ngay_t1` cho rổ `T0`: nhãn sai trong file **chưa
+  commit** ⇒ xoá, sửa, sinh lại, kèm test hồi quy. 🔑 Tổng quát hoá một hàm theo tham số thì phải soát
+  cả **tên khoá đầu ra**, không chỉ đường tính.
+
+**Kết quả:**
+- **Rổ:** `config/pool_t0.yaml` (`e538518`).
+- **Dữ liệu:** 715 file trong `user_data/data/pool_t0/futures/` = 66 chép · 43 `download-data` · 34
+  nhập kho.
+- **Kiểm tra:** H19 PASS; cắt `≤ T1` (545 file, 958.111 hàng); `E8 --ro-kiem --moc t0` PASS.
+- **Test:** full suite Docker **2307 passed, 0 failed**, HEAD không đổi suốt lượt.
+- **Giới hạn đã biết:** không 5m (`TD-0252` ⏸); `ro_cho_tap()` chưa được E1/E2/E3 gọi vì chưa có bộ
+  chạy thật.
