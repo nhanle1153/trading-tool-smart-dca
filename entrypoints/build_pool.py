@@ -81,6 +81,19 @@ def build_parser() -> argparse.ArgumentParser:
         help="Thực sự tiêu 4 trial B0 và ghi config/pool.yaml. Thiếu cờ này chỉ IN kết quả (chạy thử, không ghi sổ).",
     )
     parser.add_argument(
+        "--ro-t1",
+        action="store_true",
+        help=(
+            "TD-0247 / DR-D1-03: dựng lại rổ pool ĐÚNG TẠI T1 (0 trial, không ghi sổ). "
+            "Thiếu --ghi chỉ IN kết quả; có --ghi thì ghi config/pool_t1.yaml (từ chối ghi đè)."
+        ),
+    )
+    parser.add_argument(
+        "--ghi",
+        action="store_true",
+        help="Đi kèm --ro-t1: thực sự ghi config/pool_t1.yaml.",
+    )
+    parser.add_argument(
         "--check-min-notional",
         action="store_true",
         help="TD-0082: đối chiếu min notional + độ thô bước lot của pool đã chốt với tranche 1 nhỏ nhất (chỉ đọc, 0 trial).",
@@ -196,6 +209,187 @@ def check_min_notional() -> int:
     return 0
 
 
+RO_T1_OUTPUT_PATH = Path("config/pool_t1.yaml")
+THU_MUC_EXPLORE = Path("user_data/data/explore/futures")
+NGUON_TD0230 = Path("docs/du-lieu-do/td0230-lech-song-sot-pool.json")
+NGUON_TD0231 = Path("docs/du-lieu-do/td0231-pool-point-in-time.json")
+
+EXIT_RO_T1_LECH_TD0231 = 97
+EXIT_RO_T1_CAY_BAN = 98
+EXIT_RO_T1_EXPLORE = 99
+
+
+def _sha256(path: Path) -> str:
+    import hashlib
+
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def sinh_ro_t1(
+    *,
+    ghi: bool,
+    repo_dir: Path = Path("."),
+    doc_volume_thang=None,
+    lay_exchange_info=None,
+    thay_doi_chua_commit=None,
+    bay_gio=None,
+    lay_git_info=None,
+) -> int:
+    """TD-0247 / `DR-D1-03` §2 — bộ sinh rổ `T1` có xuất xứ. **0 trial**, không ghi sổ.
+
+    Thứ tự fail-closed:
+      1. (khi `ghi`) file đích đã tồn tại ⇒ từ chối ghi đè (khuôn E7);
+      2. (khi `ghi`) có thay đổi chưa commit trong vùng ảnh hưởng phép đo ⇒ từ chối,
+         vì `git_sha` ghi vào file phải trỏ đúng mã đã sinh ra nó;
+      3. thư mục EXPLORE không đọc được / rỗng ⇒ từ chối (tập rỗng nhận lại mã phải loại);
+      4. tính lại rổ đủ tiêu chí tại `T1` từ kho lưu trữ; KHÔNG khít `TD-0231` ⇒ từ chối;
+      5. ghép rổ cuối (− EXPLORE đã dùng − TRADIFI).
+
+    Các tham số hàm (`doc_volume_thang`, `lay_exchange_info`, `thay_doi_chua_commit`,
+    `bay_gio`, `lay_git_info`) chỉ để test tiêm thay mạng/git — mặc định là đường sản xuất thật.
+    """
+    import json
+    from datetime import date, datetime, timezone
+
+    from tool_d.api_client.binance_public import KhoLuuTruError, doc_quote_volume_1d_thang
+    from tool_d.config.loader import load_tool_d_config, resolve
+    from tool_d.measurement.gitinfo import thay_doi_anh_huong_phep_do
+    from tool_d.pool_t1 import ThuMucExploreError, dung_ro_tai_moc, ghep_ro_t1, ma_co_du_lieu_explore
+
+    doc_volume_thang = doc_volume_thang or (
+        lambda sym, nam, thang: doc_quote_volume_1d_thang(symbol=sym, nam=nam, thang=thang)
+    )
+    lay_exchange_info = lay_exchange_info or get_exchange_info
+    thay_doi_chua_commit = thay_doi_chua_commit or thay_doi_anh_huong_phep_do
+    bay_gio = bay_gio or (lambda: datetime.now(timezone.utc))
+    lay_git_info = lay_git_info or get_git_info
+
+    dich = repo_dir / RO_T1_OUTPUT_PATH
+    if ghi and dich.exists():
+        print(
+            f"🛑 {RO_T1_OUTPUT_PATH} đã tồn tại — rổ T1 ĐÃ được sinh. KHÔNG sinh lại "
+            "(spec dòng 350-352: không chọn lại pool sau khi đã thấy kết quả). "
+            "Xoá thủ công + ghi DR mới nếu thực sự cần."
+        )
+        return EXIT_POOL_ALREADY_COMMITTED
+    if ghi:
+        ban = thay_doi_chua_commit(repo_dir)
+        if ban:
+            print(
+                "🛑 Có thay đổi chưa commit trong vùng ảnh hưởng phép đo — git_sha ghi vào "
+                "file rổ sẽ KHÔNG trỏ đúng mã đã sinh ra nó. Commit trước:\n  "
+                + "\n  ".join(ban)
+            )
+            return EXIT_RO_T1_CAY_BAN
+
+    try:
+        explore_da_dung = ma_co_du_lieu_explore(repo_dir / THU_MUC_EXPLORE)
+    except ThuMucExploreError as exc:
+        print(f"🛑 {exc}")
+        return EXIT_RO_T1_EXPLORE
+
+    cfg = load_tool_d_config(repo_dir / "config" / "tool_d_config.yaml")
+    t1 = date.fromisoformat(str(resolve(cfg, "tier_c.data_split")["t1"]))
+    khoang = json.loads((repo_dir / NGUON_TD0230).read_text(encoding="utf-8"))["khoang_ton_tai"]
+    td0231 = json.loads((repo_dir / NGUON_TD0231).read_text(encoding="utf-8"))
+
+    print(f"Mốc T1 = {t1} · ứng viên từ TD-0230: {len(khoang)} mã · EXPLORE đã dùng: {len(explore_da_dung)} mã")
+    try:
+        kq = dung_ro_tai_moc(
+            t1,
+            khoang,
+            doc_volume_thang=doc_volume_thang,
+            age_floor_days=AGE_FLOOR_DAYS,
+            volume_floor_usdt=VOLUME_FLOOR_USDT,
+        )
+        exchange_info = lay_exchange_info()
+    except (KhoLuuTruError, BinancePublicApiError) as exc:
+        print(f"🛑 Tải dữ liệu thất bại, KHÔNG sinh rổ nửa vời: {exc}")
+        return EXIT_FETCH_FAILED
+
+    # DR-D1-03 §2 — đối chiếu độc lập: hai đường chạy cùng logic phải ra cùng một rổ.
+    tham_chieu = td0231["pool_dung_tai_t1"]
+    lech_moc = td0231["moc"].get("t1") != t1.isoformat()
+    chi_moi = sorted(set(kq.pool_dung) - set(tham_chieu["danh_sach"]))
+    chi_td0231 = sorted(set(tham_chieu["danh_sach"]) - set(kq.pool_dung))
+    if lech_moc or chi_moi or chi_td0231:
+        print(
+            "🛑 Rổ đủ tiêu chí tại T1 tính lại KHÔNG khít TD-0231 — một trong hai đường "
+            f"đang sai, không ghi.\n  mốc TD-0231: {td0231['moc'].get('t1')} vs {t1}\n"
+            f"  chỉ có ở lần tính mới ({len(chi_moi)}): {chi_moi}\n"
+            f"  chỉ có ở TD-0231 ({len(chi_td0231)}): {chi_td0231}"
+        )
+        return EXIT_RO_T1_LECH_TD0231
+
+    ro = ghep_ro_t1(kq.pool_dung, explore_da_dung, exchange_info["symbols"])
+    print(
+        f"Đủ tiêu chí tại T1: {len(kq.pool_dung)} (khít TD-0231) · loại EXPLORE đã dùng: "
+        f"{len(ro.loai_explore_da_dung)} · loại TRADIFI: {len(ro.loai_tradifi)} · "
+        f"RỔ T1: {len(ro.trading)} mã"
+    )
+    print(
+        f"Không đo được — 404: {len(kq.khong_do_duoc_404)} · thiếu ngày: "
+        f"{len(kq.khong_do_duoc_thieu_ngay)} (ghi riêng, KHÔNG tính là trượt tiêu chí)"
+    )
+    if not ghi:
+        print("\n(chạy thử — thêm --ghi để ghi config/pool_t1.yaml)")
+        return 0
+
+    git_info = lay_git_info(repo_dir)
+    dich.parent.mkdir(parents=True, exist_ok=True)
+    dich.write_text(
+        yaml.dump(
+            {
+                "_doc": (
+                    "TD-0247 / DR-D1-03 — rổ pool ĐÚNG TẠI T1, sinh bằng E7 --ro-t1 --ghi. "
+                    "0 trial. KHÔNG phải config/pool.yaml sản xuất (DR-D1-02 §6)."
+                ),
+                "moc_t1": t1.isoformat(),
+                "criteria": {
+                    "volume_24h_usdt_min": VOLUME_FLOOR_USDT,
+                    "listing_age_days_min": AGE_FLOOR_DAYS,
+                },
+                "trading": list(ro.trading),
+                "loai": {
+                    "explore_da_dung": list(ro.loai_explore_da_dung),
+                    "tradifi_perpetual": list(ro.loai_tradifi),
+                },
+                "khong_do_duoc": {
+                    "kho_404": list(kq.khong_do_duoc_404),
+                    "thieu_hang_dung_ngay_t1": list(kq.khong_do_duoc_thieu_ngay),
+                },
+                "dem": {
+                    "ung_vien_song_tai_t1": len(kq.ung_vien_song),
+                    "du_tieu_chi_tai_t1": len(kq.pool_dung),
+                    "onboard_ngay_chinh_xac": len(kq.onboard_chinh_xac),
+                    "onboard_xap_xi_theo_thang": kq.onboard_xap_xi,
+                },
+                "explore_da_dung_chup_luc_sinh": {
+                    "thu_muc": str(THU_MUC_EXPLORE),
+                    "n": len(explore_da_dung),
+                    "danh_sach": sorted(explore_da_dung),
+                },
+                "xuat_xu": {
+                    "git_sha": git_info.sha,
+                    "sinh_luc_utc": bay_gio().isoformat(),
+                    "nguon_khoang_ton_tai": {"file": str(NGUON_TD0230), "sha256": _sha256(repo_dir / NGUON_TD0230)},
+                    "doi_chieu_td0231": {
+                        "file": str(NGUON_TD0231),
+                        "sha256": _sha256(repo_dir / NGUON_TD0231),
+                        "khit": True,
+                    },
+                    "trial": 0,
+                },
+            },
+            allow_unicode=True,
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    print(f"\n✅ Đã ghi {RO_T1_OUTPUT_PATH} — {len(ro.trading)} mã, git_sha {git_info.sha[:7]}, 0 trial")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else list(argv)
     args, _ = build_parser().parse_known_args(argv)
@@ -203,6 +397,9 @@ def main(argv: list[str] | None = None) -> int:
     report = measurement_guard(ENTRYPOINT, argv=argv, with_params_file=args.with_params_file)
     if report.outcome is GuardOutcome.BLOCKED:
         return EXIT_GUARD_BLOCKED
+
+    if args.ro_t1:
+        return sinh_ro_t1(ghi=args.ghi)
 
     if args.check_min_notional:
         return check_min_notional()

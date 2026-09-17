@@ -60,6 +60,14 @@ from tool_d.ledger.idea_queue import IdeaQueueError, submit_idea
 from tool_d.ledger.param_proposals import ParamProposalError, submit_proposal
 from tool_d.ledger.registry import DEFAULT_REGISTRY_PATH
 from tool_d.measurement.gitinfo import get_git_info
+
+# `_thay_doi_anh_huong_phep_do` chuyển sang `gitinfo` ngày 17/09/2026 (TD-0247,
+# `DR-D1-03` §2) để E7 dùng chung đúng một quy tắc. Giữ tên cũ ở đây: cổng
+# D3/D3.5 và test của chúng gọi/monkeypatch `trial_ledger_audit._thay_doi_anh_huong_phep_do`.
+from tool_d.measurement.gitinfo import (  # noqa: F401 — THU_MUC_... tái xuất cho người đọc cũ
+    THU_MUC_ANH_HUONG_PHEP_DO,
+    thay_doi_anh_huong_phep_do as _thay_doi_anh_huong_phep_do,
+)
 from tool_d.measurement.guard import EXIT_GUARD_BLOCKED, GuardOutcome, measurement_guard
 from tool_d.measurement.tri_state import Status, audit_line
 
@@ -510,46 +518,6 @@ def close_d2_gate(
         f"L-Z49/L-Z50 ({so_ca_lz} ca): {lz_summary}\n{audit_text}",
     )
 
-
-# Thư mục mà một file chưa theo dõi nằm trong đó VẪN làm hỏng bằng chứng:
-# pytest thu cả file `.py` chưa commit trong `tests/`, và `src/`/`entrypoints/`/
-# `config/`/`registry/schemas/` đều chảy thẳng vào kết quả chạy.
-THU_MUC_ANH_HUONG_PHEP_DO = ("src/", "tests/", "entrypoints/", "config/", "registry/schemas/")
-
-
-def _thay_doi_anh_huong_phep_do(repo_dir: Path) -> list[str]:
-    """Các thay đổi chưa commit CÓ THỂ làm lệch kết quả đo. Rỗng = an toàn.
-
-    KHÔNG dùng thẳng `GitInfo.is_clean`: nó coi mọi thứ chưa commit là bẩn,
-    kể cả ảnh chụp màn hình và thư mục nháp ở gốc repo. Với repo này (luôn
-    có rác như vậy) thì cổng sẽ KHÔNG BAO GIỜ đóng được — và một chốt không
-    bao giờ thoả được sẽ bị người ta gỡ bỏ, tức tệ hơn là không có.
-
-    Phân biệt:
-      • file ĐÃ THEO DÕI bị sửa/xoá/staged → LUÔN tính, vì nó đổi hành vi
-        mà không nằm trong sha sẽ được ghi;
-      • file CHƯA THEO DÕI → chỉ tính khi nằm trong `THU_MUC_ANH_HUONG_PHEP_DO`.
-        Một file `.py` chưa commit trong `tests/` VẪN được pytest thu và
-        VẪN không có trong commit — đúng loại làm bằng chứng sai.
-    """
-    dong = subprocess.run(
-        ["git", "--no-optional-locks", "status", "--porcelain"],
-        cwd=repo_dir,
-        capture_output=True,
-        text=True,
-    ).stdout.splitlines()
-
-    ket_qua: list[str] = []
-    for d in dong:
-        if not d.strip():
-            continue
-        trang_thai, duong_dan = d[:2], d[3:].strip().strip('"')
-        if trang_thai == "??":
-            if duong_dan.startswith(THU_MUC_ANH_HUONG_PHEP_DO):
-                ket_qua.append(f"[chưa theo dõi, trong vùng đo] {duong_dan}")
-        else:
-            ket_qua.append(f"[{trang_thai.strip()}] {duong_dan}")
-    return ket_qua
 
 
 def close_d3_gate(
