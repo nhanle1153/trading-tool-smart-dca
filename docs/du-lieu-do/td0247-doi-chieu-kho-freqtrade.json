@@ -1,0 +1,165 @@
+{
+ "nguon": "TD-0247 / DR-D1-03 §4, 17/09/2026 — kho data.binance.vision vs file freqtrade download-data trong user_data/data/binance/futures/. 0 trial.",
+ "ma": "AAVEUSDT",
+ "cach_doc": "Đạt khi MỌI dòng có chi_kho = chi_freqtrade = 0 và mọi lech_theo_cot = 0 (dung sai 0).",
+ "ket_qua": [
+  {
+   "thang": "2024-05",
+   "file": "1h-futures",
+   "chung": 744,
+   "chi_kho": 0,
+   "chi_freqtrade": 0,
+   "lech_theo_cot": {
+    "open": 0,
+    "high": 0,
+    "low": 0,
+    "close": 0,
+    "volume": 0
+   },
+   "khop": true
+  },
+  {
+   "thang": "2024-05",
+   "file": "4h-futures",
+   "chung": 186,
+   "chi_kho": 0,
+   "chi_freqtrade": 0,
+   "lech_theo_cot": {
+    "open": 0,
+    "high": 0,
+    "low": 0,
+    "close": 0,
+    "volume": 0
+   },
+   "khop": true
+  },
+  {
+   "thang": "2024-05",
+   "file": "1d-futures",
+   "chung": 31,
+   "chi_kho": 0,
+   "chi_freqtrade": 0,
+   "lech_theo_cot": {
+    "open": 0,
+    "high": 0,
+    "low": 0,
+    "close": 0,
+    "volume": 0
+   },
+   "khop": true
+  },
+  {
+   "thang": "2024-05",
+   "file": "1h-mark",
+   "chung": 744,
+   "chi_kho": 0,
+   "chi_freqtrade": 0,
+   "lech_theo_cot": {
+    "open": 0,
+    "high": 0,
+    "low": 0,
+    "close": 0,
+    "volume": 0
+   },
+   "khop": true
+  },
+  {
+   "thang": "2024-05",
+   "file": "1h-funding_rate",
+   "chung": 93,
+   "chi_kho": 0,
+   "chi_freqtrade": 0,
+   "lech_theo_cot": {
+    "funding_rate": 0
+   },
+   "khop": true
+  },
+  {
+   "thang": "2025-09",
+   "file": "1h-futures",
+   "chung": 720,
+   "chi_kho": 0,
+   "chi_freqtrade": 0,
+   "lech_theo_cot": {
+    "open": 0,
+    "high": 0,
+    "low": 0,
+    "close": 0,
+    "volume": 0
+   },
+   "khop": true
+  },
+  {
+   "thang": "2025-09",
+   "file": "4h-futures",
+   "chung": 180,
+   "chi_kho": 0,
+   "chi_freqtrade": 0,
+   "lech_theo_cot": {
+    "open": 0,
+    "high": 0,
+    "low": 0,
+    "close": 0,
+    "volume": 0
+   },
+   "khop": true
+  },
+  {
+   "thang": "2025-09",
+   "file": "1d-futures",
+   "chung": 30,
+   "chi_kho": 0,
+   "chi_freqtrade": 0,
+   "lech_theo_cot": {
+    "open": 0,
+    "high": 0,
+    "low": 0,
+    "close": 0,
+    "volume": 0
+   },
+   "khop": true
+  },
+  {
+   "thang": "2025-09",
+   "file": "5m-futures",
+   "chung": 8640,
+   "chi_kho": 0,
+   "chi_freqtrade": 0,
+   "lech_theo_cot": {
+    "open": 0,
+    "high": 0,
+    "low": 0,
+    "close": 0,
+    "volume": 0
+   },
+   "khop": true
+  },
+  {
+   "thang": "2025-09",
+   "file": "1h-mark",
+   "chung": 720,
+   "chi_kho": 0,
+   "chi_freqtrade": 0,
+   "lech_theo_cot": {
+    "open": 0,
+    "high": 0,
+    "low": 0,
+    "close": 0,
+    "volume": 0
+   },
+   "khop": true
+  },
+  {
+   "thang": "2025-09",
+   "file": "1h-funding_rate",
+   "chung": 90,
+   "chi_kho": 0,
+   "chi_freqtrade": 0,
+   "lech_theo_cot": {
+    "funding_rate": 0
+   },
+   "khop": true
+  }
+ ],
+ "dat": true
+}
