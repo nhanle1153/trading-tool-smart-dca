@@ -159,3 +159,38 @@ Bộ sinh chạy thật ra **107 mã** (`config/pool_t1.yaml`, `a62540b`), khít
 - **Kiểm đủ rổ bằng máy** trước khi coi `TD-0247` xong. Cờ E8 kiểm từng mã trong
   `config/pool_t1.yaml`: đủ 6 file, không rỗng, không có nến sau `T2`, bắt đầu đúng mốc, kết thúc đúng
   mốc (hoặc đúng tháng huỷ niêm yết).
+
+---
+
+## 5. PHỤ LỤC 17/09/2026 (2) — nến "chết" sau khi sàn ngừng giao dịch (chủ dự án chốt, viết TRƯỚC code)
+
+**Sự việc đo được (0 trial, nến 1h của kho + API funding lịch sử):** lần nhập kho đầu tiên dừng đúng
+theo chốt §4 ở `FLMUSDT`: kho không có funding tháng 12/2025, dù `TD-0230` ghi mã tồn tại tới 2026-08.
+Đo tiếp thì thấy không phải kho thiếu file:
+
+| Mã | Nến cuối có volume > 0 | Sau đó | Funding |
+|---|---|---|---|
+| `MKRUSDT` | **2025-09-08 08:00** | 543 nến 1h tháng 9 + mọi tháng sau: `high = low`, `volume = 0`, đứng ở **1650,1** | kho và API cùng dừng **08/09/2025** |
+| `FLMUSDT` | **2025-11-21 08:00** | nến phẳng `volume = 0`, đứng ở **0,0082** (đầu tháng 11: 0,0248, tức **−67%** trước khi huỷ) | kho dừng sau 11/2025, API trả 0 bản ghi |
+| `ICX` · `OM` · `TON` · `AERGO` | tới hết 01/2026, `volume > 0` | — | đủ |
+
+⇒ Sau khi sàn ngừng giao dịch, kho vẫn sinh nến ở **giá thanh toán**, khối lượng 0, không funding, kéo
+dài nhiều tháng. `khoang_ton_tai` của `TD-0230` suy từ **sự tồn tại của file nến**, nên **đánh giá quá
+đời sống** của những mã này. Rổ `T1` không bị ảnh hưởng vì cả hai còn giao dịch tại `T1`; con số đó
+chỉ sai khi dùng cho các mốc muộn hơn.
+
+**Chủ dự án chốt: cắt dữ liệu tại nến cuối có giao dịch.**
+
+- **Mốc ngừng giao dịch** của một mã = mốc mở của **nến 1h futures cuối cùng có `volume > 0`**, nếu
+  mốc đó sớm hơn `T2 − 1 giờ`. Máy **đo**, không gõ tay ngày.
+- Cả 6 loại file của mã đó giữ `date ≤ mốc ngừng`, **không tải** các tháng sau tháng ngừng. Vì vậy
+  funding 404 sau khi ngừng không còn là lỗi, còn 404 **trước** mốc ngừng vẫn là lỗi (§4).
+- **Lý do:** giữ nến chết cho phép backtest mở lệnh vào một thị trường đã đóng (lệnh ma). Còn vị thế
+  đang mở lúc ngừng được chốt ở giá nến cuối, trùng với giá thanh toán của sàn. Loại hẳn MKR/FLM thì
+  mất đúng hai mã chết trong WFO (FLM −67%), tức lệch sống sót theo chiều đẹp.
+- **Mốc ngừng ghi thành artifact có bằng chứng** (`docs/du-lieu-do/td0247-moc-ngung-giao-dich.json`:
+  mốc, giá đóng nến cuối, số nến phẳng phía sau). Bộ kiểm đủ rổ đọc artifact đó. Mã kết thúc trước `T2`
+  mà **không có** trong artifact thì bộ kiểm báo lỗi.
+- **Bộ kiểm còn soi đuôi nến chết ở MỌI mã** (kể cả mã tải bằng Freqtrade): ≥ 24 nến 1h liền nhau ở
+  cuối file có `volume = 0` mà mã không có trong artifact ⇒ báo lỗi. Không tin rằng *"mã đang TRADING
+  thì không có nến chết"*.
