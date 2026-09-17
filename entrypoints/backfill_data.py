@@ -147,7 +147,130 @@ def build_parser() -> argparse.ArgumentParser:
         default="runs/backfill_snapshot.json",
         help="Nơi ghi file snapshot (mặc định runs/backfill_snapshot.json).",
     )
+    # TD-0247 / DR-D1-03 §4 — dữ liệu [T0,T2] cho rổ T1 (config/pool_t1.yaml).
+    parser.add_argument(
+        "--ro-t1-sao-chep",
+        action="store_true",
+        help=f"Chép nguyên byte mã rổ T1 đã đủ 6 file ở {DEFAULT_DATA_DIR} sang {POOL_T1_DATA_DIR} (không ghi đè).",
+    )
+    parser.add_argument(
+        "--ro-t1-nhap-kho",
+        metavar="PAIRS",
+        help="Nhập 6 file/mã từ kho data.binance.vision cho các mã (phẩy ngăn cách, vd DEGOUSDT,MKRUSDT) — chỉ dùng cho mã ĐÃ HUỶ niêm yết.",
+    )
+    parser.add_argument(
+        "--cat-den-t2",
+        action="store_true",
+        help="Cắt mọi nến sau T2 trong --data-dir (bắt buộc truyền --data-dir tường minh). Bug TD-0093.",
+    )
+    parser.add_argument(
+        "--ro-t1-kiem",
+        action="store_true",
+        help=f"Kiểm đủ rổ T1 trong {POOL_T1_DATA_DIR}: 6 file/mã, không rỗng, không lấn T2, đúng mốc đầu/cuối.",
+    )
     return parser
+
+
+POOL_T1_DATA_DIR = Path("user_data/data/pool_t1/futures")
+POOL_T1_YAML = Path("config/pool_t1.yaml")
+NGUON_TD0230 = Path("docs/du-lieu-do/td0230-lech-song-sot-pool.json")
+EXIT_RO_T1_LOI = 98
+
+
+def _moc_phan_vung() -> dict:
+    from datetime import date
+
+    from tool_d.config.loader import load_tool_d_config, resolve
+
+    tho = resolve(load_tool_d_config(), "tier_c.data_split")
+    return {k: date.fromisoformat(str(v)) for k, v in tho.items()}
+
+
+def _ro_t1_va_khoang() -> tuple[list[str], dict]:
+    import yaml
+
+    ro = list(yaml.safe_load(POOL_T1_YAML.read_text(encoding="utf-8"))["trading"])
+    khoang = json.loads(NGUON_TD0230.read_text(encoding="utf-8"))["khoang_ton_tai"]
+    return ro, khoang
+
+
+def do_ro_t1_sao_chep() -> int:
+    from tool_d.data.pool_t1_du_lieu import SAU_LOAI_FILE, DuLieuRoError, sao_chep_ma_co_san, ten_file
+
+    ro, _ = _ro_t1_va_khoang()
+    du, thieu_mot_phan = [], []
+    for s in ro:
+        co = [(DEFAULT_DATA_DIR / ten_file(s, lf)).is_file() for lf in SAU_LOAI_FILE]
+        if all(co):
+            du.append(s)
+        elif any(co):
+            thieu_mot_phan.append(s)
+    if thieu_mot_phan:
+        print(f"🛑 {len(thieu_mot_phan)} mã có MỘT PHẦN file ở {DEFAULT_DATA_DIR} — không đoán nên chép hay tải: {thieu_mot_phan}")
+        return EXIT_RO_T1_LOI
+    try:
+        da_chep = sao_chep_ma_co_san(DEFAULT_DATA_DIR, POOL_T1_DATA_DIR, du)
+    except DuLieuRoError as exc:
+        print(f"🛑 {exc}")
+        return EXIT_RO_T1_LOI
+    print(f"✅ Đã chép {len(du)} mã ({len(da_chep)} file, sha256 khớp) -> {POOL_T1_DATA_DIR}. Còn {len(ro) - len(du)} mã phải tải/nhập.")
+    return 0
+
+
+def do_ro_t1_nhap_kho(pairs: str) -> int:
+    from tool_d.api_client.binance_public import KhoLuuTruError, doc_csv_thang_kho
+    from tool_d.data.kho_luu_tru import DuLieuKhoError
+    from tool_d.data.pool_t1_du_lieu import DuLieuRoError, nhap_ma_tu_kho
+
+    ro, khoang = _ro_t1_va_khoang()
+    ma = [x.strip() for x in pairs.split(",") if x.strip()]
+    ngoai = [s for s in ma if s not in ro or s not in khoang]
+    if not ma or ngoai:
+        print(f"🛑 mã không thuộc rổ T1 hoặc không có khoảng tồn tại TD-0230: {ngoai or '(rỗng)'}")
+        return EXIT_RO_T1_LOI
+    moc = _moc_phan_vung()
+    for s in ma:
+        try:
+            kq = nhap_ma_tu_kho(s, dich=POOL_T1_DATA_DIR, khoang=khoang[s], moc=moc, doc_csv=doc_csv_thang_kho)
+        except (DuLieuRoError, DuLieuKhoError, KhoLuuTruError) as exc:
+            print(f"🛑 {s}: {exc} — DỪNG, các mã trước đã ghi đủ 6 file, mã này không ghi file nào")
+            return EXIT_RO_T1_LOI
+        print(f"✅ {s}: " + ", ".join(f"{k} {v} hàng" for k, v in kq.items()))
+    return 0
+
+
+def do_cat_den_t2(data_dir: Path) -> int:
+    from tool_d.data.pool_t1_du_lieu import DuLieuRoError, cat_den_moc
+
+    if not data_dir.is_dir():
+        print(f"🛑 {data_dir} không tồn tại.")
+        return EXIT_RO_T1_LOI
+    t2 = _moc_phan_vung()["t2"]
+    try:
+        da_cat = cat_den_moc(data_dir, t2)
+    except DuLieuRoError as exc:
+        print(f"🛑 {exc}")
+        return EXIT_RO_T1_LOI
+    print(f"✅ Cắt về ≤ {t2} 00:00 UTC: {len(da_cat)} file có nến lấn, bỏ tổng {sum(da_cat.values())} hàng.")
+    for k, v in sorted(da_cat.items())[:20]:
+        print(f"  - {k}: bỏ {v}")
+    return 0
+
+
+def do_ro_t1_kiem() -> int:
+    from tool_d.data.pool_t1_du_lieu import kiem_du_lieu_ro
+
+    ro, khoang = _ro_t1_va_khoang()
+    loi = kiem_du_lieu_ro(POOL_T1_DATA_DIR, ro, khoang, _moc_phan_vung())
+    if loi:
+        print(f"🛑 Rổ T1 CHƯA đủ dữ liệu — {len(loi)} lỗi:")
+        for x in loi[:40]:
+            print(f"  - {x}")
+        if len(loi) > 40:
+            print(f"  … và {len(loi) - 40} lỗi nữa")
+        return EXIT_RO_T1_LOI
+    print(f"✅ Rổ T1 đủ dữ liệu: {len(ro)} mã × 6 file, không lấn T2, đúng mốc đầu/cuối.")
+    return 0
 
 
 def do_snapshot_before(*, data_dir: Path, backup_root: Path, out_path: Path) -> int:
@@ -321,6 +444,21 @@ def main(argv: list[str] | None = None) -> int:
             range_from=args.range_from,
             range_to=args.range_to,
         )
+
+    if args.ro_t1_sao_chep or args.ro_t1_nhap_kho or args.cat_den_t2 or args.ro_t1_kiem:
+        gate_exit = require_d0_pre_complete(ENTRYPOINT)
+        if gate_exit is not None:
+            return gate_exit
+        if args.ro_t1_sao_chep:
+            return do_ro_t1_sao_chep()
+        if args.ro_t1_nhap_kho:
+            return do_ro_t1_nhap_kho(args.ro_t1_nhap_kho)
+        if args.cat_den_t2:
+            if not any(x == "--data-dir" or x.startswith("--data-dir=") for x in argv):
+                print("🛑 --cat-den-t2 cần --data-dir TƯỜNG MINH (không cắt thư mục mặc định do vô ý).")
+                return EXIT_RO_T1_LOI
+            return do_cat_den_t2(Path(args.data_dir))
+        return do_ro_t1_kiem()
 
     if args.snapshot_before or args.verify_after:
         gate_exit = require_d0_pre_complete(ENTRYPOINT)

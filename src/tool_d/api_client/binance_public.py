@@ -880,6 +880,85 @@ def doc_quote_volume_1d_thang(
     return ket_qua
 
 
+#: TD-0247 (`DR-D1-03`) — ba loại dữ liệu tháng của kho cần cho một mã đã huỷ
+#: niêm yết (Freqtrade `download-data` không tải được mã không còn trên sàn).
+LOAI_KHO_THANG = ("klines", "markPriceKlines", "fundingRate")
+
+
+def doc_csv_thang_kho(
+    *,
+    loai: str,
+    symbol: str,
+    nam: int,
+    thang: int,
+    khung: str | None = None,
+    timeout: float = 120.0,
+) -> list[list[str]]:
+    """TD-0247 — đọc NGUYÊN các hàng CSV của một file tháng trong kho lưu trữ.
+
+    `loai` ∈ `LOAI_KHO_THANG`. `klines`/`markPriceKlines` cần `khung` (`5m`,
+    `1h`…); `fundingRate` không có khung. Trả các hàng đã tách cột, BỎ hàng
+    tiêu đề (hàng mà cột đầu không phải số). Chuyển sang định dạng Freqtrade là
+    việc của `tool_d.data.kho_luu_tru` (logic thuần, test được không cần mạng).
+
+    Cùng chỗ với `doc_quote_volume_1d_thang()` — **R1 Single Egress**.
+
+    🔴 Fail-closed: 404 ⇒ `NenThangKhongCoError` (dữ kiện, không phải 0);
+    HTTP khác / mạng / zip hỏng / 0 hàng ⇒ `KhoLuuTruError`.
+    """
+    if loai not in LOAI_KHO_THANG:
+        raise ValueError(f"loai {loai!r} không thuộc {LOAI_KHO_THANG}")
+    if loai == "fundingRate":
+        ten = f"{symbol}-fundingRate-{nam:04d}-{thang:02d}.zip"
+        duong_dan = f"/data/futures/um/monthly/fundingRate/{_ma_url(symbol)}/{_ma_url(ten)}"
+    else:
+        if not khung:
+            raise ValueError(f"loai {loai!r} cần khung")
+        ten = f"{symbol}-{khung}-{nam:04d}-{thang:02d}.zip"
+        duong_dan = f"/data/futures/um/monthly/{loai}/{_ma_url(symbol)}/{khung}/{_ma_url(ten)}"
+
+    _kiem_tra_breaker()
+    _cho_nhip_goi()
+    conn = http.client.HTTPSConnection(AGG_TRADES_HOST, timeout=timeout)
+    try:
+        conn.request("GET", duong_dan)
+        resp = conn.getresponse()
+        if resp.status == 404:
+            resp.read()
+            raise NenThangKhongCoError(f"kho không có {ten} (HTTP 404 tại {AGG_TRADES_HOST}{duong_dan})")
+        if resp.status != 200:
+            resp.read()
+            _ghi_nhan_that_bai(http_status=resp.status)
+            raise KhoLuuTruError(f"tải {AGG_TRADES_HOST}{duong_dan} thất bại: HTTP {resp.status}")
+        noi_dung = resp.read()
+        _ghi_nhan_thanh_cong()
+    except OSError as exc:
+        raise KhoLuuTruError(f"tải {AGG_TRADES_HOST}{duong_dan} thất bại: {exc}") from exc
+    finally:
+        conn.close()
+
+    try:
+        with zipfile.ZipFile(io.BytesIO(noi_dung)) as z:
+            tho = z.read(z.namelist()[0]).decode("utf-8")
+    except (zipfile.BadZipFile, IndexError, UnicodeDecodeError) as exc:
+        raise KhoLuuTruError(f"{ten} không giải nén được: {exc}") from exc
+
+    hang: list[list[str]] = []
+    for dong in tho.splitlines():
+        dong = dong.strip()
+        if not dong:
+            continue
+        o = dong.split(",")
+        try:
+            float(o[0])
+        except ValueError:
+            continue  # hàng tiêu đề
+        hang.append(o)
+    if not hang:
+        raise KhoLuuTruError(f"{ten}: giải nén được nhưng 0 hàng đọc được")
+    return hang
+
+
 def get_open_interest_hist(
     *,
     symbol: str,
