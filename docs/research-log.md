@@ -3188,3 +3188,29 @@ CALIB (5/18). Tách xong, chênh lệch **giãn từ 3,6× lên 5,3×**, không 
 
 📌 **Điểm chung của ba lần trong ngày** (nhãn `_tai_t1`, nhãn AERGO, giả thuyết rebrand): cả ba đều bị
 bắt bằng **một phép đo rẻ chạy thêm**, không lần nào bằng đọc kỹ hơn hay tranh luận thêm.
+
+### Phụ lục 2 cùng ngày — chênh 5,2× KHÔNG đạt ý nghĩa thống kê; gộp lại cho một kỳ vọng dùng được
+
+Phiên `-93` kiểm, phiên `-01` tính lại độc lập, **hai bên ra cùng số**. 0 trial.
+
+- Phơi nhiễm: CALIB **2.015 mã-tháng / 13 ca chết thật** · WFO **812 mã-tháng / 1 ca** ⇒ 0,645 vs
+  0,123 %/tháng = **5,2×**.
+- Giả thuyết "cùng một nhịp" ⇒ kỳ vọng **9,98 / 4,02**; quan sát 13 / 1 ⇒ **χ² = 3,18 (df = 1),
+  p ≈ 0,074** ⇒ **chưa đủ để bác ở mức 5%**.
+- Gộp: λ = **0,495 %/tháng** ⇒ `[T2,T3]` (220 ngày): rổ 86 mã ⇒ **3,08 mã**, `P(0) = 4,6%`; rổ 94 mã
+  ⇒ **3,36 mã**, `P(0) = 3,5%`.
+
+⇒ Thay dải 1,5–6,1 (rộng gấp 4, dựng từ hai λ mà ta **không phân biệt được**) bằng kỳ vọng **≈ 3,1–3,4
+mã**, và phát biểu ngưỡng theo xác suất: **0 mã ⇒ P ≈ 4% ⇒ đáng nghi, phải đối chiếu bằng một mã cụ
+thể còn giao dịch tới `T3`**.
+
+🔴 **Ba giới hạn, ghi kèm để con số không bị đọc quá tay:**
+1. `p = 0,074` nghĩa là *"chưa đủ bằng chứng để nói KHÁC nhau"*, **không** phải *"giống nhau"* — đúng
+   phân biệt `DR-IQ-01` §0 đã phải viết cho `TD-0291`. Gộp là **giả định chưa bị bác**.
+2. **Tổng n = 14.** Mỏng. Đừng trích `0,495` như hằng số; có thêm giai đoạn thì tính lại.
+3. `[T2,T3]` là đoạn BTC **−53%** (`DR-D0PRE-07` §2) ⇒ λ ở đó nhiều khả năng CAO hơn ⇒ **3,1–3,4 đọc là
+   CẬN DƯỚI**, `P(0)` thật có thể nhỏ hơn 4%.
+
+🔑 Chuỗi này khép lại đúng cách nó mở ra: một đề nghị (ngưỡng "0 mã là đáng nghi") bị bác vì thiếu nền
+đo được → nền được đo → giả thuyết giải thích nền bị bác → và cuối cùng chính chênh lệch 5,2× cũng
+không sống nổi phép kiểm. **Mỗi bước đều do một phép đo rẻ, không do lập luận.**
