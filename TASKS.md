@@ -751,16 +751,50 @@
 > Câu nặng nhất: *"đoạn niêm phong 2"* ở đây là **MỞ RỘNG RỔ**, trong khi `MAX_SEGMENTS = 3` và
 > `L-Z13` sinh ra cho nghĩa **GIA HẠN INCONCLUSIVE** (`DR-011:3356-3362`, dữ liệu MỚI, tối đa 2 lần).
 > Dùng lẫn là tiêu suất gia hạn cho một việc khác nghĩa. Phiên `-01` độc lập nêu đúng lo ngại này.
+>
+> 🔑 **Đo được, phiên `-93` bàn giao 18/09/2026 (đọc mã + artifact đã commit, 0 trial) — sửa một
+> phần lo ngại trên:** ở **tầng máy** việc này **KHÔNG** tiêu suất gia hạn. `access_log.py:98` áp
+> trần lên **số BẢN GHI**, `:104-122` chỉ đòi `seal_path`/`seal_file_hash` đôi một khác nhau, và
+> **toàn hàm không đọc khoá `segment` lần nào** (đối chứng `test_lz13:104` — 3 bản ghi seal bất kỳ
+> vẫn PASS, chỉ đỏ ở bản ghi thứ 4). Lo ngại vẫn đứng ở **tầng NGHĨA**, và lộ thêm một vết: tên
+> `MAX_SEGMENTS` nói *"đoạn"* nhưng thi hành *"bản ghi"*, mà `seal.py:36-38` lại ghi *"tối đa
+> segment 3"* ⇒ đi đường này thì gia hạn lần hai mang `segment = 4`, **vượt tài liệu mà không hàm
+> nào bắt** vì `segment` chưa bao giờ được validate.
+>
+> 📊 **Số liệu cho `DR-LOCKBOX-01`, khỏi đo lại:** seal 1 = 510 file = 102 mã × 5 loại, tập mã
+> **trùng khít `config/pool.yaml`**, lệch 0 ⇒ đúng rổ đo 09/2026 (CUỐI giai đoạn lockbox).
+> `pool_dung_tai_t2` = **94 mã**; **38 mã (40,4%)** thuộc rổ `T2` mà `pool.yaml` không có;
+> **46/102 (45,1%)** trong `pool.yaml` không thuộc rổ `T2` ⇒ lệch **gần một nửa**, không phải rìa.
+> Rổ `T1`: **55/107** mã có dữ liệu lockbox. Ghép `td0247`+`td0301`: 20 mã có mốc ngừng thật, cả 20
+> ngừng trước `T2`, **0/20** lọt vào `pool_dung_tai_t2` — ⚠️ 20 mã là tập **tình cờ có sẵn**, nên
+> đây là **tín hiệu, KHÔNG phải kết luận** *"MT-59 không chạm rổ T2"*. Cơ chế: mã chết vẫn có hàng
+> nến ngày mốc nhưng `volume = 0`, `pool.py:85` đòi ≥ 15tr ⇒ rơi `explore`. **Cái sai thật** là
+> `ung_vien_song` phồng (629 tại `T2`) và `delisted_at = None` sai (`pool_t1.py:205`); 🔑 chốt sai
+> đang bị chốt đúng **CHE** — hết che ngay khi ai đó đổi `quote_volume_24h` sang trung bình N ngày
+> hoặc gọi `pairlist_over_time()`.
+>
+> 🔴 **Hai câu hỏi MỚI cho `DR-LOCKBOX-01`, ngoài 8 câu ban đầu:** **(9)** rổ `T2` dùng **5 hay 6
+> loại file**? Seal 1 có **5**, KHÔNG có `5m`; nhưng rổ `T1` (WFO) **có** `5m`, `DR-D5-01` ghi
+> `--timeframe-detail 5m` là **bắt buộc**, `DR-D9-01:244` dùng ở D9, còn `DR-D0PRE-07` **không nhắc
+> `5m` lần nào**. **(10)** 46 mã đã niêm phong nhưng ngoài rổ `T2` — đề xuất **giữ file trên đĩa,
+> append-only, cấm dùng** (`verify_seal` là danh sách ĐÓNG, `seal.py:100-101`, nên thêm file cho mã
+> mới không làm seal 1 đỏ, miễn không xoá/sửa byte nào của 510 file cũ).
+>
+> ⚠️ **Nợ riêng, phiên `-93` tìm được, chưa mở mã:** `pool_t1_du_lieu.py:303` — với `moc_cuoi="t3"`
+> phép so tháng cho `False` ⇒ **833/864 mã** rơi nhánh `elif`, file thiếu 5 tuần cuối cửa sổ lockbox
+> **vẫn PASS**. PASS RỖNG, chỉ nổ khi làm rổ `T2`. Và `build_pool.py:389-390` hardcode `_tai_t1` ⇒
+> `config/pool_t0.yaml:182-183` ghi `ung_vien_song_tai_t1: 285` cho rổ `T0` — **lỗi thật đã commit**;
+> sửa bộ sinh + đính chính trong DR, **không sửa file đã commit**.
 
 | Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
 |---|---|---|---|---|
 | TD-0304 | **Làm suất (d) dùng được** — kiểm cửa nộp còn răng + vá chú thích `docs/mau-don-y-tuong.yaml` | ✅ | — | (a) chạy thật trong Docker: đơn thiếu `who_pays` ⇒ TỪ CHỐI ghi, sổ thật **bất biến từng byte**; (b) kiểm-có-răng hai vế trong sổ hộp cát: cùng đơn, khác đúng `who_pays` ⇒ hai kết cục ngược nhau; (c) mẫu đơn trỏ `DR-IQ-01A` + danh sách file phiên sạch được/cấm đọc + bỏ số quý hardcode; (d) mẫu đơn vẫn parse, 14 khoá không đổi ✅ **XONG 18/09/2026** (`d418443`): (a) exit **96**, `sha256 a0e1d000…` **giống hệt trước và sau**; (b) hai vế ngược nhau đúng như đòi — cửa nộp từ chối **đúng chỗ**, không phải từ chối mọi thứ; (c)(d) parse OK, 14 khoá không đổi; test liên quan **63 passed, 0 failed**. 🔑 Không tạo file hướng dẫn mới — nối vào mẫu đơn đã có (một ý, một nguồn, `MT-03`). ⚠️ Phiên làm việc này **đã NHIỄM** theo DR-009 nên chỉ đặt con trỏ tới tài liệu, **không** định hướng nội dung ý tưởng; phiên sạch nên đọc thẳng `DR-IQ-01A` thay vì tin phần tóm tắt |
 | TD-0305 | 🚪 **`DR-LOCKBOX-01`** — 8 câu quyết định về rổ lockbox | 🔓 ⏸ | Chủ dự án gỡ ⏸ + trả lời 8 câu | Commit **RIÊNG và TRƯỚC** mọi dòng mã của phần B |
-| TD-0306 | **Đo lại khoảng tồn tại → artifact MỚI** (giải `MT-59`) | 🔓 ⏸ | TD-0305 | Dùng lại `pool_t1_du_lieu.moc_ngung_giao_dich()`, **không** viết khuôn đo mới; artifact mới cùng schema `khoang_ton_tai` + khối `doi_chieu_td0230`; **0 trial**, ghi 1 dòng `CTRL` dạng *đo thước*; 🔴 **không sửa** `td0230`/`td0247` |
-| TD-0307 | **Dựng rổ `T2`** (`config/pool_t2.yaml`) | 🔓 ⏸ | TD-0306 | Nới `MOC_RO_HOP_LE` + tham số hoá `NGUON_TD0230` theo mốc (t0/t1 giữ `td0230` để tái lập bằng chứng cũ); đối chiếu **khít** `td0231["pool_dung_tai_t2"]`; mở `pool_giai_doan.RO_THEO_TAP["LOCKBOX"]`, bỏ nhánh từ chối `MT-60`; 0 trial |
-| TD-0308 | **Dữ liệu `[T2,T3]` cho mã còn thiếu** | 🔓 ⏸ | TD-0307 | Chạy trong service **`lockbox`** (service DUY NHẤT thấy thư mục thật — chạy nhầm service ra *"0 file"* chứ không báo lỗi); 7 mã đã huỷ không thể có dữ liệu ⇒ **luật khai báo tường minh**, không im lặng bỏ qua |
+| TD-0306 | **Đo lại khoảng tồn tại → artifact MỚI** (giải `MT-59`) | 🔓 ⏸ | TD-0305 | Dùng lại `pool_t1_du_lieu.moc_ngung_giao_dich()`, **không** viết khuôn đo mới; artifact mới cùng schema `khoang_ton_tai` + khối `doi_chieu_td0230`; **0 trial**, **KHÔNG ghi dòng `CTRL`** — đo trên kho công khai `data.binance.vision` (metadata SÀN), không đọc một nến pool nào, đúng tiền lệ `TD-0230`/`0231`/`0247`/`0301`; 🔴 **không sửa** `td0230`/`td0247` |
+| TD-0307 | **Dựng rổ `T2`** (`config/pool_t2.yaml`) | 🔓 ⏸ | TD-0306 | Nới `MOC_RO_HOP_LE` + tham số hoá `NGUON_TD0230` theo mốc (t0/t1 giữ `td0230` để tái lập bằng chứng cũ); 🔴 **KHÔNG đòi khít** `td0231["pool_dung_tai_t2"]` — chính con số đó tính BẰNG `khoang_ton_tai` đang sai, đòi khít là ép kết quả đã sửa khớp lại số mang lệch ⇒ `TD-0306` thành vô nghĩa mà suite vẫn xanh. Thay bằng: **mọi lệch phải giải thích được bằng đúng danh sách mã có mốc ngừng trước `T2` trong artifact `TD-0306`; lệch nào không nằm trong danh sách đó ⇒ DỪNG, không ghi file rổ**. Lệch 0 mã cũng là **kết quả phải ghi**, không im lặng bỏ qua; mở `pool_giai_doan.RO_THEO_TAP["LOCKBOX"]`, bỏ nhánh từ chối `MT-60`; 0 trial |
+| TD-0308 | **Dữ liệu `[T2,T3]` cho mã còn thiếu** | 🔓 ⏸ | TD-0307 | Chạy trong service **`lockbox`** (service DUY NHẤT thấy thư mục thật — chạy nhầm service ra *"0 file"* chứ không báo lỗi); 🔴 dữ liệu **ở lại `lockbox/data/futures/`**, **KHÔNG** chép sang `user_data/data/pool_t2/` theo khuôn `TD-0301` — chép là đưa dữ liệu lockbox ra ngoài vùng cách ly tầng OS (`ARCHITECTURE.md` 3.1), đúng hình sự cố thư mục `C`+U+F03A; 🔴 `--ro-kiem` ở đây ĐỌC NẾN THẬT ⇒ va `MT-19`, và phải khai tường minh là **không** ghi `lockbox_access.log` (ghi là tiêu mất lần chạm duy nhất); 7 mã đã huỷ không thể có dữ liệu ⇒ **luật khai báo tường minh**, không im lặng bỏ qua |
 | TD-0309 | **Vá `verify_seal()` để XÉT rổ** (giải `MT-60`) | 🔓 ⏸ | TD-0307 | `Seal` thêm `pool = {moc, file, sha256, trading[]}` + `schema: 2`; `kiem_pool_seal()` trả **ba trạng thái** `KHAI_DUNG`/`KHAI_SAI`/`KHONG_KHAI` (N6); 🔴 tương thích ngược **không im lặng** — `KHONG_KHAI` là lỗi trừ khi có trong danh sách miễn đọc từ `tool_d_config.yaml`, và `verify_all_seals()` in **dòng riêng**, không trộn vào PASS |
-| TD-0310 | **Đường mã ghi đoạn niêm phong thứ 2** | 🔓 ⏸ | TD-0305, TD-0309 | `--seal-segment N`; fail-closed theo thứ tự `N ≤ MAX_SEGMENTS` → `N == len(discover_seals())+1` (cấm nhảy số) → `verify_all_seals()` đoạn CŨ phải PASS → `write_seal` từ chối ghi đè → `kiem_pool_seal` phải `KHAI_DUNG`; 🔴 `lockbox_seal_1.json` **bất biến từng byte** sau mọi thao tác |
+| TD-0310 | **Đường mã ghi đoạn niêm phong thứ 2** | 🔓 ⏸ | TD-0305, TD-0309 | `--seal-segment N`; fail-closed theo thứ tự `N ≤ MAX_SEGMENTS` → `N == len(discover_seals())+1` (cấm nhảy số) → `verify_all_seals()` đoạn CŨ phải PASS → `write_seal` từ chối ghi đè → `kiem_pool_seal` phải `KHAI_DUNG`; 🔴 `lockbox_seal_1.json` **bất biến từng byte** sau mọi thao tác. 🔑 **`--touch` KHÔNG nhận đường dẫn seal** — nhận `--tap LOCKBOX` rồi tự chọn seal qua `kiem_pool_seal`, để người vận hành **không có cách nào gõ ra seal 1** (tiền lệ `TD-0127`: *"một tham số không tồn tại thì không ai truyền vào được"* — mạnh hơn một phép kiểm có thể bị bỏ qua). `KHONG_KHAI` fail-closed theo **vắng mặt** là allowlist, mạnh hơn danh sách seal-bị-vô-hiệu vì blacklist tự nó xoá được (phiên `-93` đề xuất) |
 
 ---
 
