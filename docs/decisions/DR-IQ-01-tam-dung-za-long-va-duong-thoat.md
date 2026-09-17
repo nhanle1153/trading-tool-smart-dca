@@ -30,9 +30,9 @@ và chứa giá trị dương nhỏ). Một cấu hình chưa calibrate, dữ li
 | TD-0184 bộ chạy ablation · cổng D4 (TD-0185/0186) | ⏸ **tạm dừng** | D4 gần như chắc chắn INCONCLUSIVE (§2.1) — 9 suất B2 mua một kết cục biết trước |
 | D5 chạy B1 (TD-0258) · D9 (TD-0286…0288) | ⏸ **tạm dừng** | Phụ thuộc D4 |
 | TD-0289 mã tiêu chí skewness (`DR-D9-02`) | ⏸ trả 🔓 | Chỉ có nghĩa khi đường ống chạy; `DR-D9-02` giữ hiệu lực |
-| D6–D8 (Khối 20–22, `DR-D6D8-01`) | ⏸ **tạm dừng** (chủ dự án chốt trong kế hoạch phiên `-33`; phiên `-01` giữ khối sẽ trình xác nhận lại ở phiên mình trước khi ghi `TASKS.md`) | Riêng cho Tool D/Zone Absorption |
+| D6–D8 (Khối 20–22, `DR-D6D8-01`) | ⏸ **tạm dừng** (chủ dự án chốt trong kế hoạch phiên `-33`; phiên `-01` giữ khối sẽ trình xác nhận lại ở phiên mình trước khi ghi `TASKS.md`) · ✅ **ĐÃ XÁC NHẬN** ở phiên `-01`, 17/09/2026 (`c113567`, kèm TD-0261) | Riêng cho Tool D/Zone Absorption |
 | TD-0247 rổ pool point-in-time | ▶ **làm tiếp phần rổ** | Không lệch sống sót, dùng lại cho MỌI chiến lược trên pool |
-| TD-0247 phần *"đo lại phễu/n/lệnh-năm Z0-T1/Z0/Z0-T0/Z3 trên rổ mới"* | ⏸ **ĐỀ XUẤT tạm dừng — chờ chủ dự án xác nhận** (suy từ quyết định tạm dừng, không phải chốt tường minh; `-01` trình ở phiên mình) | Đo riêng cho Zone Absorption — cùng lý do dòng đầu |
+| TD-0247 phần *"đo lại phễu/n/lệnh-năm Z0-T1/Z0/Z0-T0/Z3 trên rổ mới"* | ⏸ **ĐỀ XUẤT tạm dừng — chờ chủ dự án xác nhận** (suy từ quyết định tạm dừng, không phải chốt tường minh; `-01` trình ở phiên mình) · ✅ **ĐÃ XÁC NHẬN** ở phiên `-01`, 17/09/2026 (`c113567`): bỏ khỏi TD-0247, chuyển sang TD-0184 khi nối lại | Đo riêng cho Zone Absorption — cùng lý do dòng đầu |
 | Hạ tầng đo (sổ trial, lockbox, cổng, testnet/D10–D11, Risk Supervisor) | ▶ giữ nguyên | Không phụ thuộc chiến lược |
 | TD-0292/0293 (CRLF, `git status` dưới tải) | ▶ làm | Hạ tầng dùng chung |
 
