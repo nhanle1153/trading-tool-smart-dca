@@ -14,7 +14,9 @@ from tool_d.data.pool_t1_du_lieu import (
     DuLieuRoError,
     cac_thang,
     cat_den_moc,
+    duoi_nen_chet,
     kiem_du_lieu_ro,
+    moc_ngung_giao_dich,
     nhap_ma_tu_kho,
     sao_chep_ma_co_san,
     ten_file,
@@ -72,18 +74,24 @@ class TestSaoChep:
         assert (dich / ten_file("AUSDT", SAU_LOAI_FILE[0])).read_bytes() == b"cu"
 
 
-def _csv_gia(so_404: set[tuple[str, int, int]] | None = None):
-    """Kho giả: mỗi tháng trả đúng 1 nến/1 funding tại ngày 15 của tháng."""
+def _csv_gia(so_404: set[tuple[str, int, int]] | None = None, chet_tu: tuple[int, int] | None = None):
+    """Kho giả: mỗi tháng trả đúng 1 nến/1 funding tại ngày 15 của tháng.
+
+    `chet_tu=(nam, thang)`: từ tháng đó nến phẳng `volume = 0` và funding 404 — đúng hình
+    dạng đo được ở MKR/FLM (`DR-D1-03` §5)."""
     so_404 = so_404 or set()
     goi: list[tuple] = []
 
     def doc(*, loai: str, symbol: str, nam: int, thang: int, khung: str | None) -> list[list[str]]:
         goi.append((loai, khung, nam, thang))
-        if (loai, nam, thang) in so_404:
+        chet = chet_tu is not None and (nam, thang) >= chet_tu
+        if (loai, nam, thang) in so_404 or (chet and loai == "fundingRate"):
             raise NenThangKhongCoError("404")
         ms = str(int(pd.Timestamp(nam, thang, 15, tz="UTC").timestamp() * 1000))
         if loai == "fundingRate":
             return [[ms, "8", "0.0001"]]
+        if chet:
+            return [[ms, "7", "7", "7", "7", "0", "0", "0", "0", "0", "0", "0"]]
         return [[ms, "1", "2", "0.5", "1.5", "3", "0", "9", "1", "0", "0", "0"]]
 
     return doc, goi
@@ -95,11 +103,13 @@ class TestNhapKho:
         kq = nhap_ma_tu_kho(
             "MKRUSDT", dich=tmp_path, khoang={"thang_dau": "2023-01", "thang_cuoi": "2025-09"}, moc=MOC, doc_csv=doc
         )
-        assert len(kq) == 6
+        assert len(kq.so_hang) == 6
         # 1h futures: tháng 2024-04 … 2025-09 = 18 tháng; nến ngày 15/04/2024 ≥ T0 nên giữ.
-        assert kq["MKR_USDT_USDT-1h-futures.feather"] == 18
+        assert kq.so_hang["MKR_USDT_USDT-1h-futures.feather"] == 18
         # 5m: từ T1 (06/2025): tháng 6 nến ngày 15 ≥ 12/06 ⇒ giữ; 6..9 = 4 tháng.
-        assert kq["MKR_USDT_USDT-5m-futures.feather"] == 4
+        assert kq.so_hang["MKR_USDT_USDT-5m-futures.feather"] == 4
+        # Kho hết file sau 09/2025 ⇒ nến cuối có giao dịch 15/09/2025 < T2 ⇒ là mốc ngừng.
+        assert kq.moc_ngung == pd.Timestamp("2025-09-15", tz="UTC")
         assert not any(t[2:] > (2025, 9) for t in goi)
         f = pd.read_feather(tmp_path / "MKR_USDT_USDT-1h-mark.feather")
         assert (f["volume"] == 0.0).all()
@@ -173,3 +183,63 @@ class TestKiemDuLieuRo:
         self._ghi_du(tmp_path, "AUSDT", tu="2024-09-01")
         loi = kiem_du_lieu_ro(tmp_path, ["AUSDT"], {"AUSDT": {"thang_dau": "2023-01", "thang_cuoi": "2026-08"}}, MOC)
         assert any("muộn hơn cần" in x for x in loi)
+
+
+class TestMocNgungGiaoDich:
+    def test_nen_chet_sau_moc_bi_CAT_va_funding_404_sau_moc_KHONG_la_loi(self, tmp_path: Path) -> None:
+        """Hình dạng MKR: nến vẫn có tới T2 nhưng phẳng volume 0 từ 10/2025, funding 404."""
+        doc, goi = _csv_gia(chet_tu=(2025, 10))
+        kq = nhap_ma_tu_kho(
+            "MKRUSDT", dich=tmp_path, khoang={"thang_dau": "2023-01", "thang_cuoi": "2026-08"}, moc=MOC, doc_csv=doc
+        )
+        assert kq.moc_ngung == pd.Timestamp("2025-09-15", tz="UTC")
+        assert kq.gia_dong_cuoi == 1.5  # nến giao dịch cuối, KHÔNG phải nến chết (7.0)
+        for lf in SAU_LOAI_FILE:
+            df = pd.read_feather(tmp_path / ten_file("MKRUSDT", lf))
+            assert df["date"].max() <= kq.moc_ngung
+        # Không tải funding/mark/4h/1d/5m của tháng sau tháng ngừng.
+        assert not any(t[0] != "klines" and t[2:] > (2025, 9) for t in goi)
+        assert not any(t[0] == "klines" and t[1] != "1h" and t[2:] > (2025, 9) for t in goi)
+
+    def test_ma_con_song_toi_T2_khong_co_moc_ngung(self) -> None:
+        df = _df_nen("2026-01-27", "2026-01-29", "1h")
+        assert moc_ngung_giao_dich(df, MOC["t2"]) is None
+
+    def test_khong_nen_nao_co_giao_dich_thi_TU_CHOI(self) -> None:
+        df = _df_nen("2026-01-27", "2026-01-29", "1h").assign(volume=0.0)
+        with pytest.raises(DuLieuRoError):
+            moc_ngung_giao_dich(df, MOC["t2"])
+
+    def test_dem_duoi_nen_chet(self) -> None:
+        df = _df_nen("2026-01-01", "2026-01-03", "1h")
+        df.loc[df.index[-30:], "volume"] = 0.0
+        assert duoi_nen_chet(df) == 30
+
+
+class TestKiemMocNgung:
+    def _ghi(self, thu_muc: Path, ma: str, den: str, vol_cuoi_0: int = 0) -> None:
+        thu_muc.mkdir(parents=True, exist_ok=True)
+        for lf in SAU_LOAI_FILE:
+            bat_dau = "2025-06-12" if lf.tu_moc == "t1" else "2024-04-09"
+            df = _df_nen(bat_dau, den, "1h" if lf is SAU_LOAI_FILE[0] else "1D")
+            if vol_cuoi_0:
+                df.loc[df.index[-vol_cuoi_0:], "volume"] = 0.0
+            df.to_feather(thu_muc / ten_file(ma, lf))
+
+    def test_ma_da_khai_moc_ngung_ket_thuc_dung_moc_la_hop_le(self, tmp_path: Path) -> None:
+        self._ghi(tmp_path, "MKRUSDT", den="2025-09-08 08:00")
+        khoang = {"MKRUSDT": {"thang_dau": "2023-01", "thang_cuoi": "2026-08"}}
+        moc_ngung = {"MKRUSDT": pd.Timestamp("2025-09-08 08:00", tz="UTC")}
+        assert kiem_du_lieu_ro(tmp_path, ["MKRUSDT"], khoang, MOC, moc_ngung) == []
+
+    def test_ma_ket_thuc_som_KHONG_khai_thi_bao(self, tmp_path: Path) -> None:
+        self._ghi(tmp_path, "MKRUSDT", den="2025-09-08 08:00")
+        khoang = {"MKRUSDT": {"thang_dau": "2023-01", "thang_cuoi": "2026-08"}}
+        loi = kiem_du_lieu_ro(tmp_path, ["MKRUSDT"], khoang, MOC)
+        assert any("sớm hơn T2" in x for x in loi)
+
+    def test_duoi_nen_chet_chua_khai_thi_bao_du_ket_thuc_dung_T2(self, tmp_path: Path) -> None:
+        self._ghi(tmp_path, "AUSDT", den="2026-01-29", vol_cuoi_0=48)
+        khoang = {"AUSDT": {"thang_dau": "2023-01", "thang_cuoi": "2026-08"}}
+        loi = kiem_du_lieu_ro(tmp_path, ["AUSDT"], khoang, MOC)
+        assert any("nến chết chưa khai" in x for x in loi)

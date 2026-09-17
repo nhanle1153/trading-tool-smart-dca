@@ -174,7 +174,34 @@ def build_parser() -> argparse.ArgumentParser:
 POOL_T1_DATA_DIR = Path("user_data/data/pool_t1/futures")
 POOL_T1_YAML = Path("config/pool_t1.yaml")
 NGUON_TD0230 = Path("docs/du-lieu-do/td0230-lech-song-sot-pool.json")
+MOC_NGUNG_JSON = Path("docs/du-lieu-do/td0247-moc-ngung-giao-dich.json")
 EXIT_RO_T1_LOI = 98
+
+
+def _doc_moc_ngung() -> dict:
+    """`DR-D1-03` §5 — {mã: {"moc_ngung": iso, ...}} đã đo khi nhập kho. Chưa có file = rỗng."""
+    if not MOC_NGUNG_JSON.is_file():
+        return {}
+    return json.loads(MOC_NGUNG_JSON.read_text(encoding="utf-8"))["ma"]
+
+
+def _ghi_moc_ngung(symbol: str, ban_ghi: dict) -> None:
+    """Gộp một mã vào artifact; mã đã có với mốc KHÁC ⇒ từ chối (không ghi đè im lặng)."""
+    du_lieu = (
+        json.loads(MOC_NGUNG_JSON.read_text(encoding="utf-8"))
+        if MOC_NGUNG_JSON.is_file()
+        else {
+            "nguon": "TD-0247 / DR-D1-03 §5 — mốc ngừng giao dịch đo khi nhập kho: nến 1h futures CUỐI có "
+            "volume > 0 (sớm hơn T2 − 1 giờ). Sau mốc, kho sinh nến phẳng giá thanh toán, volume 0. 0 trial.",
+            "ma": {},
+        }
+    )
+    cu = du_lieu["ma"].get(symbol)
+    if cu is not None and cu["moc_ngung"] != ban_ghi["moc_ngung"]:
+        raise RuntimeError(f"{symbol}: artifact đã ghi mốc {cu['moc_ngung']}, lần đo này ra {ban_ghi['moc_ngung']} — không ghi đè")
+    du_lieu["ma"][symbol] = ban_ghi
+    MOC_NGUNG_JSON.write_text(json.dumps(du_lieu, ensure_ascii=False, indent=1) + "
+", encoding="utf-8")
 
 
 def _moc_phan_vung() -> dict:
@@ -235,7 +262,17 @@ def do_ro_t1_nhap_kho(pairs: str) -> int:
         except (DuLieuRoError, DuLieuKhoError, KhoLuuTruError) as exc:
             print(f"🛑 {s}: {exc} — DỪNG, các mã trước đã ghi đủ 6 file, mã này không ghi file nào")
             return EXIT_RO_T1_LOI
-        print(f"✅ {s}: " + ", ".join(f"{k} {v} hàng" for k, v in kq.items()))
+        if kq.moc_ngung is not None:
+            _ghi_moc_ngung(
+                s,
+                {
+                    "moc_ngung": kq.moc_ngung.isoformat(),
+                    "gia_dong_nen_cuoi": kq.gia_dong_cuoi,
+                    "so_hang_1h_futures": kq.so_hang[f"{s[:-4]}_USDT_USDT-1h-futures.feather"],
+                },
+            )
+        ngung = f" · NGỪNG GIAO DỊCH {kq.moc_ngung} (đã cắt, ghi {MOC_NGUNG_JSON})" if kq.moc_ngung is not None else ""
+        print(f"✅ {s}: " + ", ".join(f"{k} {v} hàng" for k, v in kq.so_hang.items()) + ngung)
     return 0
 
 
@@ -261,7 +298,10 @@ def do_ro_t1_kiem() -> int:
     from tool_d.data.pool_t1_du_lieu import kiem_du_lieu_ro
 
     ro, khoang = _ro_t1_va_khoang()
-    loi = kiem_du_lieu_ro(POOL_T1_DATA_DIR, ro, khoang, _moc_phan_vung())
+    import pandas as pd
+
+    moc_ngung = {k: pd.Timestamp(v["moc_ngung"]) for k, v in _doc_moc_ngung().items()}
+    loi = kiem_du_lieu_ro(POOL_T1_DATA_DIR, ro, khoang, _moc_phan_vung(), moc_ngung)
     if loi:
         print(f"🛑 Rổ T1 CHƯA đủ dữ liệu — {len(loi)} lỗi:")
         for x in loi[:40]:
@@ -269,7 +309,10 @@ def do_ro_t1_kiem() -> int:
         if len(loi) > 40:
             print(f"  … và {len(loi) - 40} lỗi nữa")
         return EXIT_RO_T1_LOI
-    print(f"✅ Rổ T1 đủ dữ liệu: {len(ro)} mã × 6 file, không lấn T2, đúng mốc đầu/cuối.")
+    print(
+        f"✅ Rổ T1 đủ dữ liệu: {len(ro)} mã × 6 file, không lấn T2, đúng mốc đầu/cuối; "
+        f"{len(moc_ngung)} mã ngừng giao dịch trước T2 đã cắt đúng mốc: {sorted(moc_ngung)}."
+    )
     return 0
 
 
