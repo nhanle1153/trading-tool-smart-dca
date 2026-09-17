@@ -89,9 +89,17 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--ro-t0",
+        action="store_true",
+        help=(
+            "TD-0300 / DR-D1-05: dựng rổ pool ĐÚNG TẠI T0 cho CALIB (0 trial). "
+            "Thiếu --ghi chỉ IN; có --ghi thì ghi config/pool_t0.yaml (từ chối ghi đè)."
+        ),
+    )
+    parser.add_argument(
         "--ghi",
         action="store_true",
-        help="Đi kèm --ro-t1: thực sự ghi config/pool_t1.yaml.",
+        help="Đi kèm --ro-t1/--ro-t0: thực sự ghi config/pool_<mốc>.yaml.",
     )
     parser.add_argument(
         "--check-min-notional",
@@ -210,6 +218,7 @@ def check_min_notional() -> int:
 
 
 RO_T1_OUTPUT_PATH = Path("config/pool_t1.yaml")
+MOC_RO_HOP_LE = ("t0", "t1")  # DR-D1-05: T2 ⏸ (MT-60)
 THU_MUC_EXPLORE = Path("user_data/data/explore/futures")
 NGUON_TD0230 = Path("docs/du-lieu-do/td0230-lech-song-sot-pool.json")
 NGUON_TD0231 = Path("docs/du-lieu-do/td0231-pool-point-in-time.json")
@@ -225,8 +234,14 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def sinh_ro_t1(
+def sinh_ro_t1(**kw) -> int:
+    """Giữ tên cũ (TD-0247) — rổ tại `T1`. Xem `sinh_ro_tai_moc()`."""
+    return sinh_ro_tai_moc(moc_ten="t1", **kw)
+
+
+def sinh_ro_tai_moc(
     *,
+    moc_ten: str,
     ghi: bool,
     repo_dir: Path = Path("."),
     doc_volume_thang=None,
@@ -235,14 +250,16 @@ def sinh_ro_t1(
     bay_gio=None,
     lay_git_info=None,
 ) -> int:
-    """TD-0247 / `DR-D1-03` §2 — bộ sinh rổ `T1` có xuất xứ. **0 trial**, không ghi sổ.
+    """TD-0247 / TD-0300 (`DR-D1-03` §2, `DR-D1-05`) — bộ sinh rổ ĐÚNG TẠI MỘT MỐC có xuất xứ.
+    **0 trial**, không ghi sổ. `moc_ten` ∈ `MOC_RO_HOP_LE` (mốc `tier_c.data_split`); đích
+    `config/pool_<moc_ten>.yaml`; đối chiếu `td0231["pool_dung_tai_<moc_ten>"]`.
 
     Thứ tự fail-closed:
       1. (khi `ghi`) file đích đã tồn tại ⇒ từ chối ghi đè (khuôn E7);
       2. (khi `ghi`) có thay đổi chưa commit trong vùng ảnh hưởng phép đo ⇒ từ chối,
          vì `git_sha` ghi vào file phải trỏ đúng mã đã sinh ra nó;
       3. thư mục EXPLORE không đọc được / rỗng ⇒ từ chối (tập rỗng nhận lại mã phải loại);
-      4. tính lại rổ đủ tiêu chí tại `T1` từ kho lưu trữ; KHÔNG khít `TD-0231` ⇒ từ chối;
+      4. tính lại rổ đủ tiêu chí tại mốc từ kho lưu trữ; KHÔNG khít `TD-0231` ⇒ từ chối;
       5. ghép rổ cuối (− EXPLORE đã dùng − TRADIFI).
 
     Các tham số hàm (`doc_volume_thang`, `lay_exchange_info`, `thay_doi_chua_commit`,
@@ -264,10 +281,14 @@ def sinh_ro_t1(
     bay_gio = bay_gio or (lambda: datetime.now(timezone.utc))
     lay_git_info = lay_git_info or get_git_info
 
-    dich = repo_dir / RO_T1_OUTPUT_PATH
+    if moc_ten not in MOC_RO_HOP_LE:
+        raise ValueError(f"moc_ten {moc_ten!r} không thuộc {MOC_RO_HOP_LE} (DR-D1-05: rổ T2 ⏸ MT-60)")
+    duong_ra = Path(f"config/pool_{moc_ten}.yaml")
+    MOC = moc_ten.upper()
+    dich = repo_dir / duong_ra
     if ghi and dich.exists():
         print(
-            f"🛑 {RO_T1_OUTPUT_PATH} đã tồn tại — rổ T1 ĐÃ được sinh. KHÔNG sinh lại "
+            f"🛑 {duong_ra} đã tồn tại — rổ {MOC} ĐÃ được sinh. KHÔNG sinh lại "
             "(spec dòng 350-352: không chọn lại pool sau khi đã thấy kết quả). "
             "Xoá thủ công + ghi DR mới nếu thực sự cần."
         )
@@ -289,14 +310,14 @@ def sinh_ro_t1(
         return EXIT_RO_T1_EXPLORE
 
     cfg = load_tool_d_config(repo_dir / "config" / "tool_d_config.yaml")
-    t1 = date.fromisoformat(str(resolve(cfg, "tier_c.data_split")["t1"]))
+    moc_ngay = date.fromisoformat(str(resolve(cfg, "tier_c.data_split")[moc_ten]))
     khoang = json.loads((repo_dir / NGUON_TD0230).read_text(encoding="utf-8"))["khoang_ton_tai"]
     td0231 = json.loads((repo_dir / NGUON_TD0231).read_text(encoding="utf-8"))
 
-    print(f"Mốc T1 = {t1} · ứng viên từ TD-0230: {len(khoang)} mã · EXPLORE đã dùng: {len(explore_da_dung)} mã")
+    print(f"Mốc {MOC} = {moc_ngay} · ứng viên từ TD-0230: {len(khoang)} mã · EXPLORE đã dùng: {len(explore_da_dung)} mã")
     try:
         kq = dung_ro_tai_moc(
-            t1,
+            moc_ngay,
             khoang,
             doc_volume_thang=doc_volume_thang,
             age_floor_days=AGE_FLOOR_DAYS,
@@ -308,14 +329,14 @@ def sinh_ro_t1(
         return EXIT_FETCH_FAILED
 
     # DR-D1-03 §2 — đối chiếu độc lập: hai đường chạy cùng logic phải ra cùng một rổ.
-    tham_chieu = td0231["pool_dung_tai_t1"]
-    lech_moc = td0231["moc"].get("t1") != t1.isoformat()
+    tham_chieu = td0231[f"pool_dung_tai_{moc_ten}"]
+    lech_moc = td0231["moc"].get(moc_ten) != moc_ngay.isoformat()
     chi_moi = sorted(set(kq.pool_dung) - set(tham_chieu["danh_sach"]))
     chi_td0231 = sorted(set(tham_chieu["danh_sach"]) - set(kq.pool_dung))
     if lech_moc or chi_moi or chi_td0231:
         print(
-            "🛑 Rổ đủ tiêu chí tại T1 tính lại KHÔNG khít TD-0231 — một trong hai đường "
-            f"đang sai, không ghi.\n  mốc TD-0231: {td0231['moc'].get('t1')} vs {t1}\n"
+            f"🛑 Rổ đủ tiêu chí tại {MOC} tính lại KHÔNG khít TD-0231 — một trong hai đường "
+            f"đang sai, không ghi.\n  mốc TD-0231: {td0231['moc'].get(moc_ten)} vs {moc_ngay}\n"
             f"  chỉ có ở lần tính mới ({len(chi_moi)}): {chi_moi}\n"
             f"  chỉ có ở TD-0231 ({len(chi_td0231)}): {chi_td0231}"
         )
@@ -323,16 +344,16 @@ def sinh_ro_t1(
 
     ro = ghep_ro_t1(kq.pool_dung, explore_da_dung, exchange_info["symbols"])
     print(
-        f"Đủ tiêu chí tại T1: {len(kq.pool_dung)} (khít TD-0231) · loại EXPLORE đã dùng: "
+        f"Đủ tiêu chí tại {MOC}: {len(kq.pool_dung)} (khít TD-0231) · loại EXPLORE đã dùng: "
         f"{len(ro.loai_explore_da_dung)} · loại TRADIFI: {len(ro.loai_tradifi)} · "
-        f"RỔ T1: {len(ro.trading)} mã"
+        f"RỔ {MOC}: {len(ro.trading)} mã"
     )
     print(
         f"Không đo được — 404: {len(kq.khong_do_duoc_404)} · thiếu ngày: "
         f"{len(kq.khong_do_duoc_thieu_ngay)} (ghi riêng, KHÔNG tính là trượt tiêu chí)"
     )
     if not ghi:
-        print("\n(chạy thử — thêm --ghi để ghi config/pool_t1.yaml)")
+        print(f"\n(chạy thử — thêm --ghi để ghi {duong_ra})")
         return 0
 
     git_info = lay_git_info(repo_dir)
@@ -341,10 +362,10 @@ def sinh_ro_t1(
         yaml.dump(
             {
                 "_doc": (
-                    "TD-0247 / DR-D1-03 — rổ pool ĐÚNG TẠI T1, sinh bằng E7 --ro-t1 --ghi. "
-                    "0 trial. KHÔNG phải config/pool.yaml sản xuất (DR-D1-02 §6)."
+                    f"TD-0247/TD-0300 / DR-D1-03, DR-D1-05 — rổ pool ĐÚNG TẠI {MOC}, sinh bằng E7 "
+                    f"--ro-{moc_ten} --ghi. 0 trial. KHÔNG phải config/pool.yaml (rổ hôm nay, DR-D1-05 §1)."
                 ),
-                "moc_t1": t1.isoformat(),
+                f"moc_{moc_ten}": moc_ngay.isoformat(),
                 "criteria": {
                     "volume_24h_usdt_min": VOLUME_FLOOR_USDT,
                     "listing_age_days_min": AGE_FLOOR_DAYS,
@@ -386,7 +407,7 @@ def sinh_ro_t1(
         ),
         encoding="utf-8",
     )
-    print(f"\n✅ Đã ghi {RO_T1_OUTPUT_PATH} — {len(ro.trading)} mã, git_sha {git_info.sha[:7]}, 0 trial")
+    print(f"\n✅ Đã ghi {duong_ra} — {len(ro.trading)} mã, git_sha {git_info.sha[:7]}, 0 trial")
     return 0
 
 
@@ -400,6 +421,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.ro_t1:
         return sinh_ro_t1(ghi=args.ghi)
+    if args.ro_t0:
+        return sinh_ro_tai_moc(moc_ten="t0", ghi=args.ghi)
 
     if args.check_min_notional:
         return check_min_notional()

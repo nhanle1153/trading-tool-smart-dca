@@ -7,7 +7,7 @@ module RIÊNG gọi nó).
 🔴 `DR-D1-03` (17/09/2026) đính chính `DR-D1-02` §2:
   • tập EXPLORE bị loại vĩnh viễn = mọi mã có DỮ LIỆU trong thư mục EXPLORE
     (đã dùng để sinh giả thuyết), KHÔNG phải khối `explore:` của
-    `config/pool.yaml` (430 mã = mọi mã trượt tiêu chí 09/2026 — áp khối đó
+    `config/pool.yaml` (426 mã = mọi mã trượt tiêu chí 09/2026 — áp khối đó
     loại 54/116 mã và tái tạo lệch sống sót);
   • "trượt tiêu chí" xét TẠI `T1`, không chuỗi `pairlist_over_time()` từ `T0`.
 """
@@ -44,7 +44,7 @@ def loai_tru_explore_hien_tai(
     🔄 `DR-D1-03` §1.1 (17/09/2026) — nghĩa ĐÚNG của `explore_hien_tai` là tập
     mã CÓ DỮ LIỆU EXPLORE (đọc bằng `ma_co_du_lieu_explore()`), KHÔNG phải khối
     `explore:` của `config/pool.yaml`. Docstring bản `4fe5068` ghi theo khối đó
-    và là SAI: khối có 430 mã (mọi mã trượt tiêu chí đo 09/2026), áp nó loại 54
+    và là SAI: khối có 426 mã (mọi mã trượt tiêu chí đo 09/2026), áp nó loại 54
     mã của rổ `T1` — gồm 45 mã đủ tiêu chí giữa 2025 rồi suy giảm, tức tái tạo
     đúng lệch sống sót `TD-0247` sinh ra để sửa.
 

@@ -19,6 +19,7 @@ from tool_d.api_client.binance_public import KhoLuuTruError, NenThangKhongCoErro
 from tool_d.measurement.gitinfo import GitInfo
 
 REPO = Path(__file__).resolve().parents[2]
+T0 = date(2024, 4, 9)
 T1 = date(2025, 6, 12)
 SAN_VOL = 15_000_000.0
 
@@ -43,9 +44,17 @@ KHOANG = {
 }
 VOL = {"AUSDT": SAN_VOL * 3, "BUSDT": SAN_VOL * 2, "EXPLUSDT": SAN_VOL * 2, "LOWUSDT": SAN_VOL / 2}
 DU_TIEU_CHI = ["AUSDT", "BUSDT", "EXPLUSDT"]
+# Tại T0 (09/04/2024): BUSDT (niêm yết 2023-02) còn đủ tuổi; mọi mã khoảng trên đều đã sống.
+DU_TIEU_CHI_T0 = ["AUSDT", "BUSDT", "EXPLUSDT"]
 
 
-def _repo(tmp_path: Path, *, td0231_danh_sach: list[str] = DU_TIEU_CHI, explore: bool = True) -> Path:
+def _repo(
+    tmp_path: Path,
+    *,
+    td0231_danh_sach: list[str] = DU_TIEU_CHI,
+    td0231_t0: list[str] = DU_TIEU_CHI_T0,
+    explore: bool = True,
+) -> Path:
     (tmp_path / "config").mkdir()
     shutil.copy(REPO / "config" / "tool_d_config.yaml", tmp_path / "config" / "tool_d_config.yaml")
     dl = tmp_path / "docs" / "du-lieu-do"
@@ -54,7 +63,13 @@ def _repo(tmp_path: Path, *, td0231_danh_sach: list[str] = DU_TIEU_CHI, explore:
         json.dumps({"khoang_ton_tai": KHOANG}), encoding="utf-8"
     )
     (dl / "td0231-pool-point-in-time.json").write_text(
-        json.dumps({"moc": {"t1": T1.isoformat()}, "pool_dung_tai_t1": {"danh_sach": td0231_danh_sach}}),
+        json.dumps(
+            {
+                "moc": {"t0": T0.isoformat(), "t1": T1.isoformat()},
+                "pool_dung_tai_t0": {"danh_sach": td0231_t0},
+                "pool_dung_tai_t1": {"danh_sach": td0231_danh_sach},
+            }
+        ),
         encoding="utf-8",
     )
     if explore:
@@ -66,9 +81,10 @@ def _repo(tmp_path: Path, *, td0231_danh_sach: list[str] = DU_TIEU_CHI, explore:
 
 
 def _doc_volume(sym: str, nam: int, thang: int):
-    if (nam, thang) != (T1.year, T1.month):
-        raise NenThangKhongCoError("không cần tháng khác trong ca này")
-    return {T1: VOL[sym]}
+    for moc in (T0, T1):
+        if (nam, thang) == (moc.year, moc.month):
+            return {moc: VOL[sym]}
+    raise NenThangKhongCoError("không cần tháng khác trong ca này")
 
 
 def _chay(repo: Path, *, ghi: bool = True, **kw) -> int:
@@ -158,3 +174,49 @@ def test_main_goi_guard_truoc_ro_t1(co: str) -> None:
 
     src = inspect.getsource(E7.main)
     assert src.index("measurement_guard(") < src.index("if args.ro_t1:")
+
+
+# ─── TD-0300 (DR-D1-05) — cùng bộ sinh, mốc T0, đích config/pool_t0.yaml ───
+
+
+def _chay_moc(repo: Path, moc_ten: str, *, ghi: bool = True, **kw) -> int:
+    mac_dinh = dict(
+        doc_volume_thang=_doc_volume,
+        lay_exchange_info=lambda: {"symbols": []},
+        thay_doi_chua_commit=lambda _: [],
+        bay_gio=lambda: datetime(2026, 9, 17, tzinfo=timezone.utc),
+        lay_git_info=lambda _: GitInfo(sha="b" * 40, is_clean=True),
+    )
+    mac_dinh.update(kw)
+    return E7.sinh_ro_tai_moc(moc_ten=moc_ten, ghi=ghi, repo_dir=repo, **mac_dinh)
+
+
+def test_ro_t0_ghi_pool_t0_va_KHONG_dung_pool_t1(tmp_path: Path) -> None:
+    repo = _repo(tmp_path)
+    assert _chay_moc(repo, "t0") == 0
+    ro = yaml.safe_load((repo / "config" / "pool_t0.yaml").read_text(encoding="utf-8"))
+    assert ro["moc_t0"] == "2024-04-09" and "moc_t1" not in ro
+    assert ro["trading"] == ["AUSDT", "BUSDT"]
+    assert ro["loai"]["explore_da_dung"] == ["EXPLUSDT"]
+    assert not (repo / "config" / "pool_t1.yaml").exists()
+
+
+def test_ro_t0_doi_chieu_voi_pool_dung_tai_t0_chu_KHONG_phai_t1(tmp_path: Path) -> None:
+    """Kiểm có răng: tham chiếu T1 khớp nhưng tham chiếu T0 lệch ⇒ nhánh t0 phải chặn."""
+    repo = _repo(tmp_path, td0231_t0=["AUSDT"])
+    assert _chay_moc(repo, "t0") == E7.EXIT_RO_T1_LECH_TD0231
+    assert not (repo / "config" / "pool_t0.yaml").exists()
+
+
+def test_moc_t2_hoac_la_bi_tu_choi(tmp_path: Path) -> None:
+    repo = _repo(tmp_path)
+    for moc in ("t2", "t3", "hom_nay"):
+        with pytest.raises(ValueError):
+            _chay_moc(repo, moc)
+
+
+def test_main_co_ro_t0_di_sau_guard() -> None:
+    import inspect
+
+    src = inspect.getsource(E7.main)
+    assert src.index("measurement_guard(") < src.index("if args.ro_t0:")
