@@ -1,0 +1,36 @@
+{
+  "_doc": "TD-0312 / DR-BC-01 §6.1 — can tren cua --timerange. 0 trial, du lieu tu dung.",
+  "chien_luoc": "ZoneAbsorptionMinimal",
+  "du_lieu_tu": "2024-12-01",
+  "du_lieu_den": "2025-01-25",
+  "nen_1h_cuoi_trong_du_lieu": "2025-01-25 00:00:00+00:00",
+  "cua_so_muon_do": {
+    "tu_bao_gom": "2024-12-15 00:00:00+00:00",
+    "den_KHONG_bao_gom": "2025-01-20 00:00:00+00:00",
+    "nen_cuoi_dung_ra_phai_doc": "2025-01-19 23:00:00+00:00"
+  },
+  "ca_a_dang_ngay": {
+    "timerange_truyen": "20241215-20250120",
+    "returncode": 0,
+    "timerange_trong_bao_cao": "20241215-20250120",
+    "backtest_start": "2024-12-15 00:00:00+00:00",
+    "backtest_end": "2025-01-20 00:00:00+00:00",
+    "so_lenh": 0
+  },
+  "ca_b_dang_unix_giay_lui_1s": {
+    "timerange_truyen": "1734220800-1737331199",
+    "returncode": 0,
+    "timerange_trong_bao_cao": "1734220800-1737331199",
+    "backtest_start": "2024-12-15 00:00:00+00:00",
+    "backtest_end": "2025-01-19 23:00:00+00:00",
+    "so_lenh": 0
+  },
+  "ket_luan_can_tren": "BAO_GOM",
+  "ket_luan_dang_unix": "NHAN_VA_CAT_DUNG",
+  "_giai_thich": {
+    "BAO_GOM": "backtest_end == 2025-01-20 00:00:00+00:00 — nen tai moc ĐƯỢC tinh",
+    "KHONG_BAO_GOM": "backtest_end == 2025-01-19 23:00:00+00:00 — nen tai moc BI LOAI",
+    "NHAN_VA_CAT_DUNG": "dang unix giay dung duoc cho cua so NUA MO cua Fold",
+    "KHONG_NHAN_DANG_UNIX": "Freqtrade tu choi dang unix giay — phai dung duong khac"
+  }
+}
