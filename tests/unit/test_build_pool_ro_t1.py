@@ -220,3 +220,23 @@ def test_main_co_ro_t0_di_sau_guard() -> None:
 
     src = inspect.getsource(E7.main)
     assert src.index("measurement_guard(") < src.index("if args.ro_t0:")
+
+
+def test_khoa_khong_do_duoc_mang_ten_moc(tmp_path: Path) -> None:
+    """Lỗi thật 17/09/2026: bản đầu ghi cứng `thieu_hang_dung_ngay_t1` cho cả rổ T0."""
+    repo = _repo(tmp_path)
+    assert _chay_moc(repo, "t0") == 0
+    ro = yaml.safe_load((repo / "config" / "pool_t0.yaml").read_text(encoding="utf-8"))
+    assert set(ro["khong_do_duoc"]) == {"kho_404", "thieu_hang_dung_ngay_t0"}
+
+
+def test_git_info_loi_thi_KHONG_ghi_ro_va_tra_ma_loi(tmp_path: Path) -> None:
+    from tool_d.measurement.gitinfo import GitInfoError
+
+    repo = _repo(tmp_path)
+
+    def hong(_):
+        raise GitInfoError("git status quá hạn 10 s")
+
+    assert _chay(repo, lay_git_info=hong) == E7.EXIT_RO_T1_CAY_BAN
+    assert not (repo / "config" / "pool_t1.yaml").exists()

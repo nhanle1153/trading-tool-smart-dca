@@ -22,7 +22,7 @@ import yaml
 from tool_d.api_client.binance_public import BinancePublicApiError, get_exchange_info, get_ticker_24hr
 from tool_d.gates.dsr import N_DANG_KY
 from tool_d.ledger.registry import BudgetExhaustedError, TrialLedger
-from tool_d.measurement.gitinfo import get_git_info
+from tool_d.measurement.gitinfo import GitInfoError, get_git_info
 from tool_d.measurement.guard import EXIT_GUARD_BLOCKED, GuardOutcome, measurement_guard
 from tool_d.pool import build_symbol_stats, compute_pool
 
@@ -356,7 +356,13 @@ def sinh_ro_tai_moc(
         print(f"\n(chạy thử — thêm --ghi để ghi {duong_ra})")
         return 0
 
-    git_info = lay_git_info(repo_dir)
+    try:
+        git_info = lay_git_info(repo_dir)
+    except GitInfoError as exc:
+        # Đo 17/09/2026: `git status` trong container thường 1,3–2,3 s nhưng từng vượt hạn 10 s
+        # một lần — dừng có mã lỗi, KHÔNG ghi rổ thiếu git_sha (0d.5).
+        print(f"🛑 Không lấy được git_sha, KHÔNG ghi rổ: {exc}")
+        return EXIT_RO_T1_CAY_BAN
     dich.parent.mkdir(parents=True, exist_ok=True)
     dich.write_text(
         yaml.dump(
@@ -377,7 +383,7 @@ def sinh_ro_tai_moc(
                 },
                 "khong_do_duoc": {
                     "kho_404": list(kq.khong_do_duoc_404),
-                    "thieu_hang_dung_ngay_t1": list(kq.khong_do_duoc_thieu_ngay),
+                    f"thieu_hang_dung_ngay_{moc_ten}": list(kq.khong_do_duoc_thieu_ngay),
                 },
                 "dem": {
                     "ung_vien_song_tai_t1": len(kq.ung_vien_song),
