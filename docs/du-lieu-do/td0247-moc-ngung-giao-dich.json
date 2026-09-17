@@ -1,0 +1,15 @@
+{
+ "nguon": "TD-0247 / DR-D1-03 §5 — mốc ngừng giao dịch đo khi nhập kho: nến 1h futures CUỐI có volume > 0 (sớm hơn T2 − 1 giờ). Sau mốc, kho sinh nến phẳng giá thanh toán, volume 0. 0 trial.",
+ "ma": {
+  "FLMUSDT": {
+   "moc_ngung": "2025-11-21T08:00:00+00:00",
+   "gia_dong_nen_cuoi": 0.0082,
+   "so_hang_1h_futures": 14193
+  },
+  "MKRUSDT": {
+   "moc_ngung": "2025-09-08T08:00:00+00:00",
+   "gia_dong_nen_cuoi": 1650.1,
+   "so_hang_1h_futures": 12417
+  }
+ }
+}
