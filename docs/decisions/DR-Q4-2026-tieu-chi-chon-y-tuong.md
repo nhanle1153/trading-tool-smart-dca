@@ -17,18 +17,19 @@ HAN_NGACH_CHON: 1
 **Vì sao 1 — điều kiện (d) của `DR-IQ-01` §3 đã thoả** (chủ dự án xác nhận tạm dừng tiêu suất Zone Absorption
 LONG, 17/09/2026). Ba điều kiện `(a)(b)(c)` của `DR-Q3-2026` §2 **không** xảy ra; đây là suất (d), **đúng một lần**.
 🔴 File này cố ý **không** ghi con số hay kết cục định lượng nào của Tool D — nó là tài liệu phiên CHỌN (phiên IDEA
-sạch, DR-009) được phép đọc. **Phiên chọn KHÔNG đọc `DR-IQ-01` §0 và §2** (có số kết quả).
+sạch, DR-009) được phép đọc. **Phiên chọn KHÔNG mở `DR-IQ-01`** (có số kết quả) — định nghĩa loại trừ nằm ở
+`DR-IQ-01A-danh-sach-loai-tru-co-che.md` (không có số).
 
 **Giới hạn của suất này** (`DR-IQ-01` §3, nhắc lại để người chọn đọc tại chỗ):
-- **KHÔNG** dùng cho ý tưởng thuộc danh sách loại trừ **Z-1…Z-5** (`DR-IQ-01` §3.1) — gồm **IQ-0001** (Z-2).
+- **KHÔNG** dùng cho ý tưởng thuộc danh sách loại trừ **Z-1…Z-5** (`DR-IQ-01A-danh-sach-loai-tru-co-che.md`) — gồm **IQ-0001** (Z-2).
   `selection_reason` phải khai *"không thuộc Z-1…Z-5"* và vì sao; nghi ngờ ⇒ coi như thuộc.
-- **CHỌN do phiên IDEA sạch** (`DR-IQ-01` §3.2): chưa đọc kết quả Tool D; `selection_reason` không tham chiếu kết
+- **CHỌN do phiên IDEA sạch** (DR-009): chưa đọc kết quả Tool D; `selection_reason` không tham chiếu kết
   quả định lượng Tool D.
 - Ý tưởng được chọn vẫn qua cửa CHỌN (MT-12), cần **lockbox MỚI**, đi đủ chu trình từ D0.
 - Không dồn, không chọn bù: không chọn trong quý 4 thì suất này **không** chuyển sang quý sau.
 
 ⚠️ Máy TD-0120 chỉ đọc con số hạn ngạch; các giới hạn trên **không có máy kiểm** — người chọn phải trích
-`DR-IQ-01` §3.1 trong `selection_reason`.
+`DR-IQ-01A` trong `selection_reason`.
 
 ## 2. ĐIỀU KIỆN MỞ CỬA CHỌN CHO QUÝ SAU (quý 1/2027)
 

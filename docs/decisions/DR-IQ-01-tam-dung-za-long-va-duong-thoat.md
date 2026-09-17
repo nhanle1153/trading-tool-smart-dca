@@ -87,22 +87,13 @@ bộ quy tắc không có lối ra cho đúng tình huống §9c.7.2 sinh ra đ�
 
 ### 3.1 Danh sách loại trừ cơ chế — viết TRƯỚC, không dựa vào so chữ
 
-Suất (d) sinh ra để **THAY** ứng viên, không để thử lại chính nó. Phép chặn đổi tên có sẵn (`idea_queue.tim_nghi_trung`,
-Jaccard trên `mechanism`) **không nhìn thấy** Zone Absorption: ZA là giả thuyết gốc trong spec, **không phải một đơn
-trong sổ**, và *"không tuyên bố L3"* nghĩa là nó không bao giờ thành đơn `REJECTED` để so (phản biện #2 của `-30`).
-Nên suất (d) **KHÔNG** được dùng cho ý tưởng mà cơ chế sinh lời thuộc BẤT KỲ mục nào sau:
+➡️ **Nguồn duy nhất: `DR-IQ-01A-danh-sach-loai-tru-co-che.md`** (Z-1…Z-5, gồm IQ-0001 thuộc Z-2; luật *"nghi ngờ ⇒ coi
+như thuộc"*; không có máy canh). Suất (d) **KHÔNG** được dùng cho ý tưởng thuộc bất kỳ mục nào trong đó.
 
-| # | Họ cơ chế bị loại | Ví dụ viết bằng chữ khác |
-|---|---|---|
-| Z-1 | Phản ứng giá / hấp thụ thanh khoản tại vùng cung-cầu dựng từ swing | "hồi quy trung bình tại vùng thanh khoản", "đáy cấu trúc có lệnh chờ" |
-| Z-2 | Vào nhiều lần / trung bình giá trong hoặc quanh vùng đó | **IQ-0001** (Smart DCA ba tranche neo zone) |
-| Z-3 | Xác nhận vào lệnh tại vùng (nến rút chân, phân kỳ RSI, volume) | "entry có xác nhận tại vùng hỗ trợ" |
-| Z-4 | Cấu trúc chốt lời/cắt lỗ neo vùng đối diện, hoặc bội số R của một thiết lập vùng | "sửa tỉ lệ lời/lỗ của chiến lược vùng" |
-| Z-5 | Mọi thay đổi tham số, bộ lọc, khung thời gian của `ZoneAbsorption` | "Z0-T1 với ngưỡng ZSS khác" |
-
-- **Không có máy kiểm** — `selection_reason` phải khai tường minh *"không thuộc Z-1…Z-5"* và vì sao; thiếu câu đó
-  thì người duyệt coi như thuộc.
-- Nghi ngờ thuộc hay không ⇒ **coi như thuộc** (fail-closed).
+🔴 **Đính chính 17/09/2026 (cùng ngày, trước khi có đơn CHỌN nào):** bản commit `0db8587` đặt nguyên bảng Z-1…Z-5 ở
+đây. Phiên `-30` chỉ ra: phiên CHỌN sạch (§3.2) phải mở file này để đọc bảng — tức phải **tự bỏ qua** §0/§2 có số
+kết quả; ranh giới dựa vào thói quen đọc, không có máy giữ. Bảng được **chuyển nguyên văn** sang phụ lục không có số
+(không chép sang hai nơi — một nguồn). Nội dung quyết định không đổi; bản cũ còn trong lịch sử git.
 
 ### 3.2 Tách KÍCH HOẠT khỏi CHỌN — DR-009 (phản biện #4 của `-30`)
 
@@ -111,8 +102,8 @@ Nên suất (d) **KHÔNG** được dùng cho ý tưởng mà cơ chế sinh l�
   §0 và §2 của DR này, hay bất kỳ kết quả backtest/WFO/ablation nào của Tool D (spec `:3108-3116`).
   `selection_reason` **không được** tham chiếu kết quả định lượng Tool D (§9c.7.4). Phiên `-33` và `-30` (đã thấy số)
   **không** sinh ý tưởng, **không** chọn.
-- Phiên chọn chỉ cần đọc: `DR-Q4-2026-tieu-chi-chon-y-tuong.md` (không chứa số kết quả), §3.1 của DR này, và sổ
-  `idea_queue.jsonl`.
+- Phiên chọn chỉ cần đọc: `DR-Q4-2026-tieu-chi-chon-y-tuong.md`, `DR-IQ-01A-danh-sach-loai-tru-co-che.md` (cả hai không
+  chứa số kết quả), và sổ `idea_queue.jsonl`. **Phiên chọn KHÔNG mở file `DR-IQ-01` này.**
 - Hệ quả: giả thuyết *"sửa cấu trúc chốt lời/cắt lỗ"* dự kiến ở TD-0296 **bị huỷ** — nó sinh ra từ kết quả Tool D
   (`TOOL_D_RESULTS` ⇒ loại thẳng, spec `:3062`) và thuộc Z-4.
 
