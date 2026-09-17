@@ -1,11 +1,19 @@
-"""TD-0247 (`DR-D1-03` §4) — dữ liệu `[T0,T2]` cho rổ `T1` trong `user_data/data/pool_t1/futures/`.
+"""TD-0247 (`DR-D1-03` §4) — dữ liệu rổ theo giai đoạn: `[T0,T2]` cho rổ `T1`
+(`user_data/data/pool_t1/futures/`) và `[T0,T1]` cho rổ `T0` (`pool_t0/futures/`, `DR-D1-05`).
 
-Bốn thao tác, mỗi thao tác một hàm, không hàm nào gọi hàm nào:
+Sáu thao tác, mỗi thao tác một hàm; chỉ `nhap_ma_tu_kho()` và `nhap_them_loai_file()` dùng chung
+`_dung_khung()`:
 
-  • `sao_chep_ma_co_san()`  — 55 mã đã đủ file ở `binance/`: chép nguyên byte, kiểm sha256.
-  • `nhap_ma_tu_kho()`      — mã đã huỷ niêm yết: nhập từ kho (`tool_d.data.kho_luu_tru`).
-  • `cat_den_moc()`         — cắt nến sau `T2` (bug TD-0093: `download-data` lấn quá mốc cuối).
-  • `kiem_du_lieu_ro()`     — kiểm đủ rổ bằng máy trước khi coi `TD-0247` xong.
+  • `sao_chep_ma_co_san()`   — mã đã đủ file ở thư mục nguồn: chép nguyên byte, kiểm sha256.
+  • `nhap_ma_tu_kho()`       — mã đã huỷ niêm yết: nhập TRỌN kế hoạch file từ kho
+                               (`tool_d.data.kho_luu_tru`), tự đo mốc ngừng giao dịch.
+  • `nhap_them_loai_file()`  — 🆕 TD-0252: bổ sung MỘT/vài loại còn thiếu cho mã ĐÃ có sẵn các
+                               loại khác. **Không** tự đo mốc ngừng — người gọi cấp, đọc từ
+                               artifact; đo lại có thể ra mốc khác mốc của file `1h` cùng mã.
+  • `cat_den_moc()`          — cắt nến sau mốc cuối (bug TD-0093: `download-data` lấn quá mốc).
+  • `kiem_du_lieu_ro()`      — kiểm đủ rổ bằng máy, theo MỐC (giờ/phút).
+  • `kiem_pham_vi_dataset()` — 🆕 TD-0252: L-Z55 trên dữ liệu rổ thật, theo NGÀY. Bổ sung cho
+                               `kiem_du_lieu_ro()`, không thay thế.
 
 `DR-D1-03` §5: mã ngừng giao dịch trước `T2` được CẮT tại nến 1h futures cuối có
 `volume > 0` (`moc_ngung_giao_dich()`); sau mốc đó kho vẫn sinh nến phẳng giá thanh
