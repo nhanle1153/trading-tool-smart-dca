@@ -136,7 +136,7 @@ def _tk_dict(tk: ThongKe) -> dict:
 
 def do_arm(ma: list[str], arm: str, *, t0: pd.Timestamp, t1: pd.Timestamp, ap_luat: bool, ma_nam: float,
            so_ma_pool: int, nam_test: float, n_trials: int) -> dict:
-    t0 = time.time()
+    bam_gio = time.time()  # KHÔNG đặt tên t0 — đè tham số mốc CALIB (lượt 2 crash vì đúng lỗi này)
     try:
         trades, log = _chay_backtest(ma, arm)
         nuot = sum(1 for d in log.splitlines() if "Strategy caused the following exception" in d)
@@ -147,7 +147,7 @@ def do_arm(ma: list[str], arm: str, *, t0: pd.Timestamp, t1: pd.Timestamp, ap_lu
         if ngoai:
             raise TrichLenhError(f"{len(ngoai)} lệnh mở ngoài CALIB [T0,T1) (vd {ngoai[0]}) — §8 cấm đọc WFO")
     except TrichLenhError as e:
-        return {"arm": arm, "trang_thai": "unreadable", "ly_do": str(e), "giay": round(time.time() - t0, 1)}
+        return {"arm": arm, "trang_thai": "unreadable", "ly_do": str(e), "giay": round(time.time() - bam_gio, 1)}
 
     r_calib = [r for _od, _, r in dong]
     ra: dict = {
@@ -161,7 +161,7 @@ def do_arm(ma: list[str], arm: str, *, t0: pd.Timestamp, t1: pd.Timestamp, ap_lu
         "phan_bo_tranche": dict(Counter(str(sum(1 for o in t["orders"] if o.get("ft_is_entry"))) for t in trades)),
         "r_realized": {"trang_thai": "pending", "ly_do": "file xuất backtest không mang custom_data (planned_risk_usdt)"},
         "exception_bi_nuot": 0,
-        "giay": round(time.time() - t0, 1),
+        "giay": round(time.time() - bam_gio, 1),
     }
     if ap_luat:
         kq = danh_gia_song_con(
