@@ -669,6 +669,37 @@
 
 ---
 
+## Khối 24 — Cổng sống còn + gỡ khoá cấu trúc (mở 17/09/2026 theo đánh giá tổng hợp chủ dự án duyệt)
+
+> 🔴 **Vì sao khối này tồn tại.** Đánh giá tổng hợp 17/09/2026 (phiên `-33`, chủ dự án duyệt, mục tiêu *"chắc chắn
+> thống kê trên hết"*): sau 11 ngày **chưa có một con số lời/lỗ nào** của chiến lược (`MT-27`), trong khi đường ống
+> sẽ tiêu ~41 suất đo, và cổng Nhánh 1 **không thể PASS trọn** vì `MT-53`. Khối này làm ba thứ **trước** khi tiêu
+> suất: (1) cổng sống còn 0 trial trên EXPLORE với luật dừng viết trước; (2) gỡ khoá `MT-53`; (3) hai việc hạ tầng
+> nhỏ đã lộ ra khi làm Khối 23.
+>
+> ✅ **Chủ dự án đã chốt 17/09/2026:**
+> 1. Mục tiêu 1–2 tháng: **chắc chắn thống kê** — giữ D4→D12 và rào DSR; không live trước D9.5.
+> 2. Phép đo sớm 0 trial trên EXPLORE **được làm**, kèm luật dừng viết trước; **lỗ rõ sau phí ⇒ DỪNG Zone
+>    Absorption LONG**, chuyển ý tưởng, giữ hạ tầng.
+> 3. `MT-53`: phương án **(b′)** — tiêu chí skewness **không áp dụng có căn cứ** cho cấu hình entry đơn, **tự khôi
+>    phục** cho cấu hình DCA (`DR-D9-02`).
+> 4. **Đóng băng tạm** Khối 17 FreqAI (không huỷ quyết định 12/09); D6–D8 **không** đóng băng (đường găng D9);
+>    TD-0261 kéo lên trước suất B2 đầu tiên (`0fdea20`, phiên `-01`).
+> 5. Test khoá CRLF và đo độ trễ `git status` dưới tải — **được làm**.
+>
+> ⚠️ Quy tắc gốc 1: TD-0289 (phần mã) · TD-0291…TD-0293 chỉ bắt đầu khi chủ dự án gõ **"bắt đầu code"**.
+> Mã `DR-D9-02` · `DR-SONG-CON-01` · `TD-0289…TD-0293` · Khối 24 đã nhắn `-30`/`-01`, cả hai xác nhận không trùng.
+
+| Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
+|---|---|---|---|---|
+| TD-0289 | 🚪 **`DR-D9-02` + thi hành — `MT-53` phương án (b′).** Tiêu chí *"skewness không âm hơn skewness(Z1) quá 0,5"* không áp dụng có căn cứ khi cấu hình ∈ `arm_switches.ARM_DON_TRANCHE`; áp dụng như cũ cho arm DCA (mốc `Z1` phải n ≥ `san_lenh_moi_fold`) | 🔒 | — | DR commit RIÊNG và TRƯỚC mã, khi **chưa có** số skewness nào. Mã: `evaluate_branch1(..., arm)` + `danh_gia_cong_d9(..., arm)` bắt buộc khai; tiêu chí "không áp dụng" **liệt kê tường minh**, không xoá khoá; `test_lz35` ca cũ giữ nguyên khẳng định dưới arm DCA. Kiểm-có-răng hai chiều. Full suite xanh. `MT-53` ✅ qua "chuẩn hóa và lưu" |
+| TD-0290 | 🚪 **`DR-SONG-CON-01` — cổng sống còn EXPLORE, luật dừng viết trước** | 🔒 | — | DR commit RIÊNG và TRƯỚC script/artifact TD-0291: arm `Z0-T1` LONG tham số hiện hành · EXPLORE 88 mã `[T0,T2)` · đơn vị `R_trien_khai` · `M` theo công thức `td0184` · bốn luật (không kết luận / DỪNG / ĐI / không tiêu suất) · hạn chế (không 5m, EXPLORE ≠ pool) · luật chạy lại. **0 trial** |
+| TD-0291 | **Phép đo cổng sống còn** — `docs/du-lieu-do/do_td0291_song_con_explore.py` + `td0291-song-con-explore.json` | 🔓 | TD-0290, TD-0283 ✅ (công thức rủi ro đã triển khai) | Dùng lại khung `do_td0193_*` và `wfo/lenh`; artifact ghi `n`/`mean`/`std`/khoảng tin cậy/`M` (N = 114, `M_union` pending nếu TD-0261 chưa đo) theo CALIB · WFO · gộp, kết luận áp **máy móc** theo `DR-SONG-CON-01` §4. `merge-base` DR trước artifact. Sổ trial không thêm dòng. Kết luận trình chủ dự án |
+| TD-0292 | **Test khoá: file đã theo dõi trong cây đo có `\r\n` trên đĩa ⇒ đỏ** | 🔓 | — | Phạm vi: `src/ tests/ entrypoints/ config/ registry/schemas/` + `docs/decisions/DR-*.md` có khối băm. 🔴 **Lý do ghi đúng:** (a) `git status` báo `M` ảo sau khi chuẩn hoá ⇒ mọi `close_dN_gate` từ chối vì cây đo bẩn (đã xảy ra 17/09); (b) `sha256_of()` đọc nhị phân **nhạy** đuôi dòng nếu sau này file văn bản vào `hash_many`. **KHÔNG** vì `config_hash` — `loader.py` đọc `read_text()` nên hash sổ bất biến với đuôi dòng (đã đo LF/CRLF cùng `adc61c58…`). Kiểm-có-răng: một file CRLF tạm trong `config/` ⇒ đỏ |
+| TD-0293 | **`test_td0143` quá hạn 10 s khi tải nặng — ĐO TRƯỚC, SỬA SAU** | 🔓 | — | Đo độ trễ `git --no-optional-locks status --porcelain` trong container: nhàn · 1 suite chạy · 2 suite chồng, ≥ 30 mẫu mỗi mức, artifact `docs/du-lieu-do/`; thời hạn mới **suy từ số đo** (ghi công thức), không đoán. Thư mục chưa theo dõi đã kiểm nhỏ (9–73 file) ⇒ không phải nguyên nhân |
+
+---
+
 ## Việc đã biết là sẽ có, chưa mở
 
 | Giai đoạn | Nội dung | Chặn bởi |
@@ -715,3 +746,4 @@
 | TD-0260…TD-0279 | ➕ Thêm mới | — | **Khối 20 (D6) · 21 (D7) · 22 (D8)** — 20 việc, đặc tả NHÁP `DR-D6D8-01` | Chủ dự án yêu cầu phân tích và đề xuất D6–D8 (spec `:4492` không có dòng nào), duyệt kế hoạch 17/09/2026, chốt Long-only tới live + D7 dùng kịch bản tổng hợp + CTRL. Mở lại phần D6–D8 của quyết định *"HOÃN đặc tả D5–D9"* 13/09. Va chạm mã với phiên `-33` (D9) giải trước khi ghi: `-33` dời sang Khối 23 / `TD-0280…` | 17/09/2026 |
 | TD-0280…TD-0288 | ➕ Thêm mới | — | **Khối 23 (D9)** — 9 việc, nguồn `DR-D9-01` | Chủ dự án yêu cầu triển khai D9 (*"WFO đủ fold + PBO/CSCV nâng lên P0"*, spec `:4326`/`:4349` không có đặc tả), duyệt kế hoạch 17/09/2026 với 5 chốt ở đoạn mở khối. Mở lại phần D9 của quyết định *"HOÃN đặc tả D5–D9"* 13/09. Va chạm dãy `TD-0260…` với phiên `-01` (D6–D8) giải trước khi ghi: `-33` dời sang `TD-0280…`/`MT-51…` | 17/09/2026 |
 | TD-0184 · TD-0261 | ♻️ Sửa đổi | TD-0261 *"chốt N của D9"*, xếp ở D6 (sau `d5_complete`); TD-0184 không phụ thuộc TD-0261 | TD-0261 là đầu vào **cổng D4**, đo ngay sau TD-0247 và **trước suất B2 đầu tiên**; TD-0184 phụ thuộc thêm TD-0261 | Phiên `-33` nêu; đối chiếu `spec:4267-4268` (§10.2 Nhánh 1, N gộp Tool A *"tại thời điểm chạy GATE"*) xác nhận `DR-D6D8-01` D6.1 đóng khung thiếu. Chủ dự án chốt 17/09/2026 kèm phân vai: `-01` giữ D6–D8 + TD-0261 | 17/09/2026 |
+| TD-0289…TD-0293 | ➕ Thêm mới | — | **Khối 24 — Cổng sống còn + gỡ khoá cấu trúc** (5 việc; `DR-D9-02`, `DR-SONG-CON-01`) | Đánh giá tổng hợp 17/09/2026 (phiên `-33`) chủ dự án duyệt: chưa có con số lời/lỗ nào (`MT-27`) trước khi tiêu ~41 suất; `MT-53` khoá Nhánh 1. Kèm hai việc hạ tầng lộ ra ở Khối 23 (CRLF ⇒ `git status` `M` ảo; `test_td0143` quá hạn khi tải nặng). Mã đã nhắn `-30`/`-01` trước khi ghi | 17/09/2026 |
