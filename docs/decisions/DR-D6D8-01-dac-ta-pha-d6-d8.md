@@ -1,7 +1,8 @@
 # DR-D6D8-01 — Đặc tả pha D6, D7, D8 (khoảng giữa calibration D5 và walk-forward D9)
 
-> 🔴 **BẢN NHÁP — CHƯA CHỐT.** Chưa có hiệu lực chừng nào còn một ô `__CHUA_DIEN__` (§8).
-> **Ngày soạn:** 17/09/2026 · **Phiên:** `-01` · **Người quyết:** chủ dự án (hai câu đã trả lời 17/09, §1)
+> ✅ **ĐÃ CHỐT 17/09/2026** (`TD-0260`). Bản nháp commit ở `b72a2e5`; sáu ô `__CHUA_DIEN__` (§8, gồm
+> `MT-49`/`MT-50`) chủ dự án trả lời cùng ngày, hai lượt câu hỏi. Chưa có dòng mã nào của Khối 20–22.
+> **Ngày soạn:** 17/09/2026 · **Phiên:** `-01` · **Người quyết:** chủ dự án (§1 và §8, trả lời trực tiếp)
 > **Mở lại:** (1) quyết định *"dựng testnet trước, HOÃN đặc tả D5–D9"* ngày 13/09/2026 (đoạn mở
 > Khối 18, `TASKS.md`); `DR-D5-01` §0 đã mở lại phần D5; DR này mở lại phần **D6–D8**. (2) Câu
 > *"D6–D9 vẫn hoãn"* trong ô giải của `MT-48` (`back-end-note.md`). Quyết định mới hơn, cùng người
@@ -96,7 +97,7 @@ Stress test dùng **kịch bản giá dựng tay**: không chạm dữ liệu, 0
 
 | # | Việc | Dữ liệu / kế toán | Căn cứ |
 |---|---|---|---|
-| D6.1 | **H14 + DR-007 — chốt N của D9 TRƯỚC D9.** Đo overlap giữa rổ pool Tool D (sau TD-0247) và pool Tool A, rồi áp DR-007 **máy móc**: dưới ngưỡng thì N tách; từ ngưỡng trở lên thì N = UNION với sổ trial Tool A tại thời điểm chạy cổng. Ghi research-log. **Không** quay lại đổi tiêu chí pool | Chỉ danh sách mã, 0 trial. Chưa từng đo: grep `H14` / `DR-007` chỉ ra `DR-D0PRE-02:51` | `spec:2818-2857`, `:4267-4268`. ⚠️ Ngưỡng tự mâu thuẫn, xem §9 |
+| D6.1 | **H14 + DR-007 — chốt N của D9 TRƯỚC D9.** Đo overlap giữa rổ pool Tool D (sau TD-0247) và pool Tool A, rồi áp DR-007 **máy móc**: dưới **50%** thì N tách; **≥ 50%** (chốt `MT-50`, §8) thì N = UNION với sổ trial Tool A tại thời điểm chạy cổng. Ghi research-log. **Không** quay lại đổi tiêu chí pool | Chỉ danh sách mã, 0 trial. Chưa từng đo: grep `H14` / `DR-007` chỉ ra `DR-D0PRE-02:51` | `spec:2818-2857`, `:4267-4268`. Ngưỡng từng tự mâu thuẫn (`MT-50`), đã chốt `≥ 50%` (§8) |
 | D6.2 | **Kiểm kê DOF sau D4/D5.** Bỏ DCA làm chết DG5 và một phần DG1–DG4. Thêm `MT-44`: DG1–DG5 không bao giờ được xét trên `Z0-T1`. **Chỉ ghi** research-log, **không** hạ N của D9 | 0 trial | `spec:4314-4316`: *"HẠ N cho vòng sau … không tự động áp"* |
 | D6.3 | **`MT-30` có chạm `Z0-T1` không — ĐO, không suy.** `MT-30` là lỗi của DCA-xuống (`p_avg` tụt khi tranche 2/3 khớp). `Z0-T1` là đơn tranche nên *dự kiến* `p_avg` bất biến và lỗi không chạm, nhưng đó là suy luận. Chạm thì sửa Hạng 1 trước D9; không chạm thì ghi `MT-30` là N/A cho arm sản xuất, **vẫn** là nợ của chu trình DCA | EXPLORE, 0 trial | `back-end-note.md` `MT-30` |
 | D6.4 | **H5 — `timeframe-detail 5m` trên cấu hình cuối.** Xác minh swing 4H và tín hiệu không lệch do intrabar: so tập lệnh có/không detail, và soi các lệnh lệch | EXPLORE, 0 trial. Cần TD-0252 (5m phủ CALIB) | `spec:4342` (H5, P0, chưa gán pha) |
@@ -120,11 +121,18 @@ H5/H2 có artifact `docs/du-lieu-do/` · `MT-30` có kết luận đo được.
 - **Dải `R_eff` lấy từ đo thật, không lấy dải thiết kế 0,9–3,0%.** `TD-0191` đã chứng minh dải thiết kế
   chứa một chế độ không tồn tại: min đo được 1,303%, median 3,028%. Dải dùng cho D7 phải đo lại trên
   `d6_ung_vien` (EXPLORE).
-- **Kịch bản tổng hợp** (`__CHUA_DIEN__` biên độ cụ thể, xem §8):
+- **Kịch bản tổng hợp** (loại kịch bản):
   - gap xuyên SL trong một nến 5m;
   - wick cực đoan chạm vùng thanh lý rồi hồi;
   - funding cực đoan kéo dài;
   - nhiều mã tương quan cùng vào lệnh trong một nến 1H.
+- **Biên độ — chốt 17/09/2026 (§8):** neo vào các cú sập **đã biết công khai** (vd 05/08/2024,
+  10/10/2025), lấy **biên độ** (mức giảm %, funding đỉnh, số mã cùng sập) từ **nguồn công khai bên
+  ngoài repo**, rồi thêm **một bậc xấu hơn lịch sử (× 1,5)**.
+  - 🔴 **Cấm** chép chuỗi giá, và **cấm** đọc biên độ từ file dữ liệu trong repo. Ngày nằm trong
+    CALIB/WFO mà đọc từ file của mình thì đó là chạm dữ liệu, dù chỉ để "lấy một con số".
+  - Danh sách sự kiện, biên độ từng loại và nguồn trích dẫn ghi vào artifact kịch bản và **commit TRƯỚC**
+    lần chạy stress đầu tiên (`TD-0269`). Chạy xong rồi mới đổi biên độ = chọn kịch bản theo kết quả.
 - **Tiêu chí:** `liq_buffer_ratio ≥ 8` (§6.4b) và `max_single_trade_loss / risk_budget ≤ 1.15` ở **mọi**
   kịch bản. Kịch bản làm vỡ tiêu chí là **phát hiện**, không phải thất bại của pha. Ghi nhận rồi xử theo
   §11b.1 (L1/L2); **không** tinh chỉnh tham số ngay trong D7.
@@ -138,8 +146,16 @@ H5/H2 có artifact `docs/du-lieu-do/` · `MT-30` có kết luận đo được.
   - nửa size tới khi drawdown ≤ 5%;
   - trần 3 HALT / chu kỳ 100 lệnh, lần thứ 4 = ABORT;
   - vượt 20% = ABORT.
-- **`MT-40` phần còn mở:** *"đỉnh equity reset khi nào"* là một tham số chưa ai đếm vào kiểm kê DOF.
-  D7 phải có câu trả lời của chủ dự án, hoặc chứng minh TD-0238 đã giải phần đó.
+- **`MT-40` — đỉnh equity reset khi nào: chốt 17/09/2026 (§8).** Đỉnh chỉ được đặt lại ở **đúng hai sự
+  kiện**:
+  - (a) **nạp/rút vốn có ghi sổ** (đỉnh dịch theo đúng số tiền nạp/rút, không phải về mức hiện tại);
+  - (b) **sau ABORT**: một chu trình giả thuyết MỚI bắt đầu với đỉnh mới, vì ABORT = giả thuyết cũ đã
+    kết thúc (§11b.1 L3).
+
+  Ngoài hai sự kiện đó thì **không bao giờ**: không sau HALT, không theo lịch, không khi khởi động lại.
+  Xếp **Cấp C** (§12c.3), **không** phải tham số, không vào kiểm kê DOF. `TD-0270` phải kiểm
+  `equity_peak.py` (TD-0238) thi hành **đúng và chỉ** hai sự kiện này; có test đỏ khi reset ở sự kiện
+  thứ ba (vd restart).
 - 🔑 Phép kiểm phải chạy qua **đường sản xuất**, không qua mẫu dựng tay. Đây là câu chẩn đoán của rà
   soát 08/09: *"ca sai có đi qua đường sản xuất thật không?"*
 
@@ -148,17 +164,25 @@ H5/H2 có artifact `docs/du-lieu-do/` · `MT-30` có kết luận đo được.
 - 🔴 **Đính chính so với kế hoạch đã duyệt:** kế hoạch ghi *"DR mở rộng `CTRL_OUTPUT_ALLOWED`"*. Làm thế
   **trái `MT-19`**, vì chủ dự án đã chốt ngày 14/09/2026 đường (c): thêm **dạng CTRL thứ ba (đo mô tả)**
   với allowlist riêng, và **không nới** danh sách ba trường của D3.5. D7 dùng đường (c).
-- Danh sách tên đầu ra dự kiến, **mỗi tên phải kèm một câu vì-sao-không-phải-chỉ-số-hiệu-năng**
-  (`__CHUA_DIEN__`, §8):
-  - tỉ lệ lệnh đóng bằng `TIME_STOP` (DG8);
-  - tỉ lệ đóng bằng DG7 funding stop;
-  - tỉ lệ đóng bằng DG6;
-  - phân bố `hold_duration_bars`;
-  - phân bố `liq_buffer_ratio`.
-- ⚠️ **Câu phải hỏi chủ dự án, không tự quyết:** `max_single_trade_loss / risk_budget` và phân bố lý do
-  thoát lệnh có phải *chỉ số hiệu năng trá hình* không? Biết tỉ lệ stop-loss là biết một phần
-  expectancy. Nếu có thì bỏ khỏi CTRL; tiêu chí 1.15 khi đó chỉ kiểm được trên kịch bản tổng hợp (§4.1)
-  và ở D9.
+- **Danh sách tên đầu ra — ĐÓNG, chốt 17/09/2026 (§8), phương án tối thiểu, gộp.** Đúng ba tên, mỗi tên
+  kèm một câu vì-sao-không-phải-chỉ-số-hiệu-năng (`TD-0268` chép nguyên vào allowlist code):
+
+  | Tên | Vì sao không phải chỉ số hiệu năng |
+  |---|---|
+  | phân bố `hold_duration_bars` | Đo **thời gian** giữ lệnh, không mang dấu lãi/lỗ; chính là thứ §10.2 đòi báo cho mọi arm để biết DG8 có ràng buộc không |
+  | phân bố `liq_buffer_ratio` | Đo **khoảng cách tới thanh lý** tính từ kế hoạch lệnh (§6.4b), xác định lúc vào lệnh, trước khi biết kết cục |
+  | tỉ lệ lệnh bị **cổng an toàn đóng**, **gộp một số** (DG6 + DG7 + DG8 cộng chung) | Gộp để **không** tách được lệnh đóng vì an toàn nào thắng/thua; không kèm lãi/lỗ, không tách SL/TP |
+
+- 🔴 **Cố ý KHÔNG có:**
+  - tỉ lệ tách từng cổng;
+  - phân bố lý do thoát lệnh (SL/TP/trail);
+  - `max_single_trade_loss / risk_budget`.
+
+  Biết tỉ lệ dính stop là biết một phần expectancy, tức là chạm dữ liệu mà không trả suất. Hệ quả chấp
+  nhận có ý thức:
+  - tiêu chí `≤ 1.15` chỉ kiểm trên **kịch bản tổng hợp** (§4.1) và ở D9;
+  - *"cổng nào chưa bao giờ ràng buộc"* (kiểu `MT-44`) **không** trả lời được trên CALIB, chỉ trả lời
+    được trên EXPLORE.
 - Kèm theo: `MT-44`, ghi `BAT_KHA` cho DG1–DG5 trên `Z0-T1`. `MT-46` (1): `dg7_funding_frac` đóng băng
   với lý do *"chỉ áp cho SHORT"* trong khi code áp cho cả Long (đo được: kết thúc 19,4% lệnh `Z0-T1`) —
   sửa lời khai trạng thái, **không** sửa giá trị.
@@ -175,7 +199,7 @@ Mỗi ca phải có **phá-thật-chạy-lại** (vô hiệu hoá cơ chế thì
 - LIQUIDATED → dừng toàn hệ thống (§6.6 ràng buộc 2).
 
 **Cổng D7:** `d6_complete` · mọi cầu dao ở §4.1–§4.4 có ít nhất một test chạy qua đường sản xuất và đỏ
-khi bị vô hiệu hoá · artifact stress có xuất xứ (§0d.5) · `MT-40` có kết luận.
+khi bị vô hiệu hoá · artifact stress có xuất xứ (§0d.5) · `equity_peak.py` reset **đúng và chỉ** ở hai sự kiện của `MT-40` (§4.2).
 
 ---
 
@@ -209,8 +233,8 @@ TD-0247 → D4 → D5 → D6 → D7 ─┐
 D8 (soạn từ bây giờ) ─────────┘
 ```
 
-**Đề xuất điều kiện vào D9** (đã báo phiên `-33` để khớp vào `DR-D9-01`):
-`d5_complete` + `d7_complete` (ngụ ý `d6_complete`) + `d8_complete`.
+**Điều kiện vào D9 — chốt 17/09/2026 (§8):** `d5_complete` + `d7_complete` (ngụ ý `d6_complete`) +
+`d8_complete`. Phiên `-33` đính chính `DR-D9-01` §6.1 cho khớp (TD-0260).
 
 | Vì sao D9 phải đợi | |
 |---|---|
@@ -221,8 +245,8 @@ D8 (soạn từ bây giờ) ─────────┘
 
 ⚠️ **Đánh đổi của điều kiện này:** D9 trễ thêm thời gian của D6–D8. Phương án ngược lại (D9 chạy song
 song D6–D7) nhanh hơn, nhưng chấp nhận rủi ro phải chạy lại WFO **bằng suất mới** nếu D6/D7 lộ lỗi đổi
-số. Chọn chặn vì suất B1 dư có hạn, còn thời gian thì không phải ngân sách thống kê.
-`__CHUA_DIEN__`: chủ dự án xác nhận (§8).
+số. Chọn chặn vì suất B1 dư có hạn, còn thời gian thì không phải ngân sách thống kê. Chủ dự án chọn
+**đợi**; hai phương án bị loại là *"chạy song song"* và *"chỉ đợi D6"*.
 
 ---
 
@@ -238,19 +262,26 @@ số. Chọn chặn vì suất B1 dư có hạn, còn thời gian thì không ph
 
 ---
 
-## 8. Ô chưa chốt — `__CHUA_DIEN__`
+## 8. Ô đã chốt (17/09/2026)
 
-| Ô | Câu hỏi cho chủ dự án | Đề xuất |
-|---|---|---|
-| §4.1 biên độ kịch bản | Gap bao nhiêu %, funding bao nhiêu, bao nhiêu mã cùng vào lệnh? | Neo vào sự kiện lịch sử **đã biết công khai** (vd 05/08/2024, 10/10/2025), lấy **biên độ** chứ không lấy chuỗi giá. Chép chuỗi giá của một ngày nằm trong CALIB/WFO là chạm dữ liệu |
-| §4.3 danh sách tên CTRL | Lý do thoát lệnh và tỉ lệ lỗ/ngân sách có được coi là "mô tả" không? | Chỉ cho `hold_duration_bars` + `liq_buffer_ratio` + tỉ lệ `TIME_STOP`/DG7/DG6 **gộp một số** (không tách SL/TP). Tiêu chí 1.15 kiểm trên kịch bản tổng hợp |
-| §4.2 `MT-40` | Đỉnh equity reset khi nào (không bao giờ · sau ABORT · khi nạp vốn)? | Chỉ reset khi **nạp/rút vốn có ghi sổ**, còn lại không bao giờ. Không phải tham số tune được, xếp Cấp C |
-| §6 điều kiện vào D9 | D9 đợi D6–D8, hay chạy song song rồi chấp nhận rủi ro chạy lại? | Đợi (lý do ở §6) |
-| D6.1 ngưỡng DR-007 | `> 50%` (`spec:2821`) hay `≥ 50%` (`spec:2854`, `:4267`)? | Xem §9, `MT-50` |
+Sáu câu, chủ dự án trả lời trực tiếp trong hai lượt câu hỏi. Bảng giữ cả đề xuất lúc hỏi, để thấy chỗ
+quyết định **khác** đề xuất.
+
+| Ô | Câu hỏi | Đề xuất lúc hỏi | **Chốt** |
+|---|---|---|---|
+| §6 điều kiện vào D9 | D9 đợi D6–D8 · chạy song song · chỉ đợi D6? | Đợi | **Đợi D6–D8 xong** |
+| D6.1 · `MT-50` | Ngưỡng DR-007 `> 50%` hay `≥ 50%`? | `≥ 50%` | **`≥ 50%`** — theo ba chỗ viết v6+ (`spec:2854`, `:4267`, `:5049`); đúng 50,0% cũng gộp N |
+| §9 · `MT-49` | Lockbox chạm ở D9 hay D9.5? | D9.5 + đính chính tại chỗ | **D9.5**; đã gắn đính chính vào `DR-D0PRE-07` mục 6, giữ nguyên chữ cũ |
+| §4.2 · `MT-40` | Đỉnh equity reset khi nào? | Chỉ khi nạp/rút vốn có ghi sổ | 🔄 **KHÁC đề xuất:** nạp/rút vốn có ghi sổ **VÀ sau ABORT** (chu trình giả thuyết mới). Cấp C |
+| §4.3 tên CTRL | Tối thiểu gộp · tách từng cổng · đầy đủ kể cả lỗ/ngân sách? | Tối thiểu, gộp | **Tối thiểu, gộp** (ba tên, §4.3) |
+| §4.1 biên độ stress | Sự kiện công khai (chỉ biên độ) · bậc cố định lý thuyết? | Sự kiện công khai | **Sự kiện công khai, chỉ lấy biên độ, + một bậc × 1,5** (§4.1) |
 
 ---
 
-## 9. Mâu thuẫn phát hiện khi soạn (chờ "chuẩn hóa và lưu" để ghi `back-end-note.md`)
+## 9. Mâu thuẫn phát hiện khi soạn (ghi `back-end-note.md` ở `5a737ec`; cả hai ✅ chốt 17/09/2026, §8)
+
+> Chữ bên dưới giữ nguyên như lúc soạn. Kết quả: `MT-49` → **D9.5**; `MT-50` → **`≥ 50%`**.
+
 
 - **`MT-49` 🟡 — lockbox được chạm ở D9 hay D9.5?** `DR-D0PRE-07:85-87` viết *"chạm thật là D9"* và
   *"lần chạm duy nhất ở D9"*. Spec viết `D9.5 — LOCKBOX: chạm ĐÚNG MỘT LẦN` (`:4493`), `L-Z13` *"cho tới

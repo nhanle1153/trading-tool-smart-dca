@@ -86,6 +86,14 @@ Theo mục "CƠ CHẾ NIÊM PHONG" của DR-011 (spec dòng 3305-3320):
    (chọn đúng MỘT cấu hình từ WFO, điền ngưỡng PASS cho từng hướng) là tài liệu RIÊNG, viết TRƯỚC lần
    chạm duy nhất ở D9 — không viết ở đây vì WFO chưa chạy, chưa có cấu hình nào để đặt tên.
 
+   🔄 **ĐÍNH CHÍNH 17/09/2026 (`MT-49`, chủ dự án chốt) — hai chữ *"D9"* ở mục 4 trên là SAI; giữ
+   nguyên làm lịch sử vì đây là văn bản đã niêm phong của cổng D0-PRE.** Lần chạm lockbox duy nhất
+   thuộc pha **D9.5**, không phải D9: spec `tool-d-smart-dca.md:4493` (*"D9.5 — LOCKBOX: chạm ĐÚNG
+   MỘT LẦN"*), `:4530`, `:4903` (*"Chạm dữ liệu LOCKBOX trước D9.5"* là CRITICAL) và `L-Z13` `:3876`
+   (*"0 bản ghi cho tới sau D9"*). D9 là walk-forward trên WFO (`DR-D9-01`, *"Không thuộc D9: Chạm
+   LOCKBOX (D9.5)"*). Quy tắc quyết định trên lockbox viết TRƯỚC khi thấy số WFO — `DR-D6D8-01` §5
+   D8.1, `TD-0274`.
+
 ## 7. Giả định cần biết khi tới D1
 
 - CALIB/WFO không tự động có đủ 102 mã — cách nạp đúng theo tuổi niêm yết từng mã là việc của H1-D
