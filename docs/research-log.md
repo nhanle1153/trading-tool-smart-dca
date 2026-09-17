@@ -3214,3 +3214,157 @@ thể còn giao dịch tới `T3`**.
 🔑 Chuỗi này khép lại đúng cách nó mở ra: một đề nghị (ngưỡng "0 mã là đáng nghi") bị bác vì thiếu nền
 đo được → nền được đo → giả thuyết giải thích nền bị bác → và cuối cùng chính chênh lệch 5,2× cũng
 không sống nổi phép kiểm. **Mỗi bước đều do một phép đo rẻ, không do lập luận.**
+
+## 18/09/2026 — Khối 27 (`DR-BC-01`): lõi bộ chạy backtest. Và một lớp canh 🔴 CRITICAL mù với chính đường đọc dữ liệu của dự án
+
+**Việc:** `ro_cho_tap()` (TD-0299, 11 test khoá) có đủ răng nhưng **chưa có một lời gọi sản xuất nào** — vì
+E1/E2/E3 chưa có bộ chạy thật. Hệ quả: 143 mã rổ `T0` + 107 mã rổ `T1` + 1.357 file dữ liệu của Khối 25
+không chảy vào phép đo nào. Phiên `-13`, 0 suất trial.
+
+**Phạm vi chủ dự án chốt:** chỉ **lõi hạ tầng + nối E1**. Căn cứ là chính bảng `DR-IQ-01` §1, dòng ▶ *"Hạ
+tầng đo … không phụ thuộc chiến lược"*. E3 (TD-0184), E2 (TD-0286), và **mọi lượt chạy thật trên rổ** vẫn ⏸.
+`DR-BC-01` §5 viết thêm một câu bịt lối vòng sinh ra từ chính nó: *việc CÓ bộ chạy không phải điều kiện nối
+lại*, và cũng không phải *"đằng nào cũng viết xong, chạy thử một lượt cho biết"* — một lượt như thế là
+`seal()`, và `seal()` không lùi được.
+
+**Kết quả:** `a15e5c1` (DR) → `91537d6` (phép đo) → `122510c` (mở khối) → `1bb1051` (lõi) → `d2d3549` (nối
+E1) → `d14f54c` (sửa 2 docstring) → `2e48268` (vá L-Z25). Full suite Docker **2380 passed, 0 failed** (4:14).
+`E1 --tap WFO` chạy thật trên rổ 107 mã, exit 105 (chưa `--chay`), sổ trial **vẫn 13 dòng, sha256 không đổi**.
+
+---
+
+### 1. 🔴 Bài học chính: một lớp canh CRITICAL mù với chính đường đọc dữ liệu của dự án
+
+Lớp canh `L-Z52` bản đầu của tôi chép khuôn có sẵn: spy trên `builtins.open`, khẳng định 0 lần mở file dưới
+thư mục dữ liệu. **Phá thật** — hạ `_kiem_giay_phep()` xuống sau `ro_cho_tap()` và thêm một lần
+`Path.read_bytes()` trên file dữ liệu — thì **30/30 vẫn xanh**. Đo ra cơ chế:
+
+```
+patch builtins.open -> Path.read_bytes  bị bắt: False
+patch io.open       -> Path.read_bytes  bị bắt: True
+patch io.open       -> pd.read_feather  bị bắt: False   (pyarrow đọc ở tầng C)
+```
+
+Tức **một spy tầng Python không thể phủ hết đường đọc dữ liệu**. `pathlib` gọi `io.open` (tra tên trong
+namespace của `io` lúc gọi), nên vá `builtins.open` không chạm tới; còn pyarrow không đi qua Python I/O.
+
+⇒ Đổi lớp canh **chính** sang **AST** (*"`_kiem_giay_phep` phải là LỆNH ĐẦU TIÊN của `chay_mot_luot()`"*),
+giữ spy `io.open` làm lớp **phụ**. Với câu hỏi *"cái gì chạy trước cái gì"*, AST là đúng dụng cụ — L-Z52/L-Z53
+nói về THỨ TỰ, mà thứ tự là tính chất của mã, không phải của một lần chạy.
+
+🔴 **Kéo theo, và đây mới là phần nặng:** `tests/lock/test_lz52_budget_exhausted_refuses_before_data.py:79`
+— một test khoá **CRITICAL** — cũng chỉ vá `builtins.open`, và docstring của nó tự khai *"đây chính là bằng
+chứng 'chưa chạm dữ liệu'"*. Theo chính phép đo trên, nó **mù** với `Path.read_*` và **mù hẳn** với
+pyarrow/feather — mà feather là đường đọc dữ liệu của toàn bộ dự án này.
+
+Đây **không phải lỗi cài đặt** mà là **vấn đề phạm vi lời khai** (cách đóng khung của phiên `-a2`): nó vẫn
+bắt được `open()` trần thật; thứ sai là câu nó tự nói về mình. Vì thế vá bằng cách "thêm một `patch` nữa"
+cũng không đóng được — pyarrow vẫn lọt. Thứ cần sửa là **câu khai**, hoặc **đổi dụng cụ**.
+
+**Không tự sửa** (test khoá của việc khác; nới/siết test khoá là quyết định riêng — Quy tắc 5 + 11). Đã báo
+`-a2` và `-ef`; `-a2` đã quyết **không** dùng khuôn spy đó cho TD-0306/TD-0308 của Khối 26.
+
+📌 Cùng hình dạng với `TD-0168` (*"thứ được canh không nằm trên đường chạy"*) nhưng ở một mặt cắt mới: ở
+TD-0168 phép kiểm canh một hàm mà đường sản xuất không gọi; ở đây phép kiểm canh **một tầng API** mà đường
+sản xuất không đi qua. Và nó là cái thứ ba trong cùng một ngày, cùng một họ — hai cái kia của `-ef`
+(`NEN_CHET_TOI_THIEU`: ca không thể kích hoạt; ca *"vắng artifact ⇒ exit 98"*: PASS vì một lý do khác dẫn
+tới cùng mã thoát). Cả ba đều là: **phép kiểm đúng, nhưng không phân biệt được thứ cần phân biệt**.
+
+---
+
+### 2. Hai phép đo thay cho hai lần đoán
+
+**(a) Cận trên `--timerange`** (`td0312-can-tren-timerange.json`, 0 trial). Dạng ngày **BAO GỒM** nến tại mốc;
+dạng **unix giây** lùi 1 giây thì cắt đúng cửa sổ nửa mở:
+
+```
+--timerange 20241215-20250120     -> backtest_end = 2025-01-20 00:00   (thừa 1 nến)
+--timerange 1734220800-1737331199 -> backtest_end = 2025-01-19 23:00   (đúng)
+```
+
+Quan trọng vì dữ liệu rổ `T1` kết thúc đúng `2026-01-29 00:00` = `T2`, còn `kiem_pham_vi_du_lieu()`
+(`wfo/folds.py:244`) chỉ cho tới `test_end − 1 ngày`. Dùng dạng ngày thì fold cuối **luôn** raise; tệ hơn,
+ai đó "sửa" bằng cách nới `folds.py:244` thì đó chính là một ngày dữ liệu tương lai đi vào phép đo.
+
+🔑 **Điểm thiết kế của phép đo, suýt làm sai:** dữ liệu phải kéo dài **QUÁ** mốc yêu cầu. Nếu dữ liệu dừng
+đúng tại mốc thì `backtest_end` bị **kẹp bởi dữ liệu** chứ không bởi `--timerange`, và phép đo cho **cùng một
+con số trong cả hai giả thuyết** — tức không phân biệt được gì. Artifact `L-Z49` dừng TRƯỚC mốc, nên đọc nó
+như bằng chứng về tính bao gồm là **đọc quá tay**.
+
+**(b) Khoá ngày thật trong báo cáo.** `timerange` trong báo cáo là chuỗi `--timerange` chép nguyên ⇒ ngày
+**DỰ KIẾN**, cấm dùng. `backtest_start_ts`/`backtest_end_ts` là ngày **THẬT**, và bị kẹp bởi dữ liệu. Bẫy đơn
+vị đo được: `*.meta.json` cạnh zip ghi **GIÂY**, báo cáo trong zip ghi **MILI-GIÂY**, **cùng tên khoá** — nên
+lõi chỉ đọc trong zip và có khẳng định vệ sinh năm ∈ [2020, 2030].
+
+---
+
+### 3. Chốt thiết kế: làm cho sai lầm KHÔNG BIỂU DIỄN ĐƯỢC, thay vì canh nó
+
+`YeuCauChay` chỉ mang `tap: str` — **không có trường nào** nhận đường dẫn rổ hay thư mục dữ liệu. Muốn biết
+chạy trên mã nào thì buộc phải gọi `ro_cho_tap()`. Cùng thủ pháp TD-0127 (bỏ hẳn tham số `n_tai_sinh` thay vì
+kiểm nó): **một phép kiểm có thể bị bỏ qua; một tham số không tồn tại thì không ai truyền vào được.**
+
+Tương tự ở E1: `--budget-line` **không có mặc định**. Câu N3 của `CLAUDE.md` gợi `B3` về *nghĩa*, nhưng biến
+nó thành mặc định CLI là đúng thứ `orchestrator.py:26-28` gọi tên — *"đoán hộ là cách chắc chắn tiêu sai ngân
+sách"*: người gõ lệnh sẽ không bao giờ phải nhìn thấy mình đang tiêu dòng nào. Và `--chay` mặc định TẮT, có
+test AST ghim `return EXIT_CHUA_XAC_NHAN_CHAY` phải đứng **trước** `reserve()` — một cờ gõ nhầm không được
+phép tiêu 1 suất trong 114.
+
+`--tap` là **một chuỗi nuôi ba chỗ** (`ro_cho_tap` · `dataset_boundaries_from_config` · `reserve(dataset=)`)
+nên ba thứ không thể lệch nhau mà không ai thấy. LOCKBOX **không** có cửa chặn riêng ở E1 — `ro_cho_tap()` đã
+từ chối và nêu `MT-60`; hai cửa cho một luật là hai nguồn sự thật.
+
+---
+
+### 4. Hai quyết định sửa chữ đã có, không im lặng chọn bên
+
+- **Đơn vị đặt chỗ = một CẤU HÌNH**, không phải một fold (`DR-BC-01` §2). Chữ cũ ở `run_wfo.py:21-24` và
+  `orchestrator.py:24-28` nói ngược. Ngoài kế toán (`DR-D4-10` §2.1, `DR-D9-01` §5 đều đếm theo cấu hình; 3
+  fold = 3 suất là gấp ba), còn một lý do **cơ khí** mạnh hơn: `chay_wfo()` băm dữ liệu ở `orchestrator.py:138`
+  **trước** vòng lặp fold, nên "mỗi fold tự đặt chỗ" đặt việc đọc dữ liệu **trước đặt chỗ đầu tiên** — đúng thứ
+  tự `L-Z52` cấm. Cách đọc cũ **tự mâu thuẫn** với chốt mà nó định phục vụ. Đã sửa hai docstring, **giữ chữ cũ
+  kèm đính chính tại chỗ** để ai đọc commit cũ không tưởng có hai luật.
+- **Băm ≠ chạm** (`DR-BC-01` §3), để dòng `RESERVE` mang đủ 7 khoá xuất xứ mà vẫn giữ `L-Z52`. Căn cứ `DR-014`
+  §2 / `MT-02`: "chạm" = **đánh giá cấu hình**. 🔴 Đây là **nới một định nghĩa bằng lập luận**, nên phạm vi ghi
+  hẹp đúng một câu: *chỉ đọc byte để tính hàm băm*. Không mở cho nạp dataframe, tính chỉ báo, đếm nến.
+
+---
+
+### 5. Vặt, nhưng mỗi cái tốn một lượt
+
+- **`L-Z25` bắt chuỗi `hyperopt` trong chính test của tôi** — ở đúng dòng khẳng định mã sản xuất không chứa nó.
+  Lượt suite đầu: 1 failed / 2379 passed. Xử theo tiền lệ TD-0125: **diễn đạt lại** (`("hyper" + "opt")`),
+  **không** thêm ngoại lệ cho `L-Z25`. Cám dỗ rất thật: một dòng loại trừ cho `tests/lock/` làm suite xanh ngay
+  và trông hợp lý — rồi lần sau một dấu vết thật trong thư mục test sẽ không ai thấy.
+- **`Path.write_text()` trên Windows ghi CRLF.** Hai file dính (`TASKS.md`, `yeu_cau.py`); `yeu_cau.py` nằm
+  trong `THU_MUC_ANH_HUONG_PHEP_DO` nên sẽ làm `TD-0292` đỏ. Dùng `write_bytes()` từ đó về sau.
+- 🔑 **Một phép đo vô nghĩa mà suýt tin.** Đếm CRLF bằng `grep -c $'\r'` cho ra con số **bằng đúng tổng số
+  dòng** của mọi file — vì `$'\r'` không expand trong shell này, pattern thành **rỗng**, khớp mọi dòng. Con số
+  đó *khớp với giả thuyết đang có* ("Write tool ghi CRLF") nên rất dễ đi tiếp. Đo lại bằng Python: chỉ 2 file
+  dính, và **Write tool ghi LF, thủ phạm là `write_text` của tôi**. Cùng bài học đã ghi 07/09: *số liệu ủng hộ
+  giả thuyết của mình là lúc phải nghi ngờ phép đo nhất.*
+- **E1/E2/E3 phải chạy ở service `lockbox`.** Dưới `freqtrade`, `verify_all_seals` báo MỌI file lockbox
+  `MISSING` ⇒ exit 89 trước khi làm gì. `-93` báo, tôi tự đo lại xác nhận. Đã ghi từ 08/09
+  (`research-log.md:1373-1381`), không phải MT mới.
+
+---
+
+### 6. Giới hạn đã biết — đọc kèm mọi kết quả của Khối 27
+
+1. **Bằng chứng về CƠ CHẾ, không phải về DỮ LIỆU.** Test dùng dữ liệu tự dựng trong `tmp_path`. Hai đường
+   khác đã cân nhắc và loại: chạy thật trên `pool_t1` tiêu **1 suất** (và là thứ `DR-IQ-01` §1 ⏸); chạy trên
+   EXPLORE thì 0 suất nhưng `ro_cho_tap("EXPLORE")` **từ chối**, nên không đi qua chính mối nối cần chứng minh.
+2. **Chốt 5m hiện tại YẾU HƠN `DR-D1-05` §3b.4** — chỉ kiểm file 5m có tồn tại; file thủng giữa chừng vẫn lọt,
+   và `backtesting.py:1739` (`and pair in self.detail_data`) không báo gì, mã thiếu 5m **lặng lẽ tụt về 1H**.
+   `-ef` đã có `cho_thieu_khung_chi_tiet()` (`d1a1a7a`) trả CHỖ THỦNG chứ không trả `bool`. Nối là **TD-0314**,
+   tách riêng vì có một câu phải cân nhắc: hàm đó nhận dataframe đã nạp, còn lõi giao hẳn việc nạp cho tiến
+   trình con ⇒ **nạp hai lần** (đắt, nhưng độc lập) hay **để tiến trình con tự khai** (rẻ, nhưng là lời khai
+   của chính thứ đang bị kiểm — thứ `DR-014` §3 tránh). Nghiêng về nạp hai lần; chờ chủ dự án.
+3. **Warm-up đọc sang tập trước.** `startup_candle_count = 1000` nến 1H ≈ 41,7 ngày, dữ liệu `pool_t1` bắt đầu
+   từ `T0` ⇒ một lượt WFO **đọc byte vùng CALIB** trong khi `observed_start` vẫn báo `T1` và `L-Z55` vẫn xanh.
+   *"Warm-up có tính là chạm không?"* **chưa ai chốt**. Lõi khai `du_lieu_co_tu`/`du_lieu_co_den` — cố ý **không**
+   đặt tên "phạm vi nạp", vì báo cáo Freqtrade không có khoá nào khai điều đó; đây là **cận trên**, và một cái
+   tên hứa nhiều hơn con số là cách một phép đo nói dối về chính nó.
+4. **Hai tập lệnh cho cùng một cấu hình** — E2 qua `chay_wfo` chạy 3 lượt/fold (bắt buộc bởi
+   `kiem_pham_vi_du_lieu` tầng (b)); `wfo/lenh.py:16-21` + `DR-D9-01` §5.1 chạy 1 lượt rồi cắt lát. Không phải
+   lỗi, nhưng là **hai nguồn số** ⇒ phải khai bản nào nuôi cổng nào. Ghi thành `MT-61`.
