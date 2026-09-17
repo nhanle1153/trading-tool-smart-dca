@@ -2996,3 +2996,58 @@ loãng chính bài học.
 - **6/12 tham số vẫn `pending`** và sẽ còn `pending` cho tới khi có ngân sách cho phân tích độ nhạy.
 - **Không** sửa `param_status.yaml`, **không** sửa ô `MT` nào (quy tắc 5 + 11) — chờ *"chuẩn hóa và
   lưu"*.
+
+## 17/09/2026 — TD-0247: rổ pool đúng tại `T1` (107 mã) + dữ liệu `[T0,T2]` đủ. Bốn con số sai và một lần tự làm hỏng
+
+Phiên `-01`. **0 trial** cho toàn bộ. Nguồn quyết định: `DR-D1-03` §1–§5.
+
+**1. `DR-D1-02` §2 đếm sai, và cái sai đó đảo ngược mục đích việc.** Văn bản ghi *"9 mã … đang đứng
+trong khối `explore:` của `config/pool.yaml`"*, nhưng khối đó có **430** mã và giao rổ `T1` là **54**.
+Con số 9 là giao với **thư mục dữ liệu** EXPLORE. Áp đúng chữ thì rổ còn 62 mã và tái tạo lệch sống
+sót. 🔑 **Hình dạng lỗi:** con số đúng cho MỘT tập, được dán nhãn của một tập KHÁC có cùng tên
+*"explore"*. Chủ dự án chốt lại: xét theo dữ liệu đã dùng, tại `T1`. Chuỗi từ `T0` bị loại vì đo được
+nó cắt thêm 22 mã chưa từng có dữ liệu EXPLORE.
+
+**2. Bộ sinh rổ tái lập độc lập `TD-0231`: 116 mã đủ tiêu chí, khít từng mã.** Trừ 9 mã có dữ liệu
+EXPLORE (trùng đúng 9 mã phiên `-33` đã tính PnL ở TD-0291) còn **107**; TRADIFI 0. Commit `a62540b`.
+
+**3. Freqtrade không tải được mã không còn trên sàn ⇒ nhập từ kho. Trước khi tin, ĐỐI CHIẾU.** AAVE
+05/2024 + 09/2025, kho so với file Freqtrade thật: nến và mark khớp **từng ô**. Funding lệch mốc ở lần
+đầu, **không phải lệch giá trị**: `calc_time` của kho có jitter 1–7 ms (`1714665600002`), Freqtrade
+ghi tròn giờ. Làm tròn xuống giờ, từ chối khi lệch ≥ 60 s: 93/93 và 90/90 hàng, 0 lệch. Artifact
+`td0247-doi-chieu-kho-freqtrade.json`.
+
+**4. 🔴 `khoang_ton_tai` của TD-0230 ĐÁNH GIÁ QUÁ ĐỜI SỐNG của mã đã huỷ niêm yết.** Chốt fail-closed
+dừng ở FLM (kho thiếu funding 12/2025). Đo tiếp thì thấy không phải kho thiếu file:
+- **MKR** ngừng giao dịch **08/09/2025 08:00**, **FLM** ngừng **21/11/2025 08:00**. Trong tháng 11
+  trước khi huỷ, FLM mất **−67%**.
+- Sau đó kho vẫn sinh nến phẳng ở giá thanh toán, `volume = 0`, **không funding**, tới tận 2026.
+- `TD-0230` suy tồn tại từ file nến nên ghi hai mã *"tới 2026-08"*.
+- Rổ `T1` không bị ảnh hưởng; khoảng đó chỉ sai khi dùng cho mốc muộn hơn.
+- Chủ dự án chốt **cắt tại nến cuối có giao dịch**. Mốc đo bằng máy khớp phép đo tay; artifact
+  `td0247-moc-ngung-giao-dich.json`.
+- 🔑 Nếu *"lấp cho đủ"* hoặc *"bỏ FLM vì thiếu funding"* thì đúng mã sập 67% biến mất khỏi backtest.
+
+**5. 🔴 Tôi tự làm hỏng E8 và 65 test xanh không bắt được.** `cf86276` ghi chuỗi `"\n"` thành một
+dòng mới thật ⇒ `SyntaxError`. Không test nào nạp E8, nên lượt nhập thứ hai chết ngay khi khởi động.
+Vá `891e94c`, kèm test nạp E8. Kiểm có răng: trả về bản lỗi thì test đỏ. 🔑 Cùng họ với *"lớp canh
+sắc nhưng chĩa nhầm hướng"*: test canh module dữ liệu, không canh đường sản xuất gọi module đó.
+
+**6. Lượt tải 5m lấn vào LOCKBOX lần nữa, và H19 báo ĐỎ ĐÚNG mà không phải hư hại.**
+`download-data -t 5m --timerange 20250612-20260129` kéo lại mark/funding, lấn tới **17/09/2026**.
+- H19 `--verify-after`: 90 file *"mất 1 nến trong khoảng cũ"*.
+- Đo nến mất so với bản sao lưu: **90/90 nến mất nằm SAU T2**, 0 nến mất trong `[T0,T2]`, 0 ô giá trị
+  đổi. Đó là nến chưa hoàn chỉnh cuối phần tải lố mà Freqtrade bỏ khi gộp.
+- Không khôi phục; cắt `≤ T2` (chạy lại cắt ⇒ 0 hàng, đúng tính idempotent).
+- Bản sao lưu H19 chứa dữ liệu vùng LOCKBOX nên **đã xoá** theo quyết định chủ dự án. 🔑 H19 đỏ
+  không đồng nghĩa phải khôi phục; phải đo nến mất nằm ở đâu.
+
+**Kết quả:** `E8 --ro-t1-kiem` ✅ — **107 mã × 6 file = 642 file** trong `user_data/data/pool_t1/futures/`:
+- **55 mã chép nguyên byte** từ `binance/` (sha256 khớp);
+- **45 mã tải bằng Freqtrade**;
+- **7 mã nhập từ kho** (2 mã cắt tại mốc ngừng giao dịch);
+- không lấn `T2`, đúng mốc đầu/cuối, không đuôi nến chết chưa khai.
+
+**Phạm vi, đọc cho đúng:** đây là **dữ liệu**, không phải phép đo hiệu năng. Bước *"đo lại phễu / n /
+lệnh-năm"* đã bị chủ dự án bỏ khỏi TD-0247 (Zone Absorption tạm dừng theo `DR-IQ-01`).
+`config/pool.yaml` sản xuất **chưa đổi**; đưa rổ `T1` thành rổ sản xuất là quyết định riêng (`DR-D1-02` §6).
