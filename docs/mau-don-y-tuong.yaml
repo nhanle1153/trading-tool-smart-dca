@@ -9,8 +9,30 @@
 # nên thà không ghi còn hơn ghi một dòng bẩn.
 #
 # 🚪 Trần NHẬP: 10 đơn/quý. Đơn thứ 11 trong cùng quý bị từ chối.
-# 🚪 Cửa này KHÔNG chọn ý tưởng ra để chạy — đó là hành động khác (1 lần/quý,
-#    quý 3/2026 hạn ngạch = 0). Vì vậy `status` chỉ nhận QUEUED hoặc REJECTED.
+# 🚪 Cửa này KHÔNG chọn ý tưởng ra để chạy — đó là hành động khác, tối đa
+#    1 lần/quý. Hạn ngạch CHỌN của quý hiện hành nằm ở DR tiêu chí chọn của
+#    chính quý đó (`docs/decisions/DR-Q<n>-<năm>-tieu-chi-chon-y-tuong.md`) —
+#    đọc file đó, đừng tin một con số chép sẵn ở đây.
+#    Vì vậy `status` chỉ nhận QUEUED hoặc REJECTED.
+#
+# 🔴 TRƯỚC KHI ĐIỀN — đọc danh sách loại trừ cơ chế:
+#    `docs/decisions/DR-IQ-01A-danh-sach-loai-tru-co-che.md`
+#    Một số HỌ CƠ CHẾ đã bị loại khỏi suất chọn hiện hành. Đơn thuộc họ đó vẫn
+#    NỘP được, nhưng sẽ không bao giờ được chọn ra chạy — nên đọc trước thì đỡ
+#    mất công. Luật fail-closed: nghi ngờ có thuộc hay không ⇒ COI NHƯ THUỘC.
+#    File đó là nguồn sự thật; ở đây cố ý KHÔNG chép lại danh sách (một ý, một
+#    nguồn — MT-03). KHÔNG có máy nào canh danh sách này, phán xét cuối là người.
+#
+# 🔴 PHIÊN ĐIỀN ĐƠN PHẢI SẠCH (DR-009, spec :3104-3116) — một phiên đã đọc kết
+#    quả định lượng của Tool D thì NHIỄM và không được sinh ý tưởng nữa.
+#      ĐƯỢC đọc:  mẫu này · DR-IQ-01A · DR tiêu chí chọn của quý ·
+#                 registry/idea_queue.jsonl · spec §9c.7 · tập EXPLORE (§9c.4b,
+#                 phân tích thoải mái, không tốn trial, KHÔNG bị coi là nhiễm)
+#      CẤM đọc:   mọi kết quả backtest / WFO / ablation của Tool D ·
+#                 docs/du-lieu-do/** · DR-IQ-01 (bản đầy đủ) · các mục MT/OQ
+#                 trong back-end-note.md có trích số kết quả
+#    Không chắc phiên có sạch không → khai `data_source: TOOL_D_RESULTS`, tức tự
+#    loại. Thà mất một đơn còn hơn làm bẩn cả ngân sách đo (N thành số dối).
 #
 # `idea_id` và `created_at` để trống thì công cụ tự điền.
 
