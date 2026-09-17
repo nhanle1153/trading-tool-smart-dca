@@ -1,0 +1,95 @@
+{
+ "nguon": "TD-0247/TD-0301 / DR-D1-03 §5, DR-D1-05 — rổ T0: mốc ngừng giao dịch đo khi nhập kho: nến 1h futures CUỐI có volume > 0 (sớm hơn T1 − 1 giờ). Sau mốc, kho sinh nến phẳng giá thanh toán, volume 0. 0 trial.",
+ "ma": {
+  "AGIXUSDT": {
+   "moc_ngung": "2024-06-25T09:00:00+00:00",
+   "gia_dong_nen_cuoi": 0.7009,
+   "so_hang_1h_futures": 1858
+  },
+  "BLZUSDT": {
+   "moc_ngung": "2024-12-23T08:00:00+00:00",
+   "gia_dong_nen_cuoi": 0.06836,
+   "so_hang_1h_futures": 6201
+  },
+  "BNXUSDT": {
+   "moc_ngung": "2025-03-17T09:00:00+00:00",
+   "gia_dong_nen_cuoi": 2.0,
+   "so_hang_1h_futures": 8218
+  },
+  "EOSUSDT": {
+   "moc_ngung": "2025-05-21T08:00:00+00:00",
+   "gia_dong_nen_cuoi": 0.746,
+   "so_hang_1h_futures": 9777
+  },
+  "FRONTUSDT": {
+   "moc_ngung": "2024-08-23T08:00:00+00:00",
+   "gia_dong_nen_cuoi": 0.8996,
+   "so_hang_1h_futures": 3273
+  },
+  "FTMUSDT": {
+   "moc_ngung": "2025-01-06T09:00:00+00:00",
+   "gia_dong_nen_cuoi": 0.7702,
+   "so_hang_1h_futures": 6538
+  },
+  "GALUSDT": {
+   "moc_ngung": "2024-07-11T09:00:00+00:00",
+   "gia_dong_nen_cuoi": 2.475,
+   "so_hang_1h_futures": 2242
+  },
+  "KEYUSDT": {
+   "moc_ngung": "2024-12-03T08:00:00+00:00",
+   "gia_dong_nen_cuoi": 0.0025177,
+   "so_hang_1h_futures": 5721
+  },
+  "LINAUSDT": {
+   "moc_ngung": "2025-03-27T09:00:00+00:00",
+   "gia_dong_nen_cuoi": 0.000742,
+   "so_hang_1h_futures": 8458
+  },
+  "MATICUSDT": {
+   "moc_ngung": "2024-09-04T08:00:00+00:00",
+   "gia_dong_nen_cuoi": 0.3846,
+   "so_hang_1h_futures": 3561
+  },
+  "OCEANUSDT": {
+   "moc_ngung": "2024-06-25T09:00:00+00:00",
+   "gia_dong_nen_cuoi": 0.707,
+   "so_hang_1h_futures": 1858
+  },
+  "REEFUSDT": {
+   "moc_ngung": "2025-01-22T09:00:00+00:00",
+   "gia_dong_nen_cuoi": 0.00088,
+   "so_hang_1h_futures": 6922
+  },
+  "RENUSDT": {
+   "moc_ngung": "2024-12-03T09:00:00+00:00",
+   "gia_dong_nen_cuoi": 0.048,
+   "so_hang_1h_futures": 5722
+  },
+  "RNDRUSDT": {
+   "moc_ngung": "2024-07-16T08:00:00+00:00",
+   "gia_dong_nen_cuoi": 6.6161,
+   "so_hang_1h_futures": 2361
+  },
+  "STMXUSDT": {
+   "moc_ngung": "2025-02-21T09:00:00+00:00",
+   "gia_dong_nen_cuoi": 0.00388,
+   "so_hang_1h_futures": 7642
+  },
+  "UNFIUSDT": {
+   "moc_ngung": "2024-10-30T09:00:00+00:00",
+   "gia_dong_nen_cuoi": 1.73,
+   "so_hang_1h_futures": 4906
+  },
+  "WAVESUSDT": {
+   "moc_ngung": "2024-06-11T08:00:00+00:00",
+   "gia_dong_nen_cuoi": 1.3355,
+   "so_hang_1h_futures": 1521
+  },
+  "XEMUSDT": {
+   "moc_ngung": "2024-12-09T09:00:00+00:00",
+   "gia_dong_nen_cuoi": 0.0338,
+   "so_hang_1h_futures": 5866
+  }
+ }
+}
