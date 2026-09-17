@@ -1,0 +1,1168 @@
+{
+ "nguon": "TD-0252 — độ phủ 5m rổ T0 trên [2024-04-09, 2025-06-12]. Đo bằng history.load_data(startup_candles=0), ĐÚNG bộ tham số Backtesting._load_bt_data_detail() truyền; không nạp strategy, không sinh chỉ số hiệu năng. 0 trial.",
+ "moc": {
+  "t0": "2024-04-09",
+  "t1": "2025-06-12"
+ },
+ "ro": {
+  "file": "config/pool_t0.yaml",
+  "so_ma": 143
+ },
+ "tong": {
+  "nap_duoc_khung_chinh": 143,
+  "nap_duoc_khung_chi_tiet": 143,
+  "so_ma_thieu": 0,
+  "tong_nen_chi_tiet": 16555667
+ },
+ "thieu": [],
+ "theo_ma": {
+  "1000FLOKI/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "1000LUNC/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "1000PEPE/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "1000SHIB/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "1000XEC/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "1INCH/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "AAVE/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "ACH/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "ADA/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "AGIX/USDT:USDT": {
+   "so_nen_chinh": 1858,
+   "so_nen_chi_tiet": 22285,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2024-06-25 09:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "AGLD/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "ALGO/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "ALPHA/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "APE/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "APT/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "ARB/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "ARK/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "ARPA/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "AR/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "ATA/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "ATOM/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "AVAX/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "AXS/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "BAKE/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "BCH/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "BEL/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "BICO/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "BIGTIME/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "BLUR/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "BLZ/USDT:USDT": {
+   "so_nen_chinh": 6201,
+   "so_nen_chi_tiet": 74401,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2024-12-23 08:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "BNB/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "BNX/USDT:USDT": {
+   "so_nen_chinh": 8218,
+   "so_nen_chi_tiet": 98605,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-03-17 09:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "CELO/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "CELR/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "CFX/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "CHR/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "CHZ/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "COMP/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "COTI/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "CRV/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "CYBER/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "DENT/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "DOGE/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "DOT/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "DUSK/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "DYDX/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "EGLD/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "ENJ/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "ENS/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "EOS/USDT:USDT": {
+   "so_nen_chinh": 9777,
+   "so_nen_chi_tiet": 117313,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-05-21 08:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "ETC/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "FET/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "FIL/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "FLM/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "FLOW/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "FRONT/USDT:USDT": {
+   "so_nen_chinh": 3273,
+   "so_nen_chi_tiet": 39265,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2024-08-23 08:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "FTM/USDT:USDT": {
+   "so_nen_chinh": 6538,
+   "so_nen_chi_tiet": 78445,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-01-06 09:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "FXS/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "GALA/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "GAL/USDT:USDT": {
+   "so_nen_chinh": 2242,
+   "so_nen_chi_tiet": 26893,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2024-07-11 09:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "GMT/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "GRT/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "HBAR/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "HIFI/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "HIGH/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "HOOK/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "HOT/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "ICP/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "ID/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "IMX/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "INJ/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "IOST/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "IOTA/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "IOTX/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "JASMY/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "JOE/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "KEY/USDT:USDT": {
+   "so_nen_chinh": 5721,
+   "so_nen_chi_tiet": 68641,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2024-12-03 08:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "KSM/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "LDO/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "LEVER/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "LINA/USDT:USDT": {
+   "so_nen_chinh": 8458,
+   "so_nen_chi_tiet": 101485,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-03-27 09:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "LINK/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "LPT/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "LQTY/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "LRC/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "LTC/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "LUNA2/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "MAGIC/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "MANA/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "MASK/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "MATIC/USDT:USDT": {
+   "so_nen_chinh": 3561,
+   "so_nen_chi_tiet": 42721,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2024-09-04 08:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "MINA/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "MKR/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "NEAR/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "NEO/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "NKN/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "OCEAN/USDT:USDT": {
+   "so_nen_chinh": 1858,
+   "so_nen_chi_tiet": 22285,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2024-06-25 09:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "OGN/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "ONT/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "OP/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "PENDLE/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "PEOPLE/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "PERP/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "RDNT/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "REEF/USDT:USDT": {
+   "so_nen_chinh": 6922,
+   "so_nen_chi_tiet": 83053,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-01-22 09:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "REN/USDT:USDT": {
+   "so_nen_chinh": 5722,
+   "so_nen_chi_tiet": 68653,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2024-12-03 09:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "RLC/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "RNDR/USDT:USDT": {
+   "so_nen_chinh": 2361,
+   "so_nen_chi_tiet": 28321,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2024-07-16 08:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "RUNE/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "RVN/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "SAND/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "SFP/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "SOL/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "SSV/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "STG/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "STMX/USDT:USDT": {
+   "so_nen_chinh": 7642,
+   "so_nen_chi_tiet": 91693,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-02-21 09:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "STORJ/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "STX/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "SUI/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "SUSHI/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "SXP/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "TRB/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "TRU/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "TRX/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "T/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "UMA/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "UNFI/USDT:USDT": {
+   "so_nen_chinh": 4906,
+   "so_nen_chi_tiet": 58861,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2024-10-30 09:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "UNI/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "VET/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "WAVES/USDT:USDT": {
+   "so_nen_chinh": 1521,
+   "so_nen_chi_tiet": 18241,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2024-06-11 08:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "WLD/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "WOO/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "XEM/USDT:USDT": {
+   "so_nen_chinh": 5866,
+   "so_nen_chi_tiet": 70381,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2024-12-09 09:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "XLM/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "XMR/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "XRP/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "XVG/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "YFI/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "YGG/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "ZEC/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "ZEN/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "ZIL/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  },
+  "ZRX/USDT:USDT": {
+   "so_nen_chinh": 10297,
+   "so_nen_chi_tiet": 123553,
+   "dau": "2024-04-09 00:00:00+00:00",
+   "cuoi": "2025-06-12 00:00:00+00:00",
+   "so_gio_chinh_thieu_chi_tiet": 0,
+   "ly_do": null
+  }
+ },
+ "ranh_gioi": [
+  "Mẫu số là mã NẠP ĐƯỢC khung chính, không phải toàn rổ (bài học TD-0200: mã niêm yết sau mốc chỉ có dữ liệu từ ngày niêm yết).",
+  "H19/LD-28: KHÔNG kết luận nguyên nhân bất kỳ lỗ hổng nào chưa chạy --probe-gap."
+ ]
+}

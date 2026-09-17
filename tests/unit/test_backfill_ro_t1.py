@@ -243,3 +243,52 @@ def test_cac_co_moi_di_SAU_guard_va_gate_d0_pre() -> None:
     vi_tri_co = min(src.index("args.ro_con_thieu"), src.index("args.ro_do_phu"))
     assert vi_tri_guard < vi_tri_co
     assert "--chi-loai chỉ đi kèm" in src
+
+
+def test_do_phu_nap_duoc_0_ma_thi_KHONG_DO_DUOC_chu_khong_phai_DU(tmp_path: Path, monkeypatch, capsys) -> None:
+    """🔴 Bẫy PASS RỖNG đã XẢY RA THẬT 18/09/2026, không phải giả định: `datadir` truyền thiếu
+    một tầng (Freqtrade tự nối `futures/` cho candle_type FUTURES) ⇒ `load_data` trả 0 mã ⇒
+    `cho_thieu_khung_chi_tiet({}, {})` trả rỗng ⇒ hàm in "✅ không giờ nào thiếu, trên toàn bộ
+    0 mã nạp được" và trả **exit 0**. Khẳng định ĐÚNG-VÔ-NGHĨA trên tập rỗng.
+
+    "Không đo được" phải KHÁC "đo ra đủ" (N6) — trước bản vá, hai ca đó cho cùng mã thoát."""
+    ro_yaml = tmp_path / "pool_t0.yaml"
+    ro_yaml.write_text("moc_t0: x\ntrading:\n- AUSDT\n- BUSDT\n", encoding="utf-8")
+    td0230 = tmp_path / "td0230.json"
+    td0230.write_text('{"khoang_ton_tai": {}}', encoding="utf-8")
+    monkeypatch.setitem(E8.CAU_HINH_RO, "t0", (tmp_path / "trong" / "futures", ro_yaml, tmp_path / "m.json", ()))
+    monkeypatch.setattr(E8, "NGUON_TD0230", td0230)
+    out = tmp_path / "do-phu.json"
+    ma_thoat = E8.do_ro_do_phu("t0", "5m", out)
+    ra = capsys.readouterr().out
+    assert ma_thoat == E8.EXIT_RO_T1_LOI, "0 mã nạp được PHẢI là lỗi, không phải 'đủ'"
+    assert "KHÔNG ĐO ĐƯỢC" in ra
+    assert "✅" not in ra
+
+
+def test_do_phu_ma_qua_ro_kiem_ma_khong_nap_duoc_thi_TU_CHOI(tmp_path: Path, monkeypatch, capsys) -> None:
+    """Mẫu số không được lặng lẽ thu nhỏ: `--ro-kiem` đã khẳng định mọi mã có file 1h hợp lệ,
+    nên `load_data` bỏ sót mã là mâu thuẫn giữa hai đường đọc — phải truy, không báo 'đủ'."""
+    import tool_d.data.do_phu_chi_tiet as dp
+
+    ro_yaml = tmp_path / "pool_t0.yaml"
+    ro_yaml.write_text("moc_t0: x\ntrading:\n- AUSDT\n- BUSDT\n", encoding="utf-8")
+    td0230 = tmp_path / "td0230.json"
+    td0230.write_text('{"khoang_ton_tai": {}}', encoding="utf-8")
+    monkeypatch.setitem(E8.CAU_HINH_RO, "t0", (tmp_path / "d" / "futures", ro_yaml, tmp_path / "m.json", ()))
+    monkeypatch.setattr(E8, "NGUON_TD0230", td0230)
+
+    import pandas as pd
+
+    def _nap_gia(**kw):  # chỉ nạp được A, vắng B
+        d = pd.date_range("2024-04-09", "2024-04-10", freq="1h", tz="UTC")
+        return {"A/USDT:USDT": pd.DataFrame({"date": d})}
+
+    import freqtrade.data.history as ft_history
+
+    monkeypatch.setattr(ft_history, "load_data", _nap_gia)
+    ma_thoat = E8.do_ro_do_phu("t0", "5m", tmp_path / "o.json")
+    ra = capsys.readouterr().out
+    assert ma_thoat == E8.EXIT_RO_T1_LOI
+    assert "B/USDT:USDT" in ra and "KHÔNG nạp được" in ra
+    assert dp.cho_thieu_khung_chi_tiet({}, {}) == []  # hàm thuần vẫn đúng; chốt nằm ở người gọi

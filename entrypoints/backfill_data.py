@@ -561,8 +561,11 @@ def do_ro_do_phu(moc: str, chi_loai: str | None, out_path: Path) -> int:
     tr = TimeRange("date", "date", int(_to_ms(bat_dau.isoformat()) / 1000), int(_to_ms(ket_thuc.isoformat()) / 1000))
 
     def _nap(khung: str):
+        # 🔴 `datadir` là thư mục CHA: với `candle_type=FUTURES` Freqtrade tự nối `futures/`.
+        # Truyền thẳng `.../pool_t0/futures` thì nó tìm `.../pool_t0/futures/futures/` và nạp
+        # được 0 mã — đo được 18/09/2026, không suy từ tài liệu.
         return history.load_data(
-            datadir=thu_muc,
+            datadir=thu_muc.parent,
             pairs=cap,
             timeframe=khung,
             timerange=tr,
@@ -573,6 +576,27 @@ def do_ro_do_phu(moc: str, chi_loai: str | None, out_path: Path) -> int:
         )
 
     nen_chinh, nen_ct = _nap("1h"), _nap(khung_ct)
+
+    # 🔴 FAIL-CLOSED TRƯỚC MỌI KHẲNG ĐỊNH — tự dính một lần 18/09/2026: `datadir` sai làm
+    # `load_data` trả 0 mã, `cho_thieu_khung_chi_tiet({}, {})` trả rỗng, và hàm in
+    # "✅ không giờ nào thiếu, trên toàn bộ 0 mã" rồi trả exit 0. Một khẳng định ĐÚNG-VÔ-NGHĨA
+    # trên tập rỗng. "Không đo được" KHÁC "đo ra đủ" (N6) — và ở đây chúng từng cho cùng mã thoát.
+    if not nen_chinh:
+        print(
+            f"🛑 KHÔNG ĐO ĐƯỢC: nạp được 0/{len(cap)} mã khung chính từ {thu_muc.parent} — "
+            f"KHÁC với 'đủ'. Kiểm đường dẫn/khoảng thời gian trước khi đọc bất kỳ kết luận nào."
+        )
+        return EXIT_RO_T1_LOI
+    vang_khung_chinh = [p for p in cap if p not in nen_chinh]
+    if vang_khung_chinh:
+        # `--ro-kiem` đã khẳng định MỌI mã có file 1h hợp lệ, nên nạp không được là mâu thuẫn
+        # giữa hai đường đọc — phải truy, không được lặng lẽ thu nhỏ mẫu số rồi báo "đủ".
+        print(
+            f"🛑 {len(vang_khung_chinh)}/{len(cap)} mã có file 1h qua được --ro-kiem nhưng "
+            f"history.load_data KHÔNG nạp được: {vang_khung_chinh[:10]}"
+        )
+        return EXIT_RO_T1_LOI
+
     thieu = cho_thieu_khung_chi_tiet(nen_chinh, nen_ct)
     bang = tom_tat_theo_ma(nen_chinh, nen_ct, cap)
     tong_nen_ct = sum(len(df) for df in nen_ct.values())
