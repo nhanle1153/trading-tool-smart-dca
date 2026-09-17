@@ -3161,3 +3161,30 @@ thích được.
 ⚠️ **Phạm vi:** mọi con số trên chỉ đúng cho kho `/1d/` tại ảnh chụp `TD-0230` (12/09/2026), và số 94
 của `pool_dung_tai_t2` dựng bằng chính `khoang_ton_tai` mà `MT-59` nói là sai — phải tính lại sau
 `TD-0306`, không được đóng băng thành *"đã kiểm"*.
+
+### Phụ lục cùng ngày — tỉ lệ mã chết: giả thuyết "rebrand thổi phồng CALIB" bị chính phép đo bác
+
+Phiên `-93` đo nhịp chết hai giai đoạn và bác đề nghị *"0 mã thì phải giải thích"* của `-01` (một
+ngưỡng đơn không đứng được khi hai nhịp chênh 3,6×). Phiên `-01` đo tiếp giả thuyết giải thích chênh
+lệch đó. **0 trial**, nguồn: `khoang_ton_tai` + hai artifact mốc ngừng.
+
+| Giai đoạn | Dài | Rổ | Chết | Rebrand/merge | Chết THẬT | Nhịp chết thật |
+|---|---|---|---|---|---|---|
+| CALIB `[T0,T1]` | 429 ngày | T0, 143 mã | 18 | **5** | 13 (9,1%) | **0,64 %/tháng** |
+| WFO `[T1,T2]` | 231 ngày | T1, 107 mã | 2 | **1** | 1 (0,93%) | **0,12 %/tháng** |
+
+**Chữ ký nhận rebrand, đo được, không cần kiến thức ngoài repo:**
+- **thư mục MỚI xuất hiện đúng tháng mã cũ ngừng:** `MATIC` 2024-09-04 ↔ `POL` `thang_dau` 2024-09 ·
+  `RNDR` 2024-07-16 ↔ `RENDER` 2024-07 · `FTM` 2025-01-06 ↔ `S` 2025-01 · `MKR` 2025-09-08 ↔ `SKY`
+  2025-09;
+- **nhiều mã ngừng ĐÚNG CÙNG NGÀY** khi merge vào một mã đã có: `AGIX` + `OCEAN` cùng ngừng
+  2024-06-25 → `FET` (tồn tại từ 2023-01, không sinh thư mục mới).
+
+🔑 **Giả thuyết bị bác bởi chính phép đo:** *"nhịp CALIB cao vì một đợt rebrand tập trung 2024"* nghe
+rất hợp lý, nhưng rebrand có mặt ở **cả hai** giai đoạn, và tỉ lệ rebrand ở WFO (1/2) còn **cao hơn**
+CALIB (5/18). Tách xong, chênh lệch **giãn từ 3,6× lên 5,3×**, không thu hẹp.
+
+⚠️ `n = 1` ở WFO: không đủ để đặt một λ nền. Dùng làm cận dưới của dải thì phải khai rõ mẫu bằng 1.
+
+📌 **Điểm chung của ba lần trong ngày** (nhãn `_tai_t1`, nhãn AERGO, giả thuyết rebrand): cả ba đều bị
+bắt bằng **một phép đo rẻ chạy thêm**, không lần nào bằng đọc kỹ hơn hay tranh luận thêm.
