@@ -96,3 +96,38 @@ và kết luận "ĐI" bị gắn nhãn *"chưa tính DR-007"* cho tới khi TD-
 |---|---|
 | `TD-0290` | DR này |
 | `TD-0291` | Script `docs/du-lieu-do/do_td0291_song_con_explore.py` (dùng lại khung `do_td0193_*`, `wfo/lenh`) + artifact `docs/du-lieu-do/td0291-song-con-explore.json` ghi đủ §2, §3, §5, kết luận theo §4. **Chờ "bắt đầu code"** |
+
+---
+
+## 8. 🔴 ĐÍNH CHÍNH 17/09/2026 — viết TRƯỚC khi tồn tại bất kỳ con số hiệu năng nào (thay §2 cửa sổ, §4 luật 3)
+
+**Vì sao sửa được hợp lệ:** lượt chạy thứ nhất (`0c474ed`) ra **cả hai arm `unreadable`** — `Z0-T1` 3, `Z0-T0` 4
+exception bị Freqtrade nuốt (§3, fail-closed đúng thiết kế). Artifact lượt đó **không chứa một con số hiệu năng
+nào** (chỉ `trang_thai` + `ly_do`), được niêm phong bằng `sha256 = 232fc9217cc5f0b4aa757ac7c9020db6a5567c6cbf0e0cc8e3d07e90c469c0cd`
+và lưu lại dưới tên `td0291-song-con-explore-lan1-unreadable.json`. Nguyên nhân là lỗi chiến lược
+(nến xác nhận §3.3b đóng ≤ SL kiểu zone) — đã sửa ở **TD-0294** (`0afbc70`) trước lượt chạy lại. §6 cho phép sửa lỗi
+kỹ thuật lộ ra **trước** khi có số và chạy lại.
+
+**Phiên `-30` phản biện hai điểm; chủ dự án chốt 17/09/2026:**
+
+1. **Cửa sổ: CHỈ CALIB `[T0, T1)`** (thay "`[T0,T2)`, gộp + hai cửa sổ con" ở §2). Lý do: PnL của `Z0-T1` trên 88 mã
+   EXPLORE trong cửa sổ WFO `[T1,T2)` là ước lượng khá tốt PnL trên pool **đúng trong cửa sổ D4 sẽ phán quyết** —
+   dự án tự giả định tương quan alt = 1 (`spec:4931-4932`). EXPLORE tách theo **mã**, không theo **thời gian**.
+   Đo WFO là nhìn trước câu trả lời D4. **Giá:** mẫu nhỏ hơn (~65% độ dài), mất điều kiện "dương ở cả hai cửa sổ".
+2. **Luật 3 TRUNG TÍNH** (thay "ĐI — hết tốc lực"). Một cổng DỪNG đúng nghĩa là **bất đối xứng**: xấu ⇒ dừng;
+   tốt ⇒ *"không có lý do dừng"* — đi tiếp theo kế hoạch bình thường, **không** tăng tốc, **không** làm căn cứ kỳ vọng
+   cho D4. Bản cũ là bằng chứng dương đổi nhãn — trái chính §1.
+
+**Luật thay thế — áp máy móc trên `R_trien_khai` của `Z0-T1`, EXPLORE, `[T0, T1)`:**
+
+| # | Điều kiện | Kết luận |
+|---|---|---|
+| 1 | `n < 30` | **KHÔNG KẾT LUẬN** — trình chủ dự án |
+| 2 | Cận trên KTC 95% `< 0` | **DỪNG Zone Absorption LONG** (như §4 luật 2) |
+| 3 | `mean ≥ M` | **KHÔNG CÓ LÝ DO DỪNG** — đường găng theo kế hoạch, không tăng tốc, không neo kỳ vọng D4 |
+| 4 | Còn lại | **KHÔNG TIÊU SUẤT lúc này** — trình chủ dự án |
+
+`M` giữ công thức §2, với `n` và mã-năm tính trên `[T0, T1)`. `Z0-T0` vẫn chỉ mô tả, cùng cửa sổ.
+
+🔴 **Cấm thêm:** không chạy `[T1, T2)` dưới bất kỳ nhãn nào ("chỉ xem", "chẩn đoán") trước khi D4 đóng. Kết luận 3
+**không** được trích dẫn trong DR/phán quyết D4 như bằng chứng ủng hộ `Z0-T1`.
