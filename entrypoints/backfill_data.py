@@ -200,8 +200,7 @@ def _ghi_moc_ngung(symbol: str, ban_ghi: dict) -> None:
     if cu is not None and cu["moc_ngung"] != ban_ghi["moc_ngung"]:
         raise RuntimeError(f"{symbol}: artifact đã ghi mốc {cu['moc_ngung']}, lần đo này ra {ban_ghi['moc_ngung']} — không ghi đè")
     du_lieu["ma"][symbol] = ban_ghi
-    MOC_NGUNG_JSON.write_text(json.dumps(du_lieu, ensure_ascii=False, indent=1) + "
-", encoding="utf-8")
+    MOC_NGUNG_JSON.write_text(json.dumps(du_lieu, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
 
 
 def _moc_phan_vung() -> dict:
