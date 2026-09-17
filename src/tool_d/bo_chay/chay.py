@@ -140,6 +140,21 @@ def chay_mot_luot(
         else tuple(ro.trading)
     )
 
+    # 🔴 TẬP RỖNG LÀM MỌI KHẲNG ĐỊNH PHỔ QUÁT THÀNH ĐÚNG-VÔ-NGHĨA. Chốt này phải
+    #    đứng TRƯỚC mọi phép kiểm "mọi mã đều …" bên dưới, không phải sau. Với `ma`
+    #    rỗng thì chốt 5m ở bước 3 cho `thieu == []` và kết luận "đủ" — trên 0 mã.
+    #    Lượt chạy rồi cũng bị `dung_moi_truong()` từ chối ở bước 4, nhưng lúc đó
+    #    CHỐT 5m ĐÃ NÓI "ĐỦ" rồi; một cổng nói đúng vì không có gì để xét là một
+    #    cổng không tồn tại.
+    #    Phiên `-ef` gặp đúng hình này trên đường chạy thật ngày 18/09/2026:
+    #    `--ro-do-phu` nạp hụt 0/143 mã (sai `datadir`) rồi in `✅ Không một giờ nào
+    #    thiếu nến 5m, trên toàn bộ 0 mã` và trả exit 0. "Rỗng" bị đọc thành "đủ".
+    if not ma:
+        raise BoChayError(
+            f"0 mã để chạy (rổ {ro.file_ro} có {len(ro.trading)} mã, `ma_gioi_han` lọc còn 0). "
+            "TỪ CHỐI — đây là KHÔNG ĐO ĐƯỢC, không phải 'đủ điều kiện'."
+        )
+
     # 3 — fail-closed cho `--timeframe-detail`. Rổ `T0` KHÔNG có 5m (`DR-D1-05` §3,
     #     `TD-0252` ⏸). Im lặng chạy ở độ phân giải 1H là đúng cái bẫy đã ghi ở
     #     `do_td0193_lenh_nam_explore.py:21-22`: đủ để ĐẾM lệnh, KHÔNG đủ để nói về TP.

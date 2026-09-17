@@ -479,6 +479,41 @@ class TestCuaSoVaTimeframeDetail:
                 chien_luoc=CHIEN_LUOC,
             )
 
+    def test_ro_rong_la_KHONG_DO_DUOC_chu_khong_phai_du(self, repo_gia: Path) -> None:
+        """🔴 Tập rỗng làm mọi khẳng định "mọi mã đều …" thành đúng-vô-nghĩa.
+
+        Phiên `-ef` gặp đúng hình này trên đường chạy THẬT (18/09/2026): `--ro-do-phu`
+        nạp hụt 0/143 mã vì sai `datadir`, rồi in `✅ Không một giờ nào thiếu nến 5m,
+        trên toàn bộ 0 mã` và trả **exit 0**. Hàm thuần không sai — nó trả rỗng đúng
+        đặc tả; chốt thiếu nằm ở NGƯỜI GỌI.
+
+        Ở lõi này, `ma` rỗng + `timeframe_detail` ⇒ `thieu == []` ⇒ chốt 5m kết luận
+        "đủ" trên 0 mã. Lượt chạy rồi cũng bị `dung_moi_truong()` chặn ở bước sau,
+        nhưng lúc đó cổng 5m ĐÃ nói "đủ" — một cổng nói đúng vì không có gì để xét
+        là một cổng không tồn tại.
+
+        Kiểm CÓ RĂNG: bỏ chốt `if not ma` ⇒ ca này đỏ (và thông điệp đổi từ
+        "KHÔNG ĐO ĐƯỢC" sang thông điệp của `dung_moi_truong`).
+        """
+        so = _so_tam(repo_gia)
+        tid = _dat_cho(so, param="ro_rong")
+        with pytest.raises(BoChayError, match="KHÔNG ĐO ĐƯỢC") as loi:
+            chay_mot_luot(
+                YeuCauChay(
+                    tap="WFO", tu=TU, den_khong_gom=DEN_KHONG_GOM,
+                    chien_luoc=CHIEN_LUOC, ma_gioi_han=(), timeframe_detail="5m",
+                ),
+                giay_phep=GiayPhepChay(ledger=so, trial_id=tid, budget_line="B3"),
+                repo_dir=repo_gia,
+            )
+        # Lỗi cũ không nằm ở mã thoát mà ở CHỮ in ra — nên khẳng định luôn vào chữ,
+        # cùng hình `assert "✅" not in ra` mà `-ef` dùng ở `f9222d6`.
+        # (Bản đầu của ca này khẳng định `"đủ" not in ...` và TỰ ĐỎ, vì chính thông
+        #  điệp chứa vế phủ định "không phải 'đủ điều kiện'" — một phép kiểm quét
+        #  chuỗi trần không phân biệt được KHẲNG ĐỊNH với PHỦ ĐỊNH của nó.)
+        assert "✅" not in str(loi.value)
+        assert "0 mã" in str(loi.value), "thông điệp phải nêu CỠ MẪU, không chỉ nói 'từ chối'"
+
     def test_xin_5m_ma_khong_co_thi_tu_choi(self, repo_gia: Path) -> None:
         """`pool_t0` thật có **0** file 5m (`DR-D1-05` §3). Im lặng tụt về 1H là một
         phép đo nói dối về chính nó — `backtesting.py:1739` không báo gì."""
