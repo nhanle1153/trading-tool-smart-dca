@@ -93,7 +93,8 @@ Stress test dùng **kịch bản giá dựng tay**: không chạm dữ liệu, 0
 
 ## 3. D6 — Niêm phong ứng viên & xác minh đúng hệ thống cuối
 
-**Mục tiêu:** D9 chấm **đúng một** cấu hình, và đó đúng là thứ sẽ chạy live. **Đòi:** `d5_complete`.
+**Mục tiêu:** D9 chấm **đúng một** cấu hình, và đó đúng là thứ sẽ chạy live. **Đòi:** `d5_complete`
+(**trừ D6.1**, xem đính chính dưới bảng).
 
 | # | Việc | Dữ liệu / kế toán | Căn cứ |
 |---|---|---|---|
@@ -103,6 +104,18 @@ Stress test dùng **kịch bản giá dựng tay**: không chạm dữ liệu, 0
 | D6.4 | **H5 — `timeframe-detail 5m` trên cấu hình cuối.** Xác minh swing 4H và tín hiệu không lệch do intrabar: so tập lệnh có/không detail, và soi các lệnh lệch | EXPLORE, 0 trial. Cần TD-0252 (5m phủ CALIB) | `spec:4342` (H5, P0, chưa gán pha) |
 | D6.5 | **H2 — danh mục ràng buộc thật.** Trên backtest cấp rổ pool mới: kết nạp §6.8f (TD-0188 ✅) · `mult_corr` · `mult_deploy` có **lần nào** ràng buộc không; phân bố số vị thế đồng thời; tỉ lệ lệnh bị từ chối vì danh mục. Bằng chứng "có răng": phá cổng thì số lệnh đổi | EXPLORE, 0 trial | `spec:4339`, §6.8f. Cùng lớp lỗi "cổng không bao giờ ràng buộc" với `MT-44` |
 | D6.6 | **Niêm phong cấu hình ứng viên.** `config_hash` + `params_frozen_hash` + git sha của `Z0-T1` LONG mang giá trị D5 → `runtime_state.json.d6_ung_vien`. Bất biến, từ chối ghi đè (khuôn `src/tool_d/lockbox/seal.py`) | 0 trial | Làm SAU D6.3 và D6.5: nếu một trong hai sửa code thì hash đổi |
+
+> 🔄 **ĐÍNH CHÍNH 17/09/2026 — D6.1 bị đóng khung THIẾU; chữ trong bảng giữ nguyên làm lịch sử.**
+> - **Chỗ sai:** D6.1 ghi *"chốt N **của D9**"*. Nhưng spec §10.2 Nhánh 1, tức **cổng D4 (GATE D0.9)**,
+>   đã đòi chính con số này: `tool-d-smart-dca.md:4267-4268` *"Nếu overlap pool ≥ 50% (H14) → DR-007 →
+>   N là UNION với Tool A, lấy từ trial_registry Tool A **tại thời điểm chạy GATE**"*. H14 là đầu vào
+>   của **cổng D4**, không chỉ của D9.
+> - **Ai bắt:** phiên `-33` nêu khi đề nghị đổi ưu tiên. Đối chiếu spec xác nhận.
+> - **Chủ dự án chốt 17/09/2026:** đo H14 (`TD-0261`) **ngay sau `TD-0247`, TRƯỚC suất B2 đầu tiên
+>   của D4** (`TD-0184` phụ thuộc thêm `TD-0261`).
+> - **Vì sao trước suất đầu:** nếu N gộp Tool A làm cổng D4 bất khả thi thì phải biết trước khi tiêu
+>   suất. Phép đo chỉ đếm danh sách mã, 0 trial. Việc này **không** đòi `d5_complete`.
+> - **Phân vai (chủ dự án chốt cùng ngày):** phiên `-01` giữ D6–D8 + `TD-0261`.
 
 **Cổng D6:** `d5_complete` · `d6_ung_vien` tồn tại · N của D9 đã ghi kèm kết quả DR-007 · báo cáo
 H5/H2 có artifact `docs/du-lieu-do/` · `MT-30` có kết luận đo được.
