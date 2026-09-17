@@ -21,11 +21,18 @@ Module này nối ba mảnh đã có, mỗi mảnh giữ nguyên trách nhiệm 
        có backtest thật thì nó sẽ chỉ được kiểm ở D9, tức sau khi đã tin nó
        suốt nhiều tháng.
 
-🔴 **Chỗ nối trial reservation (L-Z52) khi có bộ chạy thật:** `reserve()`
-   phải được gọi TRƯỚC khi `chay_mot_fold` chạm dữ liệu, không phải sau.
-   Module này cố ý KHÔNG tự đặt chỗ: nó không biết `budget_line` nào, và
-   đoán hộ là cách chắc chắn tiêu sai ngân sách. Chỗ gọi truyền vào một
-   `chay_mot_fold` đã tự đặt chỗ.
+🔴 **Trial reservation (L-Z52):** module này cố ý KHÔNG tự đặt chỗ — nó
+   không biết `budget_line` nào, và đoán hộ là cách chắc chắn tiêu sai ngân
+   sách. Chỗ gọi (`main()` của entrypoint) đặt chỗ **MỘT** suất cho CẢ cấu
+   hình rồi truyền xuống một `GiayPhepChay`; `chay_mot_fold` chỉ CHỨNG MINH
+   đã có đặt chỗ (`bo_chay.chay._kiem_giay_phep`), không tạo ra nó.
+
+   ⚠️ Chữ cũ ở đây là *"chỗ gọi truyền vào một `chay_mot_fold` ĐÃ TỰ ĐẶT CHỖ"*
+   — sửa 18/09/2026 theo `DR-BC-01` §2, giữ câu này để không ai tưởng có hai
+   luật. Lý do cơ khí nằm ngay trong file này: `van_tay_hien_tai(...)` ở dòng
+   ~138 băm dữ liệu TRƯỚC vòng lặp fold, nên "mỗi fold tự đặt chỗ" đặt việc
+   đọc dữ liệu trước đặt chỗ đầu tiên — đúng thứ tự `L-Z52` cấm. Lý do kế
+   toán: `DR-D4-10` §2.1 và `DR-D9-01` §5 đều đếm theo CẤU HÌNH.
 
 🔴 **Fold dưới sàn số lệnh KHÔNG ghi số** — DR-D3-01 §5.2 + N6. Nó nhận
    `Measured.unreadable(...)`, không phải `0.0`, không phải số kèm cảnh

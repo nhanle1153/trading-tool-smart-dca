@@ -18,10 +18,22 @@ chạy backtest thật ở bất kỳ đâu trong repo — E1 `run_backtest.py` 
 `EXIT_CHUA_CO_BO_CHAY`. Đó là một cổng có thông báo, không phải một
 traceback — và nó chứng minh đường nối cấu hình → fold đã sống.
 
-🔴 **Khi có bộ chạy thật, chỗ nối là `chay_mot_fold`** — và nó phải tự gọi
-`TrialLedger.reserve()` TRƯỚC khi chạm dữ liệu (L-Z52). `orchestrator` cố ý
-không tự đặt chỗ: nó không biết `budget_line` nào, đoán hộ là cách chắc
-chắn tiêu sai ngân sách.
+🔴 **Chỗ nối là `chay_mot_fold`; ĐẶT CHỖ thì KHÔNG nằm ở đó** (`DR-BC-01` §2,
+18/09/2026). `main()` của entrypoint đặt chỗ **MỘT** suất cho cả cấu hình rồi
+truyền xuống một `GiayPhepChay`; `chay_mot_fold` chỉ **chứng minh** đã có đặt
+chỗ, không tạo ra nó.
+
+⚠️ Chữ cũ ở đây nói *"`chay_mot_fold` phải tự gọi `reserve()`"* — đã sửa, giữ
+lại câu này để ai đọc commit cũ không tưởng có hai luật. Hai lý do đổi:
+  • **Kế toán:** mọi chỗ khác đếm theo CẤU HÌNH (`DR-D4-10` §2.1: 9 arm = 9 suất;
+    `DR-D9-01` §5). Một suất mỗi fold ⇒ một lượt WFO 3 fold ăn **3 suất** trong 114.
+  • **Cơ khí:** `chay_wfo()` băm dữ liệu ở `orchestrator.py:138` — TRƯỚC vòng lặp
+    fold. Đặt chỗ bên trong `chay_mot_fold` nghĩa là việc đọc dữ liệu để băm xảy ra
+    trước đặt chỗ đầu tiên, tức chính thứ tự `L-Z52` cấm. Cách đọc cũ **tự mâu
+    thuẫn** với chốt mà nó định phục vụ.
+
+Phần KHÔNG đổi: lý do `orchestrator` từ chối tự đặt chỗ — *nó không biết
+`budget_line` nào, đoán hộ là cách chắc chắn tiêu sai ngân sách* — vẫn nguyên vẹn.
 """
 
 from __future__ import annotations
