@@ -3094,3 +3094,33 @@ trước khi ghi DR.
 - **Test:** full suite Docker **2307 passed, 0 failed**, HEAD không đổi suốt lượt.
 - **Giới hạn đã biết:** không 5m (`TD-0252` ⏸); `ro_cho_tap()` chưa được E1/E2/E3 gọi vì chưa có bộ
   chạy thật.
+
+## 18/09/2026 — Lỗi nhãn `_tai_t1` trong rổ T0: test canh GIÁ TRỊ, thứ sai là CÁI NHÃN dán lên giá trị
+
+Phiên `-01`, phiên `-93` bắt được. **0 trial.**
+
+`config/pool_t0.yaml` (`e538518`, commit hôm trước) ghi `ung_vien_song_tai_t1: 285` và
+`du_tieu_chi_tai_t1: 164` — **số đúng, nhãn sai**: đó là số của mốc `T0`.
+
+**Vì sao không test nào đỏ.** Bộ sinh được tổng quát hoá theo tham số mốc (`sinh_ro_tai_moc`), và
+test hồi quy so **đường tính**: rổ phải khít `td0231["pool_dung_tai_t0"]`, không được lấy nhầm tham
+chiếu `t1`. Đường tính ĐÚNG — 164 và 143 đều là số của `T0`. Cái sai nằm ở **tên khoá đầu ra**, thứ
+không phép kiểm nào đang canh. Nó lộ ra vì **một phiên khác mở file YAML đã sinh ra mà đọc**.
+
+🔑 **Đây là mặt thứ hai của câu chẩn đoán cũ.** *"Ca sai có đi qua đường sản xuất thật không?"* hỏi về
+ĐƯỜNG CHẠY. Ca này ngược phía: đường chạy đúng, dữ liệu đúng, **cái nhãn dán lên dữ liệu sai**. Cùng
+họ với *"sáu lần phát biểu vượt quá phạm vi đã đo"* (09/09) — ở đó cũng là nhãn, không phải phép đo.
+
+🔴 **Đã lặp HAI lần trong hai ngày, cùng một hàm:** `thieu_hang_dung_ngay_t1` (17/09, tôi tự bắt khi
+đọc file vừa sinh) rồi `dem.*_tai_t1` (18/09, phiên `-93` bắt). Lần đầu tôi sửa đúng một khoá và
+**không đi soát các khoá còn lại** — sửa theo TRIỆU CHỨNG, không theo LỚP.
+
+**Xử lý:**
+- Bộ sinh sửa (`4d3ab99`); test hồi quy mở rộng: mọi khoá trong `dem` và `khong_do_duoc` phải mang
+  đúng tên mốc, và **không khoá nào được kết thúc bằng `_t1`** khi sinh rổ `T0` — canh cả LỚP.
+- File đã commit **giữ nguyên**, đính chính tại chỗ ở `DR-D1-05` §4b (chủ dự án chốt 18/09): số đúng,
+  chỉ nhãn sai; xoá-sinh-lại là trả giá đường *"xoá thủ công + ghi DR mới"* của `build_pool.py` cho
+  một lỗi nhãn.
+
+**Quy tắc rút ra:** tổng quát hoá một hàm theo tham số thì phải soát cả **tên khoá đầu ra**, không chỉ
+đường tính — và phép kiểm nên canh **dạng của khoá**, vì canh giá trị không bao giờ thấy nhãn sai.
