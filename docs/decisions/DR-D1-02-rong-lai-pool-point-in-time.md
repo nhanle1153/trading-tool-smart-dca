@@ -49,6 +49,8 @@ lại đúng lỗi đang sửa.
 >   - loại vĩnh viễn **mọi mã có dữ liệu EXPLORE đã dùng**;
 >   - xét *"trượt tiêu chí"* **tại `T1`**, không chuỗi từ `T0`, không theo phân loại 09/2026.
 > - **Rổ dự kiến ≈ 107 mã.**
+> - 🔄 **Đính chính thêm 17/09/2026 (`DR-D1-05` §4):** khối `explore:` có **426** mã, không phải 430
+>   (4 dòng `b0_trial_ids` bị đếm lẫn). Giao rổ `T1` vẫn là 54.
 
 ### 2.1. Sự việc đo được (16/09/2026, đối chiếu `td0231-pool-point-in-time.json` với
 `config/pool.yaml`, 0 trial)

@@ -34,6 +34,9 @@ chí giữa 2025 rồi suy giảm tới 09/2026**, nên bị xếp *"trượt ti
 sống sót đi qua cửa tiêu chí lọc mà `TD-0231`/`MT-34` đo được và `TD-0247` sinh ra để sửa: rổ mới chỉ
 thêm 7 mã so với `config/pool.yaml` (các mã đã huỷ niêm yết), WFO vẫn đo lệch theo chiều PASS.
 
+> 🔄 **Đính chính 17/09/2026 (`DR-D1-05` §4):** bảng trên ghi khối `explore:` có **430** mã — đúng là
+> **426** (phép đếm cũ gộp 4 dòng `b0_trial_ids`). Giao rổ `T1` vẫn là **54**; không kết luận nào đổi.
+
 ## 1. Quyết định (chủ dự án chốt 17/09/2026)
 
 ### 1.1. Tập bị loại vĩnh viễn = mọi mã có dữ liệu EXPLORE đã dùng
