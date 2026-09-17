@@ -39,6 +39,17 @@ lại đúng lỗi đang sửa.
 
 ## 2. Quyết định 1 — ranh giới §9c.4b cho 9 mã đã bị xếp EXPLORE
 
+> 🔄 **ĐÍNH CHÍNH 17/09/2026 — mục 2 này ĐẾM SAI; chữ bên dưới giữ nguyên làm lịch sử.**
+> **Thay bằng `DR-D1-03`.**
+> - **Chỗ sai:** khối `explore:` của `config/pool.yaml` có **430** mã (mọi mã trượt tiêu chí, phân loại
+>   09/2026), giao rổ `T1` là **54** mã, không phải 9. Số 9 là giao với **thư mục dữ liệu**
+>   `user_data/data/explore/futures/`.
+> - **Hệ quả nếu áp đúng chữ:** rổ `T1` còn 62 mã, tái tạo lệch sống sót mà `TD-0247` sinh ra để sửa.
+> - **Chủ dự án chốt lại 17/09/2026:**
+>   - loại vĩnh viễn **mọi mã có dữ liệu EXPLORE đã dùng**;
+>   - xét *"trượt tiêu chí"* **tại `T1`**, không chuỗi từ `T0`, không theo phân loại 09/2026.
+> - **Rổ dự kiến ≈ 107 mã.**
+
 ### 2.1. Sự việc đo được (16/09/2026, đối chiếu `td0231-pool-point-in-time.json` với
 `config/pool.yaml`, 0 trial)
 
