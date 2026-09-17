@@ -707,6 +707,29 @@
 | TD-0296 | **Nộp giả thuyết sửa cấu trúc chốt lời/cắt lỗ vào Idea Queue** (cửa NỘP, `E6 --nop-y-tuong`) | ❌ | TD-0295 | `data_source = EXPLORE`, căn cứ là hình dạng lệnh quan sát được (không phải giá trị tham số); qua kiểm trùng `mechanism` (TD-0126) — KHÔNG được là Zone Absorption đổi tên; trần nhập 10/quý. **KHÔNG chọn** — chọn theo `TC-Q4-2026` từ 01/10. **0 trial** ❌ **HUỶ 17/09/2026** (`DR-IQ-01` §3.2): giả thuyết sinh từ kết quả Tool D mà phiên `-33` đã đọc ⇒ `TOOL_D_RESULTS` loại thẳng (spec `:3062`, DR-009), và thuộc họ Z-4. Ý tưởng mới phải do phiên IDEA sạch nộp — chủ dự án sắp xếp. |
 | TD-0297 | **Ghi `MT-55` · `MT-57` · `MT-58` vào `back-end-note.md` mục 7** | ✅ | TD-0295 | ✅ `e97e325` ("chuẩn hóa và lưu" 17/09/2026; kèm nối `MT-53` ✅ (b′); `MT-54`/`MT-56` của `-01` để trống) · Qua lệnh "chuẩn hóa và lưu" (N9, trả lời ba câu trước): `MT-55` arm entry đơn định cỡ theo `p_avg` ba tranche (ghi nợ, không sửa — đường ống dừng) · `MT-57` ngõ cụt quản trị (giải bằng `DR-IQ-01`) · `MT-58` tranche 2 có thể cao hơn tranche 1 ở arm DCA (`p1 = min(zh, close(C)) < p2 = mid`, phiên `-30`) |
 
+
+## Khối 25 — Rổ pool theo từng giai đoạn (mở 17/09/2026, thi hành `DR-D1-05`)
+
+> **Vì sao khối này tồn tại:** chủ dự án yêu cầu thực hiện `DR-D1-02` §6 (*"đưa rổ `T1` thành rổ sản xuất"*). Khảo sát
+> 17/09/2026 cho thấy thay thẳng `config/pool.yaml` là sai hình. **Không** mã nào đọc `pool.yaml` khi chạy, và mỗi tập
+> dữ liệu cần rổ đúng tại mốc của nó: CALIB→`T0` (`DR-D5-01` §1), WFO→`T1`, LOCKBOX→`T2`, live→hôm nay.
+> **Chủ dự án chốt `DR-D1-05` (`8cec5cf`):**
+> - rổ theo giai đoạn; `pool.yaml` **không đổi** (rổ hôm nay + sổ 4 suất B0);
+> - lockbox xử khi nối lại D8 (`MT-60`);
+> - dựng rổ `T0`/`T2` bằng đúng tiêu chí B0 = **0 suất** (H1-D, `spec:438`), **không** được đọc thành *"chọn lại pool
+>   miễn phí"*.
+>
+> Mã đã nhắn phiên `-a2` trước khi ghi (N12 mục 6). Đính chính kèm: khối `explore:` có **426** mã, không phải 430.
+
+| Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
+|---|---|---|---|---|
+| TD-0298 | 🚪 **`DR-D1-05` — rổ theo giai đoạn, 0 suất, đính chính 426** | ✅ | — | Commit `8cec5cf` TRƯỚC mọi dòng mã khối này; đính chính tại chỗ `DR-D1-02` §2 + `DR-D1-03` §0 |
+| TD-0299 | **Hàm chọn rổ theo tập dữ liệu** `src/tool_d/pool_giai_doan.py` + test khoá | 🔓 | TD-0298 | CALIB→`pool_t0`, WFO→`pool_t1`; `LOCKBOX` ⇒ từ chối nêu `MT-60`; tập lạ / file rổ thiếu ⇒ từ chối; **không bao giờ** trả `config/pool.yaml`; kiểm có răng |
+| TD-0300 | **Tổng quát hoá bộ sinh E7 theo mốc + sinh `config/pool_t0.yaml`** | 🔓 | TD-0298 | `E7 --ro-t0 [--ghi]` (giữ nguyên `--ro-t1`); đối chiếu **khít** `td0231["pool_dung_tai_t0"]` (164 mã); loại mã có dữ liệu EXPLORE, xét tại `T0`; 0 trial; chạy thật trong Docker + commit file rổ; test cũ `--ro-t1` vẫn xanh |
+| TD-0301 | **Dữ liệu `[T0,T1]` cho rổ `T0`** trong `user_data/data/pool_t0/futures/` | 🔓 | TD-0300 | 5 loại/mã (`1h`/`4h`/`1d` futures, `1h` mark, `1h` funding), **không 5m** (`TD-0252`); chép từ `binance/` rồi `pool_t1/`, tải `download-data` mã còn giao dịch, nhập kho mã đã huỷ; cắt `≤ T1` và tại mốc ngừng giao dịch; H19 quanh mỗi lượt tải; `E8 --ro-t0-kiem` PASS; full suite Docker 0 failed |
+| TD-0302 | ⏸ **Rổ `T2` + dữ liệu/niêm phong lockbox đoạn 2** | 🔓 | `MT-59`, `MT-60`, nối lại D8 (`DR-IQ-01`) | ⏸ **TẠM DỪNG** — không làm cho tới khi nối lại D8; phải xong TRƯỚC lần chạm lockbox (`TD-0274`) |
+| TD-0303 | **Sửa docstring `src/tool_d/pool_t1.py` 430 → 426** | 🔓 | TD-0298 | Không đổi hành vi; đi cùng commit mã đầu tiên của khối |
+
 ---
 
 ## Việc đã biết là sẽ có, chưa mở
@@ -757,3 +780,4 @@
 | TD-0184 · TD-0261 | ♻️ Sửa đổi | TD-0261 *"chốt N của D9"*, xếp ở D6 (sau `d5_complete`); TD-0184 không phụ thuộc TD-0261 | TD-0261 là đầu vào **cổng D4**, đo ngay sau TD-0247 và **trước suất B2 đầu tiên**; TD-0184 phụ thuộc thêm TD-0261 | Phiên `-33` nêu; đối chiếu `spec:4267-4268` (§10.2 Nhánh 1, N gộp Tool A *"tại thời điểm chạy GATE"*) xác nhận `DR-D6D8-01` D6.1 đóng khung thiếu. Chủ dự án chốt 17/09/2026 kèm phân vai: `-01` giữ D6–D8 + TD-0261 | 17/09/2026 |
 | TD-0289…TD-0293 | ➕ Thêm mới | — | **Khối 24 — Cổng sống còn + gỡ khoá cấu trúc** (5 việc; `DR-D9-02`, `DR-SONG-CON-01`) | Đánh giá tổng hợp 17/09/2026 (phiên `-33`) chủ dự án duyệt: chưa có con số lời/lỗ nào (`MT-27`) trước khi tiêu ~41 suất; `MT-53` khoá Nhánh 1. Kèm hai việc hạ tầng lộ ra ở Khối 23 (CRLF ⇒ `git status` `M` ảo; `test_td0143` quá hạn khi tải nặng). Mã đã nhắn `-30`/`-01` trước khi ghi | 17/09/2026 |
 | Khối 20–22 · TD-0261 · TD-0247 | ♻️ Sửa đổi | Khối 20–22 + TD-0261 đang mở; Tiêu chí XONG TD-0247 gồm *"đo lại phễu/n/lệnh-năm Z0-T1/Z0/Z0-T0/Z3"*; ghi *"9 mã explore"* | ⏸ Khối 20–22 + TD-0261 tạm dừng, trạng thái giữ nguyên. TD-0247 bỏ bước đo Zone Absorption, XONG ở rổ + dữ liệu; nối thêm cập nhật `DR-D1-03` + bộ sinh `385cbbb` | Chủ dự án chốt ở phiên `-33` sau cổng sống còn TD-0291 (`DR-IQ-01`), **xác nhận lại ở phiên `-01`** trước khi ghi. `DR-D1-03` đính chính con số 9 → 54 | 17/09/2026 |
+| TD-0298…TD-0303 | ➕ Thêm mới | — | **Khối 25 — Rổ pool theo từng giai đoạn** (6 việc; TD-0298 ✅ ngay vì DR đã commit) | Chủ dự án yêu cầu thực hiện `DR-D1-02` §6; khảo sát cho thấy thay `config/pool.yaml` là sai hình; chốt `DR-D1-05` (rổ theo giai đoạn, lockbox ⏸ D8, 0 suất) 17/09/2026 | 17/09/2026 |
