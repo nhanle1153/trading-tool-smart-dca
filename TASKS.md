@@ -728,7 +728,7 @@
 | TD-0300 | **Tổng quát hoá bộ sinh E7 theo mốc + sinh `config/pool_t0.yaml`** | 🔒 | TD-0298 | `E7 --ro-t0 [--ghi]` (giữ nguyên `--ro-t1`); đối chiếu **khít** `td0231["pool_dung_tai_t0"]` (164 mã); loại mã có dữ liệu EXPLORE, xét tại `T0`; 0 trial; chạy thật trong Docker + commit file rổ; test cũ `--ro-t1` vẫn xanh |
 | TD-0301 | **Dữ liệu `[T0,T1]` cho rổ `T0`** trong `user_data/data/pool_t0/futures/` | 🔒 | TD-0300 | 5 loại/mã (`1h`/`4h`/`1d` futures, `1h` mark, `1h` funding), **không 5m** (`TD-0252`); chép từ `binance/` rồi `pool_t1/`, tải `download-data` mã còn giao dịch, nhập kho mã đã huỷ; cắt `≤ T1` và tại mốc ngừng giao dịch; H19 quanh mỗi lượt tải; `E8 --ro-t0-kiem` PASS; full suite Docker 0 failed |
 | TD-0302 | ⏸ **Rổ `T2` + dữ liệu/niêm phong lockbox đoạn 2** | 🔓 | `MT-59`, `MT-60`, nối lại D8 (`DR-IQ-01`) | ⏸ **TẠM DỪNG** — không làm cho tới khi nối lại D8; phải xong TRƯỚC lần chạm lockbox (`TD-0274`) |
-| TD-0303 | **Sửa docstring `src/tool_d/pool_t1.py` 430 → 426** | 🔒 | TD-0298 | Không đổi hành vi; đi cùng commit mã đầu tiên của khối |
+| TD-0303 | **Sửa docstring `src/tool_d/pool_t1.py` 430 → 426** | ✅ | TD-0298 | Không đổi hành vi; đi cùng commit mã đầu tiên của khối ✅ XONG 17/09/2026: `4f15353`. |
 
 ---
 
