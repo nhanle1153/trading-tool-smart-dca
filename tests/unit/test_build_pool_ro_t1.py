@@ -228,6 +228,14 @@ def test_khoa_khong_do_duoc_mang_ten_moc(tmp_path: Path) -> None:
     assert _chay_moc(repo, "t0") == 0
     ro = yaml.safe_load((repo / "config" / "pool_t0.yaml").read_text(encoding="utf-8"))
     assert set(ro["khong_do_duoc"]) == {"kho_404", "thieu_hang_dung_ngay_t0"}
+    # Phiên -93 bắt 18/09/2026: `dem` cũng ghi cứng "_tai_t1" — cùng lớp lỗi, khác khoá.
+    assert set(ro["dem"]) == {
+        "ung_vien_song_tai_t0",
+        "du_tieu_chi_tai_t0",
+        "onboard_ngay_chinh_xac",
+        "onboard_xap_xi_theo_thang",
+    }
+    assert not any(k.endswith("_t1") for k in {**ro["dem"], **ro["khong_do_duoc"]})
 
 
 def test_git_info_loi_thi_KHONG_ghi_ro_va_tra_ma_loi(tmp_path: Path) -> None:

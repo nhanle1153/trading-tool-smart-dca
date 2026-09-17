@@ -386,8 +386,8 @@ def sinh_ro_tai_moc(
                     f"thieu_hang_dung_ngay_{moc_ten}": list(kq.khong_do_duoc_thieu_ngay),
                 },
                 "dem": {
-                    "ung_vien_song_tai_t1": len(kq.ung_vien_song),
-                    "du_tieu_chi_tai_t1": len(kq.pool_dung),
+                    f"ung_vien_song_tai_{moc_ten}": len(kq.ung_vien_song),
+                    f"du_tieu_chi_tai_{moc_ten}": len(kq.pool_dung),
                     "onboard_ngay_chinh_xac": len(kq.onboard_chinh_xac),
                     "onboard_xap_xi_theo_thang": kq.onboard_xap_xi,
                 },
