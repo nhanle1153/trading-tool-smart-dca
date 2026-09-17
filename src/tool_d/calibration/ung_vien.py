@@ -36,6 +36,9 @@ from typing import Any, Iterable, Mapping
 DEFAULT_DR_D5_01_PATH = Path("docs/decisions/DR-D5-01-pham-vi-ung-vien-luat-chon-calibration.md")
 
 BUDGET_LINE_B1 = "B1"
+KHOA_CONG_VAO_D9: tuple[str, ...] = ("d5_complete", "d6_complete", "d7_complete", "d8_complete")
+"""`DR-D9-01` §6.1.1 (chủ dự án chốt ĐỢI D6–D8, `DR-D6D8-01` `7428678`). Kiểm `d6` TƯỜNG MINH dù
+`DR-D6D8-01` viết "`d7` ngụ ý `d6`" — cửa sổ trial không tin một hàm ý."""
 PARAM_MOC = "D5_MOC"
 """Suất MỐC CHUNG (`DR-D5-01` §4, suất 1): mọi tham số ở giá trị hiện tại. `param_value = None`."""
 PARAM_XAC_NHAN = "D5_XAC_NHAN"
@@ -146,7 +149,7 @@ def kiem_dat_cho_b1(
     *,
     bang: BangUngVien,
     d4_complete: bool,
-    d5_complete: bool,
+    khoa_cong_vao_d9: Mapping[str, bool],
     dataset: str,
     direction: str,
     param_under_test: str,
@@ -167,7 +170,7 @@ def kiem_dat_cho_b1(
     projections = list(projections)
     if dataset == "WFO":
         _kiem_dat_cho_b1_wfo(
-            projections, bang=bang, d5_complete=d5_complete, direction=direction,
+            projections, bang=bang, khoa_cong_vao_d9=khoa_cong_vao_d9, direction=direction,
             param_under_test=param_under_test, param_value=param_value,
         )
         return
@@ -228,7 +231,7 @@ def _kiem_dat_cho_b1_wfo(
     projections: list[Any],
     *,
     bang: BangUngVien,
-    d5_complete: bool,
+    khoa_cong_vao_d9: Mapping[str, bool],
     direction: str,
     param_under_test: str,
     param_value: Any,
@@ -237,13 +240,15 @@ def _kiem_dat_cho_b1_wfo(
 
     Chuyển giao TƯỜNG MINH ≤ 16 suất B1 dư cho D9 (tiền lệ `DR-D4-01:113`: không
     tự động). Mỗi suất WFO phải chạy lại ĐÚNG một cấu hình đã CONSUMED trên CALIB:
-    cổng vào `d5_complete` · hướng khớp DR · `(tham số, giá trị)` khớp một suất
+    cổng vào ĐỦ `KHOA_CONG_VAO_D9` (§6.1.1) · hướng khớp DR · `(tham số, giá trị)` khớp một suất
     B1/CALIB/CONSUMED · không trùng suất WFO chưa hoàn trả · tổng WFO chưa hoàn
     trả < số suất CALIB đã CONSUMED.
     """
-    if d5_complete is not True:
+    thieu = [k for k in KHOA_CONG_VAO_D9 if khoa_cong_vao_d9.get(k) is not True]
+    if thieu:
         raise UngVienError(
-            "cổng vào D9 chưa mở (`d5_complete` ≠ true) — KHÔNG đặt chỗ B1 trên WFO (DR-D9-01 §6.1)"
+            f"cổng vào D9 chưa mở — thiếu {thieu} (≠ true). KHÔNG đặt chỗ B1 trên WFO: chủ dự án chốt "
+            "ĐỢI D5–D8 (DR-D9-01 §6.1.1)"
         )
     if direction != bang.huong:
         raise UngVienError(f"B1/WFO đợt này chỉ hướng {bang.huong} (DR-D9-01 §1), nhận {direction!r}")
@@ -276,6 +281,7 @@ def _kiem_dat_cho_b1_wfo(
 
 __all__ = [
     "BUDGET_LINE_B1",
+    "KHOA_CONG_VAO_D9",
     "BangUngVien",
     "DEFAULT_DR_D5_01_PATH",
     "PARAM_MOC",

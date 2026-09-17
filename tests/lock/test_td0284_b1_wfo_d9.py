@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from tool_d.calibration.ung_vien import PARAM_MOC, PARAM_XAC_NHAN
+from tool_d.calibration.ung_vien import KHOA_CONG_VAO_D9, PARAM_MOC, PARAM_XAC_NHAN
 from tool_d.ledger.audit_checks import check_lz15_calibrate_params_have_status
 from tool_d.ledger.registry import B1Error, TrialLedger
 
@@ -33,11 +33,21 @@ def _prov() -> dict:
     }
 
 
-def _so(tmp_path: Path, *, d5: bool | None = True) -> tuple[TrialLedger, Path, Path]:
+def _mo_cong(**doi) -> dict:
+    """d4 + ĐỦ bốn khoá cổng vào D9 (DR-D9-01 §6.1.1); `doi` ghi đè / `None` = bỏ khoá."""
+    khoa = {"d4_complete": True, **{k: True for k in KHOA_CONG_VAO_D9}}
+    for k, v in doi.items():
+        if v is None:
+            khoa.pop(k)
+        else:
+            khoa[k] = v
+    return khoa
+
+
+def _so(tmp_path: Path) -> tuple[TrialLedger, Path, Path]:
     reg = tmp_path / "reg.jsonl"
     state = tmp_path / "runtime_state.json"
-    khoa = {"d4_complete": True, **({} if d5 is None else {"d5_complete": d5})}
-    state.write_text(json.dumps(khoa), encoding="utf-8")
+    state.write_text(json.dumps(_mo_cong()), encoding="utf-8")
     return TrialLedger(reg, dr_d5_path=DR_THAT, runtime_state_path=state), reg, state
 
 
@@ -95,12 +105,29 @@ class TestDuongHopLe:
 
 
 class TestTuChoiTaiCua:
-    @pytest.mark.parametrize("d5", [None, False])
-    def test_cong_vao_d9_chua_mo(self, tmp_path: Path, d5) -> None:
-        ledger, reg, state = _so(tmp_path, d5=True)
+    @pytest.mark.parametrize("gia_tri", [None, False, "true", 1])
+    @pytest.mark.parametrize("khoa", ["d5_complete", "d6_complete", "d7_complete", "d8_complete"])
+    def test_cong_vao_d9_thieu_bat_ky_khoa_nao(self, tmp_path: Path, khoa: str, gia_tri) -> None:
+        """DR-D9-01 §6.1.1: chủ dự án chốt ĐỢI D5–D8. Thiếu / sai kiểu MỘT khoá bất kỳ ⇒ từ chối,
+        kể cả `d6` (DR-D6D8-01 viết "d7 ngụ ý d6" — cửa không tin hàm ý)."""
+        ledger, reg, state = _so(tmp_path)
         _calib(ledger, "zss_threshold", 0.4)
-        state.write_text(json.dumps({"d4_complete": True, **({} if d5 is None else {"d5_complete": d5})}), encoding="utf-8")
-        _tu_choi(ledger, reg, "d5_complete")
+        state.write_text(json.dumps(_mo_cong(**{khoa: gia_tri})), encoding="utf-8")
+        _tu_choi(ledger, reg, khoa)
+
+    def test_chi_d5_nhu_ban_cu_thi_tu_choi(self, tmp_path: Path) -> None:
+        """Ca hồi quy: điều kiện cũ (chỉ `d5_complete`, trước DR-D6D8-01 chốt) KHÔNG còn đủ."""
+        ledger, reg, state = _so(tmp_path)
+        _calib(ledger, "zss_threshold", 0.4)
+        state.write_text(json.dumps({"d4_complete": True, "d5_complete": True}), encoding="utf-8")
+        _tu_choi(ledger, reg, "d6_complete")
+
+    def test_runtime_state_hong_thi_tu_choi(self, tmp_path: Path) -> None:
+        ledger, reg, state = _so(tmp_path)
+        _calib(ledger, "zss_threshold", 0.4)
+        state.write_text("{không phải json", encoding="utf-8")
+        with pytest.raises(B1Error):
+            ledger.reserve(**_kw())
 
     def test_cau_hinh_khong_co_suat_calib(self, tmp_path: Path) -> None:
         ledger, reg, _ = _so(tmp_path)

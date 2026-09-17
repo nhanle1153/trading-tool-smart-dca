@@ -26,6 +26,7 @@ import jsonschema
 from tool_d.calibration.ung_vien import (
     BUDGET_LINE_B1,
     DEFAULT_DR_D5_01_PATH,
+    KHOA_CONG_VAO_D9,
     UngVienError,
     doc_bang_ung_vien,
     kiem_dat_cho_b1,
@@ -48,13 +49,16 @@ def _doc_d4_complete(runtime_state_path: Path) -> bool:
     return isinstance(data, dict) and data.get("d4_complete") is True
 
 
-def _doc_d5_complete(runtime_state_path: Path) -> bool:
-    """`d5_complete` — cổng vào D9 (`DR-D9-01` §6.1). Cùng khuôn fail-closed `_doc_d4_complete`."""
+def _doc_khoa_cong_vao_d9(runtime_state_path: Path) -> dict[str, bool]:
+    """Các khoá cổng vào D9 (`DR-D9-01` §6.1.1). Cùng khuôn fail-closed `_doc_d4_complete`:
+    thiếu file / JSON hỏng / thiếu khoá / khác `true` ⇒ False cho khoá đó."""
     try:
         data = json.loads(runtime_state_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
-        return False
-    return isinstance(data, dict) and data.get("d5_complete") is True
+        data = {}
+    if not isinstance(data, dict):
+        data = {}
+    return {k: data.get(k) is True for k in KHOA_CONG_VAO_D9}
 
 CTRL_BUDGET_LINE = "CTRL"
 
@@ -460,7 +464,7 @@ class TrialLedger:
                 self.projections().values(),
                 bang=bang,
                 d4_complete=_doc_d4_complete(self._runtime_state_path),
-                d5_complete=_doc_d5_complete(self._runtime_state_path),
+                khoa_cong_vao_d9=_doc_khoa_cong_vao_d9(self._runtime_state_path),
                 dataset=dataset,
                 direction=direction,
                 param_under_test=param_under_test,
