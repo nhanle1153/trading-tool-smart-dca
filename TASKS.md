@@ -732,6 +732,38 @@
 
 ---
 
+## Khối 26 — Đường thoát `DR-IQ-01`: suất (d) dùng được + máy lockbox đúng rổ (mở 18/09/2026)
+
+> **Vì sao khối này tồn tại:** `DR-IQ-01` (17/09/2026) tạm dừng tiêu suất Zone Absorption LONG và
+> **tự viết sẵn đường thoát** — suất **(d)**, đúng 1 suất Ngân sách A, cửa mở **01/10/2026**, đóng
+> **31/12/2026**, **không dồn**. Rà 18/09/2026 thấy hai chỗ làm đường thoát đó không đi được:
+> - 🔴 **Suất (d) chưa có ứng viên nào.** `registry/idea_queue.jsonl` có đúng 1 đơn (`IQ-0001`), và
+>   nó thuộc **Z-2** của `DR-IQ-01A` ⇒ bị loại khỏi chính suất này. `DR-IQ-01:127-128` đã cảnh báo:
+>   không có phiên IDEA sạch nộp đơn mới trong quý 4 thì **suất (d) hết hạn không ứng viên**.
+> - 🔴 **Ứng viên mới cần lockbox mới đúng rổ**, mà `MT-59`/`MT-60` chưa giải và `verify_seal()`
+>   **không nhìn thấy** lỗi rổ nên sẽ im lặng.
+>
+> **Bàn giao:** `MT-59`, `MT-60`, `TD-0302` do phiên `-01` bàn giao cho phiên `-a2` (18/09/2026);
+> mã `TD-0304`…`TD-0310` + Khối 26 + `DR-LOCKBOX-01` đã nhắn trước và được xác nhận còn trống (N12 mục 6).
+>
+> 🔴 **Phần B (`TD-0305`…`TD-0310`) CHƯA ĐƯỢC BẮT ĐẦU** — cần chủ dự án (a) gỡ ⏸ cho việc lockbox
+> (`TD-0302` đang ⏸ theo `DR-IQ-01`, nối lại cùng D8) và (b) trả lời 8 câu trong `DR-LOCKBOX-01`.
+> Câu nặng nhất: *"đoạn niêm phong 2"* ở đây là **MỞ RỘNG RỔ**, trong khi `MAX_SEGMENTS = 3` và
+> `L-Z13` sinh ra cho nghĩa **GIA HẠN INCONCLUSIVE** (`DR-011:3356-3362`, dữ liệu MỚI, tối đa 2 lần).
+> Dùng lẫn là tiêu suất gia hạn cho một việc khác nghĩa. Phiên `-01` độc lập nêu đúng lo ngại này.
+
+| Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
+|---|---|---|---|---|
+| TD-0304 | **Làm suất (d) dùng được** — kiểm cửa nộp còn răng + vá chú thích `docs/mau-don-y-tuong.yaml` | 🔒 | — | (a) chạy thật trong Docker: đơn thiếu `who_pays` ⇒ TỪ CHỐI ghi, sổ thật **bất biến từng byte**; (b) kiểm-có-răng hai vế trong sổ hộp cát: cùng đơn, khác đúng `who_pays` ⇒ hai kết cục ngược nhau; (c) mẫu đơn trỏ `DR-IQ-01A` + danh sách file phiên sạch được/cấm đọc + bỏ số quý hardcode; (d) mẫu đơn vẫn parse, 14 khoá không đổi |
+| TD-0305 | 🚪 **`DR-LOCKBOX-01`** — 8 câu quyết định về rổ lockbox | 🔓 ⏸ | Chủ dự án gỡ ⏸ + trả lời 8 câu | Commit **RIÊNG và TRƯỚC** mọi dòng mã của phần B |
+| TD-0306 | **Đo lại khoảng tồn tại → artifact MỚI** (giải `MT-59`) | 🔓 ⏸ | TD-0305 | Dùng lại `pool_t1_du_lieu.moc_ngung_giao_dich()`, **không** viết khuôn đo mới; artifact mới cùng schema `khoang_ton_tai` + khối `doi_chieu_td0230`; **0 trial**, ghi 1 dòng `CTRL` dạng *đo thước*; 🔴 **không sửa** `td0230`/`td0247` |
+| TD-0307 | **Dựng rổ `T2`** (`config/pool_t2.yaml`) | 🔓 ⏸ | TD-0306 | Nới `MOC_RO_HOP_LE` + tham số hoá `NGUON_TD0230` theo mốc (t0/t1 giữ `td0230` để tái lập bằng chứng cũ); đối chiếu **khít** `td0231["pool_dung_tai_t2"]`; mở `pool_giai_doan.RO_THEO_TAP["LOCKBOX"]`, bỏ nhánh từ chối `MT-60`; 0 trial |
+| TD-0308 | **Dữ liệu `[T2,T3]` cho mã còn thiếu** | 🔓 ⏸ | TD-0307 | Chạy trong service **`lockbox`** (service DUY NHẤT thấy thư mục thật — chạy nhầm service ra *"0 file"* chứ không báo lỗi); 7 mã đã huỷ không thể có dữ liệu ⇒ **luật khai báo tường minh**, không im lặng bỏ qua |
+| TD-0309 | **Vá `verify_seal()` để XÉT rổ** (giải `MT-60`) | 🔓 ⏸ | TD-0307 | `Seal` thêm `pool = {moc, file, sha256, trading[]}` + `schema: 2`; `kiem_pool_seal()` trả **ba trạng thái** `KHAI_DUNG`/`KHAI_SAI`/`KHONG_KHAI` (N6); 🔴 tương thích ngược **không im lặng** — `KHONG_KHAI` là lỗi trừ khi có trong danh sách miễn đọc từ `tool_d_config.yaml`, và `verify_all_seals()` in **dòng riêng**, không trộn vào PASS |
+| TD-0310 | **Đường mã ghi đoạn niêm phong thứ 2** | 🔓 ⏸ | TD-0305, TD-0309 | `--seal-segment N`; fail-closed theo thứ tự `N ≤ MAX_SEGMENTS` → `N == len(discover_seals())+1` (cấm nhảy số) → `verify_all_seals()` đoạn CŨ phải PASS → `write_seal` từ chối ghi đè → `kiem_pool_seal` phải `KHAI_DUNG`; 🔴 `lockbox_seal_1.json` **bất biến từng byte** sau mọi thao tác |
+
+---
+
 ## Việc đã biết là sẽ có, chưa mở
 
 | Giai đoạn | Nội dung | Chặn bởi |
