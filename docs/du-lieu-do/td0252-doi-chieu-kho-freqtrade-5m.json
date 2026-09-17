@@ -1,0 +1,87 @@
+{
+ "nguon": "TD-0252 / DR-D1-05 §3b.3, 18/09/2026 — kho data.binance.vision vs file freqtrade download-data, khung 5m, KỶ NGUYÊN CALIB (milli-giây). Bổ sung đúng chỗ mà td0247-doi-chieu-kho-freqtrade.json không phủ (nó đo 5m ở 2025-09, micro-giây). 0 trial.",
+ "ma": [
+  "1000BONKUSDT",
+  "1000PEPEUSDT"
+ ],
+ "thang": [
+  "2024-06",
+  "2024-07"
+ ],
+ "cach_doc": "Đạt khi MỌI dòng có chi_kho = chi_freqtrade = 0 và mọi lech_theo_cot = 0 (dung sai 0).",
+ "ket_qua": [
+  {
+   "ma": "1000BONKUSDT",
+   "thang": "2024-06",
+   "file": "5m-futures",
+   "so_nen_kho": 8640,
+   "so_nen_freqtrade": 8640,
+   "chung": 8640,
+   "chi_kho": 0,
+   "chi_freqtrade": 0,
+   "lech_theo_cot": {
+    "open": 0,
+    "high": 0,
+    "low": 0,
+    "close": 0,
+    "volume": 0
+   },
+   "khop": true
+  },
+  {
+   "ma": "1000BONKUSDT",
+   "thang": "2024-07",
+   "file": "5m-futures",
+   "so_nen_kho": 8928,
+   "so_nen_freqtrade": 8928,
+   "chung": 8928,
+   "chi_kho": 0,
+   "chi_freqtrade": 0,
+   "lech_theo_cot": {
+    "open": 0,
+    "high": 0,
+    "low": 0,
+    "close": 0,
+    "volume": 0
+   },
+   "khop": true
+  },
+  {
+   "ma": "1000PEPEUSDT",
+   "thang": "2024-06",
+   "file": "5m-futures",
+   "so_nen_kho": 8640,
+   "so_nen_freqtrade": 8640,
+   "chung": 8640,
+   "chi_kho": 0,
+   "chi_freqtrade": 0,
+   "lech_theo_cot": {
+    "open": 0,
+    "high": 0,
+    "low": 0,
+    "close": 0,
+    "volume": 0
+   },
+   "khop": true
+  },
+  {
+   "ma": "1000PEPEUSDT",
+   "thang": "2024-07",
+   "file": "5m-futures",
+   "so_nen_kho": 8928,
+   "so_nen_freqtrade": 8928,
+   "chung": 8928,
+   "chi_kho": 0,
+   "chi_freqtrade": 0,
+   "lech_theo_cot": {
+    "open": 0,
+    "high": 0,
+    "low": 0,
+    "close": 0,
+    "volume": 0
+   },
+   "khop": true
+  }
+ ],
+ "dat": true
+}
