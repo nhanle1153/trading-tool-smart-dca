@@ -186,6 +186,20 @@ du_tieu_chi_tai_t1: 164
 - **Không đo phễu / n / lệnh-năm** (Zone Absorption ⏸, `DR-IQ-01`).
 - **Không tải 5m cho CALIB** (`TD-0252` ⏸).
 
+## 5b. ĐÍNH CHÍNH 18/09/2026 — rổ `T2` nay ĐƯỢC dựng (`DR-LOCKBOX-01`)
+
+Giữ nguyên chữ §5 ở trên làm lịch sử. Dòng *"Không dựng rổ `T2`"* **hết hiệu lực** kể từ
+`DR-LOCKBOX-01`: chủ dự án gỡ ⏸ cho phần **quyết định + đo đời sống mã + dựng rổ + vá máy canh seal**
+(`TD-0305/0306/0307/0309`), với lý lẽ rổ khoá **trước khi có bất kỳ số nào** là cách duy nhất chứng minh
+rổ không được chọn theo kết quả. Phần **tải dữ liệu `[T2,T3]` + niêm phong** (`TD-0308/0310`) **vẫn ⏸**
+tới khi nối lại D8, đúng như §1 ghi *"LOCKBOX→`pool_t2` (tạm dừng)"*.
+
+Hai điểm của `DR-LOCKBOX-01` sửa hình dung *"ghi đoạn 2"* ở §6 của DR này, đọc kèm:
+- Lockbox **không** được niêm phong lại bằng *"seal 2"*. `lockbox_seal_2.json` đã dành cho lần gia hạn
+  INCONCLUSIVE thứ nhất (`seal.py:80`); rổ `T2` đi vào một bản **cấp lại** của đoạn 1,
+  `lockbox_seal_1_cap_lai.json`, không ăn vào trần 3 đoạn.
+- Rổ `T2` gồm **6 loại file** (có `5m`), không phải 5 như seal 1.
+
 ## 6. Mâu thuẫn mới — `MT-60` (chờ "chuẩn hóa và lưu")
 
 🟡 **Lockbox niêm phong dữ liệu cho 102 mã `pool.yaml`, nhưng rổ đúng cho LOCKBOX là rổ tại `T2`.**
