@@ -208,9 +208,13 @@ def test_ro_t0_doi_chieu_voi_pool_dung_tai_t0_chu_KHONG_phai_t1(tmp_path: Path) 
     assert not (repo / "config" / "pool_t0.yaml").exists()
 
 
-def test_moc_t2_hoac_la_bi_tu_choi(tmp_path: Path) -> None:
+def test_moc_la_bi_tu_choi_con_t2_nay_duoc_phep(tmp_path: Path) -> None:
+    """ĐẢO CHIỀU 18/09/2026 (TD-0307, `DR-LOCKBOX-01`), không xoá — tiền lệ TD-0150.
+    Bản trước khẳng định `t2` bị từ chối (rổ T2 ⏸ theo `MT-60`); nay `t2` được mở, ca của nó ở
+    `tests/lock/test_td0307_ro_t2.py`. Mốc lạ (`t3`, `hom_nay`) vẫn phải bị từ chối."""
     repo = _repo(tmp_path)
-    for moc in ("t2", "t3", "hom_nay"):
+    assert "t2" in E7.MOC_RO_HOP_LE
+    for moc in ("t3", "hom_nay"):
         with pytest.raises(ValueError):
             _chay_moc(repo, moc)
 

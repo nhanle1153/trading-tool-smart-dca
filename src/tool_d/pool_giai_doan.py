@@ -5,7 +5,9 @@ tại mốc muộn hơn đã loại sẵn những mã suy giảm/chết trong gi
 
   CALIB   [T0,T1] → `config/pool_t0.yaml`  · `user_data/data/pool_t0/futures`
   WFO     [T1,T2] → `config/pool_t1.yaml`  · `user_data/data/pool_t1/futures`
-  LOCKBOX [T2,T3] → TỪ CHỐI (`MT-60`: lockbox niêm phong 102 mã `pool.yaml`, rổ `T2` chưa dựng)
+  LOCKBOX [T2,T3] → TỪ CHỐI, vĩnh viễn ở hàm này. Rổ đúng tại `T2` là `config/pool_t2.yaml`
+                    (TD-0307, giải phần rổ của `MT-60`), nhưng lần chạm lockbox DUY NHẤT chỉ đi qua
+                    E4 tại D9.5 (`DR-LOCKBOX-01` §3, TD-0310/TD-0274) — không qua bảng này.
 
 🔴 `config/pool.yaml` là rổ HÔM NAY (live) + sổ 4 suất B0 — hàm này KHÔNG BAO GIỜ trả nó.
 Bộ chạy backtest không tự đọc file rổ nào; gọi `ro_cho_tap()`.
@@ -32,7 +34,10 @@ class RoGiaiDoan:
     trading: tuple[str, ...]
 
 
-#: `DR-D1-05` §1 — bảng DUY NHẤT. Thêm LOCKBOX chỉ khi `MT-60` đã giải (TD-0302).
+#: `DR-D1-05` §1 — bảng DUY NHẤT. 🔴 KHÔNG thêm LOCKBOX vào đây, kể cả khi rổ `T2` đã có:
+#: lõi bộ chạy (Khối 27) không có cửa chặn LOCKBOX riêng — nó dựa vào đúng việc hàm này từ
+#: chối (`test_td0312_loi_bo_chay.py:203`). Thêm vào bảng là gỡ chốt chặn duy nhất giữa bộ
+#: chạy backtest và dữ liệu chỉ được chạm một lần. Rổ `T2` cho lần chạm đi đường RIÊNG của E4.
 RO_THEO_TAP: dict[str, tuple[str, Path, Path]] = {
     "CALIB": ("t0", Path("config/pool_t0.yaml"), Path("user_data/data/pool_t0/futures")),
     "WFO": ("t1", Path("config/pool_t1.yaml"), Path("user_data/data/pool_t1/futures")),
@@ -42,12 +47,14 @@ POOL_HOM_NAY = Path("config/pool.yaml")
 
 
 def ro_cho_tap(tap: str, *, repo_dir: Path = Path(".")) -> RoGiaiDoan:
-    """Rổ + thư mục dữ liệu cho `tap`. Từ chối: LOCKBOX (`MT-60`), tên tập lạ, file rổ thiếu/hỏng,
+    """Rổ + thư mục dữ liệu cho `tap`. Từ chối: LOCKBOX (luôn luôn), tên tập lạ, file rổ thiếu/hỏng,
     file rổ mang mốc khác bảng, danh sách `trading` rỗng."""
     if tap == "LOCKBOX":
         raise RoGiaiDoanError(
-            "LOCKBOX chưa có rổ đúng: lockbox niêm phong 102 mã config/pool.yaml (đo 09/2026) trong khi "
-            "rổ đúng là rổ tại T2 — MT-60, TD-0302 ⏸ tới D8. Không dùng pool.yaml thay thế."
+            "LOCKBOX không đi qua ro_cho_tap(): rổ đúng tại T2 là config/pool_t2.yaml (TD-0307, giải "
+            "phần rổ của MT-60), nhưng lần chạm lockbox DUY NHẤT chỉ đi qua E4 tại D9.5 và phải trỏ bản "
+            "cấp lại của seal 1 (DR-LOCKBOX-01 §3, TD-0310/TD-0274). Hàm này là cửa chặn duy nhất của "
+            "lõi bộ chạy — không mở cho LOCKBOX. Không dùng pool.yaml thay thế."
         )
     if tap not in RO_THEO_TAP:
         raise RoGiaiDoanError(f"tập {tap!r} không có trong bảng rổ theo giai đoạn {sorted(RO_THEO_TAP)}")

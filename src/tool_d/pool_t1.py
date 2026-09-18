@@ -202,19 +202,38 @@ def dung_ro_tai_moc(
         else:
             ob_xap_xi += 1
 
-        delisted = None if k["thang_cuoi"] == thang_cuoi_lon_nhat else _cuoi_thang(k["thang_cuoi"])  # type: ignore[arg-type]
+        # `MT-59` / `DR-LOCKBOX-01` Q3 bước 2: có mốc ngừng giao dịch ĐO THẬT (artifact
+        # `TD-0306`) thì dùng nó — không suy từ tháng cuối của kho, vốn kéo đời sống mã chết
+        # tới tận tháng lớn nhất và gán `delisted_at = None`. Dữ liệu `TD-0230` không mang
+        # khoá `moc_ngung` ⇒ nhánh cũ giữ nguyên ⇒ rổ `t0`/`t1` đã commit tái lập từng byte.
+        if k.get("moc_ngung"):
+            delisted_dt: datetime | None = datetime.fromisoformat(str(k["moc_ngung"]))
+        else:
+            delisted = None if k["thang_cuoi"] == thang_cuoi_lon_nhat else _cuoi_thang(k["thang_cuoi"])  # type: ignore[arg-type]
+            delisted_dt = _utc(delisted) if delisted else None
         stats.append(
             SymbolStat(
                 symbol=sym,
                 onboard_date=_utc(onboard),
                 quote_volume_24h=vol_thang[moc],
-                delisted_at=_utc(delisted) if delisted else None,
+                delisted_at=delisted_dt,
             )
         )
 
     kq = pairlist_point_in_time(
         stats, t=_utc(moc), age_floor_days=age_floor_days, volume_floor_usdt=volume_floor_usdt
     )
+    # Fail-closed: dữ liệu mang nhãn xuất xứ (`nguon_thang_cuoi`, artifact `TD-0306`) thì mọi
+    # mã LỌT rổ phải có đời sống ĐO THẬT. Mã chỉ mang cận trên mà lọt rổ nghĩa là tập đã đo
+    # không phủ rổ — đời sống của nó là đoán, không phải đo (N6). Không có nhãn ⇒ dữ liệu
+    # cũ (`TD-0230`) ⇒ không áp, giữ tái lập được rổ `t0`/`t1`.
+    if any("nguon_thang_cuoi" in k for k in co_du.values()):
+        chua_do = sorted(s for s in kq.trading if co_du[s].get("nguon_thang_cuoi") != "do_that")
+        if chua_do:
+            raise ValueError(
+                f"{len(chua_do)} mã lọt rổ tại {moc} nhưng đời sống CHƯA đo thật (chỉ là cận trên / "
+                f"không đo được): {chua_do} — tập đã đo ở TD-0306 không phủ rổ, không dựng rổ trên số đoán"
+            )
     return KetQuaMoc(
         moc=moc,
         ung_vien_song=tuple(song),

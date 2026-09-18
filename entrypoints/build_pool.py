@@ -97,9 +97,18 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--ro-t2",
+        action="store_true",
+        help=(
+            "TD-0307 / DR-LOCKBOX-01: dựng rổ pool ĐÚNG TẠI T2 cho LOCKBOX (0 trial), đời sống mã "
+            "đo thật từ TD-0306. Thiếu --ghi chỉ IN; có --ghi thì ghi config/pool_t2.yaml "
+            "(từ chối ghi đè). KHÔNG chạm dữ liệu lockbox."
+        ),
+    )
+    parser.add_argument(
         "--ghi",
         action="store_true",
-        help="Đi kèm --ro-t1/--ro-t0: thực sự ghi config/pool_<mốc>.yaml.",
+        help="Đi kèm --ro-t1/--ro-t0/--ro-t2: thực sự ghi config/pool_<mốc>.yaml.",
     )
     parser.add_argument(
         "--check-min-notional",
@@ -218,10 +227,14 @@ def check_min_notional() -> int:
 
 
 RO_T1_OUTPUT_PATH = Path("config/pool_t1.yaml")
-MOC_RO_HOP_LE = ("t0", "t1")  # DR-D1-05: T2 ⏸ (MT-60)
+MOC_RO_HOP_LE = ("t0", "t1", "t2")  # DR-D1-05; t2 mở bởi DR-LOCKBOX-01 (TD-0307)
 THU_MUC_EXPLORE = Path("user_data/data/explore/futures")
 NGUON_TD0230 = Path("docs/du-lieu-do/td0230-lech-song-sot-pool.json")
 NGUON_TD0231 = Path("docs/du-lieu-do/td0231-pool-point-in-time.json")
+NGUON_TD0306 = Path("docs/du-lieu-do/td0306-khoang-ton-tai-that.json")
+#: Nguồn `khoang_ton_tai` theo mốc. `t0`/`t1` GIỮ `TD-0230` để hai rổ đã commit tái lập được
+#: từng byte; `t2` dùng đời sống ĐO THẬT của `TD-0306` (`MT-59`: kho kéo dài đời sống mã chết).
+NGUON_KHOANG_THEO_MOC = {"t0": NGUON_TD0230, "t1": NGUON_TD0230, "t2": NGUON_TD0306}
 
 EXIT_RO_T1_LECH_TD0231 = 97
 EXIT_RO_T1_CAY_BAN = 98
@@ -282,7 +295,7 @@ def sinh_ro_tai_moc(
     lay_git_info = lay_git_info or get_git_info
 
     if moc_ten not in MOC_RO_HOP_LE:
-        raise ValueError(f"moc_ten {moc_ten!r} không thuộc {MOC_RO_HOP_LE} (DR-D1-05: rổ T2 ⏸ MT-60)")
+        raise ValueError(f"moc_ten {moc_ten!r} không thuộc {MOC_RO_HOP_LE} (DR-D1-05, DR-LOCKBOX-01)")
     duong_ra = Path(f"config/pool_{moc_ten}.yaml")
     MOC = moc_ten.upper()
     dich = repo_dir / duong_ra
@@ -311,10 +324,12 @@ def sinh_ro_tai_moc(
 
     cfg = load_tool_d_config(repo_dir / "config" / "tool_d_config.yaml")
     moc_ngay = date.fromisoformat(str(resolve(cfg, "tier_c.data_split")[moc_ten]))
-    khoang = json.loads((repo_dir / NGUON_TD0230).read_text(encoding="utf-8"))["khoang_ton_tai"]
+    nguon_khoang = NGUON_KHOANG_THEO_MOC[moc_ten]
+    nguon_json = json.loads((repo_dir / nguon_khoang).read_text(encoding="utf-8"))
+    khoang = nguon_json["khoang_ton_tai"]
     td0231 = json.loads((repo_dir / NGUON_TD0231).read_text(encoding="utf-8"))
 
-    print(f"Mốc {MOC} = {moc_ngay} · ứng viên từ TD-0230: {len(khoang)} mã · EXPLORE đã dùng: {len(explore_da_dung)} mã")
+    print(f"Mốc {MOC} = {moc_ngay} · ứng viên từ {nguon_khoang.name}: {len(khoang)} mã · EXPLORE đã dùng: {len(explore_da_dung)} mã")
     try:
         kq = dung_ro_tai_moc(
             moc_ngay,
@@ -324,6 +339,10 @@ def sinh_ro_tai_moc(
             volume_floor_usdt=VOLUME_FLOOR_USDT,
         )
         exchange_info = lay_exchange_info()
+    except ValueError as exc:
+        # `dung_ro_tai_moc` fail-closed: mã lọt rổ mà đời sống chưa đo thật (TD-0307).
+        print(f"🛑 {exc}")
+        return EXIT_RO_T1_LECH_TD0231
     except (KhoLuuTruError, BinancePublicApiError) as exc:
         print(f"🛑 Tải dữ liệu thất bại, KHÔNG sinh rổ nửa vời: {exc}")
         return EXIT_FETCH_FAILED
@@ -333,18 +352,29 @@ def sinh_ro_tai_moc(
     lech_moc = td0231["moc"].get(moc_ten) != moc_ngay.isoformat()
     chi_moi = sorted(set(kq.pool_dung) - set(tham_chieu["danh_sach"]))
     chi_td0231 = sorted(set(tham_chieu["danh_sach"]) - set(kq.pool_dung))
-    if lech_moc or chi_moi or chi_td0231:
+    # `t0`/`t1`: hai đường cùng logic, cùng nguồn ⇒ phải KHÍT. `t2`: TD-0231 tính bằng
+    # `khoang_ton_tai` đang sai (`MT-59`) — chính thứ TD-0306 sửa — nên đòi khít là ép kết quả
+    # đã sửa khớp lại số mang lệch. Thay bằng phép so BẤT ĐỐI XỨNG (DR-LOCKBOX-01, TD-0307):
+    #  (a) `chi_moi` PHẢI RỖNG — sửa MT-59 chỉ có thể THU HẸP rổ, không đường nào thêm mã;
+    #  (b) `chi_td0231` ⊆ mã TD-0306 đo là chết TRƯỚC T2 — lệch nào khác là có thứ khác đã đổi.
+    # Cả hai phía là `pool_dung` (TRƯỚC khi loại EXPLORE) ⇒ so cùng tầng.
+    if moc_ten == "t2":
+        chet_truoc = set(nguon_json.get("mt59_lech_pool_dung_tai_t2", []))
+        khong_giai_thich = sorted(set(chi_td0231) - chet_truoc)
+    else:
+        khong_giai_thich = chi_td0231
+    if lech_moc or chi_moi or khong_giai_thich:
         print(
-            f"🛑 Rổ đủ tiêu chí tại {MOC} tính lại KHÔNG khít TD-0231 — một trong hai đường "
+            f"🛑 Rổ đủ tiêu chí tại {MOC} tính lại KHÔNG khớp TD-0231 — một trong hai đường "
             f"đang sai, không ghi.\n  mốc TD-0231: {td0231['moc'].get(moc_ten)} vs {moc_ngay}\n"
             f"  chỉ có ở lần tính mới ({len(chi_moi)}): {chi_moi}\n"
-            f"  chỉ có ở TD-0231 ({len(chi_td0231)}): {chi_td0231}"
+            f"  chỉ có ở TD-0231, KHÔNG giải thích được ({len(khong_giai_thich)}): {khong_giai_thich}"
         )
         return EXIT_RO_T1_LECH_TD0231
 
     ro = ghep_ro_t1(kq.pool_dung, explore_da_dung, exchange_info["symbols"])
     print(
-        f"Đủ tiêu chí tại {MOC}: {len(kq.pool_dung)} (khít TD-0231) · loại EXPLORE đã dùng: "
+        f"Đủ tiêu chí tại {MOC}: {len(kq.pool_dung)} (khớp TD-0231; lệch đã giải thích: {len(chi_td0231)}) · loại EXPLORE đã dùng: "
         f"{len(ro.loai_explore_da_dung)} · loại TRADIFI: {len(ro.loai_tradifi)} · "
         f"RỔ {MOC}: {len(ro.trading)} mã"
     )
@@ -399,11 +429,13 @@ def sinh_ro_tai_moc(
                 "xuat_xu": {
                     "git_sha": git_info.sha,
                     "sinh_luc_utc": bay_gio().isoformat(),
-                    "nguon_khoang_ton_tai": {"file": str(NGUON_TD0230), "sha256": _sha256(repo_dir / NGUON_TD0230)},
+                    "nguon_khoang_ton_tai": {"file": str(nguon_khoang), "sha256": _sha256(repo_dir / nguon_khoang)},
                     "doi_chieu_td0231": {
                         "file": str(NGUON_TD0231),
                         "sha256": _sha256(repo_dir / NGUON_TD0231),
-                        "khit": True,
+                        "kieu": "bat_doi_xung" if moc_ten == "t2" else "khit",
+                        "khit": not chi_td0231,
+                        "chi_co_o_td0231_giai_thich_bang_chet_truoc_t2": chi_td0231,
                     },
                     "trial": 0,
                 },
@@ -429,6 +461,8 @@ def main(argv: list[str] | None = None) -> int:
         return sinh_ro_t1(ghi=args.ghi)
     if args.ro_t0:
         return sinh_ro_tai_moc(moc_ten="t0", ghi=args.ghi)
+    if args.ro_t2:
+        return sinh_ro_tai_moc(moc_ten="t2", ghi=args.ghi)
 
     if args.check_min_notional:
         return check_min_notional()
