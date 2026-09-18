@@ -10,10 +10,15 @@ xoá lại được.
    chạy TRƯỚC khi mở file, và `submit_idea()` raise thay vì ghi một phần.
 
 Công cụ này chỉ mở CỬA NỘP (MT-12). Nó KHÔNG ghi được dòng `SELECTED` —
-cửa CHỌN là hành động khác hẳn: 1 lần/quý, đòi thêm 4 trường
-(`tin_hieu`/`quy_tac`/`nguong_bac_bo`/`so_bien_the`), và quý 3/2026 có
-`HAN_NGACH_CHON: 0`. Tách vật lý hai cửa để không có đường nào một lần nộp
-đơn vô tình trở thành một lần chọn.
+cửa CHỌN là hành động khác hẳn: tối đa 1 lần/quý và đòi thêm 4 trường
+(`tin_hieu`/`quy_tac`/`nguong_bac_bo`/`so_bien_the`). Tách vật lý hai cửa để
+không có đường nào một lần nộp đơn vô tình trở thành một lần chọn.
+
+🔴 Hạn ngạch CHỌN của một quý nằm ở `docs/decisions/DR-Q{n}-{năm}-tieu-chi-
+   chon-y-tuong.md` của ĐÚNG quý đó, và máy đọc động (`audit_checks.HAN_NGACH_RE`
+   + `_tieu_chi_path()`). Cố ý KHÔNG chép con số nào vào đây: bản trước có chép,
+   nguồn đổi sang quý sau, bản chép ở lại — và vì nó nằm trong chuỗi in ra lúc
+   chạy nên người đọc tưởng máy đang nói sự thật hiện tại (TD-0315).
 """
 
 from __future__ import annotations
@@ -225,9 +230,10 @@ def submit_idea(
     if e["status"] not in TRANG_THAI_CUA_NOP:
         raise IdeaQueueError(
             f"status={e['status']} — cửa NỘP chỉ ghi được {list(TRANG_THAI_CUA_NOP)}. "
-            "Chọn một ý tưởng ra khỏi hàng chờ là hành động KHÁC (MT-12): 1 lần/quý, "
-            "đòi thêm tin_hieu/quy_tac/nguong_bac_bo/so_bien_the, và quý 3/2026 khai "
-            "HAN_NGACH_CHON: 0."
+            "Chọn một ý tưởng ra khỏi hàng chờ là hành động KHÁC (MT-12): tối đa 1 lần/quý, "
+            "đòi thêm tin_hieu/quy_tac/nguong_bac_bo/so_bien_the. Hạn ngạch CHỌN của quý "
+            "hiện hành đọc ở docs/decisions/DR-Q<n>-<năm>-tieu-chi-chon-y-tuong.md — đọc "
+            "file đó, đừng tin một con số chép sẵn ở đây (TD-0315)."
         )
 
     # ── Ca 3 — TOOL_D_RESULTS phải REJECTED (cùng luật L-Z16) ─────────────
