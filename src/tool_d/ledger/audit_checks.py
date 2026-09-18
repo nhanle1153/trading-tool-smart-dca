@@ -21,6 +21,7 @@ import yaml
 from tool_d.calibration.ung_vien import PARAM_XAC_NHAN, cung_gia_tri
 from tool_d.config.loader import DEFAULT_CONFIG_PATH, load_tool_d_config
 from tool_d.ledger import budget as _budget
+from tool_d.ledger.idea_events import duyet_so
 from tool_d.ledger.registry import DEFAULT_REGISTRY_PATH, TrialLedger, TrialState
 from tool_d.measurement.tri_state import Measured
 
@@ -507,7 +508,8 @@ def check_lz17_budget_a_slots_per_quarter(
     """Số slot NGÂN SÁCH A đã tiêu (status==SELECTED) ≤ 5/quý — KHÔNG
     nới vì có LLM (spec dòng 3888-3889, DR-009)."""
     entries = _read_jsonl(idea_queue_path)
-    selected = [e for e in entries if e.get("status") == "SELECTED" and e.get("selected_at")]
+    # DR-IQ-02 §4.4 — lần chọn đã bị VOIDED không tiêu suất.
+    selected = [e for e in duyet_so(entries).chon_hieu_luc if e.get("selected_at")]
     if not entries:
         return CheckResult("L-Z17", Measured.pending("idea_queue rỗng"))
 
@@ -545,7 +547,7 @@ def check_td0119_selected_du_phep_thu(
     Fail-closed, cùng khuôn `selection_reason` đã có sẵn ở §9c.7.4.
     """
     entries = _read_jsonl(idea_queue_path)
-    selected = [e for e in entries if e.get("status") == "SELECTED"]
+    selected = duyet_so(entries).chon_hieu_luc
     if not selected:
         return CheckResult("TD-0119a", Measured.pending("chưa có ý tưởng nào được CHỌN"))
 
@@ -576,8 +578,8 @@ def check_td0119_so_bien_the_khong_vuot_khai(
     entries = _read_jsonl(idea_queue_path)
     khai = {
         e["idea_id"]: e.get("so_bien_the")
-        for e in entries
-        if e.get("status") == "SELECTED" and e.get("so_bien_the") is not None
+        for e in duyet_so(entries).chon_hieu_luc
+        if e.get("so_bien_the") is not None
     }
     if not khai:
         return CheckResult(
@@ -621,8 +623,10 @@ def check_td0124_tran_nhap_don_moi_quy(
     if not entries:
         return CheckResult("TD-0124", Measured.pending("idea_queue rỗng"))
 
+    # DR-IQ-02 §4.1 — một ĐƠN là dòng đầu của một mã; các dòng sau là sự kiện
+    # trên đơn đó (chọn/huỷ), không phải đơn nộp mới.
     counts: Counter[tuple[int, int]] = Counter()
-    for e in entries:
+    for e in duyet_so(entries).dong_dau.values():
         ts = e.get("created_at")
         if not isinstance(ts, str):
             continue
@@ -664,20 +668,32 @@ def check_td0120_selection_reason_trich_ma_tieu_chi(
       (c) quý đó CHƯA có file tiêu chí (fail-closed — đúng điều cấm ở
           spec dòng 4935: mở queue trước khi commit tiêu chí)
       (d) quý đó khai `HAN_NGACH_CHON: 0` mà vẫn có dòng SELECTED
+      (e) DR-IQ-02 §4.4 — số lần chọn còn hiệu lực trong quý > `HAN_NGACH_CHON`
+
+    Chỉ tính lần chọn CÒN HIỆU LỰC (DR-IQ-02): lần đã bị VOIDED không chịu
+    các ca trên nữa, nhưng vẫn được nêu trong bằng chứng để không ai phải đoán.
 
     Máy KHÔNG kiểm được câu đó có trung thực không — nhưng chặn được ca dễ
     xảy ra nhất: chọn theo tiêu chí mới nghĩ ra SAU khi đã nhìn thấy đơn.
     """
     entries = _read_jsonl(idea_queue_path)
-    selected = [e for e in entries if e.get("status") == "SELECTED" and e.get("selected_at")]
+    duyet = duyet_so(entries)
+    selected = [e for e in duyet.chon_hieu_luc if e.get("selected_at")]
+    da_huy = "; ".join(
+        f"{e['idea_id']} chọn lúc {e.get('selected_at')} ĐÃ HUỶ (DR-IQ-02)" for e in duyet.chon_da_huy
+    )
     if not selected:
-        return CheckResult("TD-0120", Measured.pending("chưa có ý tưởng nào được CHỌN"))
+        return CheckResult(
+            "TD-0120", Measured.pending("chưa có lần CHỌN nào còn hiệu lực"), evidence=da_huy
+        )
 
     violations: list[str] = []
+    so_chon_theo_quy: Counter[tuple[int, int]] = Counter()
     for e in selected:
         idea_id = e["idea_id"]
         d = datetime.strptime(e["selected_at"], "%Y-%m-%dT%H:%M:%SZ").date()
         nam, quy = _quarter_of(d)
+        so_chon_theo_quy[(nam, quy)] += 1
         path = _tieu_chi_path(tieu_chi_dir, nam, quy)
         if not path.exists():
             violations.append(f"{idea_id}: quý {quy}/{nam} CHƯA có file tiêu chí ({path})")
@@ -690,6 +706,11 @@ def check_td0120_selection_reason_trich_ma_tieu_chi(
         if han_ngach and int(han_ngach.group(1)) == 0:
             violations.append(
                 f"{idea_id}: quý {quy}/{nam} khai HAN_NGACH_CHON: 0 nhưng vẫn có dòng SELECTED"
+            )
+        elif han_ngach and so_chon_theo_quy[(nam, quy)] > int(han_ngach.group(1)):
+            violations.append(
+                f"{idea_id}: lần chọn thứ {so_chon_theo_quy[(nam, quy)]} còn hiệu lực trong quý "
+                f"{quy}/{nam} > HAN_NGACH_CHON: {han_ngach.group(1)}"
             )
 
         ly_do = e.get("selection_reason") or ""
@@ -704,7 +725,9 @@ def check_td0120_selection_reason_trich_ma_tieu_chi(
                     + ", ".join(sorted(khong_co_that))
                 )
     return CheckResult(
-        "TD-0120", Measured.ok(len(violations) == 0), evidence="; ".join(violations)
+        "TD-0120",
+        Measured.ok(len(violations) == 0),
+        evidence="; ".join(x for x in (*violations, da_huy) if x),
     )
 
 
@@ -739,11 +762,15 @@ def check_td0126_explore_evidence_va_trung_mechanism(
         if e.get("data_source") == "EXPLORE" and not str(e.get("explore_evidence") or "").strip():
             violations.append(f"{e['idea_id']}: data_source=EXPLORE nhưng thiếu explore_evidence")
 
-    # So từng đơn với các đơn ĐỨNG TRƯỚC nó trong sổ — sổ là nhật ký theo
+    # So từng ĐƠN với các đơn ĐỨNG TRƯỚC nó trong sổ — sổ là nhật ký theo
     # thứ tự thời gian, nên "đơn nộp sau phải khai đơn nộp trước", không
     # ngược lại (nếu không mỗi cặp trùng sẽ bị đếm hai lần).
-    for k, e in enumerate(entries):
-        truoc = entries[:k]
+    # DR-IQ-02: một đơn là DÒNG ĐẦU của một mã. Dòng chọn/huỷ sau đó mang lại
+    # đúng nội dung đơn (§4.2) — so chúng thì một mã tự trùng 100% với chính
+    # nó, tức đường chọn thật (chép nguyên văn) không bao giờ xanh được.
+    don = list(duyet_so(entries).dong_dau.values())
+    for k, e in enumerate(don):
+        truoc = don[:k]
         da_khai = set(e.get("overlaps_with") or [])
         for idea_id, status, ty_le in tim_nghi_trung(truoc, e.get("mechanism") or ""):
             if idea_id in da_khai:
@@ -755,6 +782,27 @@ def check_td0126_explore_evidence_va_trung_mechanism(
             )
 
     return CheckResult("TD-0126", Measured.ok(len(violations) == 0), evidence="; ".join(violations))
+
+
+# ── TD-0326 (DR-IQ-02) ────────────────────────────────────────────────
+def check_td0326_so_y_tuong_nhat_ky_su_kien(
+    idea_queue_path: Path = DEFAULT_IDEA_QUEUE_PATH,
+    registry_path: Path = DEFAULT_REGISTRY_PATH,
+    decisions_dir: Path = DEFAULT_TIEU_CHI_DIR,
+) -> CheckResult:
+    """DR-IQ-02 §4.1–4.3 trên TRẠNG THÁI sổ: thứ tự sự kiện hợp lệ, trường nộp
+    bất biến, và năm điều kiện của VOIDED.
+
+    Cửa ghi (`chon_y_tuong`/`huy_chon`) đã chặn các ca này trước khi ghi, nhưng
+    sổ vẫn thêm tay được — đúng cách dòng CHỌN ngày 18/09/2026 vào sổ (MT-65).
+    Hai lớp dùng CHUNG `duyet_so()` để không lệch luật nhau.
+    """
+    entries = _read_jsonl(idea_queue_path)
+    if not entries:
+        return CheckResult("TD-0326", Measured.pending("idea_queue rỗng"))
+    slot = {p.hypothesis_slot for p in TrialLedger(registry_path).projections().values()}
+    vi_pham = duyet_so(entries, decisions_dir=decisions_dir, slot_da_dung=slot).vi_pham
+    return CheckResult("TD-0326", Measured.ok(len(vi_pham) == 0), evidence="; ".join(vi_pham))
 
 
 # ── L-Z26 (OQ-13, §12d.4) ─────────────────────────────────────────────

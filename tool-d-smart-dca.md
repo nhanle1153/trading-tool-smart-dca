@@ -4065,7 +4065,7 @@ Append-only, cùng thư mục với `trial_registry.jsonl`.
                                             //      | FAIL_DURABILITY | DUPLICATE
   "overlaps_with":   ["DR-005 mean-reversion"],  // đối chiếu ứng viên đã loại
 
-  "status":          "QUEUED",              // QUEUED | SELECTED | ARCHIVED | REJECTED
+  "status":          "QUEUED",              // QUEUED | SELECTED | ARCHIVED | REJECTED | VOIDED — 🔴 ĐÍNH CHÍNH 19/09/2026 (DR-IQ-02, MT-65): sổ là NHẬT KÝ SỰ KIỆN — mỗi dòng một sự kiện trên idea_id, trạng thái dựng lại bằng cách đọc hết sổ, trường nộp bất biến; VOIDED huỷ lần chọn đang hiệu lực, đưa mã về hàng chờ
   "selected_at":     null,
   "budget_a_slot":   null,                  // điền khi SELECTED, vd "A-04"
   "selection_reason": null                  // 🔴 BẮT BUỘC khi SELECTED — xem 9c.7.4

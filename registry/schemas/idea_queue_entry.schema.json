@@ -96,8 +96,10 @@
         "QUEUED",
         "SELECTED",
         "ARCHIVED",
-        "REJECTED"
-      ]
+        "REJECTED",
+        "VOIDED"
+      ],
+      "description": "DR-IQ-02: mỗi dòng là một SỰ KIỆN trên idea_id; trạng thái hiện hành dựng lại bằng cách đọc hết sổ. VOIDED huỷ lần chọn đang hiệu lực và đưa mã về hàng chờ."
     },
     "selected_at": {
       "type": [
@@ -105,6 +107,21 @@
         "null"
       ],
       "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "voided_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$",
+      "description": "DR-IQ-02 §4.3 — chỉ có ở dòng VOIDED, máy đóng dấu."
+    },
+    "void_reason": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "DR-IQ-02 §4.3 — lý do huỷ chọn, BẮT BUỘC trích một DR có thật trong docs/decisions/."
     },
     "budget_a_slot": {
       "type": [

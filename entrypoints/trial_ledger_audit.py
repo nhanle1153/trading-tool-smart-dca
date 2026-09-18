@@ -54,10 +54,11 @@ from tool_d.ledger.audit_checks import (
     check_td0124_tran_nhap_don_moi_quy,
     check_lz26_de_xuat_doi_tham_so,
     check_td0126_explore_evidence_va_trung_mechanism,
+    check_td0326_so_y_tuong_nhat_ky_su_kien,
     check_lz27_tran_b3,
     check_lz28_doi_tham_so_dung_diem_quyet_dinh,
 )
-from tool_d.ledger.idea_queue import IdeaQueueError, submit_idea
+from tool_d.ledger.idea_queue import IdeaQueueError, chon_y_tuong, huy_chon, submit_idea
 from tool_d.ledger.param_proposals import ParamProposalError, submit_proposal
 from tool_d.ledger.registry import DEFAULT_REGISTRY_PATH
 from tool_d.measurement.gitinfo import get_git_info
@@ -126,6 +127,19 @@ def build_parser() -> argparse.ArgumentParser:
         "(mẫu: docs/mau-don-y-tuong.yaml). Đơn không hợp lệ thì TỪ CHỐI ghi.",
     )
     parser.add_argument(
+        "--chon-y-tuong",
+        metavar="TO_CHON.yaml",
+        help="TD-0326 (DR-IQ-02) — ghi sự kiện SELECTED cho một ý tưởng đang QUEUED. "
+        "selected_at do máy đóng dấu; tờ chọn tự điền thì TỪ CHỐI.",
+    )
+    parser.add_argument(
+        "--huy-chon",
+        metavar="IQ-xxxx",
+        help="TD-0326 (DR-IQ-02 §4.3) — ghi sự kiện VOIDED huỷ lần chọn đang hiệu lực. "
+        "Bắt buộc kèm --ly-do trích một DR có thật.",
+    )
+    parser.add_argument("--ly-do", metavar="TEXT", help="Lý do cho --huy-chon.")
+    parser.add_argument(
         "--nop-de-xuat",
         metavar="DE_XUAT.yaml",
         help="TD-0125 (OQ-13) — nộp một đề xuất đổi tham số vào "
@@ -185,6 +199,7 @@ def run_audit(
         check_td0124_tran_nhap_don_moi_quy(idea_queue_path),
         check_lz26_de_xuat_doi_tham_so(proposals_path, registry_path),
         check_td0126_explore_evidence_va_trung_mechanism(idea_queue_path),
+        check_td0326_so_y_tuong_nhat_ky_su_kien(idea_queue_path, registry_path, tieu_chi_dir),
         check_lz27_tran_b3(registry_path),
         check_lz28_doi_tham_so_dung_diem_quyet_dinh(proposals_path),
     ]
@@ -246,6 +261,36 @@ def nop_don_y_tuong(don_path: Path) -> tuple[int, str]:
 
     audit_exit, audit_text = run_audit()
     return audit_exit, f"✅ Đã ghi {idea_id} vào {DEFAULT_IDEA_QUEUE_PATH}.\n{audit_text}"
+
+
+def chon_don_y_tuong(to_chon_path: Path) -> tuple[int, str]:
+    """TD-0326 (DR-IQ-02) — đọc tờ chọn YAML, ghi sự kiện SELECTED, rồi tự audit."""
+    if not to_chon_path.exists():
+        return EXIT_DON_TU_CHOI, f"🛑 Không thấy tờ chọn: {to_chon_path}"
+    try:
+        to_chon = yaml.safe_load(to_chon_path.read_text(encoding="utf-8")) or {}
+    except yaml.YAMLError as exc:
+        return EXIT_DON_TU_CHOI, f"🛑 Tờ chọn sai cú pháp YAML:\n{exc}"
+    if not isinstance(to_chon, dict):
+        return EXIT_DON_TU_CHOI, "🛑 Tờ chọn phải là một khối 'khoá: giá trị'"
+    try:
+        idea_id = chon_y_tuong(to_chon=to_chon)
+    except IdeaQueueError as exc:
+        return EXIT_DON_TU_CHOI, f"🛑 TỪ CHỐI ghi — sổ KHÔNG bị đụng tới.\n{exc}"
+    audit_exit, audit_text = run_audit()
+    return audit_exit, f"✅ Đã ghi {idea_id} SELECTED vào {DEFAULT_IDEA_QUEUE_PATH}.\n{audit_text}"
+
+
+def huy_chon_y_tuong(idea_id: str, ly_do: str | None) -> tuple[int, str]:
+    """TD-0326 (DR-IQ-02 §4.3) — ghi sự kiện VOIDED, rồi tự audit."""
+    if not (ly_do or "").strip():
+        return EXIT_DON_TU_CHOI, "🛑 --huy-chon bắt buộc kèm --ly-do trích một DR có thật."
+    try:
+        huy_chon(idea_id=idea_id, ly_do=ly_do)
+    except IdeaQueueError as exc:
+        return EXIT_DON_TU_CHOI, f"🛑 TỪ CHỐI ghi — sổ KHÔNG bị đụng tới.\n{exc}"
+    audit_exit, audit_text = run_audit()
+    return audit_exit, f"✅ Đã ghi {idea_id} VOIDED vào {DEFAULT_IDEA_QUEUE_PATH}.\n{audit_text}"
 
 
 def nop_de_xuat_doi_tham_so(de_xuat_path: Path) -> tuple[int, str]:
@@ -876,6 +921,16 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.nop_y_tuong:
         exit_code, text = nop_don_y_tuong(Path(args.nop_y_tuong))
+        print(text)
+        return exit_code
+
+    if args.chon_y_tuong:
+        exit_code, text = chon_don_y_tuong(Path(args.chon_y_tuong))
+        print(text)
+        return exit_code
+
+    if args.huy_chon:
+        exit_code, text = huy_chon_y_tuong(args.huy_chon, args.ly_do)
         print(text)
         return exit_code
 

@@ -84,9 +84,15 @@ class TestVuotTranChiCanhBao:
     def test_sau_don_selected_cung_quy_van_exit_0(self, tmp_path: Path) -> None:
         assert BUDGET_A_SLOTS_PER_QUARTER_MAX == 5, "trần vẫn là 5 — TD-0118 không đổi con số"
         iq = tmp_path / "iq.jsonl"
+        # DR-IQ-02: mỗi lần chọn là sự kiện trên một đơn ĐÃ NỘP — dòng QUEUED
+        # đi trước, như đường thật. Không đổi khẳng định nào bên dưới.
         _ghi(iq, [
-            _don(f"IQ-000{i}", status="SELECTED", selected_at=f"2026-08-0{i}T00:00:00Z")
+            dong
             for i in range(1, 7)  # 6 suất trong CÙNG quý 3/2026 -> vượt trần 5
+            for dong in (
+                _don(f"IQ-000{i}", status="QUEUED"),
+                _don(f"IQ-000{i}", status="SELECTED", selected_at=f"2026-08-0{i}T00:00:00Z"),
+            )
         ])
         reg = tmp_path / "reg.jsonl"
         reg.touch()

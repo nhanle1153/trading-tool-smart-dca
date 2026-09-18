@@ -33,10 +33,17 @@ from typing import Any
 import jsonschema
 
 from tool_d.ledger.audit_checks import (
+    CUA_CHON_FIELDS,
     DEFAULT_IDEA_QUEUE_PATH,
+    DEFAULT_TIEU_CHI_DIR,
+    HAN_NGACH_RE,
+    TC_CODE_RE,
     _quarter_of,
     _read_jsonl,
+    _tieu_chi_path,
 )
+from tool_d.ledger.idea_events import SO_LAN_HUY_TOI_DA, TRUONG_NOP, dr_co_that, duyet_so
+from tool_d.ledger.registry import DEFAULT_REGISTRY_PATH, TrialLedger
 
 SCHEMA_PATH = Path("registry/schemas/idea_queue_entry.schema.json")
 
@@ -176,9 +183,12 @@ def dem_don_trong_quy(entries: list[dict[str, Any]], quy: tuple[int, int]) -> in
     Kể cả đơn `REJECTED`: trần NHẬP chặn ở NGUỒN (spec dòng 4095 —
     "Chặn ở NGUỒN rẻ hơn và hữu hình hơn chặn ở đầu ra"). Một đơn bị bộ lọc
     §0.1 loại vẫn đã tiêu công sinh + công đọc của quý đó.
+
+    Chỉ đếm DÒNG ĐẦU của mỗi mã (DR-IQ-02): dòng chọn/huỷ là sự kiện trên
+    một đơn đã có, không phải đơn nộp mới.
     """
     n = 0
-    for e in entries:
+    for e in duyet_so(entries).dong_dau.values():
         ts = e.get("created_at")
         if not isinstance(ts, str):
             continue
@@ -282,7 +292,7 @@ def submit_idea(
         )
 
     # ── Ca 8 — nghi trùng `mechanism` (§9c.7.4 ràng buộc 3) ───────────────
-    nghi = tim_nghi_trung(entries, e["mechanism"])
+    nghi = tim_nghi_trung(list(duyet_so(entries).dong_dau.values()), e["mechanism"])
     da_khai = set(e.get("overlaps_with") or [])
     chua_khai = [x for x in nghi if x[0] not in da_khai]
     if chua_khai:
@@ -306,3 +316,187 @@ def submit_idea(
     with path.open("a", encoding="utf-8") as f:
         f.write(json.dumps(e, ensure_ascii=False) + "\n")
     return e["idea_id"]
+
+
+# ── Cửa CHỌN và cửa HUỶ (DR-IQ-02) ────────────────────────────────────
+# Tờ chọn chỉ được mang các khoá này. `selected_at` KHÔNG nằm trong danh sách:
+# máy đóng dấu (§4.5) — ngày chọn do người điền chính là gốc của MT-65.
+KHOA_TO_CHON = frozenset(
+    {"idea_id", "status", "selection_reason", "budget_a_slot", *CUA_CHON_FIELDS, *TRUONG_NOP}
+)
+
+
+def _vi_pham_moi(truoc: list[str], sau: list[str]) -> list[str]:
+    return [v for v in sau if v not in truoc]
+
+
+def _ghi_dong(path: Path, e: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(e, ensure_ascii=False) + "\n")
+
+
+def chon_y_tuong(
+    *,
+    to_chon: dict[str, Any],
+    path: Path = DEFAULT_IDEA_QUEUE_PATH,
+    schema_path: Path = SCHEMA_PATH,
+    tieu_chi_dir: Path = DEFAULT_TIEU_CHI_DIR,
+    bay_gio: str | None = None,
+) -> str:
+    """Ghi sự kiện SELECTED cho một mã đang QUEUED. Raise `IdeaQueueError` nếu từ chối.
+
+    Trường nộp lấy từ DÒNG ĐẦU của mã (DR-IQ-02 §4.2); tờ chọn chỉ mang thêm
+    các trường cửa CHỌN. Mọi điều kiện kiểm TRƯỚC khi mở file. `bay_gio` chỉ
+    để test cố định đồng hồ — đường chạy thật để trống.
+    """
+    t = dict(to_chon)
+    ma = t.get("idea_id")
+    if t.get("selected_at") is not None:
+        raise IdeaQueueError(
+            "Tờ chọn tự điền selected_at — TỪ CHỐI (DR-IQ-02 §4.5). Máy đóng dấu thời điểm chọn "
+            "lúc ghi; một ngày chọn do người điền chính là gốc của MT-65."
+        )
+    la = sorted(set(k for k, v in t.items() if v is not None) - KHOA_TO_CHON)
+    if la:
+        raise IdeaQueueError(f"Tờ chọn mang khoá không thuộc cửa CHỌN: {la}")
+    if t.get("status") not in (None, "SELECTED"):
+        raise IdeaQueueError(f"status={t.get('status')} — cửa CHỌN chỉ ghi SELECTED")
+
+    entries = _read_jsonl(path)
+    duyet = duyet_so(entries)
+    if duyet.trang_thai.get(ma) != "QUEUED":
+        raise IdeaQueueError(
+            f"{ma} đang {duyet.trang_thai.get(ma) or 'không có trong sổ'} — chỉ chọn được mã đang "
+            "QUEUED (DR-IQ-02 §4.1)."
+        )
+    dau = duyet.dong_dau[ma]
+    lech = [f for f in TRUONG_NOP if f in t and t[f] != dau.get(f)]
+    if lech:
+        raise IdeaQueueError(
+            f"Tờ chọn đổi trường nộp {lech} so với đơn đã nộp — TỪ CHỐI (DR-IQ-02 §4.2). Muốn sửa "
+            f"ý tưởng thì nộp đơn mới với overlaps_with: [\"{ma}\"] rồi chọn đơn đó."
+        )
+
+    e = {k: v for k, v in dau.items() if k not in ("voided_at", "void_reason")}
+    e["status"] = "SELECTED"
+    e["selected_at"] = bay_gio or _utcnow_iso_seconds()
+    e["budget_a_slot"] = t.get("budget_a_slot")
+    e["selection_reason"] = t.get("selection_reason")
+    for f in CUA_CHON_FIELDS:
+        e[f] = t.get(f)
+
+    try:
+        jsonschema.validate(e, _load_schema(schema_path))
+    except jsonschema.ValidationError as exc:
+        raise IdeaQueueError(
+            f"Tờ chọn không hợp lệ theo schema — TỪ CHỐI ghi.\n"
+            f"  chỗ sai: {'/'.join(str(p) for p in exc.absolute_path) or '(gốc)'}\n"
+            f"  lý do:   {exc.message}"
+        ) from exc
+
+    thieu = [f for f in CUA_CHON_FIELDS if e[f] is None or (isinstance(e[f], str) and not e[f].strip())]
+    if thieu:
+        raise IdeaQueueError(f"Thiếu trường cửa CHỌN {thieu} (MT-12, TD-0119a).")
+
+    nam, quy = _quarter_of_iso(e["selected_at"])
+    file_tc = _tieu_chi_path(tieu_chi_dir, nam, quy)
+    if not file_tc.exists():
+        raise IdeaQueueError(f"Quý {quy}/{nam} CHƯA có file tiêu chí ({file_tc}) — TỪ CHỐI chọn.")
+    noi_dung = file_tc.read_text(encoding="utf-8")
+    m = HAN_NGACH_RE.search(noi_dung)
+    if m is None:
+        raise IdeaQueueError(f"{file_tc} không khai HAN_NGACH_CHON — TỪ CHỐI chọn (fail-closed).")
+    han_ngach = int(m.group(1))
+    da_chon = sum(
+        1
+        for x in duyet.chon_hieu_luc
+        if x.get("selected_at") and _quarter_of_iso(x["selected_at"]) == (nam, quy)
+    )
+    if da_chon >= han_ngach:
+        raise IdeaQueueError(
+            f"Quý {quy}/{nam} đã có {da_chon} lần chọn còn hiệu lực, HAN_NGACH_CHON: {han_ngach} "
+            f"({file_tc.name}) — TỪ CHỐI chọn (DR-IQ-02 §4.4)."
+        )
+    ma_trich = {x.group(0) for x in TC_CODE_RE.finditer(e["selection_reason"] or "")}
+    ma_hop_le = {x.group(0) for x in TC_CODE_RE.finditer(noi_dung)}
+    if not ma_trich:
+        raise IdeaQueueError("selection_reason không trích mã tiêu chí nào (TD-0120).")
+    if ma_trich - ma_hop_le:
+        raise IdeaQueueError(
+            f"selection_reason trích mã không có trong {file_tc.name}: {sorted(ma_trich - ma_hop_le)}"
+        )
+
+    moi = _vi_pham_moi(duyet.vi_pham, duyet_so([*entries, e]).vi_pham)
+    if moi:
+        raise IdeaQueueError("Dòng chọn sẽ làm sổ vi phạm DR-IQ-02:\n  " + "\n  ".join(moi))
+
+    _ghi_dong(path, e)
+    return ma
+
+
+def huy_chon(
+    *,
+    idea_id: str,
+    ly_do: str,
+    path: Path = DEFAULT_IDEA_QUEUE_PATH,
+    registry_path: Path = DEFAULT_REGISTRY_PATH,
+    decisions_dir: Path = DEFAULT_TIEU_CHI_DIR,
+    schema_path: Path = SCHEMA_PATH,
+    bay_gio: str | None = None,
+) -> str:
+    """Ghi sự kiện VOIDED — huỷ lần chọn đang hiệu lực của `idea_id` (DR-IQ-02 §4.3).
+
+    Năm điều kiện, kiểm hết TRƯỚC khi mở file: đang SELECTED · không trial nào
+    mang `hypothesis_slot` bằng mã này · chưa từng huỷ · `ly_do` trích DR có
+    thật · `voided_at` do máy đóng dấu.
+    """
+    entries = _read_jsonl(path)
+    duyet = duyet_so(entries)
+    if duyet.trang_thai.get(idea_id) != "SELECTED":
+        raise IdeaQueueError(
+            f"{idea_id} đang {duyet.trang_thai.get(idea_id) or 'không có trong sổ'} — chỉ huỷ được "
+            "lần chọn đang hiệu lực."
+        )
+    if duyet.so_lan_huy[idea_id] >= SO_LAN_HUY_TOI_DA:
+        raise IdeaQueueError(f"{idea_id} đã bị huỷ chọn một lần — hết lượt (DR-IQ-02 §4.3 điều 3).")
+    slot = {p.hypothesis_slot for p in TrialLedger(registry_path).projections().values()}
+    if idea_id in slot:
+        raise IdeaQueueError(
+            f"Đã có trial mang hypothesis_slot={idea_id} — không được huỷ một lần chọn đã tiêu "
+            "ngân sách N (DR-IQ-02 §4.3 điều 2)."
+        )
+    if not dr_co_that(ly_do, decisions_dir):
+        raise IdeaQueueError(
+            f"Lý do huỷ phải trích một DR có thật trong {decisions_dir} (DR-IQ-02 §4.3 điều 4)."
+        )
+
+    bi_huy = [x for x in duyet.chon_hieu_luc if x.get("idea_id") == idea_id][-1]
+    dau = duyet.dong_dau[idea_id]
+    e: dict[str, Any] = {k: dau.get(k) for k in TRUONG_NOP}
+    e.update(
+        idea_id=idea_id,
+        status="VOIDED",
+        selected_at=bi_huy.get("selected_at"),
+        voided_at=bay_gio or _utcnow_iso_seconds(),
+        void_reason=ly_do,
+        budget_a_slot=None,
+        selection_reason=None,
+    )
+    for f in CUA_CHON_FIELDS:
+        e[f] = None
+
+    try:
+        jsonschema.validate(e, _load_schema(schema_path))
+    except jsonschema.ValidationError as exc:
+        raise IdeaQueueError(f"Dòng huỷ không hợp lệ theo schema: {exc.message}") from exc
+
+    moi = _vi_pham_moi(
+        duyet_so(entries, decisions_dir=decisions_dir, slot_da_dung=slot).vi_pham,
+        duyet_so([*entries, e], decisions_dir=decisions_dir, slot_da_dung=slot).vi_pham,
+    )
+    if moi:
+        raise IdeaQueueError("Dòng huỷ sẽ làm sổ vi phạm DR-IQ-02:\n  " + "\n  ".join(moi))
+
+    _ghi_dong(path, e)
+    return idea_id
