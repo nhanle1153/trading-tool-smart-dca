@@ -3542,3 +3542,59 @@ thay vì chờ một tin có thể không bao giờ tới.
 
 Trọng tài bền duy nhất đang có là **commit trên đĩa** (đã là tiêu chí của N12 mục 6). `-2c` sẽ trình chủ dự
 án; phiên này không tự sửa quy ước.
+
+## 18/09/2026 — N12 mục 7: đĩa là trọng tài, việc là địa chỉ, mã phiên là chữ ký
+
+> Phiên mã `4168d1eb` (tên `-93`, sau khởi động lại `-2c`). Nối tiếp mục §2 ở trên. Chủ dự án duyệt kế
+> hoạch; `c9f72ee` (`CLAUDE.md`) · `aeb2cd1` (`TASKS.md`) · `5c423bc` (`DR-D6D8-01`). 0 trial, 0 dòng mã.
+
+### 1. Đo trước khi đề xuất — và phép đo đổi hình dạng lời giải
+
+Mục §2 ở trên đã chỉ ra *tên* không bền. Câu quyết định hình dạng lời giải là câu còn lại: **có định danh
+nào bền không?** Đo trên file phiên `~/.claude/projects/c--Trading-Tool-Smart-DCA/<uuid>.jsonl`:
+
+| Tên | Mã phiên (8 ký tự đầu UUID) |
+|---|---|
+| `-93` và `-2c` | **cùng** `4168d1eb` ⇒ mã phiên **bền** qua khởi động lại |
+| `-a2` | **hai** mã: `55661c40` (chủ Khối 26, nay `-2b`) và `c95baba3` (từng `-13`) ⇒ tên **không** bền |
+
+Mã phiên chính là tên thư mục nháp mỗi phiên được cấp, nên phiên nào cũng tự biết mã mình mà không cần hỏi.
+Nếu không có định danh bền thì lời giải chỉ còn là "hỏi quanh"; có nó thì *"ai giữ việc này"* tra được
+bằng máy từ đĩa.
+
+**Kiểm kê tên phiên trong tài liệu** (chỉ đọc): ≈362 lần, 34 hậu tố. ~75–80% là **lịch sử / ghi công**
+(vô hại, đúng tại ngày viết), ~10% là **bằng chứng đã nhắn**, ~10–14% dùng làm **địa chỉ** — trong đó ~15
+chỗ gắn với việc còn mở. Bảng việc (cột 🔒) **không** ghi tên ai; thứ đang mang tên phiên là văn xuôi quanh
+bảng và mục "TRẠNG THÁI HIỆN TẠI" của `CLAUDE.md` (đứng từ 09/09).
+
+### 2. Năm sự cố, một gốc
+
+Tin nhắn rơi nhầm phiên · va mã `TD-0304/0305` và `TD-0314` hôm nay, "hai `DR-D4-06`" hôm 09/09 · khoá mồ
+côi `TD-0216`/`TD-0247` · chờ một phiên đã không còn tên đó báo xong suite · mục "Chia việc" cũ vẫn mang
+tiêu đề "hiện tại". Điểm chung: **dùng TIN NHẮN hoặc TÊN làm cơ chế, thay vì ĐĨA.** Hai lần va mã hôm nay
+xảy ra ở hai phiên khác nhau dù cả hai đều **đã nhắn trước đúng N12 mục 6** — tức lỗ nằm ở cơ chế, không ở
+người: N12 mục 6 bảo *nhắn*, không bảo *đặt chỗ trên đĩa*.
+
+### 3. Quyết định (N12 mục 7)
+
+(a) mã phiên = 8 ký tự đầu UUID · (b) commit khoá/hoàn tất/đặt chỗ mang dòng `Phien: <mã>` · (c) đặt chỗ mã
+`TD`/`DR`/`MT` bằng **commit**, nhắn chỉ để báo · (d) tên phiên không làm địa chỉ trong tài liệu · (e) tài
+nguyên dùng chung: **đo** (`docker ps`), không chờ tin · (f) khoá mồ côi: **chỉ báo** chủ dự án, không tự
+nhận. Ba điểm chủ dự án chốt đều là phương án phiên này đánh dấu "Đề xuất".
+
+🔑 **Điểm phiên mã `95c7a7bf` bổ sung, đưa thẳng vào (b):** quy ước chỉ áp từ 18/09. Commit cũ không có dòng
+`Phien:`, nên **thiếu dòng đó không phải bằng chứng khoá mồ côi**. Không ghi câu này ra thì chính quy ước
+mới sinh một kiểu đọc sai mới — đúng họ *"lớp canh sinh ra để chặn một lỗi lại mở cửa cho lỗi khác"*.
+
+### 4. Phạm vi thật đã sửa — và một chỗ tôi bỏ khỏi kế hoạch
+
+Sửa: `CLAUDE.md` (+45 dòng, **0 dòng xoá**) · `TASKS.md` luật 3 (câu cũ gạch ngang, giữ chữ) + nối mã phiên
+ở 4 chỗ · `DR-D6D8-01:118`. `tests/lock/test_td0233_cot_bang_md.py` trong Docker: **11 passed** (chú thích
+vào ô bảng không được chứa `|` — đó là lý do chạy nó).
+
+**Bỏ `DR-D1-03:5`** dù có trong bản kiểm kê: kiểm lại thì `TD-0247` đã ✅ ⇒ dòng đó là lịch sử, sửa là vượt
+phạm vi đã chốt. Bản kiểm kê phân loại theo *chữ* ("người giữ"); trạng thái việc mới quyết định nó còn là
+địa chỉ hay không.
+
+**Còn mở, chỉ báo:** `TD-0216` 🔒 từ 12/09, không ai nhận, file `DR-FAI-01` nằm ngoài git từ 13/09 — đúng ca
+(f). Chờ chủ dự án giao lại hoặc huỷ. File ngoài git còn có rủi ro bị một commit không pathspec nuốt.
