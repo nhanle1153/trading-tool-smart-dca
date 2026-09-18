@@ -116,6 +116,9 @@ Stress test dùng **kịch bản giá dựng tay**: không chạm dữ liệu, 0
 > - **Vì sao trước suất đầu:** nếu N gộp Tool A làm cổng D4 bất khả thi thì phải biết trước khi tiêu
 >   suất. Phép đo chỉ đếm danh sách mã, 0 trial. Việc này **không** đòi `d5_complete`.
 > - **Phân vai (chủ dự án chốt cùng ngày):** phiên `-01` giữ D6–D8 + `TD-0261`.
+>   🔴 *Ghi chú 18/09/2026 (`CLAUDE.md` N12 mục 7), không đổi chữ trên:* `-01` = mã phiên `0ea66758`. Tên
+>   phiên đổi sau khởi động lại, nên khi nối lại D6–D8 thì người giữ đọc từ 🔒 + dòng `Phien:` của commit
+>   khoá trong `TASKS.md`; không còn phiên nào nhận thì báo chủ dự án giao lại, không tự nhận.
 
 **Cổng D6:** `d5_complete` · `d6_ung_vien` tồn tại · N của D9 đã ghi kèm kết quả DR-007 · báo cáo
 H5/H2 có artifact `docs/du-lieu-do/` · `MT-30` có kết luận đo được.
