@@ -1,0 +1,6861 @@
+{
+ "nguon": "TD-0306 / DR-LOCKBOX-01 Q3 bước 1 + iv + v + vi — đời sống THẬT của 94 mã rổ T2 (TD-0231 pool_dung_tai_t2.danh_sach): nến 1h futures của kho data.binance.vision, lùi từ thang_cuoi của TD-0230 tới tháng đầu có volume > 0; phân loại bằng tool_d.data.doi_song_ma (dùng lại moc_ngung_giao_dich, DR-D1-03 §5); đối chiếu exchangeInfo làm nguồn độc lập. 0 trial.",
+ "ranh_gioi": [
+  "Chỉ đo 94 mã lọt rổ T2; 770 mã còn lại trong khoang_ton_tai giữ số TD-0230 làm CẬN TRÊN, nhãn nguon_thang_cuoi = can_tren_td0230 — không phải số đo.",
+  "Kho tháng tới hết 08/2026; khoảng từ hết kho tới T3 không nhìn thấy từ kho. Mã sống tới hết kho chỉ được nâng thành song_toi_t3 khi exchangeInfo hôm nay còn TRADING; ngược lại là khong_do_duoc.",
+  "exchangeInfo đọc tại luc_exchange_info. Một mã bị huỷ rồi niêm yết lại giữa [T2, hôm nay] sẽ hiện là mâu thuẫn và làm dừng phép đo — không bị gộp im lặng.",
+  "nghi_merge chỉ là dấu hiệu (ngừng cùng giờ), không phải phán quyết chết-thật/rebrand."
+ ],
+ "git_sha": "eb3f3749ea4d6f2909a1bfe6b82082a01b7175d2",
+ "chay_luc": "2026-09-18T04:18:51+00:00",
+ "luc_exchange_info": "2026-09-18T04:15:26+00:00",
+ "moc": {
+  "t2": "2026-01-29",
+  "t3": "2026-09-06"
+ },
+ "trial": 0,
+ "so_ma_do": 94,
+ "so_file_thang": 102,
+ "mt59_lech_pool_dung_tai_t2": [],
+ "chet_trong_t2_t3": {
+  "FUNUSDT": {
+   "moc_ngung": "2026-04-15T09:00:00+00:00",
+   "nghi_merge_voi": []
+  },
+  "IPUSDT": {
+   "moc_ngung": "2026-06-28T09:00:00+00:00",
+   "nghi_merge_voi": []
+  },
+  "TONUSDT": {
+   "moc_ngung": "2026-06-23T09:00:00+00:00",
+   "nghi_merge_voi": []
+  }
+ },
+ "ky_vong_nen_chet_trong_t2_t3": [
+  3.1,
+  3.4
+ ],
+ "khong_do_duoc": [],
+ "canh_bao": [],
+ "doi_chieu_td0230": {
+  "FUNUSDT": {
+   "thang_cuoi_td0230": "2026-08",
+   "thang_cuoi_that": "2026-04"
+  },
+  "IPUSDT": {
+   "thang_cuoi_td0230": "2026-08",
+   "thang_cuoi_that": "2026-06"
+  },
+  "TONUSDT": {
+   "thang_cuoi_td0230": "2026-08",
+   "thang_cuoi_that": "2026-06"
+  }
+ },
+ "chi_tiet_94_ma": {
+  "1000BONKUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "1000PEPEUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "1000SHIBUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "1INCHUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "AAVEUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "ADAUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "ALGOUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "APTUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "ARBUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "ARKMUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "ARPAUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "ATOMUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "AUCTIONUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "AVAXUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "AXLUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "AXSUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "BCHUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "BERAUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "BNBUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "BULLAUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "CHZUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "CRVUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "DASHUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "DOGEUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "DOTUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "DUSKUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "DYDXUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "EIGENUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "ENAUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "ENJUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "ETCUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "ETHFIUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "FARTCOINUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "FETUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "FILUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "FLOWUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "FUNUSDT": {
+   "trang_thai_kho": "chet_trong_t2_t3",
+   "trang_thai": "chet_trong_t2_t3",
+   "moc_ngung": "2026-04-15T09:00:00+00:00",
+   "dang_giao_dich_hom_nay": false,
+   "so_file": 5
+  },
+  "GALAUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "GUNUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "HBARUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "HYPEUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "ICPUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "INJUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "IPUSDT": {
+   "trang_thai_kho": "chet_trong_t2_t3",
+   "trang_thai": "chet_trong_t2_t3",
+   "moc_ngung": "2026-06-28T09:00:00+00:00",
+   "dang_giao_dich_hom_nay": false,
+   "so_file": 3
+  },
+  "JTOUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "JUPUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "KAIAUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "LDOUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "LINKUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "LITUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "LTCUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "MANAUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "MERLUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "NEARUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "NEWTUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "ONDOUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "OPUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "ORDIUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "PAXGUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "PENDLEUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "PENGUUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "PIPPINUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "PLAYUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "POLUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "PUMPUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "PYTHUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "RENDERUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "RESOLVUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "ROSEUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "SAHARAUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "SANDUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "SEIUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "SOLUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "SPXUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "STRKUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "SUIUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "SYNUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "TAOUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "TIAUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "TONUSDT": {
+   "trang_thai_kho": "chet_trong_t2_t3",
+   "trang_thai": "chet_trong_t2_t3",
+   "moc_ngung": "2026-06-23T09:00:00+00:00",
+   "dang_giao_dich_hom_nay": false,
+   "so_file": 3
+  },
+  "TRUMPUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "TRXUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "UNIUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "VETUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "VIRTUALUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "WIFUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "WLDUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "XLMUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "XMRUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "XRPUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "XVSUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "ZECUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "ZENUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  },
+  "ZROUSDT": {
+   "trang_thai_kho": "song_toi_het_kho",
+   "trang_thai": "song_toi_t3",
+   "moc_ngung": null,
+   "dang_giao_dich_hom_nay": true,
+   "so_file": 1
+  }
+ },
+ "khoang_ton_tai": {
+  "0GUSDT": {
+   "symbol": "0GUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "1000000BOBUSDT": {
+   "symbol": "1000000BOBUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "1000000MOGUSDT": {
+   "symbol": "1000000MOGUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "1000BONKUSDT": {
+   "symbol": "1000BONKUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "1000BTTCUSDT": {
+   "symbol": "1000BTTCUSDT",
+   "thang_dau": "2022-01",
+   "thang_cuoi": "2022-04",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "1000CATUSDT": {
+   "symbol": "1000CATUSDT",
+   "thang_dau": "2024-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 46,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "1000CHEEMSUSDT": {
+   "symbol": "1000CHEEMSUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "1000FLOKIUSDT": {
+   "symbol": "1000FLOKIUSDT",
+   "thang_dau": "2023-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 80,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "1000LUNCUSDT": {
+   "symbol": "1000LUNCUSDT",
+   "thang_dau": "2022-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 96,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "1000PEPEUSDT": {
+   "symbol": "1000PEPEUSDT",
+   "thang_dau": "2023-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 80,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "1000RATSUSDT": {
+   "symbol": "1000RATSUSDT",
+   "thang_dau": "2023-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 66,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "1000SATSUSDT": {
+   "symbol": "1000SATSUSDT",
+   "thang_dau": "2023-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 66,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "1000SHIBUSDT": {
+   "symbol": "1000SHIBUSDT",
+   "thang_dau": "2021-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 128,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "1000WHYUSDT": {
+   "symbol": "1000WHYUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "1000XECUSDT": {
+   "symbol": "1000XECUSDT",
+   "thang_dau": "2021-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 120,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "1000XUSDT": {
+   "symbol": "1000XUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "1INCHUSDT": {
+   "symbol": "1INCHUSDT",
+   "thang_dau": "2020-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 138,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "1MBABYDOGEUSDT": {
+   "symbol": "1MBABYDOGEUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "2ZUSDT": {
+   "symbol": "2ZUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "42USDT": {
+   "symbol": "42USDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "4USDT": {
+   "symbol": "4USDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "A2ZUSDT": {
+   "symbol": "A2ZUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AAOIUSDT": {
+   "symbol": "AAOIUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AAPLUSDT": {
+   "symbol": "AAPLUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AAVEUSDT": {
+   "symbol": "AAVEUSDT",
+   "thang_dau": "2020-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 142,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "ACEUSDT": {
+   "symbol": "ACEUSDT",
+   "thang_dau": "2023-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 66,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ACHUSDT": {
+   "symbol": "ACHUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 86,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ACTUSDT": {
+   "symbol": "ACTUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ACUUSDT": {
+   "symbol": "ACUUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ACXUSDT": {
+   "symbol": "ACXUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ADAUSDT": {
+   "symbol": "ADAUSDT",
+   "thang_dau": "2020-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 160,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "ADBEUSDT": {
+   "symbol": "ADBEUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AERGOUSDT": {
+   "symbol": "AERGOUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-06",
+   "so_khoa": 44,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AEROUSDT": {
+   "symbol": "AEROUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AEVOUSDT": {
+   "symbol": "AEVOUSDT",
+   "thang_dau": "2024-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 60,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AGIXUSDT": {
+   "symbol": "AGIXUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 86,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AGLDUSDT": {
+   "symbol": "AGLDUSDT",
+   "thang_dau": "2023-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 76,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AGTUSDT": {
+   "symbol": "AGTUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AI16ZUSDT": {
+   "symbol": "AI16ZUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AIAUSDT": {
+   "symbol": "AIAUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AIGENSYNUSDT": {
+   "symbol": "AIGENSYNUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AINUSDT": {
+   "symbol": "AINUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AIOTUSDT": {
+   "symbol": "AIOTUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AIOUSDT": {
+   "symbol": "AIOUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AIUSDT": {
+   "symbol": "AIUSDT",
+   "thang_dau": "2024-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 64,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AIXBTUSDT": {
+   "symbol": "AIXBTUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AKEUSDT": {
+   "symbol": "AKEUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AKROUSDT": {
+   "symbol": "AKROUSDT",
+   "thang_dau": "2021-01",
+   "thang_cuoi": "2022-05",
+   "so_khoa": 34,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AKTUSDT": {
+   "symbol": "AKTUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ALABUSDT": {
+   "symbol": "ALABUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ALCHUSDT": {
+   "symbol": "ALCHUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ALGOUSDT": {
+   "symbol": "ALGOUSDT",
+   "thang_dau": "2020-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 150,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "ALICEUSDT": {
+   "symbol": "ALICEUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 132,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ALLOUSDT": {
+   "symbol": "ALLOUSDT",
+   "thang_dau": "2025-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 20,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ALLUSDT": {
+   "symbol": "ALLUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ALPACAUSDT": {
+   "symbol": "ALPACAUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ALPHAUSDT": {
+   "symbol": "ALPHAUSDT",
+   "thang_dau": "2020-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 140,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ALPINEUSDT": {
+   "symbol": "ALPINEUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ALTUSDT": {
+   "symbol": "ALTUSDT",
+   "thang_dau": "2024-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 64,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AMATUSDT": {
+   "symbol": "AMATUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AMBUSDT": {
+   "symbol": "AMBUSDT",
+   "thang_dau": "2023-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 84,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AMDUSDT": {
+   "symbol": "AMDUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AMZNUSDT": {
+   "symbol": "AMZNUSDT",
+   "thang_dau": "2026-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 14,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ANCUSDT": {
+   "symbol": "ANCUSDT",
+   "thang_dau": "2022-03",
+   "thang_cuoi": "2022-05",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ANIMEUSDT": {
+   "symbol": "ANIMEUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ANKRUSDT": {
+   "symbol": "ANKRUSDT",
+   "thang_dau": "2021-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 136,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ANTHROPICUSDT": {
+   "symbol": "ANTHROPICUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ANTUSDT": {
+   "symbol": "ANTUSDT",
+   "thang_dau": "2021-12",
+   "thang_cuoi": "2024-05",
+   "so_khoa": 60,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "APEUSDT": {
+   "symbol": "APEUSDT",
+   "thang_dau": "2022-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 108,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "API3USDT": {
+   "symbol": "API3USDT",
+   "thang_dau": "2022-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 110,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "APPUSDT": {
+   "symbol": "APPUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "APRUSDT": {
+   "symbol": "APRUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "APTUSDT": {
+   "symbol": "APTUSDT",
+   "thang_dau": "2022-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 94,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "ARBUSDT": {
+   "symbol": "ARBUSDT",
+   "thang_dau": "2023-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 84,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "ARCUSDT": {
+   "symbol": "ARCUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ARIAUSDT": {
+   "symbol": "ARIAUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ARKMUSDT": {
+   "symbol": "ARKMUSDT",
+   "thang_dau": "2023-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 76,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "ARKUSDT": {
+   "symbol": "ARKUSDT",
+   "thang_dau": "2023-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 72,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ARMUSDT": {
+   "symbol": "ARMUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ARPAUSDT": {
+   "symbol": "ARPAUSDT",
+   "thang_dau": "2021-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 118,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "ARUSDT": {
+   "symbol": "ARUSDT",
+   "thang_dau": "2021-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 120,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ARXUSDT": {
+   "symbol": "ARXUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ASMLUSDT": {
+   "symbol": "ASMLUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ASRUSDT": {
+   "symbol": "ASRUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ASTERUSDT": {
+   "symbol": "ASTERUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ASTRUSDT": {
+   "symbol": "ASTRUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 86,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ASTSUSDT": {
+   "symbol": "ASTSUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ATAUSDT": {
+   "symbol": "ATAUSDT",
+   "thang_dau": "2021-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 122,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ATHUSDT": {
+   "symbol": "ATHUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ATOMUSDT": {
+   "symbol": "ATOMUSDT",
+   "thang_dau": "2020-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 158,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "ATUSDT": {
+   "symbol": "ATUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AUCTIONUSDT": {
+   "symbol": "AUCTIONUSDT",
+   "thang_dau": "2023-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 66,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "AUDIOUSDT": {
+   "symbol": "AUDIOUSDT",
+   "thang_dau": "2021-08",
+   "thang_cuoi": "2024-05",
+   "so_khoa": 68,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AUSDT": {
+   "symbol": "AUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AVAAIUSDT": {
+   "symbol": "AVAAIUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AVAUSDT": {
+   "symbol": "AVAUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AVAXUSDT": {
+   "symbol": "AVAXUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "AVGOUSDT": {
+   "symbol": "AVGOUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AVNTUSDT": {
+   "symbol": "AVNTUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AWEUSDT": {
+   "symbol": "AWEUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AXLUSDT": {
+   "symbol": "AXLUSDT",
+   "thang_dau": "2024-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 60,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "AXSUSDT": {
+   "symbol": "AXSUSDT",
+   "thang_dau": "2020-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 140,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "AXTIUSDT": {
+   "symbol": "AXTIUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "AZTECUSDT": {
+   "symbol": "AZTECUSDT",
+   "thang_dau": "2026-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 14,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "B2USDT": {
+   "symbol": "B2USDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "B3USDT": {
+   "symbol": "B3USDT",
+   "thang_dau": "2025-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 38,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BABAUSDT": {
+   "symbol": "BABAUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BABYUSDT": {
+   "symbol": "BABYUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BADGERUSDT": {
+   "symbol": "BADGERUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BAKEUSDT": {
+   "symbol": "BAKEUSDT",
+   "thang_dau": "2021-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 128,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BALUSDT": {
+   "symbol": "BALUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BANANAS31USDT": {
+   "symbol": "BANANAS31USDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BANANAUSDT": {
+   "symbol": "BANANAUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BANDUSDT": {
+   "symbol": "BANDUSDT",
+   "thang_dau": "2020-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 148,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BANKUSDT": {
+   "symbol": "BANKUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BANUSDT": {
+   "symbol": "BANUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BARDUSDT": {
+   "symbol": "BARDUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BASEDUSDT": {
+   "symbol": "BASEDUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BASUSDT": {
+   "symbol": "BASUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BATUSDT": {
+   "symbol": "BATUSDT",
+   "thang_dau": "2020-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 158,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BBUSDT": {
+   "symbol": "BBUSDT",
+   "thang_dau": "2024-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 56,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BBXUSDT": {
+   "symbol": "BBXUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BCHUSDT": {
+   "symbol": "BCHUSDT",
+   "thang_dau": "2020-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 160,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "BDXNUSDT": {
+   "symbol": "BDXNUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-03",
+   "so_khoa": 20,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BEAMXUSDT": {
+   "symbol": "BEAMXUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BEATUSDT": {
+   "symbol": "BEATUSDT",
+   "thang_dau": "2025-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 20,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BELUSDT": {
+   "symbol": "BELUSDT",
+   "thang_dau": "2020-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 140,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BERAUSDT": {
+   "symbol": "BERAUSDT",
+   "thang_dau": "2025-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 38,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "BEUSDT": {
+   "symbol": "BEUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BICOUSDT": {
+   "symbol": "BICOUSDT",
+   "thang_dau": "2023-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 72,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BIDUSDT": {
+   "symbol": "BIDUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BIGTIMEUSDT": {
+   "symbol": "BIGTIMEUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BILLUSDT": {
+   "symbol": "BILLUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BIOUSDT": {
+   "symbol": "BIOUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BIRBUSDT": {
+   "symbol": "BIRBUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BITOUSDT": {
+   "symbol": "BITOUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BLESSUSDT": {
+   "symbol": "BLESSUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BLUAIUSDT": {
+   "symbol": "BLUAIUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BLUEBIRDUSDT": {
+   "symbol": "BLUEBIRDUSDT",
+   "thang_dau": "2022-11",
+   "thang_cuoi": "2024-05",
+   "so_khoa": 38,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BLURUSDT": {
+   "symbol": "BLURUSDT",
+   "thang_dau": "2023-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 82,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BLZUSDT": {
+   "symbol": "BLZUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BMNRUSDT": {
+   "symbol": "BMNRUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BMTUSDT": {
+   "symbol": "BMTUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BNBUSDT": {
+   "symbol": "BNBUSDT",
+   "thang_dau": "2020-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 158,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "BNCUSDT": {
+   "symbol": "BNCUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BNTUSDT": {
+   "symbol": "BNTUSDT",
+   "thang_dau": "2023-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 74,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BNXUSDT": {
+   "symbol": "BNXUSDT",
+   "thang_dau": "2022-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 106,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BOBUSDT": {
+   "symbol": "BOBUSDT",
+   "thang_dau": "2025-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 20,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BOMEUSDT": {
+   "symbol": "BOMEUSDT",
+   "thang_dau": "2024-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 60,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BONDUSDT": {
+   "symbol": "BONDUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BOTUSDT": {
+   "symbol": "BOTUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BRETTUSDT": {
+   "symbol": "BRETTUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BREVUSDT": {
+   "symbol": "BREVUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BRKBUSDT": {
+   "symbol": "BRKBUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BROCCOLI714USDT": {
+   "symbol": "BROCCOLI714USDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BROCCOLIF3BUSDT": {
+   "symbol": "BROCCOLIF3BUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BRUSDT": {
+   "symbol": "BRUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BSBUSDT": {
+   "symbol": "BSBUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BSPUSDT": {
+   "symbol": "BSPUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BSVUSDT": {
+   "symbol": "BSVUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BSWUSDT": {
+   "symbol": "BSWUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BTCDOMUSDT": {
+   "symbol": "BTCDOMUSDT",
+   "thang_dau": "2021-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 126,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BTCSTUSDT": {
+   "symbol": "BTCSTUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-06",
+   "so_khoa": 128,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BTCUSDT": {
+   "symbol": "BTCUSDT",
+   "thang_dau": "2020-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 160,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BTRUSDT": {
+   "symbol": "BTRUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BTSUSDT": {
+   "symbol": "BTSUSDT",
+   "thang_dau": "2021-02",
+   "thang_cuoi": "2024-05",
+   "so_khoa": 80,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BTTUSDT": {
+   "symbol": "BTTUSDT",
+   "thang_dau": "2021-04",
+   "thang_cuoi": "2022-01",
+   "so_khoa": 20,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BTWUSDT": {
+   "symbol": "BTWUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BULLAUSDT": {
+   "symbol": "BULLAUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "BUSDT": {
+   "symbol": "BUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BXUSDT": {
+   "symbol": "BXUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BZRXUSDT": {
+   "symbol": "BZRXUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2021-12",
+   "so_khoa": 32,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "BZUSDT": {
+   "symbol": "BZUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "C98USDT": {
+   "symbol": "C98USDT",
+   "thang_dau": "2021-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 122,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CAKEUSDT": {
+   "symbol": "CAKEUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CAPUSDT": {
+   "symbol": "CAPUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CARVUSDT": {
+   "symbol": "CARVUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CATIUSDT": {
+   "symbol": "CATIUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CATUSDT": {
+   "symbol": "CATUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CBRSUSDT": {
+   "symbol": "CBRSUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CCUSDT": {
+   "symbol": "CCUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CELOUSDT": {
+   "symbol": "CELOUSDT",
+   "thang_dau": "2021-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 120,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CELRUSDT": {
+   "symbol": "CELRUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 132,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CETUSUSDT": {
+   "symbol": "CETUSUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CFGUSDT": {
+   "symbol": "CFGUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CFXUSDT": {
+   "symbol": "CFXUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 86,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CGPTUSDT": {
+   "symbol": "CGPTUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CHESSUSDT": {
+   "symbol": "CHESSUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CHILLGUYUSDT": {
+   "symbol": "CHILLGUYUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CHIPUSDT": {
+   "symbol": "CHIPUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CHRUSDT": {
+   "symbol": "CHRUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 132,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CHZUSDT": {
+   "symbol": "CHZUSDT",
+   "thang_dau": "2021-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 136,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "CIENUSDT": {
+   "symbol": "CIENUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CKBUSDT": {
+   "symbol": "CKBUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 86,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CLANKERUSDT": {
+   "symbol": "CLANKERUSDT",
+   "thang_dau": "2025-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 20,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CLOUSDT": {
+   "symbol": "CLOUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CLUSDT": {
+   "symbol": "CLUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "COAIUSDT": {
+   "symbol": "COAIUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "COCOSUSDT": {
+   "symbol": "COCOSUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2024-05",
+   "so_khoa": 32,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "COHRUSDT": {
+   "symbol": "COHRUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "COINUSDT": {
+   "symbol": "COINUSDT",
+   "thang_dau": "2026-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 14,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "COLLECTUSDT": {
+   "symbol": "COLLECTUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "COMBOUSDT": {
+   "symbol": "COMBOUSDT",
+   "thang_dau": "2023-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 78,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "COMMONUSDT": {
+   "symbol": "COMMONUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "COMPUSDT": {
+   "symbol": "COMPUSDT",
+   "thang_dau": "2020-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 150,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "COOKIEUSDT": {
+   "symbol": "COOKIEUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "COPPERUSDT": {
+   "symbol": "COPPERUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "COSTUSDT": {
+   "symbol": "COSTUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "COSUSDT": {
+   "symbol": "COSUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "COTIUSDT": {
+   "symbol": "COTIUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 132,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "COWUSDT": {
+   "symbol": "COWUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CRCLUSDT": {
+   "symbol": "CRCLUSDT",
+   "thang_dau": "2026-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 14,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CRDOUSDT": {
+   "symbol": "CRDOUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CRMUSDT": {
+   "symbol": "CRMUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CROSSUSDT": {
+   "symbol": "CROSSUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CRVUSDT": {
+   "symbol": "CRVUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "CRWDUSDT": {
+   "symbol": "CRWDUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CRWVUSDT": {
+   "symbol": "CRWVUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CSCOUSDT": {
+   "symbol": "CSCOUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CSOPSAMSUNG2LUSDT": {
+   "symbol": "CSOPSAMSUNG2LUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CSOPSKHYNIX2LUSDT": {
+   "symbol": "CSOPSKHYNIX2LUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CTKUSDT": {
+   "symbol": "CTKUSDT",
+   "thang_dau": "2020-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 140,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CTRUSDT": {
+   "symbol": "CTRUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CTSIUSDT": {
+   "symbol": "CTSIUSDT",
+   "thang_dau": "2021-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 118,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CUDISUSDT": {
+   "symbol": "CUDISUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CUSDT": {
+   "symbol": "CUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CVCUSDT": {
+   "symbol": "CVCUSDT",
+   "thang_dau": "2020-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 140,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CVXUSDT": {
+   "symbol": "CVXUSDT",
+   "thang_dau": "2022-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 96,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CXMTUSDT": {
+   "symbol": "CXMTUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CYBERUSDT": {
+   "symbol": "CYBERUSDT",
+   "thang_dau": "2023-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 74,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "CYSUSDT": {
+   "symbol": "CYSUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DAMUSDT": {
+   "symbol": "DAMUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DARUSDT": {
+   "symbol": "DARUSDT",
+   "thang_dau": "2022-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 106,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DASHUSDT": {
+   "symbol": "DASHUSDT",
+   "thang_dau": "2020-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 158,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "DATAIPUSDT": {
+   "symbol": "DATAIPUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DEEPUSDT": {
+   "symbol": "DEEPUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DEFIUSDT": {
+   "symbol": "DEFIUSDT",
+   "thang_dau": "2020-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 146,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DEGENUSDT": {
+   "symbol": "DEGENUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DEGOUSDT": {
+   "symbol": "DEGOUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DELLUSDT": {
+   "symbol": "DELLUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DENTUSDT": {
+   "symbol": "DENTUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 132,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DEXEUSDT": {
+   "symbol": "DEXEUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DFUSDT": {
+   "symbol": "DFUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DGBUSDT": {
+   "symbol": "DGBUSDT",
+   "thang_dau": "2021-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 130,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DIAUSDT": {
+   "symbol": "DIAUSDT",
+   "thang_dau": "2024-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 46,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DISUSDT": {
+   "symbol": "DISUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DJTUSDT": {
+   "symbol": "DJTUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DKNGUSDT": {
+   "symbol": "DKNGUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DMCUSDT": {
+   "symbol": "DMCUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DODOUSDT": {
+   "symbol": "DODOUSDT",
+   "thang_dau": "2021-02",
+   "thang_cuoi": "2022-05",
+   "so_khoa": 32,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DODOXUSDT": {
+   "symbol": "DODOXUSDT",
+   "thang_dau": "2023-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 74,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DOGEUSDT": {
+   "symbol": "DOGEUSDT",
+   "thang_dau": "2020-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 148,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "DOGSUSDT": {
+   "symbol": "DOGSUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DOLOUSDT": {
+   "symbol": "DOLOUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DOODUSDT": {
+   "symbol": "DOODUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DOSUSDT": {
+   "symbol": "DOSUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DOTECOUSDT": {
+   "symbol": "DOTECOUSDT",
+   "thang_dau": "2021-01",
+   "thang_cuoi": "2021-02",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DOTUSDT": {
+   "symbol": "DOTUSDT",
+   "thang_dau": "2020-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 146,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "DRAMUSDT": {
+   "symbol": "DRAMUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DRIFTUSDT": {
+   "symbol": "DRIFTUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DUSDT": {
+   "symbol": "DUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "DUSKUSDT": {
+   "symbol": "DUSKUSDT",
+   "thang_dau": "2022-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 112,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "DYDXUSDT": {
+   "symbol": "DYDXUSDT",
+   "thang_dau": "2021-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 120,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "DYMUSDT": {
+   "symbol": "DYMUSDT",
+   "thang_dau": "2024-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 62,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "EBAYUSDT": {
+   "symbol": "EBAYUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "EDENUSDT": {
+   "symbol": "EDENUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "EDGEUSDT": {
+   "symbol": "EDGEUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "EDUUSDT": {
+   "symbol": "EDUUSDT",
+   "thang_dau": "2023-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 82,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "EGLDUSDT": {
+   "symbol": "EGLDUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "EIGENUSDT": {
+   "symbol": "EIGENUSDT",
+   "thang_dau": "2024-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 46,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "ELSAUSDT": {
+   "symbol": "ELSAUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ENAUSDT": {
+   "symbol": "ENAUSDT",
+   "thang_dau": "2024-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 58,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "ENJUSDT": {
+   "symbol": "ENJUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "ENSOUSDT": {
+   "symbol": "ENSOUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ENSUSDT": {
+   "symbol": "ENSUSDT",
+   "thang_dau": "2021-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 116,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "EOSUSDT": {
+   "symbol": "EOSUSDT",
+   "thang_dau": "2020-01",
+   "thang_cuoi": "2025-05",
+   "so_khoa": 130,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "EPICUSDT": {
+   "symbol": "EPICUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "EPTUSDT": {
+   "symbol": "EPTUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ERAUSDT": {
+   "symbol": "ERAUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ESPORTSUSDT": {
+   "symbol": "ESPORTSUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ESPUSDT": {
+   "symbol": "ESPUSDT",
+   "thang_dau": "2026-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 14,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ETCUSDT": {
+   "symbol": "ETCUSDT",
+   "thang_dau": "2020-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 160,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "ETHFIUSDT": {
+   "symbol": "ETHFIUSDT",
+   "thang_dau": "2024-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 60,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "ETHUSDT": {
+   "symbol": "ETHUSDT",
+   "thang_dau": "2020-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 160,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ETHWUSDT": {
+   "symbol": "ETHWUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "EULUSDT": {
+   "symbol": "EULUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "EVAAUSDT": {
+   "symbol": "EVAAUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "EWJUSDT": {
+   "symbol": "EWJUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "EWTUSDT": {
+   "symbol": "EWTUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "EWYUSDT": {
+   "symbol": "EWYUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "EWZUSDT": {
+   "symbol": "EWZUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "FARTCOINUSDT": {
+   "symbol": "FARTCOINUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "FETUSDT": {
+   "symbol": "FETUSDT",
+   "thang_dau": "2023-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 88,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "FFUSDT": {
+   "symbol": "FFUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "FHEUSDT": {
+   "symbol": "FHEUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "FIDAUSDT": {
+   "symbol": "FIDAUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "FIGHTUSDT": {
+   "symbol": "FIGHTUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "FILUSDT": {
+   "symbol": "FILUSDT",
+   "thang_dau": "2020-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 142,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "FIOUSDT": {
+   "symbol": "FIOUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "FISUSDT": {
+   "symbol": "FISUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "FLEXUSDT": {
+   "symbol": "FLEXUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "FLMUSDT": {
+   "symbol": "FLMUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "FLNCUSDT": {
+   "symbol": "FLNCUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "FLOCKUSDT": {
+   "symbol": "FLOCKUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "FLOWUSDT": {
+   "symbol": "FLOWUSDT",
+   "thang_dau": "2022-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 110,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "FLUIDUSDT": {
+   "symbol": "FLUIDUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "FLUXUSDT": {
+   "symbol": "FLUXUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "FOGOUSDT": {
+   "symbol": "FOGOUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "FOLKSUSDT": {
+   "symbol": "FOLKSUSDT",
+   "thang_dau": "2025-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 20,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "FOOTBALLUSDT": {
+   "symbol": "FOOTBALLUSDT",
+   "thang_dau": "2022-09",
+   "thang_cuoi": "2024-05",
+   "so_khoa": 42,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "FORMUSDT": {
+   "symbol": "FORMUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "FORTHUSDT": {
+   "symbol": "FORTHUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "FRAXUSDT": {
+   "symbol": "FRAXUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "FRONTUSDT": {
+   "symbol": "FRONTUSDT",
+   "thang_dau": "2023-09",
+   "thang_cuoi": "2024-09",
+   "so_khoa": 26,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "FTMUSDT": {
+   "symbol": "FTMUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "FTTUSDT": {
+   "symbol": "FTTUSDT",
+   "thang_dau": "2022-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 106,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "FUNUSDT": {
+   "symbol": "FUNUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-04",
+   "so_khoa": 36,
+   "trang_thai": "chet_trong_t2_t3",
+   "moc_ngung": "2026-04-15T09:00:00+00:00",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "FUSDT": {
+   "symbol": "FUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "FWDIUSDT": {
+   "symbol": "FWDIUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "FXSUSDT": {
+   "symbol": "FXSUSDT",
+   "thang_dau": "2023-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 88,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "GALAUSDT": {
+   "symbol": "GALAUSDT",
+   "thang_dau": "2021-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 120,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "GALUSDT": {
+   "symbol": "GALUSDT",
+   "thang_dau": "2022-05",
+   "thang_cuoi": "2024-07",
+   "so_khoa": 54,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "GASUSDT": {
+   "symbol": "GASUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "GDXUSDT": {
+   "symbol": "GDXUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "GENIUSUSDT": {
+   "symbol": "GENIUSUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "GEVUSDT": {
+   "symbol": "GEVUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "GHSTUSDT": {
+   "symbol": "GHSTUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "GIGADEVUSDT": {
+   "symbol": "GIGADEVUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "GIGGLEUSDT": {
+   "symbol": "GIGGLEUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "GLMRUSDT": {
+   "symbol": "GLMRUSDT",
+   "thang_dau": "2023-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 72,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "GLMUSDT": {
+   "symbol": "GLMUSDT",
+   "thang_dau": "2024-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 62,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "GLWUSDT": {
+   "symbol": "GLWUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "GMEUSDT": {
+   "symbol": "GMEUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "GMTUSDT": {
+   "symbol": "GMTUSDT",
+   "thang_dau": "2022-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 108,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "GMXUSDT": {
+   "symbol": "GMXUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 86,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "GOATUSDT": {
+   "symbol": "GOATUSDT",
+   "thang_dau": "2024-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 46,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "GOOGLUSDT": {
+   "symbol": "GOOGLUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "GPSUSDT": {
+   "symbol": "GPSUSDT",
+   "thang_dau": "2025-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 38,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "GRAMUSDT": {
+   "symbol": "GRAMUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "GRASSUSDT": {
+   "symbol": "GRASSUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "GRIFFAINUSDT": {
+   "symbol": "GRIFFAINUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "GRTUSDT": {
+   "symbol": "GRTUSDT",
+   "thang_dau": "2020-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 138,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "GRVTUSDT": {
+   "symbol": "GRVTUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "GSUSDT": {
+   "symbol": "GSUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "GTCUSDT": {
+   "symbol": "GTCUSDT",
+   "thang_dau": "2021-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 126,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "GUAUSDT": {
+   "symbol": "GUAUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "GUNUSDT": {
+   "symbol": "GUNUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "GUSDT": {
+   "symbol": "GUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "GWEIUSDT": {
+   "symbol": "GWEIUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "HAEDALUSDT": {
+   "symbol": "HAEDALUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "HANAUSDT": {
+   "symbol": "HANAUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "HANMIUSDT": {
+   "symbol": "HANMIUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "HBARUSDT": {
+   "symbol": "HBARUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 132,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "HDUSDT": {
+   "symbol": "HDUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "HEIUSDT": {
+   "symbol": "HEIUSDT",
+   "thang_dau": "2025-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 38,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "HEMIUSDT": {
+   "symbol": "HEMIUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "HFTUSDT": {
+   "symbol": "HFTUSDT",
+   "thang_dau": "2023-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 82,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "HIFIUSDT": {
+   "symbol": "HIFIUSDT",
+   "thang_dau": "2023-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 72,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "HIGHUSDT": {
+   "symbol": "HIGHUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 86,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "HIMSUSDT": {
+   "symbol": "HIMSUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "HIPPOUSDT": {
+   "symbol": "HIPPOUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "HIVEUSDT": {
+   "symbol": "HIVEUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "HK0700USDT": {
+   "symbol": "HK0700USDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "HK1810USDT": {
+   "symbol": "HK1810USDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "HMSTRUSDT": {
+   "symbol": "HMSTRUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "HNTUSDT": {
+   "symbol": "HNTUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2024-05",
+   "so_khoa": 90,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "HOLOUSDT": {
+   "symbol": "HOLOUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "HOMEUSDT": {
+   "symbol": "HOMEUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "HOODUSDT": {
+   "symbol": "HOODUSDT",
+   "thang_dau": "2026-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 14,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "HOOKUSDT": {
+   "symbol": "HOOKUSDT",
+   "thang_dau": "2023-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 88,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "HOTUSDT": {
+   "symbol": "HOTUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 132,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "HPEUSDT": {
+   "symbol": "HPEUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "HUMAUSDT": {
+   "symbol": "HUMAUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "HUSDT": {
+   "symbol": "HUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "HYPERUSDT": {
+   "symbol": "HYPERUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "HYPEUSDT": {
+   "symbol": "HYPEUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "HYUNDAIUSDT": {
+   "symbol": "HYUNDAIUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "IBMUSDT": {
+   "symbol": "IBMUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ICNTUSDT": {
+   "symbol": "ICNTUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ICPUSDT": {
+   "symbol": "ICPUSDT",
+   "thang_dau": "2021-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 128,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "ICXUSDT": {
+   "symbol": "ICXUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "IDEXUSDT": {
+   "symbol": "IDEXUSDT",
+   "thang_dau": "2023-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 80,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "IDOLUSDT": {
+   "symbol": "IDOLUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "IDUSDT": {
+   "symbol": "IDUSDT",
+   "thang_dau": "2023-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 84,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ILVUSDT": {
+   "symbol": "ILVUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "IMXUSDT": {
+   "symbol": "IMXUSDT",
+   "thang_dau": "2022-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 110,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "INITUSDT": {
+   "symbol": "INITUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "INJUSDT": {
+   "symbol": "INJUSDT",
+   "thang_dau": "2022-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 98,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "INTCUSDT": {
+   "symbol": "INTCUSDT",
+   "thang_dau": "2026-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 14,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "INTWUSDT": {
+   "symbol": "INTWUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "INUSDT": {
+   "symbol": "INUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "INXUSDT": {
+   "symbol": "INXUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "IONQUSDT": {
+   "symbol": "IONQUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "IOSTUSDT": {
+   "symbol": "IOSTUSDT",
+   "thang_dau": "2020-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 158,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "IOTAUSDT": {
+   "symbol": "IOTAUSDT",
+   "thang_dau": "2020-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 158,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "IOTXUSDT": {
+   "symbol": "IOTXUSDT",
+   "thang_dau": "2021-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 122,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "IOUSDT": {
+   "symbol": "IOUSDT",
+   "thang_dau": "2024-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 54,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "IPUSDT": {
+   "symbol": "IPUSDT",
+   "thang_dau": "2025-02",
+   "thang_cuoi": "2026-06",
+   "so_khoa": 38,
+   "trang_thai": "chet_trong_t2_t3",
+   "moc_ngung": "2026-06-28T09:00:00+00:00",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "IRENUSDT": {
+   "symbol": "IRENUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "IRUSDT": {
+   "symbol": "IRUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "IRYSUSDT": {
+   "symbol": "IRYSUSDT",
+   "thang_dau": "2025-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 20,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "IWMUSDT": {
+   "symbol": "IWMUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "JASMYUSDT": {
+   "symbol": "JASMYUSDT",
+   "thang_dau": "2022-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 106,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "JCTUSDT": {
+   "symbol": "JCTUSDT",
+   "thang_dau": "2025-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 20,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "JELLYJELLYUSDT": {
+   "symbol": "JELLYJELLYUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "JOEUSDT": {
+   "symbol": "JOEUSDT",
+   "thang_dau": "2023-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 84,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "JPMUSDT": {
+   "symbol": "JPMUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "JSTUSDT": {
+   "symbol": "JSTUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "JTOUSDT": {
+   "symbol": "JTOUSDT",
+   "thang_dau": "2023-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 66,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "JUPUSDT": {
+   "symbol": "JUPUSDT",
+   "thang_dau": "2024-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 64,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "KAIAUSDT": {
+   "symbol": "KAIAUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "KAITOUSDT": {
+   "symbol": "KAITOUSDT",
+   "thang_dau": "2025-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 38,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "KASUSDT": {
+   "symbol": "KASUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "KATUSDT": {
+   "symbol": "KATUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "KAVAUSDT": {
+   "symbol": "KAVAUSDT",
+   "thang_dau": "2020-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 148,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "KDAUSDT": {
+   "symbol": "KDAUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "KEEPUSDT": {
+   "symbol": "KEEPUSDT",
+   "thang_dau": "2021-06",
+   "thang_cuoi": "2022-02",
+   "so_khoa": 18,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "KERNELUSDT": {
+   "symbol": "KERNELUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "KEYUSDT": {
+   "symbol": "KEYUSDT",
+   "thang_dau": "2023-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 80,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "KGENUSDT": {
+   "symbol": "KGENUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "KITEUSDT": {
+   "symbol": "KITEUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "KLACUSDT": {
+   "symbol": "KLACUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "KLAYUSDT": {
+   "symbol": "KLAYUSDT",
+   "thang_dau": "2021-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 118,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "KMNOUSDT": {
+   "symbol": "KMNOUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "KNCUSDT": {
+   "symbol": "KNCUSDT",
+   "thang_dau": "2020-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 150,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "KODEX200USDT": {
+   "symbol": "KODEX200USDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "KOMAUSDT": {
+   "symbol": "KOMAUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "KORUUSDT": {
+   "symbol": "KORUUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "KOUSDT": {
+   "symbol": "KOUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "KSMUSDT": {
+   "symbol": "KSMUSDT",
+   "thang_dau": "2020-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 142,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "KSTRUSDT": {
+   "symbol": "KSTRUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "KUAISHOUUSDT": {
+   "symbol": "KUAISHOUUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "LABUSDT": {
+   "symbol": "LABUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "LAUSDT": {
+   "symbol": "LAUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "LAYERUSDT": {
+   "symbol": "LAYERUSDT",
+   "thang_dau": "2025-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 38,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "LDOUSDT": {
+   "symbol": "LDOUSDT",
+   "thang_dau": "2022-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 96,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "LENDUSDT": {
+   "symbol": "LENDUSDT",
+   "thang_dau": "2020-07",
+   "thang_cuoi": "2020-11",
+   "so_khoa": 10,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "LEVERUSDT": {
+   "symbol": "LEVERUSDT",
+   "thang_dau": "2023-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 84,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "LGELECTRONICSUSDT": {
+   "symbol": "LGELECTRONICSUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "LIGHTUSDT": {
+   "symbol": "LIGHTUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "LINAUSDT": {
+   "symbol": "LINAUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 132,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "LINEAUSDT": {
+   "symbol": "LINEAUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "LINKUSDT": {
+   "symbol": "LINKUSDT",
+   "thang_dau": "2020-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 160,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "LISTAUSDT": {
+   "symbol": "LISTAUSDT",
+   "thang_dau": "2024-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 54,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "LITEUSDT": {
+   "symbol": "LITEUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "LITUSDT": {
+   "symbol": "LITUSDT",
+   "thang_dau": "2021-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 134,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "LLYUSDT": {
+   "symbol": "LLYUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "LOKAUSDT": {
+   "symbol": "LOKAUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "LOOMUSDT": {
+   "symbol": "LOOMUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "LPTUSDT": {
+   "symbol": "LPTUSDT",
+   "thang_dau": "2021-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 116,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "LQTYUSDT": {
+   "symbol": "LQTYUSDT",
+   "thang_dau": "2023-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 84,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "LRCUSDT": {
+   "symbol": "LRCUSDT",
+   "thang_dau": "2020-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 142,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "LRCXUSDT": {
+   "symbol": "LRCXUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "LSKUSDT": {
+   "symbol": "LSKUSDT",
+   "thang_dau": "2024-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 64,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "LTCUSDT": {
+   "symbol": "LTCUSDT",
+   "thang_dau": "2020-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 160,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "LUMIAUSDT": {
+   "symbol": "LUMIAUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "LUNA2USDT": {
+   "symbol": "LUNA2USDT",
+   "thang_dau": "2022-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 96,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "LUNAUSDT": {
+   "symbol": "LUNAUSDT",
+   "thang_dau": "2021-01",
+   "thang_cuoi": "2022-05",
+   "so_khoa": 34,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "LYNUSDT": {
+   "symbol": "LYNUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "LYTEUSDT": {
+   "symbol": "LYTEUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MAGICUSDT": {
+   "symbol": "MAGICUSDT",
+   "thang_dau": "2023-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 88,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MAGMAUSDT": {
+   "symbol": "MAGMAUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MANAUSDT": {
+   "symbol": "MANAUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 132,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "MANTAUSDT": {
+   "symbol": "MANTAUSDT",
+   "thang_dau": "2024-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 64,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MANTRAUSDT": {
+   "symbol": "MANTRAUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MARAUSDT": {
+   "symbol": "MARAUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MASKUSDT": {
+   "symbol": "MASKUSDT",
+   "thang_dau": "2021-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 122,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MATICUSDT": {
+   "symbol": "MATICUSDT",
+   "thang_dau": "2020-10",
+   "thang_cuoi": "2024-09",
+   "so_khoa": 96,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MAVIAUSDT": {
+   "symbol": "MAVIAUSDT",
+   "thang_dau": "2024-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 62,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MAVUSDT": {
+   "symbol": "MAVUSDT",
+   "thang_dau": "2023-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 78,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MBLUSDT": {
+   "symbol": "MBLUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2024-05",
+   "so_khoa": 14,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MBOXUSDT": {
+   "symbol": "MBOXUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MDTUSDT": {
+   "symbol": "MDTUSDT",
+   "thang_dau": "2023-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 78,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MEGAUSDT": {
+   "symbol": "MEGAUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MEITUANUSDT": {
+   "symbol": "MEITUANUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MELANIAUSDT": {
+   "symbol": "MELANIAUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MEMEFIUSDT": {
+   "symbol": "MEMEFIUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MEMEUSDT": {
+   "symbol": "MEMEUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MERLUSDT": {
+   "symbol": "MERLUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "METAUSDT": {
+   "symbol": "METAUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "METISUSDT": {
+   "symbol": "METISUSDT",
+   "thang_dau": "2024-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 60,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "METUSDT": {
+   "symbol": "METUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MEUSDT": {
+   "symbol": "MEUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MEWUSDT": {
+   "symbol": "MEWUSDT",
+   "thang_dau": "2024-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 54,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MILKUSDT": {
+   "symbol": "MILKUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MINAUSDT": {
+   "symbol": "MINAUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 86,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MINIMAXUSDT": {
+   "symbol": "MINIMAXUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MIRAUSDT": {
+   "symbol": "MIRAUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MITOUSDT": {
+   "symbol": "MITOUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MKRUSDT": {
+   "symbol": "MKRUSDT",
+   "thang_dau": "2020-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 146,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MLNUSDT": {
+   "symbol": "MLNUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MMTUSDT": {
+   "symbol": "MMTUSDT",
+   "thang_dau": "2025-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 20,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MOCAUSDT": {
+   "symbol": "MOCAUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MONUSDT": {
+   "symbol": "MONUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MOODENGUSDT": {
+   "symbol": "MOODENGUSDT",
+   "thang_dau": "2024-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 46,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MORPHOUSDT": {
+   "symbol": "MORPHOUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MOVEUSDT": {
+   "symbol": "MOVEUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MOVRUSDT": {
+   "symbol": "MOVRUSDT",
+   "thang_dau": "2023-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 66,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MRKUSDT": {
+   "symbol": "MRKUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MRNAUSDT": {
+   "symbol": "MRNAUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MRVLUSDT": {
+   "symbol": "MRVLUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MSFTUSDT": {
+   "symbol": "MSFTUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MSTRUSDT": {
+   "symbol": "MSTRUSDT",
+   "thang_dau": "2026-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 14,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MTLUSDT": {
+   "symbol": "MTLUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 132,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MUBARAKUSDT": {
+   "symbol": "MUBARAKUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MUSDT": {
+   "symbol": "MUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MUUSDT": {
+   "symbol": "MUUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MUUUSDT": {
+   "symbol": "MUUUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MVLLUSDT": {
+   "symbol": "MVLLUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MYROUSDT": {
+   "symbol": "MYROUSDT",
+   "thang_dau": "2024-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 60,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "MYXUSDT": {
+   "symbol": "MYXUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "NAORISUSDT": {
+   "symbol": "NAORISUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "NATGASUSDT": {
+   "symbol": "NATGASUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "NAVERUSDT": {
+   "symbol": "NAVERUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "NBISUSDT": {
+   "symbol": "NBISUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "NEARUSDT": {
+   "symbol": "NEARUSDT",
+   "thang_dau": "2020-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 142,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "NEIROETHUSDT": {
+   "symbol": "NEIROETHUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "NEIROUSDT": {
+   "symbol": "NEIROUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "NEOUSDT": {
+   "symbol": "NEOUSDT",
+   "thang_dau": "2020-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 158,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "NETUSDT": {
+   "symbol": "NETUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "NEWTUSDT": {
+   "symbol": "NEWTUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "NFLXUSDT": {
+   "symbol": "NFLXUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "NFPUSDT": {
+   "symbol": "NFPUSDT",
+   "thang_dau": "2023-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 66,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "NIGHTUSDT": {
+   "symbol": "NIGHTUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "NILUSDT": {
+   "symbol": "NILUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "NKNUSDT": {
+   "symbol": "NKNUSDT",
+   "thang_dau": "2021-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 130,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "NMRUSDT": {
+   "symbol": "NMRUSDT",
+   "thang_dau": "2023-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 78,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "NOKUSDT": {
+   "symbol": "NOKUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "NOMUSDT": {
+   "symbol": "NOMUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "NOTUSDT": {
+   "symbol": "NOTUSDT",
+   "thang_dau": "2024-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 56,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "NOWUSDT": {
+   "symbol": "NOWUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "NTRNUSDT": {
+   "symbol": "NTRNUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "NULSUSDT": {
+   "symbol": "NULSUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "NUUSDT": {
+   "symbol": "NUUSDT",
+   "thang_dau": "2021-10",
+   "thang_cuoi": "2022-02",
+   "so_khoa": 10,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "NVDAUSDT": {
+   "symbol": "NVDAUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "NVOUSDT": {
+   "symbol": "NVOUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "NXPCUSDT": {
+   "symbol": "NXPCUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "OBOLUSDT": {
+   "symbol": "OBOLUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "OCEANUSDT": {
+   "symbol": "OCEANUSDT",
+   "thang_dau": "2020-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 140,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "OGNUSDT": {
+   "symbol": "OGNUSDT",
+   "thang_dau": "2021-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 130,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "OGUSDT": {
+   "symbol": "OGUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "OLUSDT": {
+   "symbol": "OLUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "OMGUSDT": {
+   "symbol": "OMGUSDT",
+   "thang_dau": "2020-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 148,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "OMNIUSDT": {
+   "symbol": "OMNIUSDT",
+   "thang_dau": "2024-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 58,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "OMUSDT": {
+   "symbol": "OMUSDT",
+   "thang_dau": "2024-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 62,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ONDOUSDT": {
+   "symbol": "ONDOUSDT",
+   "thang_dau": "2024-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 64,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "ONDSUSDT": {
+   "symbol": "ONDSUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ONEUSDT": {
+   "symbol": "ONEUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 132,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ONGUSDT": {
+   "symbol": "ONGUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ONTUSDT": {
+   "symbol": "ONTUSDT",
+   "thang_dau": "2020-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 158,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ONUSDT": {
+   "symbol": "ONUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "OPENAIUSDT": {
+   "symbol": "OPENAIUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "OPENUSDT": {
+   "symbol": "OPENUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "OPGUSDT": {
+   "symbol": "OPGUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "OPNUSDT": {
+   "symbol": "OPNUSDT",
+   "thang_dau": "2026-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 14,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "OPUSDT": {
+   "symbol": "OPUSDT",
+   "thang_dau": "2022-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 102,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "ORBSUSDT": {
+   "symbol": "ORBSUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ORCAUSDT": {
+   "symbol": "ORCAUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ORCLUSDT": {
+   "symbol": "ORCLUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ORDERUSDT": {
+   "symbol": "ORDERUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ORDIUSDT": {
+   "symbol": "ORDIUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "OUSDT": {
+   "symbol": "OUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "OXTUSDT": {
+   "symbol": "OXTUSDT",
+   "thang_dau": "2023-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 74,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PANWUSDT": {
+   "symbol": "PANWUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PARTIUSDT": {
+   "symbol": "PARTIUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PAXGUSDT": {
+   "symbol": "PAXGUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "PAYPUSDT": {
+   "symbol": "PAYPUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PDDUSDT": {
+   "symbol": "PDDUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PENDLEUSDT": {
+   "symbol": "PENDLEUSDT",
+   "thang_dau": "2023-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 76,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "PENGUSDT": {
+   "symbol": "PENGUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PENGUUSDT": {
+   "symbol": "PENGUUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "PEOPLEUSDT": {
+   "symbol": "PEOPLEUSDT",
+   "thang_dau": "2021-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 114,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PERPUSDT": {
+   "symbol": "PERPUSDT",
+   "thang_dau": "2023-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 84,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PHAROSUSDT": {
+   "symbol": "PHAROSUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PHAUSDT": {
+   "symbol": "PHAUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PHBUSDT": {
+   "symbol": "PHBUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 86,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PIEVERSEUSDT": {
+   "symbol": "PIEVERSEUSDT",
+   "thang_dau": "2025-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 20,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PIPPINUSDT": {
+   "symbol": "PIPPINUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "PIXELUSDT": {
+   "symbol": "PIXELUSDT",
+   "thang_dau": "2024-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 62,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PLAYUSDT": {
+   "symbol": "PLAYUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "PLTRUSDT": {
+   "symbol": "PLTRUSDT",
+   "thang_dau": "2026-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 14,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PLUMEUSDT": {
+   "symbol": "PLUMEUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PNUTUSDT": {
+   "symbol": "PNUTUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "POLUSDT": {
+   "symbol": "POLUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "POLYXUSDT": {
+   "symbol": "POLYXUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PONKEUSDT": {
+   "symbol": "PONKEUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "POPCATUSDT": {
+   "symbol": "POPCATUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "POPMARTUSDT": {
+   "symbol": "POPMARTUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PORT3USDT": {
+   "symbol": "PORT3USDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PORTALUSDT": {
+   "symbol": "PORTALUSDT",
+   "thang_dau": "2024-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 62,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "POWERUSDT": {
+   "symbol": "POWERUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "POWRUSDT": {
+   "symbol": "POWRUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PRLUSDT": {
+   "symbol": "PRLUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PROMPTUSDT": {
+   "symbol": "PROMPTUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PROMUSDT": {
+   "symbol": "PROMUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PROVEUSDT": {
+   "symbol": "PROVEUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PTBUSDT": {
+   "symbol": "PTBUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PUFFERUSDT": {
+   "symbol": "PUFFERUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PUMPBTCUSDT": {
+   "symbol": "PUMPBTCUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PUMPUSDT": {
+   "symbol": "PUMPUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "PUNDIXUSDT": {
+   "symbol": "PUNDIXUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PYPLUSDT": {
+   "symbol": "PYPLUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "PYTHUSDT": {
+   "symbol": "PYTHUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "QCOMUSDT": {
+   "symbol": "QCOMUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "QNTUSDT": {
+   "symbol": "QNTUSDT",
+   "thang_dau": "2022-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 94,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "QNTXUSDT": {
+   "symbol": "QNTXUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "QQQUSDT": {
+   "symbol": "QQQUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "QTUMUSDT": {
+   "symbol": "QTUMUSDT",
+   "thang_dau": "2020-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 158,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "QUICKUSDT": {
+   "symbol": "QUICKUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "QUSDT": {
+   "symbol": "QUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "RADUSDT": {
+   "symbol": "RADUSDT",
+   "thang_dau": "2023-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 80,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "RAMUSDT": {
+   "symbol": "RAMUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "RAREUSDT": {
+   "symbol": "RAREUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "RAVEUSDT": {
+   "symbol": "RAVEUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "RAYSOLUSDT": {
+   "symbol": "RAYSOLUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "RAYUSDT": {
+   "symbol": "RAYUSDT",
+   "thang_dau": "2021-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 122,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "RDDTUSDT": {
+   "symbol": "RDDTUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "RDNTUSDT": {
+   "symbol": "RDNTUSDT",
+   "thang_dau": "2023-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 82,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "RECALLUSDT": {
+   "symbol": "RECALLUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "REDUSDT": {
+   "symbol": "REDUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "REEFUSDT": {
+   "symbol": "REEFUSDT",
+   "thang_dau": "2021-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 134,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "REIUSDT": {
+   "symbol": "REIUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "RENDERUSDT": {
+   "symbol": "RENDERUSDT",
+   "thang_dau": "2024-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 52,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "RENUSDT": {
+   "symbol": "RENUSDT",
+   "thang_dau": "2020-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 142,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "RESOLVUSDT": {
+   "symbol": "RESOLVUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "REUSDT": {
+   "symbol": "REUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "REZUSDT": {
+   "symbol": "REZUSDT",
+   "thang_dau": "2024-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 58,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "RIFUSDT": {
+   "symbol": "RIFUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "RIVERUSDT": {
+   "symbol": "RIVERUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "RIVNUSDT": {
+   "symbol": "RIVNUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "RKLBUSDT": {
+   "symbol": "RKLBUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "RLCUSDT": {
+   "symbol": "RLCUSDT",
+   "thang_dau": "2020-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 148,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "RLSUSDT": {
+   "symbol": "RLSUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "RNDRUSDT": {
+   "symbol": "RNDRUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2024-07",
+   "so_khoa": 36,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ROBOUSDT": {
+   "symbol": "ROBOUSDT",
+   "thang_dau": "2026-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 14,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "RONINUSDT": {
+   "symbol": "RONINUSDT",
+   "thang_dau": "2024-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 62,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ROSEUSDT": {
+   "symbol": "ROSEUSDT",
+   "thang_dau": "2021-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 114,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "RPLUSDT": {
+   "symbol": "RPLUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "RSRUSDT": {
+   "symbol": "RSRUSDT",
+   "thang_dau": "2020-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 142,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "RUNEUSDT": {
+   "symbol": "RUNEUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "RVNUSDT": {
+   "symbol": "RVNUSDT",
+   "thang_dau": "2021-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 134,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "RVVUSDT": {
+   "symbol": "RVVUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SAFEUSDT": {
+   "symbol": "SAFEUSDT",
+   "thang_dau": "2024-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 46,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SAGAUSDT": {
+   "symbol": "SAGAUSDT",
+   "thang_dau": "2024-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 58,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SAHARAUSDT": {
+   "symbol": "SAHARAUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "SAMSUNGEMUSDT": {
+   "symbol": "SAMSUNGEMUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SAMSUNGUSDT": {
+   "symbol": "SAMSUNGUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SANDUSDT": {
+   "symbol": "SANDUSDT",
+   "thang_dau": "2021-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 136,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "SANTOSUSDT": {
+   "symbol": "SANTOSUSDT",
+   "thang_dau": "2024-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 46,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SAPIENUSDT": {
+   "symbol": "SAPIENUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SCRTUSDT": {
+   "symbol": "SCRTUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SCRUSDT": {
+   "symbol": "SCRUSDT",
+   "thang_dau": "2024-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 46,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SCUSDT": {
+   "symbol": "SCUSDT",
+   "thang_dau": "2021-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 130,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SEIUSDT": {
+   "symbol": "SEIUSDT",
+   "thang_dau": "2023-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 74,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "SENTUSDT": {
+   "symbol": "SENTUSDT",
+   "thang_dau": "2025-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 20,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SFPUSDT": {
+   "symbol": "SFPUSDT",
+   "thang_dau": "2021-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 134,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SHAZUSDT": {
+   "symbol": "SHAZUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SHELLUSDT": {
+   "symbol": "SHELLUSDT",
+   "thang_dau": "2025-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 38,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SHOPUSDT": {
+   "symbol": "SHOPUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SIGNUSDT": {
+   "symbol": "SIGNUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SIRENUSDT": {
+   "symbol": "SIRENUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SKATEUSDT": {
+   "symbol": "SKATEUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SKDDUSDT": {
+   "symbol": "SKDDUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SKHYNIXUSDT": {
+   "symbol": "SKHYNIXUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SKHYUSDT": {
+   "symbol": "SKHYUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SKLUSDT": {
+   "symbol": "SKLUSDT",
+   "thang_dau": "2020-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 138,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SKRUSDT": {
+   "symbol": "SKRUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SKUUUSDT": {
+   "symbol": "SKUUUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SKYAIUSDT": {
+   "symbol": "SKYAIUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SKYUSDT": {
+   "symbol": "SKYUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SLERFUSDT": {
+   "symbol": "SLERFUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SLPUSDT": {
+   "symbol": "SLPUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SLXUSDT": {
+   "symbol": "SLXUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SMCIUSDT": {
+   "symbol": "SMCIUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SMHUSDT": {
+   "symbol": "SMHUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SNDKUSDT": {
+   "symbol": "SNDKUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SNOWUSDT": {
+   "symbol": "SNOWUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SNTUSDT": {
+   "symbol": "SNTUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SNXUSDT": {
+   "symbol": "SNXUSDT",
+   "thang_dau": "2020-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 146,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SNXXUSDT": {
+   "symbol": "SNXXUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SOFIUSDT": {
+   "symbol": "SOFIUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SOLUSDT": {
+   "symbol": "SOLUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "SOLVUSDT": {
+   "symbol": "SOLVUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SOMIUSDT": {
+   "symbol": "SOMIUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SONICUSDT": {
+   "symbol": "SONICUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SONYUSDT": {
+   "symbol": "SONYUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SOONUSDT": {
+   "symbol": "SOONUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SOPHUSDT": {
+   "symbol": "SOPHUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SOXLUSDT": {
+   "symbol": "SOXLUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SOXSUSDT": {
+   "symbol": "SOXSUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SPACEUSDT": {
+   "symbol": "SPACEUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SPCXUSDT": {
+   "symbol": "SPCXUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SPELLUSDT": {
+   "symbol": "SPELLUSDT",
+   "thang_dau": "2022-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 96,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SPKUSDT": {
+   "symbol": "SPKUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SPORTFUNUSDT": {
+   "symbol": "SPORTFUNUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SPXUSDT": {
+   "symbol": "SPXUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "SPYUSDT": {
+   "symbol": "SPYUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SQDUSDT": {
+   "symbol": "SQDUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SQQQUSDT": {
+   "symbol": "SQQQUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SRMUSDT": {
+   "symbol": "SRMUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2024-05",
+   "so_khoa": 90,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SSVUSDT": {
+   "symbol": "SSVUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 86,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "STABLEUSDT": {
+   "symbol": "STABLEUSDT",
+   "thang_dau": "2025-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 20,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "STARUSDT": {
+   "symbol": "STARUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "STBLUSDT": {
+   "symbol": "STBLUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "STEEMUSDT": {
+   "symbol": "STEEMUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "STGUSDT": {
+   "symbol": "STGUSDT",
+   "thang_dau": "2022-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 98,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "STMXUSDT": {
+   "symbol": "STMXUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 132,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "STORJUSDT": {
+   "symbol": "STORJUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "STOUSDT": {
+   "symbol": "STOUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "STPTUSDT": {
+   "symbol": "STPTUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "STRAXUSDT": {
+   "symbol": "STRAXUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "STRCUSDT": {
+   "symbol": "STRCUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "STRKUSDT": {
+   "symbol": "STRKUSDT",
+   "thang_dau": "2024-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 62,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "STXUSDT": {
+   "symbol": "STXUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 86,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "STXXUSDT": {
+   "symbol": "STXXUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SUIUSDT": {
+   "symbol": "SUIUSDT",
+   "thang_dau": "2023-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 80,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "SUNUSDT": {
+   "symbol": "SUNUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SUPERUSDT": {
+   "symbol": "SUPERUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SUSDT": {
+   "symbol": "SUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SUSHIUSDT": {
+   "symbol": "SUSHIUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SWARMSUSDT": {
+   "symbol": "SWARMSUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SWELLUSDT": {
+   "symbol": "SWELLUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SXPUSDT": {
+   "symbol": "SXPUSDT",
+   "thang_dau": "2020-07",
+   "thang_cuoi": "2026-05",
+   "so_khoa": 142,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SXTUSDT": {
+   "symbol": "SXTUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SYNUSDT": {
+   "symbol": "SYNUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "SYRUPUSDT": {
+   "symbol": "SYRUPUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "SYSUSDT": {
+   "symbol": "SYSUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TACUSDT": {
+   "symbol": "TACUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TAGUSDT": {
+   "symbol": "TAGUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TAIKOUSDT": {
+   "symbol": "TAIKOUSDT",
+   "thang_dau": "2025-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 30,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TAKEUSDT": {
+   "symbol": "TAKEUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TANSSIUSDT": {
+   "symbol": "TANSSIUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TAOUSDT": {
+   "symbol": "TAOUSDT",
+   "thang_dau": "2024-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 58,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "TAUSDT": {
+   "symbol": "TAUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TBTUSDT": {
+   "symbol": "TBTUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TEMUSDT": {
+   "symbol": "TEMUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TENCENTUSDT": {
+   "symbol": "TENCENTUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TERUSDT": {
+   "symbol": "TERUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "THETAUSDT": {
+   "symbol": "THETAUSDT",
+   "thang_dau": "2020-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 152,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "THEUSDT": {
+   "symbol": "THEUSDT",
+   "thang_dau": "2024-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 44,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TIAUSDT": {
+   "symbol": "TIAUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "TLMUSDT": {
+   "symbol": "TLMUSDT",
+   "thang_dau": "2021-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 124,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TMFUSDT": {
+   "symbol": "TMFUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TNSRUSDT": {
+   "symbol": "TNSRUSDT",
+   "thang_dau": "2024-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 58,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TOKENUSDT": {
+   "symbol": "TOKENUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TOMOUSDT": {
+   "symbol": "TOMOUSDT",
+   "thang_dau": "2020-10",
+   "thang_cuoi": "2024-05",
+   "so_khoa": 88,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TONUSDT": {
+   "symbol": "TONUSDT",
+   "thang_dau": "2024-03",
+   "thang_cuoi": "2026-06",
+   "so_khoa": 60,
+   "trang_thai": "chet_trong_t2_t3",
+   "moc_ngung": "2026-06-23T09:00:00+00:00",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "TOSHIUSDT": {
+   "symbol": "TOSHIUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TOWNSUSDT": {
+   "symbol": "TOWNSUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TQQQUSDT": {
+   "symbol": "TQQQUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TRADOORUSDT": {
+   "symbol": "TRADOORUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TRBUSDT": {
+   "symbol": "TRBUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TREEUSDT": {
+   "symbol": "TREEUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TRIAUSDT": {
+   "symbol": "TRIAUSDT",
+   "thang_dau": "2026-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 14,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TROYUSDT": {
+   "symbol": "TROYUSDT",
+   "thang_dau": "2024-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 46,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TRUMPUSDT": {
+   "symbol": "TRUMPUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "TRUSTUSDT": {
+   "symbol": "TRUSTUSDT",
+   "thang_dau": "2025-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 20,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TRUTHUSDT": {
+   "symbol": "TRUTHUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TRUUSDT": {
+   "symbol": "TRUUSDT",
+   "thang_dau": "2023-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 84,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TRXUSDT": {
+   "symbol": "TRXUSDT",
+   "thang_dau": "2020-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 160,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "TSLAUSDT": {
+   "symbol": "TSLAUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TSMUSDT": {
+   "symbol": "TSMUSDT",
+   "thang_dau": "2026-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 10,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TSTUSDT": {
+   "symbol": "TSTUSDT",
+   "thang_dau": "2025-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 38,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TTWOUSDT": {
+   "symbol": "TTWOUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TURBOUSDT": {
+   "symbol": "TURBOUSDT",
+   "thang_dau": "2024-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 56,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TURTLEUSDT": {
+   "symbol": "TURTLEUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TUSDT": {
+   "symbol": "TUSDT",
+   "thang_dau": "2023-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 86,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TUTUSDT": {
+   "symbol": "TUTUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TWTUSDT": {
+   "symbol": "TWTUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TXNUSDT": {
+   "symbol": "TXNUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "TZAUSDT": {
+   "symbol": "TZAUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "UAIUSDT": {
+   "symbol": "UAIUSDT",
+   "thang_dau": "2025-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 20,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "UBERUSDT": {
+   "symbol": "UBERUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "UBUSDT": {
+   "symbol": "UBUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "UMAUSDT": {
+   "symbol": "UMAUSDT",
+   "thang_dau": "2023-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 80,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "UNFIUSDT": {
+   "symbol": "UNFIUSDT",
+   "thang_dau": "2021-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 134,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "UNITREEUSDT": {
+   "symbol": "UNITREEUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "UNIUSDT": {
+   "symbol": "UNIUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 144,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "URNMUSDT": {
+   "symbol": "URNMUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "USARUSDT": {
+   "symbol": "USARUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "USDCUSDT": {
+   "symbol": "USDCUSDT",
+   "thang_dau": "2023-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 84,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "USELESSUSDT": {
+   "symbol": "USELESSUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "USTCUSDT": {
+   "symbol": "USTCUSDT",
+   "thang_dau": "2023-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 68,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "USUALUSDT": {
+   "symbol": "USUALUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "USUSDT": {
+   "symbol": "USUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "UVXYUSDT": {
+   "symbol": "UVXYUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "UXLINKUSDT": {
+   "symbol": "UXLINKUSDT",
+   "thang_dau": "2024-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 48,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "VANAUSDT": {
+   "symbol": "VANAUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "VANRYUSDT": {
+   "symbol": "VANRYUSDT",
+   "thang_dau": "2024-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 60,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "VELODROMEUSDT": {
+   "symbol": "VELODROMEUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "VELVETUSDT": {
+   "symbol": "VELVETUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "VETUSDT": {
+   "symbol": "VETUSDT",
+   "thang_dau": "2020-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 158,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "VFYUSDT": {
+   "symbol": "VFYUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "VICUSDT": {
+   "symbol": "VICUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "VIDTUSDT": {
+   "symbol": "VIDTUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "VINEUSDT": {
+   "symbol": "VINEUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "VIRTUALUSDT": {
+   "symbol": "VIRTUALUSDT",
+   "thang_dau": "2024-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 42,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "VOXELUSDT": {
+   "symbol": "VOXELUSDT",
+   "thang_dau": "2024-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 50,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "VRTUSDT": {
+   "symbol": "VRTUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "VSTUSDT": {
+   "symbol": "VSTUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "VTHOUSDT": {
+   "symbol": "VTHOUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "VUSDT": {
+   "symbol": "VUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "VVVUSDT": {
+   "symbol": "VVVUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "WALUSDT": {
+   "symbol": "WALUSDT",
+   "thang_dau": "2025-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 36,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "WAVESUSDT": {
+   "symbol": "WAVESUSDT",
+   "thang_dau": "2020-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 146,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "WAXPUSDT": {
+   "symbol": "WAXPUSDT",
+   "thang_dau": "2023-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 70,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "WCTUSDT": {
+   "symbol": "WCTUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "WDCUSDT": {
+   "symbol": "WDCUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "WENUSDT": {
+   "symbol": "WENUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "WETUSDT": {
+   "symbol": "WETUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "WIFUSDT": {
+   "symbol": "WIFUSDT",
+   "thang_dau": "2024-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 64,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "WLDUSDT": {
+   "symbol": "WLDUSDT",
+   "thang_dau": "2023-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 76,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "WLFIUSDT": {
+   "symbol": "WLFIUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "WMTUSDT": {
+   "symbol": "WMTUSDT",
+   "thang_dau": "2026-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 8,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "WOOUSDT": {
+   "symbol": "WOOUSDT",
+   "thang_dau": "2022-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 106,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "WUSDT": {
+   "symbol": "WUSDT",
+   "thang_dau": "2024-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 58,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "XAGUSDT": {
+   "symbol": "XAGUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "XAIUSDT": {
+   "symbol": "XAIUSDT",
+   "thang_dau": "2024-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 64,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "XANUSDT": {
+   "symbol": "XANUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "XAUTUSDT": {
+   "symbol": "XAUTUSDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "XAUUSDT": {
+   "symbol": "XAUUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "XBIUSDT": {
+   "symbol": "XBIUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "XCNUSDT": {
+   "symbol": "XCNUSDT",
+   "thang_dau": "2025-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 34,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "XEMUSDT": {
+   "symbol": "XEMUSDT",
+   "thang_dau": "2021-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 132,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "XLEUSDT": {
+   "symbol": "XLEUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "XLMUSDT": {
+   "symbol": "XLMUSDT",
+   "thang_dau": "2020-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 160,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "XMRUSDT": {
+   "symbol": "XMRUSDT",
+   "thang_dau": "2020-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 158,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "XNYUSDT": {
+   "symbol": "XNYUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "XPDUSDT": {
+   "symbol": "XPDUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "XPINUSDT": {
+   "symbol": "XPINUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "XPLUSDT": {
+   "symbol": "XPLUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "XPTUSDT": {
+   "symbol": "XPTUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "XRPUSDT": {
+   "symbol": "XRPUSDT",
+   "thang_dau": "2020-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 160,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "XTZUSDT": {
+   "symbol": "XTZUSDT",
+   "thang_dau": "2020-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 158,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "XVGUSDT": {
+   "symbol": "XVGUSDT",
+   "thang_dau": "2023-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 76,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "XVSUSDT": {
+   "symbol": "XVSUSDT",
+   "thang_dau": "2023-04",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 82,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "YALAUSDT": {
+   "symbol": "YALAUSDT",
+   "thang_dau": "2025-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 26,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "YBUSDT": {
+   "symbol": "YBUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "YFIIUSDT": {
+   "symbol": "YFIIUSDT",
+   "thang_dau": "2020-09",
+   "thang_cuoi": "2022-04",
+   "so_khoa": 40,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "YFIUSDT": {
+   "symbol": "YFIUSDT",
+   "thang_dau": "2020-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 146,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "YGGUSDT": {
+   "symbol": "YGGUSDT",
+   "thang_dau": "2023-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 74,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ZAMAUSDT": {
+   "symbol": "ZAMAUSDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ZBTUSDT": {
+   "symbol": "ZBTUSDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ZECUSDT": {
+   "symbol": "ZECUSDT",
+   "thang_dau": "2020-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 158,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "ZENUSDT": {
+   "symbol": "ZENUSDT",
+   "thang_dau": "2020-11",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 140,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "ZEREBROUSDT": {
+   "symbol": "ZEREBROUSDT",
+   "thang_dau": "2025-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 40,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ZESTUSDT": {
+   "symbol": "ZESTUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ZETAUSDT": {
+   "symbol": "ZETAUSDT",
+   "thang_dau": "2024-02",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 62,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ZHIPUUSDT": {
+   "symbol": "ZHIPUUSDT",
+   "thang_dau": "2026-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 4,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ZHONGJIUSDT": {
+   "symbol": "ZHONGJIUSDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ZILUSDT": {
+   "symbol": "ZILUSDT",
+   "thang_dau": "2020-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 150,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ZKCUSDT": {
+   "symbol": "ZKCUSDT",
+   "thang_dau": "2025-09",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 24,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ZKJUSDT": {
+   "symbol": "ZKJUSDT",
+   "thang_dau": "2025-05",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 32,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ZKPUSDT": {
+   "symbol": "ZKPUSDT",
+   "thang_dau": "2025-12",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 18,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ZKUSDT": {
+   "symbol": "ZKUSDT",
+   "thang_dau": "2024-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 54,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ZMUSDT": {
+   "symbol": "ZMUSDT",
+   "thang_dau": "2026-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 6,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ZORAUSDT": {
+   "symbol": "ZORAUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ZRCUSDT": {
+   "symbol": "ZRCUSDT",
+   "thang_dau": "2025-07",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 28,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "ZROUSDT": {
+   "symbol": "ZROUSDT",
+   "thang_dau": "2024-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 54,
+   "trang_thai": "song_toi_t3",
+   "nguon_thang_cuoi": "do_that"
+  },
+  "ZRXUSDT": {
+   "symbol": "ZRXUSDT",
+   "thang_dau": "2020-06",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 150,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "币安人生USDT": {
+   "symbol": "币安人生USDT",
+   "thang_dau": "2025-10",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 22,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "我踏马来了USDT": {
+   "symbol": "我踏马来了USDT",
+   "thang_dau": "2026-01",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 16,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "牛来USDT": {
+   "symbol": "牛来USDT",
+   "thang_dau": "2026-08",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 2,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  },
+  "龙虾USDT": {
+   "symbol": "龙虾USDT",
+   "thang_dau": "2026-03",
+   "thang_cuoi": "2026-08",
+   "so_khoa": 12,
+   "nguon_thang_cuoi": "can_tren_td0230"
+  }
+ }
+}
