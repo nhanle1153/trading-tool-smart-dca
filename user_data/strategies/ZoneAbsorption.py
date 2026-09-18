@@ -90,7 +90,15 @@ phải làm đúng trước D11 (dry-run có API equity), không phải chỗ đ
     §8.3 cần (`mult_breakdown`, `rho_eff`, `planned_risk_usdt`,
     `planned_margin_usdt`, `l_exchange_at_entry`, `tranche_weights`) đã có
     trong `custom_data["co_lenh"]`.
-  - LONG only (DR-D4-01). DG6 điều kiện C/D vẫn `False` như Minimal.
+  - **SHORT: đã DỰNG, công tắc TẮT** (TD-0321, `DR-SHORT-01`, D-dựng, 0 trial):
+    `can_short = True`, nhưng `tier_a.enable_short: false` ⇒ `populate_entry_
+    trend` không sinh `enter_short` và `confirm_trade_entry` từ chối `side=
+    "short"`. Không đo gì trên dữ liệu thị trường; điều kiện mở lại khâu ĐO nằm
+    ở `DR-HUONG-01` §3 + `DR-D4-01` §2b, không đổi. Đường SHORT là gương CỘNG
+    THÊM (hàm/cột `_short` song song), không sửa thân hàm LONG — bất biến
+    "đường LONG không đổi một bit" (`DR-SHORT-01` §7).
+  - DG6 điều kiện C vẫn `False` như Minimal. **DG6-D (short squeeze) CHƯA nối**:
+    cần nguồn funding rate 8h cắt an toàn theo thời gian — `TD-0323`.
   - **DG6 chỉ bật ở arm `Z3b`** — DIỄN GIẢI: §10.1 định nghĩa Z3 = *"KHÔNG
     DG6"*, Z3b = *"CỘNG DG6"*, các arm khác không nhắc. Chọn tắt cho mọi arm
     ≠ Z3b để cặp Z3/Z3b cô lập được DG6; ghi ra để cãi lại được.
@@ -191,14 +199,33 @@ EMA_NHANH, EMA_CHAM = 20, 50  # §2.1
 _KHOA_JSON = ("zl", "zh", "p1", "p2", "p3", "sl", "zs", "t4", "sw")
 
 
+#: TD-0321 (DR-SHORT-01, D-dựng) — khoá hướng của enter_tag, CHỈ ghi cho
+#: SHORT (`"h": "s"`). Tag của LONG KHÔNG có khoá này: byte-đồng-nhất với
+#: trước TD-0321 (test khoá L-Z49/TD-0187/TD-0193/TD-0237 đọc đúng hình
+#: dạng đó), và `_giai_ma` đọc thiếu khoá = LONG.
+_KHOA_HUONG = "h"
+_HUONG_SHORT_TRONG_TAG = "s"
+
+
+def _la_short(trade) -> bool:
+    """`Trade` THẬT của Freqtrade luôn có `is_short` (bool). Đọc bằng `getattr`
+    với mặc định LONG để các vật thay thế trong test khoá cũ (`_ViTheGia` của
+    TD-0237...) — vốn dựng TRƯỚC khi có SHORT — vẫn chạy đúng nhánh LONG cũ. `is
+    True` (không phải truthy) để một `MagicMock` lỡ dùng làm trade không lật cả
+    thử nghiệm sang SHORT: mặc định an toàn là hành vi cũ."""
+    return getattr(trade, "is_short", False) is True
+
+
 def _ma_hoa(
     kh: KeHoachTranche, *, zss_value: float, trend_4h: str, swing_ts_ms: int,
-    xac_nhan: dict | None = None,
+    xac_nhan: dict | None = None, huong: str = "long",
 ) -> str:
     d = {
         "zl": kh.zone_low, "zh": kh.zone_high, "p1": kh.p1, "p2": kh.p2, "p3": kh.p3,
         "sl": kh.sl, "zs": round(zss_value, 6), "t4": trend_4h, "sw": swing_ts_ms,
     }
+    if huong == "short":
+        d[_KHOA_HUONG] = _HUONG_SHORT_TRONG_TAG
     if xac_nhan is not None:
         d.update(xac_nhan)
     return json.dumps(d, separators=(",", ":"))
@@ -214,9 +241,13 @@ def _giai_ma(tag: str | None, *, atr_1h_tai_tranche1: float) -> tuple[KeHoachTra
     if not all(k in d for k in _KHOA_JSON):
         return None
     p_avg = (d["p1"] + d["p2"] + d["p3"]) / 3
+    # TD-0321 — SHORT có SL TRÊN giá vào: `r_eff = (sl − p_avg) / p_avg`. Thiếu
+    # khoá hướng = LONG (tag cũ / tag của Minimal), công thức cũ không đổi.
+    la_short = d.get(_KHOA_HUONG) == _HUONG_SHORT_TRONG_TAG
+    r_eff_plan = (d["sl"] - p_avg) / p_avg if la_short else (p_avg - d["sl"]) / p_avg
     kh = KeHoachTranche(
         zone_low=d["zl"], zone_high=d["zh"], p1=d["p1"], p2=d["p2"], p3=d["p3"], sl=d["sl"],
-        r_eff_plan=(p_avg - d["sl"]) / p_avg, atr_1h_tai_tranche1=atr_1h_tai_tranche1,
+        r_eff_plan=r_eff_plan, atr_1h_tai_tranche1=atr_1h_tai_tranche1,
     )
     return kh, d
 
@@ -225,7 +256,11 @@ class ZoneAbsorption(IStrategy):
     timeframe = "1h"
     informative_timeframe = "4h"
     informative_1d = "1d"
-    can_short = False
+    # TD-0321 (DR-SHORT-01, D-dựng): Freqtrade chỉ nhận tín hiệu `enter_short`
+    # khi cờ này True. Công tắc THẬT là `tier_a.enable_short` (YAML, hiện
+    # `false`) — `populate_entry_trend` không sinh `enter_short` và
+    # `confirm_trade_entry` từ chối `side="short"` khi nó tắt (chốt kép).
+    can_short = True
     # 1000 nến 1H ≈ 42 ngày: đủ để ADX(14,1D) và EMA50(1D) có giá trị khi
     # backtest bắt đầu. 200 của Minimal không đủ cho khung 1D.
     startup_candle_count = 1000
@@ -283,6 +318,9 @@ class ZoneAbsorption(IStrategy):
         self._wick_frac = float(resolve(self._cfg, "tier_b.wick_close_upper_frac"))
         self._bat_dieu_kien_c = bat_dieu_kien_c_cua_arm(self._arm)  # Z0-V1 = False
         self._l_exchange = float(resolve(self._cfg, "tier_a.L_exchange"))
+        # TD-0321 — hai công tắc hướng (N4: đọc YAML qua `resolve`, một chỗ).
+        self._enable_long = bool(resolve(self._cfg, "tier_a.enable_long"))
+        self._enable_short = bool(resolve(self._cfg, "tier_a.enable_short"))
         self._adx_threshold = float(resolve(self._cfg, "tier_frozen.adx_threshold.value"))
         self._tang_loc_trend = tang_cua_arm(self._arm)  # TD-0182 — công tắc Phần 2 theo arm
         # TD-0198 — arm này có thi hành §2.5 (ADX(1D) ≥ ngưỡng) làm cổng vào
@@ -348,6 +386,10 @@ class ZoneAbsorption(IStrategy):
         # chỉ số nến 1H tuyệt đối để quét cụm chạm, và cần `inf4` chưa bị
         # dịch ngày để ánh xạ đúng "nến 1H đầu tiên SAU khi nến 4H j đóng".
         self._xac_nhan_3_3b(dataframe, inf4, metadata["pair"])
+        # TD-0321 (DR-SHORT-01, D-dựng) — gương SHORT của §3.3b, ghi các cột
+        # `_short` RIÊNG (không đụng cột LONG). Luôn chạy (hàm thuần, không đọc
+        # thêm dữ liệu); chỉ `populate_entry_trend` mới nhìn `enable_short`.
+        self._xac_nhan_3_3b_short(dataframe, inf4, metadata["pair"])
         dataframe = merge_informative_pair(dataframe, inf4, self.timeframe, self.informative_timeframe, ffill=True)
 
         inf1d = self.dp.get_pair_dataframe(pair=metadata["pair"], timeframe=self.informative_1d)
@@ -430,7 +472,98 @@ class ZoneAbsorption(IStrategy):
         inf["trend_dir_4h"] = trend
         inf["atr_4h"] = atr  # TD-0193 — tính lại kế hoạch tại C với ATR đóng băng tại j (DR-D4-08 §3 #4)
         inf["zone_dinh_gia"] = self._quet_zone_dinh(cao, thap, dong, volume, atr, self._nguong_zss)
+        # TD-0321 (DR-SHORT-01, D-dựng) — cột SHORT, CỘNG THÊM song song, không
+        # đụng dòng nào ở trên: `zone_valid_short`/`ke_hoach_json_short` là zone
+        # ĐỈNH làm zone VÀO LỆNH (gương của zone đáy), `zone_day_gia` là zone ĐÁY
+        # làm đích TP1 của SHORT (gương của `zone_dinh_gia`).
+        zone_valid_s, tag_col_s = self._quet_zone_vao_lenh_short(cao, thap, dong, volume, atr, trend, ts_ms)
+        inf["zone_valid_short"] = zone_valid_s
+        inf["ke_hoach_json_short"] = tag_col_s
+        inf["zone_day_gia"] = self._quet_zone_day(cao, thap, dong, volume, atr, self._nguong_zss)
         return inf
+
+    def _quet_zone_vao_lenh_short(self, cao, thap, dong, volume, atr, trend, ts_ms) -> tuple[list[bool], list[str]]:
+        """TD-0321 — GƯƠNG SHORT của vòng quét zone ĐÁY trong `_tinh_zone_4h`.
+
+        Từng bước đối xứng, chỉ đảo `thap` ↔ `cao` và `"day"` ↔ `"dinh"`: swing
+        đỉnh → chưa bị huỷ → volume/nén đọc được → touch → `zone_hop_le`, rồi
+        `ke_hoach_theo_arm(huong="short")` (SL TRÊN zone). Cùng công thức vùng
+        `[cao×(1−buf), cao×(1+buf)]` với `_quet_zone_dinh` (đích TP của LONG) —
+        khác nhau CHỈ ở đầu ra: hàm này dựng kế hoạch vào lệnh đầy đủ.
+
+        🔑 Giữ HAI hàm quét đỉnh (đây và `_quet_zone_dinh`) thay vì gộp một lõi
+        tham số: `_quet_zone_dinh` có test khoá đọc nguyên văn thân hàm và tên
+        nó (TD-0207), gộp là phải sửa khẳng định của các test đó. Trùng lặp có
+        ý thức, ghi ra; gộp lại là một TD riêng sau khi Short được chứng minh."""
+        n = len(cao)
+        zone_valid = [False] * n
+        tag_col = [""] * n
+        for i in range(K_XAC_NHAN, n):
+            if not la_diem_swing(cao, i, loai="dinh"):
+                continue
+            if math.isnan(atr[i]) or dong[i] == 0:
+                continue
+            buf = BUF_ZONE * atr[i] / dong[i]
+            zone_low, zone_high = cao[i] * (1 - buf), cao[i] * (1 + buf)
+            j = i + K_XAC_NHAN
+            if j >= n or zone_da_bi_huy(cao, i, j, loai="dinh"):
+                continue
+            v_r = volume_ratio(volume, i_swing=i)
+            comp = compression(cao, thap, dong, i_hinh_thanh=i, i_hien_tai=j)
+            if v_r is None or comp is None:
+                continue
+            tc = touch_count(cao, dong, zone_low, zone_high, i_swing=i, t=j, loai="dinh")
+            diem = zss(touch=tc, ty_le_volume=v_r, do_nen=comp)
+            if not zone_hop_le(
+                zss_value=diem, so_touch=tc, tuoi_nen=K_XAC_NHAN, nguong_zss=self._nguong_zss
+            ) or math.isnan(atr[j]):
+                continue
+            # Không bắt `ArmSwitchError` ở đây: LONG cũng không bắt, và một SL
+            # không hợp lệ (Z1 với ATR lệch so với bề rộng zone) phải NỔ TO, không
+            # bị nuốt thành "zone ít đi" — im lặng bỏ zone che mất chính lỗi cấu
+            # hình arm (N6). Gương đúng nghĩa là không thêm hành vi mà LONG không có.
+            kh = ke_hoach_theo_arm(
+                arm=self._arm, zone_low=zone_low, zone_high=zone_high, gia_dong_cua=dong[j],
+                atr_4h=atr[j], atr_1h_tai_tranche1=0.0, buf_sl_he_so=self._buf_sl_he_so,
+                huong="short",
+            )
+            zone_valid[j] = True
+            tag_col[j] = _ma_hoa(kh, zss_value=diem, trend_4h=trend[j], swing_ts_ms=int(ts_ms[i]), huong="short")
+        return zone_valid, tag_col
+
+    @staticmethod
+    def _quet_zone_day(cao, thap, dong, volume, atr, nguong_zss: float) -> list[float]:
+        """TD-0321 — GƯƠNG SHORT của `_quet_zone_dinh`: zone ĐÁY làm đích TP1
+        của SHORT. Trả giá **MÉP TRÊN** của zone đáy (`thap[i] × (1 + buf)`),
+        ghi tại nến xác nhận `j` — giá đi XUỐNG chạm mép trên TRƯỚC, đúng
+        như LONG chạm mép dưới zone đỉnh trước (xem docstring `_quet_zone_dinh`
+        cho diễn giải và cảnh báo `NaN` — KHÔNG dùng cột này làm mặt nạ)."""
+        n = len(cao)
+        ra = [float("nan")] * n
+        for i in range(K_XAC_NHAN, n):
+            if not la_diem_swing(thap, i, loai="day"):
+                continue
+            if math.isnan(atr[i]) or dong[i] == 0:
+                continue
+            buf = BUF_ZONE * atr[i] / dong[i]
+            zone_low, zone_high = thap[i] * (1 - buf), thap[i] * (1 + buf)
+            j = i + K_XAC_NHAN
+            if j >= n or zone_da_bi_huy(thap, i, j, loai="day"):
+                continue
+            v_r = volume_ratio(volume, i_swing=i)
+            comp = compression(cao, thap, dong, i_hinh_thanh=i, i_hien_tai=j)
+            if v_r is None or comp is None:
+                continue
+            tc = touch_count(thap, dong, zone_low, zone_high, i_swing=i, t=j, loai="day")
+            if not zone_hop_le(
+                zss_value=zss(touch=tc, ty_le_volume=v_r, do_nen=comp),
+                so_touch=tc,
+                tuoi_nen=K_XAC_NHAN,
+                nguong_zss=nguong_zss,
+            ):
+                continue
+            ra[j] = zone_high
+        return ra
 
     def _xac_nhan_3_3b(self, df1: pd.DataFrame, inf4: pd.DataFrame, pair: str) -> None:
         """TD-0193 / DR-D4-08 — §3.3b + §3.5 trên khung 1H, ghi BỐN cột vào `df1`:
@@ -587,6 +720,151 @@ class ZoneAbsorption(IStrategy):
         return moc
 
     @staticmethod
+    def _moc_cham_truoc_xac_nhan_dinh(cao, rsi, zl: float, zh: float, k_i: int, k_start: int):
+        """TD-0321 — GƯƠNG SHORT của `_moc_cham_truoc_xac_nhan`: đỉnh THẬT (CAO
+        NHẤT) + RSI của cụm chạm 1H CUỐI trong `[k_i, k_start)`. Đọc `cao`, so `>`
+        — cùng lớp lỗi TD-0320 đã sửa ở `quet_xac_nhan_zone` (so `<` vô điều kiện
+        chỉ đúng cho zone đáy)."""
+        moc = None
+        t = max(k_i, 0)
+        while t < k_start:
+            if not (zl <= cao[t] <= zh):
+                t += 1
+                continue
+            t_dinh, gia_dinh = t, cao[t]
+            while t < k_start and (zl <= cao[t] <= zh):
+                if cao[t] > gia_dinh:
+                    t_dinh, gia_dinh = t, cao[t]
+                t += 1
+            if rsi[t_dinh] == rsi[t_dinh]:  # not NaN
+                moc = (gia_dinh, rsi[t_dinh])
+        return moc
+
+    def _xac_nhan_3_3b_short(self, df1: pd.DataFrame, inf4: pd.DataFrame, pair: str) -> None:
+        """TD-0321 (DR-SHORT-01, D-dựng) — GƯƠNG SHORT của `_xac_nhan_3_3b`.
+
+        Ghi BỐN cột `_short` vào `df1` (không đụng cột LONG):
+        `xac_nhan_3_3b_short`, `ke_hoach_json_3_3b_short`,
+        `xac_nhan_phan_thuc_b_short`, `lan_cham_phan_thuc_short`.
+
+        Từng dòng đối xứng với bản LONG: đọc `zone_valid_short`/`ke_hoach_json_short`
+        (zone ĐỈNH); `sl_zone` neo mép TRÊN (`sl_kieu_zone(huong="short")`); zone
+        bị huỷ khi nến 4H ĐÓNG TRÊN `sl_zone`; mốc phân kỳ là ĐỈNH thật của cụm
+        chạm trước; `quet_xac_nhan_zone(loai="dinh")`; chặn TD-0294 là nến xác
+        nhận ĐÓNG `>= sl_zone` (đã thủng SL phía trên); kế hoạch tính lại tại C
+        với `huong="short"`; tag mang khoá hướng `"h": "s"`.
+
+        🔑 **Trùng lặp có ý thức, không phải sơ suất**: bản LONG có ba nhóm
+        test khoá AST đọc nguyên tên/thân `_xac_nhan_3_3b`/`_ghi_cot_3_3b`
+        (TD-0193). Gộp hai hướng vào một lõi tham số là phải sửa khẳng định của
+        chúng — vi phạm bất biến "đường LONG không đổi một bit" của `DR-SHORT-01`
+        §7. Gộp lại là một TD riêng, sau khi Short đã được chứng minh.
+
+        Cột phản thực B ở đây chỉ GHI (cùng luật MT-22 Phương án A): tên cột
+        `_short` để test AST của LONG (chuỗi chính xác `xac_nhan_phan_thuc_b`)
+        không thấy chúng.
+        """
+        n1 = len(df1)
+        xac_nhan_s = [False] * n1
+        ke_hoach_s = [""] * n1
+        phan_thuc_b_s = [False] * n1
+        lan_cham_b_s = [0] * n1
+        so_zone = so_a = so_b = trung_nen = thung_sl = 0
+
+        if n1 == 0 or inf4.empty or not inf4["zone_valid_short"].any():
+            self._ghi_cot_3_3b_short(df1, xac_nhan_s, ke_hoach_s, phan_thuc_b_s, lan_cham_b_s)
+            return
+
+        mo, cao, thap, dong = (df1[c].tolist() for c in ("open", "high", "low", "close"))
+        vol = df1["volume"].tolist()
+        rsi = df1["rsi_1h"].tolist()
+        vma = df1["volume_ma_1h"].tolist()
+        ngay1 = df1["date"].to_numpy(dtype="datetime64[ns]")
+        ngay4 = inf4["date"].to_numpy(dtype="datetime64[ns]")
+        dong4 = inf4["close"].tolist()
+        atr4 = inf4["atr_4h"].tolist()
+        trend4 = inf4["trend_dir_4h"].tolist()
+        bon_gio = np.timedelta64(4, "h")
+        mot_gio = np.timedelta64(1, "h")
+        dong_cua4 = ngay4 + bon_gio
+
+        for j in np.flatnonzero(inf4["zone_valid_short"].to_numpy(dtype=bool)):
+            tag = json.loads(inf4["ke_hoach_json_short"].iloc[j])
+            zl, zh = float(tag["zl"]), float(tag["zh"])
+            so_zone += 1
+
+            k_start = int(np.searchsorted(ngay1, dong_cua4[j]))
+            if k_start >= n1:
+                continue
+            den = min(n1, k_start + NGUONG_TUOI_ZONE_TOI_DA * NEN_1H_MOI_NEN_4H)
+            sl_zone = sl_kieu_zone(
+                zone_low=zl, zone_high=zh, atr_4h=atr4[j], buf_sl_he_so=self._buf_sl_he_so,
+                huong="short",
+            )
+            for m in range(j + 1, len(dong4)):
+                if dong4[m] > sl_zone:  # gương: LONG huỷ zone khi nến 4H đóng DƯỚI sl_zone
+                    den = min(den, int(np.searchsorted(ngay1, dong_cua4[m])))
+                    break
+            if den <= k_start:
+                continue
+
+            k_i = int(np.searchsorted(ngay1, np.datetime64(int(tag["sw"]), "ms").astype("datetime64[ns]")))
+            moc = self._moc_cham_truoc_xac_nhan_dinh(cao, rsi, zl, zh, k_i, k_start)
+
+            kq = quet_xac_nhan_zone(
+                mo, cao, thap, dong, rsi, vol, vma,
+                zone_low=zl, zone_high=zh, tu=k_start, den=den,
+                v_min=self._v_min, loai="dinh",
+                lan_cham_truoc_khi_xac_nhan=moc,
+                bat_dieu_kien_c=self._bat_dieu_kien_c, wick_frac=self._wick_frac,
+            )
+            if kq.nen_xac_nhan_phan_thuc is not None:
+                phan_thuc_b_s[kq.nen_xac_nhan_phan_thuc] = True
+                lan_cham_b_s[kq.nen_xac_nhan_phan_thuc] = kq.lan_cham_phan_thuc
+                so_b += 1
+            c = kq.nen_xac_nhan_that
+            if c is None:
+                continue
+            # TD-0294 gương: nến xác nhận ĐÃ ĐÓNG ≥ SL kiểu zone (phía trên) ⇒ KHÔNG
+            # phải xác nhận. So với `sl_zone` (độc lập arm), không so `kh.sl`.
+            if dong[c] >= sl_zone:
+                thung_sl += 1
+                continue
+            if xac_nhan_s[c]:
+                trung_nen += 1
+                continue
+            kh = ke_hoach_theo_arm(
+                arm=self._arm, zone_low=zl, zone_high=zh, gia_dong_cua=dong[c],
+                atr_4h=atr4[j], atr_1h_tai_tranche1=0.0, buf_sl_he_so=self._buf_sl_he_so,
+                huong="short",
+            )
+            m_c = int(np.searchsorted(dong_cua4, ngay1[c] + mot_gio)) - 1
+            xac_nhan_s[c] = True
+            ke_hoach_s[c] = _ma_hoa(
+                kh, zss_value=float(tag["zs"]), trend_4h=str(trend4[m_c]), swing_ts_ms=int(tag["sw"]),
+                xac_nhan={
+                    "ec": kq.loai_xac_nhan_that,
+                    "wb": int(c - kq.nen_cham_dau_that),
+                    "lc": int(kq.lan_cham_phan_thuc),
+                },
+                huong="short",
+            )
+            so_a += 1
+
+        logger.info(
+            "XAC_NHAN_3_3B_SHORT %s zone=%d A=%d B=%d trung_nen=%d thung_sl=%d arm=%s c=%s",
+            pair, so_zone, so_a, so_b, trung_nen, thung_sl, self._arm, self._bat_dieu_kien_c,
+        )
+        self._ghi_cot_3_3b_short(df1, xac_nhan_s, ke_hoach_s, phan_thuc_b_s, lan_cham_b_s)
+
+    @staticmethod
+    def _ghi_cot_3_3b_short(df1, xac_nhan, ke_hoach, phan_thuc_b, lan_cham_b) -> None:
+        df1["xac_nhan_3_3b_short"] = xac_nhan
+        df1["ke_hoach_json_3_3b_short"] = ke_hoach
+        df1["xac_nhan_phan_thuc_b_short"] = phan_thuc_b
+        df1["lan_cham_phan_thuc_short"] = lan_cham_b
+
+    @staticmethod
     def _quet_zone_dinh(cao, thap, dong, volume, atr, nguong_zss: float) -> list[float]:
         """TD-0189 — quét zone ĐỈNH (`loai="dinh"`) cho TP1 §5.1.
 
@@ -689,9 +967,58 @@ class ZoneAbsorption(IStrategy):
             trend_ok.loc[xn_ok] = dataframe.loc[xn_ok].apply(_dat_dieu_kien_trend, axis=1)
 
         hop_le = xn_ok & trend_ok
-        dataframe.loc[hop_le, "enter_long"] = 1
-        dataframe.loc[hop_le, "enter_tag"] = dataframe.loc[hop_le, "ke_hoach_json_3_3b"]
+        if self._enable_long:  # TD-0321 — công tắc LONG (YAML hiện `true`: hành vi cũ)
+            dataframe.loc[hop_le, "enter_long"] = 1
+            dataframe.loc[hop_le, "enter_tag"] = dataframe.loc[hop_le, "ke_hoach_json_3_3b"]
+
+        # TD-0321 (DR-SHORT-01, D-dựng) — GƯƠNG SHORT. Khi `tier_a.enable_short`
+        # tắt (hiện `false`) khối này KHÔNG chạy và KHÔNG tạo cột `enter_short`
+        # nào: dataframe đầu ra byte-đồng-nhất với trước TD-0321.
+        if self._enable_short:
+            xn_ok_s = dataframe["xac_nhan_3_3b_short"].astype(bool)
+            trend_ok_s = pd.Series(False, index=dataframe.index)
+            if xn_ok_s.any():
+                trend_ok_s.loc[xn_ok_s] = dataframe.loc[xn_ok_s].apply(
+                    lambda hang: self._dat_dieu_kien_trend_short(hang, sfx4, sfx1d), axis=1
+                )
+            hop_le_s = xn_ok_s & trend_ok_s
+            dataframe.loc[hop_le_s, "enter_short"] = 1
+            # `enter_tag` chung một cột với LONG — hai hướng KHÔNG thể cùng nến vì
+            # Freqtrade one-way; nếu cùng nến thì SHORT không ghi đè tag LONG.
+            #
+            # 🔴 "Ô còn trống" là `NaN` HOẶC `""`, không chỉ `NaN`: Freqtrade gán
+            # `enter_tag = ""` cho cả cột TRƯỚC khi gọi hàm này (`advise_entry`,
+            # `interface.py:1856`, "Pandas bug #56503"). Bản đầu chỉ kiểm `isna()`
+            # nên KHÔNG BAO GIỜ ghi tag Short ⇒ mọi lệnh Short vào với tag rỗng
+            # ⇒ `custom_stake_amount` raise "không có kế hoạch tranche" ⇒ bị
+            # `strategy_safe_wrapper` NUỐT ⇒ 0 lệnh mà rc = 0. Phép thử trên
+            # dataframe TỰ DỰNG không thấy được vì nó không đi qua `advise_entry`.
+            if "enter_tag" in dataframe.columns:
+                trong = dataframe["enter_tag"].isna() | (dataframe["enter_tag"] == "")
+                ghi_tag = hop_le_s & trong
+            else:
+                ghi_tag = hop_le_s
+            dataframe.loc[ghi_tag, "enter_tag"] = dataframe.loc[ghi_tag, "ke_hoach_json_3_3b_short"]
         return dataframe
+
+    def _dat_dieu_kien_trend_short(self, hang: pd.Series, sfx4: str, sfx1d: str) -> bool:
+        """Gương của `_dat_dieu_kien_trend` (LONG) trong `populate_entry_trend`:
+        bộ lọc trend Phần 2 theo arm, `huong_muc_tieu="DOWN"` thay cho `"UP"`.
+
+        Đặt ở cấp lớp (không lồng trong `populate_entry_trend`) để hàm LONG giữ
+        nguyên thân — test khoá đọc AST của `populate_entry_trend`."""
+        huong_1d, huong_4h = hang[f"trend_dir_1d{sfx1d}"], hang[f"trend_dir_4h{sfx4}"]
+        adx, tuoi = hang[f"adx{sfx1d}"], hang[f"tuoi_trend_1d{sfx1d}"]
+        if pd.isna(huong_1d) or pd.isna(huong_4h) or pd.isna(adx):
+            return False
+        return du_dieu_kien_trend_theo_tang(
+            tang=self._tang_loc_trend,
+            huong_muc_tieu="DOWN",
+            huong_1d=huong_1d,
+            huong_4h=huong_4h,
+            adx_1d=adx,
+            tuoi_nen_1d=None if pd.isna(tuoi) else int(tuoi),
+        )
 
     def populate_exit_trend(self, dataframe: pd.DataFrame, metadata: dict) -> pd.DataFrame:
         return dataframe
@@ -762,6 +1089,17 @@ class ZoneAbsorption(IStrategy):
         chỗ kia trả lời *"to bao nhiêu"*, chỗ này *"có được mở không"*. Trả
         cỡ 0 để từ chối là cách một lệnh bị chặn trông giống một lệnh nhỏ.
         """
+        # TD-0321 (DR-SHORT-01) — CHỐT KÉP cho hai công tắc hướng: `populate_
+        # entry_trend` đã không sinh tín hiệu khi công tắc tắt, nhưng đây là cửa
+        # cuối trước khi lệnh được đặt — nếu có đường nào khác sinh `enter_short`
+        # (một tag sót, một test lắp sai) thì lệnh vẫn bị từ chối ở đây. Trả `False`
+        # là cửa từ chối được framework hỗ trợ (raise sẽ bị nuốt, MT-16 vii).
+        if side == "short" and not self._enable_short:
+            logger.info("HUONG_TU_CHOI %s side=short enable_short=false", pair)
+            return False
+        if side != "short" and not self._enable_long:
+            logger.info("HUONG_TU_CHOI %s side=long enable_long=false", pair)
+            return False
         if pair in self._halt:
             return False  # HALT §12c.5 — ngừng MỞ lệnh mới
         cho = self._cho.get(pair)
@@ -848,7 +1186,11 @@ class ZoneAbsorption(IStrategy):
             # gần như tức thì, ở một mức không ai quyết định. Một mục tiêu
             # thoát không được phép trôi (cùng lập luận spec dòng 1670 dùng để
             # neo hai bội số vào `R_eff` chứ không vào R tiền tệ).
-            trade.set_custom_data("zone_dinh", self._zone_dinh_tren(pair, current_time, trade.open_rate))
+            if _la_short(trade):
+                # TD-0321 — gương: đích TP1 của SHORT là zone ĐÁY DƯỚI p_avg.
+                trade.set_custom_data("zone_day", self._zone_day_duoi(pair, current_time, trade.open_rate))
+            else:
+                trade.set_custom_data("zone_dinh", self._zone_dinh_tren(pair, current_time, trade.open_rate))
         # TD-0189 chặng 2b — mục tiêu TP1 tự nó (khác danh sách ứng viên ở
         # trên) PHẢI tính lại ở MỌI lần entry khớp, không chỉ tranche 1:
         # `DR-D4-06` §3 ràng buộc 5 nói rõ "chỉ tính lại TP1 khi p_avg đổi,
@@ -939,22 +1281,30 @@ class ZoneAbsorption(IStrategy):
         cùng tồn tại có chủ đích (không phải một lỗi trộn đơn vị kiểu
         `L-Z48c` — `r_eff_plan` luôn là TỈ LỆ, `p_avg` luôn là GIÁ)."""
         kh, _, _ = self._doc_ke_hoach(trade)
-        zone_dinh = trade.get_custom_data("zone_dinh") or []
+        # TD-0321 — SHORT: zone đối diện là zone ĐÁY (key `zone_day`), hướng "short".
+        # LONG giữ NGUYÊN key `zone_dinh` và không truyền `huong` (mặc định "long").
+        zone_dinh = trade.get_custom_data("zone_day" if _la_short(trade) else "zone_dinh") or []
         tham_so = doc_tham_so_tp(self._cfg)
         chot = chon_muc_tp1(
             p_avg=trade.open_rate,
             r_eff_plan=kh.r_eff_plan,
             gia_cac_zone_doi_dien=zone_dinh,
             tham_so=tham_so,
+            huong="short" if _la_short(trade) else "long",
         )
         # TD-0206 — vì sao lệnh này rơi nạng: khoảng cách tới ứng viên gần nhất
         # quy theo `R_eff` của CHÍNH lệnh đó, đặt cạnh trần `tp_fallback_dist_r`.
         # Không có số này thì "nạng" chỉ nói ĐÃ xảy ra, không nói TẠI SAO — mà
         # hai nguyên nhân (không có ứng viên / có nhưng quá xa) dẫn tới hai hành
         # động trái ngược. `khoang` > 0 luôn đúng vì `khoang_r_eff()` đã fail-closed.
-        _tren = [z for z in zone_dinh if z > trade.open_rate]
-        _khoang = chot.khoang_r_eff_gia
-        _gan = min((z - trade.open_rate for z in _tren), default=None)
+        if _la_short(trade):  # TD-0321 — gương: ứng viên DƯỚI p_avg, khoảng cách = p_avg − z
+            _tren = [z for z in zone_dinh if z < trade.open_rate]
+            _khoang = chot.khoang_r_eff_gia
+            _gan = min((trade.open_rate - z for z in _tren), default=None)
+        else:
+            _tren = [z for z in zone_dinh if z > trade.open_rate]
+            _khoang = chot.khoang_r_eff_gia
+            _gan = min((z - trade.open_rate for z in _tren), default=None)
         logger.info(
             "TP_CHON %s trade=%s nguon=%s ung_vien=%d gan_nhat_r=%s tran_r=%.4f",
             trade.pair, trade.id, chot.tp_source, len(_tren),
@@ -967,8 +1317,9 @@ class ZoneAbsorption(IStrategy):
         # backtest xong): mốc `current_time` này CHÍNH LÀ mốc mà mục tiêu
         # TP1 được (tái) chọn, đúng lúc `_tuoi_zone_dinh_nen` cần. Tra lại
         # từ Decision Log ở một mốc khác sẽ ra tuổi khác — sai câu hỏi.
+        tuoi_zone = self._tuoi_zone_day_nen if _la_short(trade) else self._tuoi_zone_dinh_nen
         d["tp_zone_age_bars"] = (
-            self._tuoi_zone_dinh_nen(trade.pair, current_time, chot.zone_gia_goc)
+            tuoi_zone(trade.pair, current_time, chot.zone_gia_goc)
             if chot.tp_source == TP_SOURCE_ZONE else None
         )
         trade.set_custom_data("chot_loi", d)
@@ -1021,7 +1372,9 @@ class ZoneAbsorption(IStrategy):
         kh, cl, tag = self._doc_ke_hoach(trade)
         i = trade.nr_of_successful_entries + 1  # tranche sắp xét: 2 hoặc 3
         muc = kh.p2 if i == 2 else kh.p3
-        if current_rate > muc:
+        # TD-0321 — LONG bơm khi giá XUỐNG tới mức (DCA-xuống: bỏ qua nếu giá
+        # còn trên mức); SHORT gương: bơm khi giá LÊN tới mức (DCA-lên).
+        if (current_rate < muc) if _la_short(trade) else (current_rate > muc):
             return None
 
         # 🔴 "KHÔNG ĐO ĐƯỢC" phải TƯỜNG MINH, không đi qua DG5.
@@ -1032,7 +1385,9 @@ class ZoneAbsorption(IStrategy):
         # vào "cổng đóng" (N6 cấm), còn `raise` bị `strategy_safe_wrapper`
         # NUỐT thành im lặng không bơm tranche. Chặn ngay tại chỗ gọi: không
         # bơm thêm tiền khi không xác minh được zone, và NÓI RA.
-        zss_now = self._zss_hien_tai(trade.pair, tag, current_time)
+        zss_now = self._zss_hien_tai(
+            trade.pair, tag, current_time, loai="dinh" if _la_short(trade) else "day"
+        )
         if zss_now != zss_now:  # NaN
             logger.warning(
                 "DG5_KHONG_DO_DUOC %s trade=%s tranche=%d t=%s — không bơm thêm tranche "
@@ -1044,7 +1399,7 @@ class ZoneAbsorption(IStrategy):
         cong = danh_gia_tat_ca(
             close_4h_ke_tu_tranche1=self._close_4h_ke_tu(trade, current_time),
             sl=kh.sl,
-            huong="long",
+            huong="short" if _la_short(trade) else "long",
             trend_dir_tai_tranche1=tag["t4"],
             trend_dir_hien_tai=self._trend_4h_hien_tai(trade.pair, current_time),
             margin_reserve_con_lai=max(cl.planned_margin_usdt - float(trade.stake_amount), 0.0),
@@ -1089,7 +1444,13 @@ class ZoneAbsorption(IStrategy):
                 f"{trade.pair}: chưa có `chot_loi` trong custom_data lúc xét TP1 — "
                 "order_filled chưa chạy hoặc thứ tự callback đã hỏng"
             )
-        if current_rate < float(chot["tp1_gia"]):
+        # TD-0321 — LONG chốt khi giá LÊN tới mức (chưa tới ⇒ `<`); SHORT gương:
+        # chốt khi giá XUỐNG tới mức (chưa tới ⇒ `>`).
+        chua_toi = (
+            current_rate > float(chot["tp1_gia"]) if _la_short(trade)
+            else current_rate < float(chot["tp1_gia"])
+        )
+        if chua_toi:
             return None
         ty_le = float(chot["ty_le_chot_tp1"])
         giam = -ty_le * float(trade.stake_amount)
@@ -1195,14 +1556,24 @@ class ZoneAbsorption(IStrategy):
                 atr_now / kh.atr_1h_tai_tranche1,
                 current_rate,
                 p_avg=trade.open_rate,
-                huong="long",
+                huong="short" if _la_short(trade) else "long",  # TD-0321
                 nguong_atr_ratio=self._dg6a_atr_ratio,
             )
         b = False
         df, _ = self.dp.get_analyzed_dataframe(pair=pair, timeframe=self.timeframe)
         if df is not None:
             dong = df.loc[df["date"] > trade.open_date_utc, "close"].tolist()
-            b = dieu_kien_b(dong, p1=kh.p1, so_nen_da_troi=len(dong), huong="long")
+            b = dieu_kien_b(
+                dong, p1=kh.p1, so_nen_da_troi=len(dong),
+                huong="short" if _la_short(trade) else "long",  # TD-0321
+            )
+        # ⏳ DG6-D (rủi ro short squeeze, CHỈ áp cho SHORT) VẪN `d=False` — CHƯA
+        # nối. `dieu_kien_d()` đã sẵn sàng (TD-0320: nhận `nguong_funding` bắt
+        # buộc), nhưng nó cần MỘT NGUỒN DỮ LIỆU mà chiến lược chưa có: funding rate
+        # 8h gần nhất dưới dạng cột dataframe cắt an toàn theo thời gian (không
+        # lookahead), và tỉ lệ hồi về p1. Dựng nguồn đó là một việc riêng
+        # (`TD-0323`) — không bịa dữ liệu ở đây. Với `enable_short` tắt, không có
+        # lệnh SHORT nào để DG6-D thiếu.
         return "DG6_EARLY_INVALIDATION" if dg6_dong_vi_the(a=a, b=b, c=False, d=False) else None
 
     def _xet_tp2(self, pair: str, trade, current_rate: float) -> str | None:
@@ -1224,7 +1595,9 @@ class ZoneAbsorption(IStrategy):
                 pair, trade.id,
             )
             return None
-        dinh = self._dinh_gia_tu(pair, tu)
+        # TD-0321 — SHORT gương: đáy giá THẤP NHẤT kể từ TP1 (`_day_gia_tu`), trail
+        # TRÊN đáy đó, thoát khi giá LÊN chạm trail. LONG giữ nguyên nhánh cũ.
+        dinh = self._day_gia_tu(pair, tu) if _la_short(trade) else self._dinh_gia_tu(pair, tu)
         if dinh is None:
             return None  # chưa có nến 1H nào SAU mốc TP1 khớp trong dataframe đã phân tích
         hang = self._hang_hien_tai(pair)
@@ -1233,11 +1606,18 @@ class ZoneAbsorption(IStrategy):
             return None  # ATR chưa đọc được (vùng warmup) — không bịa số (N6)
         tham_so = doc_tham_so_tp(self._cfg)
         try:
-            muc_trail = tp2_muc_trail(gia_cao_nhat_sau_tp1=dinh, atr_1h=atr_1h, tp2_trail_atr=tham_so.tp2_trail_atr)
+            if _la_short(trade):
+                muc_trail = tp2_muc_trail(
+                    gia_thap_nhat_sau_tp1=dinh, atr_1h=atr_1h,
+                    tp2_trail_atr=tham_so.tp2_trail_atr, huong="short",
+                )
+            else:
+                muc_trail = tp2_muc_trail(gia_cao_nhat_sau_tp1=dinh, atr_1h=atr_1h, tp2_trail_atr=tham_so.tp2_trail_atr)
         except TakeProfitError as exc:
             logger.warning("TP2_KHONG_TINH_DUOC %s trade=%s: %s", pair, trade.id, exc)
             return None
-        return "TP2_TRAIL" if current_rate <= muc_trail else None
+        cham_trail = current_rate >= muc_trail if _la_short(trade) else current_rate <= muc_trail
+        return "TP2_TRAIL" if cham_trail else None
 
     def _moc_tp1_khop(self, trade) -> datetime | None:
         """Mốc khớp của lệnh THOÁT đã khớp (TP1) — `None` nếu chưa tra được.
@@ -1262,6 +1642,16 @@ class ZoneAbsorption(IStrategy):
             return None
         cao = df.loc[df["date"] >= tu, "high"]
         return float(cao.max()) if not cao.empty else None
+
+    def _day_gia_tu(self, pair: str, tu: datetime) -> float | None:
+        """TD-0321 — GƯƠNG SHORT của `_dinh_gia_tu`: đáy LOW thấp nhất của khung
+        1H từ mốc `tu` tới hiện tại. Cùng đường `get_analyzed_dataframe()` (được
+        cắt đúng theo thời gian backtest), cùng lý do tránh `get_pair_dataframe()`."""
+        df, _ = self.dp.get_analyzed_dataframe(pair=pair, timeframe=self.timeframe)
+        if df is None or df.empty:
+            return None
+        thap = df.loc[df["date"] >= tu, "low"]
+        return float(thap.min()) if not thap.empty else None
 
     # ── trợ giúp đọc dữ liệu (không tính toán nghiệp vụ) ─────────────
 
@@ -1418,8 +1808,59 @@ class ZoneAbsorption(IStrategy):
             return None
         return int((current_time - khop).total_seconds() // (4 * 3600))
 
-    def _zss_hien_tai(self, pair: str, tag: dict, current_time: datetime) -> float:
-        """ZSS tính LẠI cho cùng zone tại nến 4H ĐÃ ĐÓNG gần nhất (DG5)."""
+    # ── TD-0321 (DR-SHORT-01, D-dựng): gương SHORT của ba hàm zone đỉnh ──────
+    #
+    # Cố ý KHÔNG gộp với `_zone_dinh_*` (xem `_quet_zone_vao_lenh_short`): các
+    # hàm LONG có test khoá đọc tên/thân (TD-0207). Ba hàm dưới đây lặp đúng
+    # từng bước, chỉ đảo hướng: zone ĐÁY thay zone đỉnh, DƯỚI `p_avg` thay TRÊN.
+
+    def _zone_day_duoi(self, pair: str, current_time: datetime, p_avg: float) -> list[float]:
+        """Giá các zone ĐÁY đã xác nhận, nằm DƯỚI `p_avg` — đích TP1 của SHORT.
+        Đi qua `_df_4h()` (lát cắt `date + 4h ≤ now`, chống lookahead — TD-0170);
+        KHÔNG lọc tuổi (`DR-D4-06` §2.1 áp cho zone đối diện ở CẢ HAI hướng)."""
+        gia = [g for _, g in self._zone_day_da_xac_nhan(pair, current_time)]
+        duoi = [float(g) for g in gia if float(g) < p_avg]
+        logger.info(
+            "TP_ZONE_UNGVIEN_SHORT %s xac_nhan=%d duoi_p_avg=%d p_avg=%.8f",
+            pair, len(gia), len(duoi), p_avg,
+        )
+        return duoi
+
+    def _zone_day_da_xac_nhan(self, pair: str, current_time: datetime) -> list[tuple]:
+        """(ngày xác nhận, giá mép trên) của MỌI zone đáy đã xác nhận tới
+        `current_time` — TÍNH LẠI trên khung 4H ĐÃ CẮT bằng `_quet_zone_day`, cùng
+        lý do `_zone_dinh_da_xac_nhan` (TD-0207): không đọc cột đã merge vì
+        `ffill` lặp giá và làm tuổi zone ≈ 0 ở mọi lệnh."""
+        df = self._df_4h(pair, current_time)
+        if len(df) <= K_XAC_NHAN:
+            return []
+        thap, cao, dong, volume = (df[c].tolist() for c in ("low", "high", "close", "volume"))
+        atr = talib.ATR(
+            np.asarray(cao, dtype=float), np.asarray(thap, dtype=float),
+            np.asarray(dong, dtype=float), timeperiod=14,
+        )
+        gia = self._quet_zone_day(cao, thap, dong, volume, atr, self._nguong_zss)
+        ngay = df["date"].tolist()
+        return [(ngay[j], g) for j, g in enumerate(gia) if not math.isnan(g)]
+
+    def _tuoi_zone_day_nen(self, pair: str, current_time: datetime, gia_zone: float) -> int | None:
+        """Tuổi (nến 4H) của zone ĐÁY mang giá `gia_zone` tại `current_time` —
+        gương của `_tuoi_zone_dinh_nen`, `None` khi không tra được (N6: không
+        bịa 0). `DR-D4-06` §2.3 đòi tuổi vào Decision Log cho MỌI lệnh
+        TP-theo-zone, cả hai hướng."""
+        khop = next(
+            (ngay for ngay, g in self._zone_day_da_xac_nhan(pair, current_time) if g == gia_zone),
+            None,
+        )
+        if khop is None:
+            return None
+        return int((current_time - khop).total_seconds() // (4 * 3600))
+
+    def _zss_hien_tai(self, pair: str, tag: dict, current_time: datetime, loai: str = "day") -> float:
+        """ZSS tính LẠI cho cùng zone tại nến 4H ĐÃ ĐÓNG gần nhất (DG5).
+
+        `loai="day"` (mặc định — LONG, code cũ) đọc `thap`; `loai="dinh"`
+        (TD-0321, SHORT) đọc `cao` cho `touch_count`."""
         df = self._df_4h(pair, current_time)
         ts = (df["date"].astype("int64") // 10**6).tolist()
         try:
@@ -1432,7 +1873,11 @@ class ZoneAbsorption(IStrategy):
         comp = compression(cao, thap, dong, i_hinh_thanh=i_swing, i_hien_tai=t)
         if v_r is None or comp is None:
             return float("nan")  # dg5 fail-closed với NaN (TrancheGateError) — không bịa số
-        tc = touch_count(thap, dong, tag["zl"], tag["zh"], i_swing=i_swing, t=t, loai="day")
+        tc = (
+            touch_count(cao, dong, tag["zl"], tag["zh"], i_swing=i_swing, t=t, loai="dinh")
+            if loai == "dinh"
+            else touch_count(thap, dong, tag["zl"], tag["zh"], i_swing=i_swing, t=t, loai="day")
+        )
         return zss(touch=tc, ty_le_volume=v_r, do_nen=comp)
 
     def _vi_the_mo_khac(self, pair: str) -> list:
