@@ -11,29 +11,31 @@ TD-0145 nối phần ĐIỀU PHỐI: `wfo.orchestrator.chay_wfo()` gộp
 bằng NHÂN). Khối guard/audit/seal ở đầu `main()` (TD-0016/0057/0072) KHÔNG
 bị đụng tới — phần mới chỉ nằm SAU nó.
 
-🔴 **Cái CÒN THIẾU, nói rõ để không ai tưởng E2 đã chạy được:** chưa có bộ
-chạy backtest thật ở bất kỳ đâu trong repo — E1 `run_backtest.py` cũng còn
-`NotImplementedError` (việc của Khối 2/3). Vì vậy `main()` in ra SƠ ĐỒ FOLD
-(sinh từ cấu hình, không chạm một byte dữ liệu thị trường nào) rồi dừng với
-`EXIT_CHUA_CO_BO_CHAY`. Đó là một cổng có thông báo, không phải một
-traceback — và nó chứng minh đường nối cấu hình → fold đã sống.
+🔴 **Trạng thái 18/09/2026, nói rõ để không ai tưởng E2 đã chạy được:** E2
+chưa nối bộ chạy nào — TD-0286 (*"Bộ chạy D9 trên E2"*) ⏸ theo `DR-IQ-01` §1.
+`main()` in SƠ ĐỒ FOLD (sinh từ cấu hình, không chạm một byte dữ liệu thị trường)
+rồi dừng với `EXIT_CHUA_CO_BO_CHAY` — một cổng có thông báo, không phải traceback.
+Lõi bộ chạy dùng chung ĐÃ có (`tool_d.bo_chay`, E1 dùng từ TD-0313).
 
-🔴 **Chỗ nối là `chay_mot_fold`; ĐẶT CHỖ thì KHÔNG nằm ở đó** (`DR-BC-01` §2,
-18/09/2026). `main()` của entrypoint đặt chỗ **MỘT** suất cho cả cấu hình rồi
-truyền xuống một `GiayPhepChay`; `chay_mot_fold` chỉ **chứng minh** đã có đặt
-chỗ, không tạo ra nó.
+🔑 **Khi nối lại TD-0286, đường nối là `tool_d.wfo.lenh`, KHÔNG phải `chay_wfo`.**
+Hai quyết định đã chốt, cùng chiều:
+  • `DR-D9-01` §5 + §5.1 (17/09/2026): mỗi cấu hình chạy **MỘT** lượt `[T1, T2)`,
+    cắt lát theo `open_date` — *"Một cấu hình = một tập lệnh"*. D9 KHÔNG đi qua
+    `chay_wfo`: tầng (b) của `kiem_pham_vi_du_lieu` đòi `observed_end` của TỪNG
+    fold, một lượt toàn cửa sổ chỉ qua được bằng cách KHAI ngày giả.
+  • `DR-BC-01` §2 (18/09/2026): `main()` đặt chỗ **MỘT** suất cho cả cấu hình rồi
+    truyền `GiayPhepChay` xuống; lõi chỉ CHỨNG MINH đã có đặt chỗ, không tạo ra nó.
+    Lý do từ chối tự đặt chỗ ở tầng dưới — *không biết `budget_line` nào, đoán hộ
+    là cách chắc chắn tiêu sai ngân sách* — giữ nguyên.
+`chay_wfo` (thiết kế mỗi-fold-một-backtest, `DR-D3-01`) giữ nguyên, có test bảo vệ,
+nhưng **hiện chưa có cổng nào dùng** (MT-61 (b)).
 
-⚠️ Chữ cũ ở đây nói *"`chay_mot_fold` phải tự gọi `reserve()`"* — đã sửa, giữ
-lại câu này để ai đọc commit cũ không tưởng có hai luật. Hai lý do đổi:
-  • **Kế toán:** mọi chỗ khác đếm theo CẤU HÌNH (`DR-D4-10` §2.1: 9 arm = 9 suất;
-    `DR-D9-01` §5). Một suất mỗi fold ⇒ một lượt WFO 3 fold ăn **3 suất** trong 114.
-  • **Cơ khí:** `chay_wfo()` băm dữ liệu ở `orchestrator.py:138` — TRƯỚC vòng lặp
-    fold. Đặt chỗ bên trong `chay_mot_fold` nghĩa là việc đọc dữ liệu để băm xảy ra
-    trước đặt chỗ đầu tiên, tức chính thứ tự `L-Z52` cấm. Cách đọc cũ **tự mâu
-    thuẫn** với chốt mà nó định phục vụ.
-
-Phần KHÔNG đổi: lý do `orchestrator` từ chối tự đặt chỗ — *nó không biết
-`budget_line` nào, đoán hộ là cách chắc chắn tiêu sai ngân sách* — vẫn nguyên vẹn.
+⚠️ **Đính chính tại chỗ (MT-61), giữ chữ cũ để ai đọc commit cũ không tưởng có hai
+luật.** Bản trước viết: *"chưa có bộ chạy backtest thật ở bất kỳ đâu trong repo —
+E1 `run_backtest.py` cũng còn `NotImplementedError`"* (sai từ `d2d3549`); và *"Chỗ
+nối là `chay_mot_fold`"* (chữ TD-0145, lặp lại ở `d14f54c` — bản đó sửa theo
+`DR-BC-01` §2 mà **không đối chiếu `DR-D9-01` §5.1**). Bản trước nữa còn viết
+*"`chay_mot_fold` phải tự gọi `reserve()`"* — trái `DR-BC-01` §2.
 """
 
 from __future__ import annotations
@@ -94,11 +96,11 @@ def in_so_do_fold() -> str:
         f"  sàn số lệnh mỗi fold: {san} — dưới sàn thì chỉ số ghi `unreadable`,",
         "  KHÔNG ghi số (DR-D3-01 §5.2, N6).",
         "",
-        "🛑 CHƯA CHẠY ĐƯỢC: không có bộ chạy backtest thật (E1 cũng chưa có).",
-        "   Phần điều phối đã sẵn sàng ở `tool_d.wfo.orchestrator.chay_wfo()`;",
-        "   thiếu đúng một mảnh là hàm chạy backtest cho một cửa sổ thời gian.",
-        "   Khi viết mảnh đó: nó phải gọi `TrialLedger.reserve()` TRƯỚC khi",
-        "   chạm dữ liệu (L-Z52).",
+        "🛑 CHƯA CHẠY ĐƯỢC: E2 chưa nối bộ chạy (TD-0286 ⏸ theo DR-IQ-01 §1).",
+        "   Lõi bộ chạy đã có (`tool_d.bo_chay`, E1 dùng từ TD-0313). D9 nối qua",
+        "   `tool_d.wfo.lenh` — MỘT lượt mỗi cấu hình rồi cắt lát (DR-D9-01 §5.1),",
+        "   KHÔNG qua `chay_wfo`. Đặt chỗ MỘT suất cho cả cấu hình ở main(),",
+        "   TRƯỚC khi chạm dữ liệu (L-Z52, DR-BC-01 §2).",
     ]
     return "\n".join(dong)
 

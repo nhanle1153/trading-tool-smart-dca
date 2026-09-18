@@ -8,6 +8,13 @@ Module này nối ba mảnh đã có, mỗi mảnh giữ nguyên trách nhiệm 
     cache.doc_cache()       -> HIT / MISS / STALE theo vân tay (§0d.3)
     equity.kiem_can_doi_fold() + ghep_duong_von()  -> L-Z47, ghép bằng NHÂN
 
+📌 **Người dùng hiện tại: CHƯA CÓ** (MT-61 (b), chủ dự án chốt 18/09/2026). Sau
+   `DR-D9-01` §5.1, D9 — cổng WFO duy nhất đã chốt — chạy MỘT lượt mỗi cấu hình
+   rồi cắt lát bằng `wfo/lenh.py`, KHÔNG qua module này. Module này GIỮ NGUYÊN,
+   không xoá: nó đúng cho thiết kế mỗi-fold-một-backtest (`DR-D3-01`), có test
+   bảo vệ, và giữ thì 0 chi phí. Ai định nối nó vào một cổng phải chỉ ra cổng nào
+   trước — đừng nối vì "nó có sẵn".
+
 🔑 **Bộ chạy backtest được TIÊM VÀO, không gọi thẳng.** `chay_mot_fold` là
    tham số bắt buộc. Hai lý do, và lý do thứ hai mới là lý do thật:
 
