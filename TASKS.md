@@ -844,6 +844,31 @@
 
 ---
 
+## Khối 28 — Dựng đường SHORT cho `ZoneAbsorption`, công tắc TẮT (mở 18/09/2026, thi hành `DR-SHORT-01`)
+
+> **Chủ dự án chốt 18/09/2026 (phiên mã `aab049b6`):** *"triển khai Short đồng thời"* hiểu là **chỉ DỰNG code**,
+> `tier_a.enable_short` **giữ `false`**. Đích vận hành: **một bot, cả hai chiều** (Long ở zone đáy, Short ở zone
+> đỉnh, chung `E_D`). Toàn khối **0 suất trial**, không đo trên CALIB/WFO/LOCKBOX/EXPLORE, lockbox nguyên.
+>
+> 🔴 **Không gỡ ⏸ nào của khâu ĐO.** `DR-HUONG-01` §3 (điều kiện mở lại D) và `DR-D4-01` §2b (DG7 riêng,
+> Δ_R(SHORT) `ok`, ≥ 9 suất) giữ nguyên từng chữ; `L-Z56` không sửa. Bẫy *"nhìn kết quả Long rồi chọn Short"*
+> nằm ở khâu đo, không ở khâu viết code — `DR-SHORT-01` khai thẳng nó được quyết SAU khi đã thấy kết quả Long.
+>
+> 🔑 **Bất biến của cả khối:** đường Long cho **tập lệnh y hệt từng lệnh** trên mọi fixture hiện có;
+> `ZoneAbsorptionMinimal.py` (fixture `L-Z49`) và `tests/lock/test_lz56_*` không đổi một byte.
+
+| Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
+|---|---|---|---|---|
+| TD-0318 | 🚪 **`DR-SHORT-01`** — tách phương án D của `DR-HUONG-01` §3 thành *D-dựng* (✅ 0 trial) và *D-đo* (⏸, điều kiện giữ nguyên); chốt đích một bot hai chiều + hệ quả futures one-way | 🔒 | — | Commit **RIÊNG và TRƯỚC** mọi dòng mã (tiền lệ `DR-D4-08`, `DR-BC-01`). Khai: quyết SAU khi thấy kết quả Long; danh sách KHÔNG làm; điều kiện đảo ngược (Long lệch một lệnh ⇒ dừng) |
+| TD-0319 | **Module thuần theo hướng** — `trade_plan.py` (`sl_kieu_zone`/`tinh_ke_hoach`), `arm_switches.py` (`sl_neo_atr`, kiểm `sl` vs `p_avg`), `take_profit.py` (`tp1_tu_zone`/`chon_muc_tp1`/`tp2_muc_trail`); tham số `huong` mặc định `"long"` | 🔓 | TD-0318 | Mọi test cũ xanh **không sửa khẳng định nào**; test GƯƠNG: lật giá `x → K − x` ⇒ kế hoạch Short = gương kế hoạch Long (p1/p2/p3/sl/r_eff/TP1/TP2); `KeHoachTranche` không thêm trường |
+| TD-0320 | **Hai lỗi lộ ra khi soát đường Short** — (a) `entry_confirmation.py:379`: `loai="dinh"` phải tìm đỉnh CAO nhất cụm, đang tìm thấp nhất (DR-012 Hạng 1; đường Long chỉ gọi `loai="day"` ⇒ không ảnh hưởng Long); (b) DG6-D đọc `tier_b.funding_rate_pct` qua `resolve()` **chia 100**, bỏ hằng cứng `NGUONG_FUNDING_D` | 🔓 | TD-0318 | Test bắt đúng đỉnh cụm + kiểm có răng; test ghim đơn vị %→tỉ lệ; ghi chú vào research-log rằng mốc phân kỳ của phễu `do_short_pheu_tin_hieu_explore.json` bị ảnh hưởng — **KHÔNG chạy lại phễu** (đo = D-đo) |
+| TD-0321 | **Đường Short trong `ZoneAbsorption.py`** — quét zone một lõi tham số `loai`; §3.3b gương (kể cả chặn đóng-xuyên-SL TD-0294); `enter_short` lọc `DOWN`; cả hai chiều gated bởi `tier_a.enable_long/enable_short` (N4) + chốt kép ở `confirm_trade_entry`; `can_short = True`; tag thêm khoá hướng CHỈ cho Short; đảo mọi so sánh callback theo `trade.is_short`; DG1–DG6 nhận `huong` thật; DG6-D chỉ nối cho Short | 🔓 | TD-0319, TD-0320 | Hồi quy Long: `test_td0187/0189/0193/0237/0294` + L-Z49 xanh không sửa; test so tập lệnh Long trước/sau từng lệnh. Backtest fixture Short (dữ liệu tổng hợp lật, cấu hình bật Short trong `tmp_path`): có lệnh, tranche bơm khi giá LÊN, SL trên, TP dưới, DG6-D nổ; kiểm có răng. YAML thật ⇒ 0 lệnh Short (test ghim nêu `DR-SHORT-01`). Full suite Docker xanh; từ điển sinh lại nếu lệch cột "nơi đọc" (N13) |
+| TD-0322 | *(tuỳ)* **Bộ đo DR-015 sẵn hướng Short, KHÔNG chạy** — `buoc1_lech_tranche.py` (`p3` theo hướng), `buoc3_doi_chung_z0.py` (bỏ ghi cứng `long`) | 🔓 | TD-0321 | Test bằng fixture; artifact niêm phong D3.5 không đổi byte; `kiem_cong_d35()` vẫn xanh |
+
+**Đặt chỗ mã (N12 mục 7c):** `TD-0318`…`TD-0322` + `DR-SHORT-01`, commit này, `Phien: aab049b6`.
+
+---
+
 ## Việc đã biết là sẽ có, chưa mở
 
 | Giai đoạn | Nội dung | Chặn bởi |
