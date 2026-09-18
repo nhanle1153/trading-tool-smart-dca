@@ -283,11 +283,15 @@ với dòng phiên kia đang gõ dở cùng lúc — đã gây ít nhất 3 lầ
       lại. Tra ngược một tên cũ ra mã: `grep -l "This session is trading-tool-smart-dca-<xx> "
       ~/.claude/projects/c--Trading-Tool-Smart-DCA/*.jsonl`.
    b. **Commit khoá / hoàn tất / đặt chỗ mang dòng chữ ký `Phien: <mã phiên>`** (đặt trước
-      `Co-Authored-By`). Ai giữ `TD-xxxx` tra được bằng máy: `git log -S"TD-xxxx" -- TASKS.md` → commit
-      khoá → dòng `Phien:`.
+      `Co-Authored-By`). Ai giữ `TD-xxxx` tra được bằng máy:
+      `git log -1 -G"^\| TD-xxxx \|.*\| 🔒 \|" -- TASKS.md` → commit gần nhất chạm dòng đang khoá → dòng
+      `Phien:`. 🔴 *Đính chính cùng ngày:* bản đầu ghi `git log -S"TD-xxxx"` — **SAI**: `-S` chỉ bắt commit
+      làm đổi **số lần xuất hiện** của chuỗi, mà commit khoá chỉ đổi 🔓 → 🔒 nên mã việc không đổi số lần
+      ⇒ `-S` bỏ qua đúng commit cần tìm (đo trên TD-0306: `-S` trả `96f1b78`, `-G` trả commit khoá `0069ec8`).
       ⚠️ **Chỉ áp cho commit từ 18/09/2026.** Commit cũ **không** có dòng `Phien:` vì quy ước chưa tồn
       tại — **thiếu dòng `Phien:` KHÔNG phải bằng chứng khoá mồ côi**; với commit cũ, tra theo mã việc
-      (`git log -S"TD-xxxx"`) rồi hỏi theo mã việc (phiên mã `95c7a7bf` nêu).
+      (cùng lệnh `-G` ở trên; nó vẫn tìm ra commit khoá cũ, chỉ không có dòng `Phien:` để đọc) rồi hỏi theo
+      mã việc (phiên mã `95c7a7bf` nêu).
    c. **Đặt chỗ mã `TD`/`DR`/`MT` bằng COMMIT, không bằng tin nhắn:** ghi mã dự kiến vào `TASKS.md` ngay
       trong commit khoá (tiền lệ: Khối 26 đặt chỗ `DR-LOCKBOX-01` như vậy). **Ngay trước khi ghi**, chạy lại
       `git log --oneline -10` và tra mã cuối đã cấp — trạng thái đĩa lúc lập kế hoạch đã cũ. Vẫn nhắn để
