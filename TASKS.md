@@ -883,7 +883,7 @@
 
 | Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
 |---|---|---|---|---|
-| TD-0325 | 🚪 **`DR-IQ-02`** — sổ ý tưởng là nhật ký sự kiện; sự kiện `VOIDED` (điều kiện: đang `SELECTED`, 0 trial mang `hypothesis_slot`, tối đa 1 lần/mã, trích DR có thật); trường nộp bất biến; `selected_at`/`voided_at` do máy đóng dấu; `TD-0120` siết thành ≤ `HAN_NGACH_CHON` | 🔒 | — | DR commit RIÊNG và TRƯỚC mọi dòng code của TD-0326 |
+| TD-0325 | 🚪 **`DR-IQ-02`** — sổ ý tưởng là nhật ký sự kiện; sự kiện `VOIDED` (điều kiện: đang `SELECTED`, 0 trial mang `hypothesis_slot`, tối đa 1 lần/mã, trích DR có thật); trường nộp bất biến; `selected_at`/`voided_at` do máy đóng dấu; `TD-0120` siết thành ≤ `HAN_NGACH_CHON` | ✅ `0764543` | — | DR commit RIÊNG và TRƯỚC mọi dòng code của TD-0326 |
 | TD-0326 | **Thi hành `DR-IQ-02`** — schema (`VOIDED`, `voided_at`, `void_reason`); `idea_queue.py` (dựng trạng thái, `chon_y_tuong()`, `huy_chon()`, đếm trần nhập theo dòng đầu); `audit_checks.py` (TD-0120/0119/L-Z17 chỉ tính chọn hiệu lực, TD-0126 bỏ qua cùng mã, phép kiểm mới `TD-0326`); E6 `--chon-y-tuong`/`--huy-chon`; đính chính spec §9c.7.3 | 🔒 | TD-0325 | Test khoá mới gồm ca **đường thật** QUEUED→SELECTED xanh; sổ mẫu cũ chỉ CHÈN thêm dòng QUEUED, không nới khẳng định nào; phá thật 4 chỗ đều đỏ đúng test; full suite Docker 0 failed |
 | TD-0327 | **Áp cho `IQ-0002`** — chạy thử `--huy-chon` trên bản sao sổ, rồi ghi thật | 🔒 | TD-0326 | `trial_ledger_audit.py` exit 0 trên sổ thật; `TD-0120` xanh nhưng bằng chứng vẫn nêu dòng đã huỷ; diff sổ đúng 1 dòng |
 
