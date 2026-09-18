@@ -333,7 +333,7 @@ ca `idea_queue` đỏ ~2,5 ngày không ai nhận, 14–16/09).
 
 ## TRẠNG THÁI HIỆN TẠI
 
-**Cập nhật lần cuối: 09/09/2026**
+**Cập nhật lần cuối: 18/09/2026**
 
 > 🔴 **18/09/2026 — đọc trước (N12 mục 7):** mọi câu *"phiên X giữ / nhận / đang làm Y"* trong mục này là
 > **LỊCH SỬ tại ngày ghi**, không phải phân việc hiện tại — tên phiên đổi sau mỗi lần khởi động lại. Chủ
@@ -342,6 +342,42 @@ ca `idea_queue` đỏ ~2,5 ngày không ai nhận, 14–16/09).
 > ⚠️ **Hai (nay ba) phiên Claude Code cùng làm việc song song trên repo này** (chủ dự án xác nhận).
 > Mục này có thể lệch nhịp vài phút so với phiên kia — luôn `git log --oneline` +
 > đọc lại `TASKS.md` (cột 🔓/🔒/✅) trước khi chọn việc tiếp theo, đừng chỉ tin mục này.
+
+**Đang ở (cập nhật 18/09/2026, phiên mã `0074a97b` — bản tổng hợp tiến độ, 0 trial, không đổi trạng thái
+việc nào):** đọc từ đĩa (`TASKS.md`, `runtime_state.json`, `git tag`, `docs/decisions/`), không từ trí nhớ.
+
+- **Cổng đã đóng: 5** — D0-PRE · D1 · D2 · D3 · D3.5 (tag + khoá `*_complete`). **D4 chưa đóng.** Trial
+  **4/114** (B0), sổ 13 dòng. Lockbox **chưa chạm**.
+- ⏸ **Zone Absorption LONG tạm dừng tiêu suất** (`DR-IQ-01`, 17/09): `Z0-T1` EXPLORE mean **−0,0015 R**,
+  KTC95 **[−0,177; +0,175]**, cần **0,403** để PASS ⇒ luật 4 `DR-SONG-CON-01`. Đọc đúng: *không có bằng
+  chứng lợi thế*, KHÔNG phải *có bằng chứng thua* — **không tuyên bố L3**.
+- ✅ **Hướng chính = ý tưởng MỚI qua suất (d)** (`DR-HUONG-01`, 18/09): mở 01/10/2026, hạn ngạch 1, hết hạn
+  31/12/2026. Idea Queue: `IQ-0001` (loại khỏi (d)) · `IQ-0002` QUEUED (18/09). **Phiên IDEA bịt mắt chưa
+  mở — việc của chủ dự án.** Dữ liệu sau `T3` mặc định tính cho ZA LONG, nhường khi có ý tưởng được CHỌN
+  (`MT-62`).
+- 🔴 **SHORT: CHƯA triển khai, CỐ Ý không song song với Long.** `ZoneAbsorption.py:228` `can_short = False`,
+  `tool_d_config.yaml:29` `enable_short: false`; chỉ có phễu **tín hiệu** EXPLORE
+  (`do_short_pheu_tin_hieu_explore.json`), 0 lệnh. Chốt 17/09: **Long-only tới live**, Short là chu trình
+  riêng với lockbox MỚI (`TD-0276`). `DR-HUONG-01` §3 xếp ZA SHORT ⏸; điều kiện mở lại viết TRƯỚC: ý tưởng
+  (d) có kết cục tại cổng **và** DR viết trước khi đo tách lợi thế khỏi xu hướng giai đoạn. *"Long thất bại
+  nên thử Short"* KHÔNG phải điều kiện. Điều kiện kỹ thuật `DR-D4-01` (DG7 riêng, Δ_R(SHORT), ≥ 9 suất) +
+  `L-Z56` giữ nguyên.
+- ❌ **Khối 17 FreqAI huỷ** (TD-0216…0225, `DR-FAI-01`).
+
+**Việc còn mở (34 dòng chưa ✅ trong `TASKS.md`):**
+- ▶ **Làm được ngay (hạ tầng dùng chung):** `TD-0314` (nối `cho_thieu_khung_chi_tiet()` vào lõi bộ chạy,
+  phụ thuộc đã ✅) · `TD-0277` (nợ trước go-live — cần chủ dự án quyết từng MT).
+- ⏸ **Chặn bởi `DR-IQ-01`/`DR-HUONG-01` (riêng ZA LONG):** D4 TD-0184/0185/0186/0227 · D5 TD-0251/0255/
+  0257/0258 · D6 TD-0261…0267 · D7 TD-0268…0273 · D8 TD-0274/0275/0276/0279 · D9 TD-0286/0287/0288 +
+  TD-0289 · lockbox đoạn 2 TD-0302/0308/0310.
+- ⏳ **Chờ chủ dự án (`back-end-note.md` mục 7):** 🔴 MT-30 · MT-31 · MT-33 · MT-44 — 🟡 MT-26 câu 2 · MT-27 ·
+  MT-28 · MT-46 · MT-55 · MT-58 · MT-64 · OQ-10.
+- **Chưa mở:** D9.5 (lockbox một lần) · D10 testnet → D11 dry-run → D12 live vốn nhỏ (chuẩn bị Khối 18 đã ✅).
+
+**Xong 17–18/09:** TD-0290…0295 · TD-0297…0301 · TD-0303…0307 · TD-0309 · TD-0311…0313 · TD-0315 · TD-0316;
+MT-59/60/61/62/63 đã giải (`DR-LOCKBOX-01`, `DR-LOCKBOX-02`, `DR-BC-01`, `DR-D1-05`).
+
+*(Đoạn "Đang ở" cũ bên dưới giữ nguyên làm lịch sử.)*
 
 **Đang ở (cập nhật 09/09/2026 khuya, phiên `be` — TD-0193 ĐÓNG, TD-0184 BỊ CHẶN BỞI SỐ MẪU):**
 ✅ **TD-0193 xong** — `DR-D4-08` (`b50a175`, P1 + sáu diễn giải, commit TRƯỚC code) → `99114fb`
