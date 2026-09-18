@@ -94,3 +94,36 @@ Short đã bắt được một lỗi thật (§5).
 Ghi một mục `MT` vào `back-end-note.md` §7 trỏ về DR này (va chạm với `DR-HUONG-01` §3, giải bằng tách
 D-dựng/D-đo) — chờ lệnh *"chuẩn hóa và lưu"* theo N9, không ghi ở đây. Nối một dòng đính chính trỏ về DR này
 vào `DR-HUONG-01` §2 dòng D — cùng đợt đó.
+
+> 📌 Mã `MT-65` dự kiến ở bản nháp kế hoạch đã bị phiên khác chiếm (IQ-0002, commit `0c1ca38`) trước khi tôi kịp
+> ghi — đĩa là trọng tài (N12 mục 7). Mục `MT` của DR này sẽ lấy mã kế tiếp còn trống **lúc ghi**, không phải `MT-66`
+> đã nhắc trong chat.
+
+## 9. ĐÍNH CHÍNH THI HÀNH — 18/09/2026, sau khi TD-0319…TD-0321 xong
+
+Chữ cũ ở §5 giữ nguyên. Thi hành lệch chữ ở **hai điểm**, khai để không ai đọc §5 thành "đã làm đúng như viết":
+
+1. **`TD-0321` KHÔNG gộp một lõi tham số `loai`** (§5 dòng `TD-0321` nói *"quét zone một lõi tham số `loai`"*).
+   Đường Short là hàm/cột `_short` **cộng thêm song song**, không sửa thân hàm Long. Lý do đo được, không phải
+   ngại việc: nhiều lock test đọc **AST/thân hàm theo tên** (`test_td0193` — allow-list cột phản thực và
+   `count("xac_nhan[c] = True") == 1`; `test_td0207` — `_quet_zone_dinh` phải nằm trong thân
+   `_zone_dinh_da_xac_nhan`), nên gộp buộc phải **sửa khẳng định** của chúng — đúng thứ điều kiện đảo ngược ở §7
+   cấm. Cái giá là trùng lặp có ý thức; gộp lại là **`TD-0324`**, không ưu tiên.
+2. **DG6-D CHƯA nối** (§5 nói *"DG1–DG6 nhận hướng thật"*). DG1–DG5 và DG6-A/B đã nhận `huong` thật; **DG6-D**
+   (short squeeze) cần một nguồn mà chiến lược chưa có — funding rate 8h gần nhất dưới dạng dữ liệu cắt an
+   toàn theo thời gian — và dựng nguồn đó là việc riêng (**`TD-0323`**). Chỗ gọi vẫn `d=False` cố định như trước
+   TD-0321, khai tại chỗ trong mã. DG6 chỉ chạy ở arm `Z3b`; tổ hợp `Z3b` + Short **chưa có test backtest**.
+
+**Điều kiện đảo ngược (§7) đã được kiểm, không chỉ hứa:** chạy backtest THẬT trên fixture Long của `test_td0187`
+với chiến lược ở HEAD (trước TD-0321) và bản sau, một mã và hai mã — tập lệnh **giống hệt từng trường**. Không
+test khoá nào phải sửa khẳng định. Bằng chứng: commit `39946c1`.
+
+🔑 **Hai lỗi thật bắt được khi dựng bằng chứng Short** (chi tiết ở docstring `test_td0321_…`): (i) Freqtrade
+gán `enter_tag = ""` cho cả cột trước `populate_entry_trend` — bản đầu không bao giờ ghi tag Short, lệnh bị
+`strategy_safe_wrapper` nuốt, **0 lệnh với rc = 0**; (ii) một phép lật gương giá tuỳ ý làm tỉ lệ `R_eff` phình
+~4 lần, tranche 1 rơi dưới sàn min-notional — lỗi của dữ liệu thử, không phải chiến lược. Cả hai đều là dạng
+"trông như chạy được mà thực ra 0 lệnh" mà dự án đã dặn cảnh giác.
+
+⚠️ **Phạm vi bằng chứng — đừng đọc quá tay:** tất cả chạy trên chuỗi giá TỔNG HỢP. Chúng chứng minh đường Short
+được **nối đúng và đủ**, không chứng minh Short có lợi thế, càng không chứng minh Δ_R(SHORT), DG7 riêng hay số
+lệnh/năm. Khâu đo vẫn ⏸ theo `DR-HUONG-01` §3 và `DR-D4-01` §2b.
