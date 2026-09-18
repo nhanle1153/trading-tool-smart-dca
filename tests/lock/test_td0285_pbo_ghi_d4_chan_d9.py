@@ -47,6 +47,7 @@ def _chi_so(**sua: Measured[float]) -> dict[str, Measured[float]]:
         "skewness_diff_vs_z1": Measured.ok(0.0),
         "trades_per_year": Measured.ok(300.0),
         "tp_fallback_ratio": Measured.ok(0.1),
+        "time_stop_ratio": Measured.ok(0.10),  # TD-0277 — giữa dải 5–25%
     }
     tot.update(sua)
     return tot

@@ -4257,7 +4257,7 @@ Thiết kế trước tách hai câu hỏi (zone-anchor, DCA). Giờ thêm câu 
 Áp cho CẤU HÌNH TỐT NHẤT, bất kể nó là Z0, Z3 hay Z3b.
 Đây là câu hỏi "hệ thống có đủ tốt để đem tiền thật ra không".
 
-   ✅ DSR-adjusted expectancy ≥ ......   🔴 PHẢI ĐIỀN SỐ Ở D0-PRE
+   ✅ DSR-adjusted expectancy ≥ ......   🔴 PHẢI ĐIỀN SỐ Ở D0-PRE   ➜ ✅ ĐÃ ĐIỀN 0,10 R_realized (DR-D0PRE-03, src/tool_d/gates/thresholds.py:24 — đính chính tại chỗ 18/09/2026, MT-28/TD-0277; nối cùng dòng để không dịch số dòng spec)
       🆕 v7: cho tới khi điền, giá trị trong code = +inf (L-Z35).
       Gate này KHÔNG THỂ pass bằng cách quên điền.
       (v5 để trống ô này — đó là lý do GATE chưa từng là một phép

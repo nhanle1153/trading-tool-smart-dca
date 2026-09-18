@@ -50,6 +50,10 @@ TIEU_CHI_KHAI: tuple[str, ...] = (
     "skewness_diff_vs_z1",
     "trades_per_year",
     "tp_fallback_ratio",
+    # TD-0277 (MT-46): dải TIME_STOP 5–25% nay là tiêu chí CHẶN của Nhánh 1.
+    # Khai ở đây để "chưa đo" rơi vào INCONCLUSIVE — thiếu khai thì
+    # `evaluate_branch1` sẽ FAIL nó như đã đo mà trượt, tức FAIL GIẢ.
+    "time_stop_ratio",
 )
 
 

@@ -1,0 +1,28 @@
+{
+  "viec": "TD-0277 (MT-46 muc 4) — ra MOT LAN 12 loi khai frozen_rationale cua tier_b",
+  "ngay": "2026-09-18",
+  "phien": "bf636766",
+  "chi_phi": "0 trial — chi doc code + spec, khong chay backtest, khong cham du lieu",
+  "phuong_phap": "Doi chieu tung khang dinh trong frozen_rationale voi (a) dong spec duoc trich, (b) cho doc that 'tier_b.<khoa>' trong src/tool_d + user_data/strategies (dem bang AST, khong tinh docstring — src/tool_d/ledger/audit_checks.py dem_cho_doc_tier_b), (c) artifact do da co (td0246-tham-so-nao-ganh-viec.json). 4 muc da kiem o TD-0246 (dg7_funding_frac, max_hold_bars_4h, dg6d_retrace_frac, funding_rate_pct) duoc kiem lai cung phep dem.",
+  "tom_tat": {
+    "dung": 8,
+    "dung_luc_viet_nay_thieu_pham_vi": 1,
+    "sai": 3,
+    "co_che_chung_cua_3_sai": "'chua co duong chay nao cham toi' dung luc viet, het dung khi code noi vao sau, khong ai quay lai sua"
+  },
+  "bang": {
+    "v_min":                 {"ket_luan": "DUNG", "trich_spec": "tool-d-smart-dca.md:1311", "cho_doc": ["user_data/strategies/ZoneAbsorption.py:282"]},
+    "zss_threshold":         {"ket_luan": "DUNG", "trich_spec": "tool-d-smart-dca.md:750",  "cho_doc": ["user_data/strategies/ZoneAbsorption.py:277", "user_data/strategies/ZoneAbsorptionMinimal.py:139"]},
+    "buf_sl_atr":            {"ket_luan": "DUNG", "trich_spec": "tool-d-smart-dca.md:980",  "cho_doc": ["user_data/strategies/ZoneAbsorption.py:278", "user_data/strategies/ZoneAbsorptionMinimal.py:140"]},
+    "wick_close_upper_frac": {"ket_luan": "DUNG", "trich_spec": "tool-d-smart-dca.md:1080", "cho_doc": ["user_data/strategies/ZoneAbsorption.py:283"]},
+    "dg6a_atr_ratio":        {"ket_luan": "DUNG", "trich_spec": "tool-d-smart-dca.md:1361", "cho_doc": ["user_data/strategies/ZoneAbsorption.py:279", "user_data/strategies/ZoneAbsorptionMinimal.py:141"]},
+    "max_hold_bars_4h":      {"ket_luan": "DUNG", "trich_spec": "tool-d-smart-dca.md:1476", "cho_doc": ["user_data/strategies/ZoneAbsorption.py:1168"], "ghi_chu": "da kiem o TD-0246"},
+    "funding_rate_pct":      {"ket_luan": "DUNG", "trich_spec": "tool-d-smart-dca.md:1384", "cho_doc": [], "ghi_chu": "da kiem o TD-0246; van 0 cho doc sau DR-SHORT-01 (f6b50b4)"},
+    "dg6d_retrace_frac":     {"ket_luan": "DUNG", "trich_spec": "tool-d-smart-dca.md:1386", "cho_doc": [], "ghi_chu": "da kiem o TD-0246; short-only that (dieu_kien_d() tra False khi huong != 'short'; spec :1160); van 0 cho doc sau DR-SHORT-01 (f6b50b4) — loi khai 'chua co duong chay nao cham toi' se DO khi co nguoi noi, lop canh TD-0277 bat"},
+    "dg4_bars_1h":           {"ket_luan": "DUNG_LUC_VIET_NAY_THIEU_PHAM_VI", "trich_spec": "tool-d-smart-dca.md:1346", "cho_doc": ["user_data/strategies/ZoneAbsorption.py:1053"], "ghi_chu": "'dang chan that 17/24 (71%)' do tren lenh DCA nhieu tranche; tren arm ung vien Z0-T1 DG1-DG5 khong bao gio duoc xet (td0246 json:60) — da them cau pham vi"},
+    "tp1_haircut_pct":       {"ket_luan": "SAI", "trich_spec": "tool-d-smart-dca.md:1656", "cho_doc": ["src/tool_d/take_profit.py:158"], "ghi_chu": "khai 'dang chan TD-0189 ... tang TP chua ton tai nen chua phep do nao cham toi'; TD-0189 da xong, ZoneAbsorption goi doc_tham_so_tp() — da viet lai"},
+    "mult_corr_thresholds":  {"ket_luan": "SAI", "trich_spec": "tool-d-smart-dca.md:1738", "cho_doc": ["user_data/strategies/ZoneAbsorption.py:723"], "ghi_chu": "khai 'chua co duong chay nao dung no ... chua noi he so nay'; co lenh doc dua vao co lenh, TD-0188 da xong — da viet lai"},
+    "dg7_funding_frac":      {"ket_luan": "SAI", "trich_spec": "tool-d-smart-dca.md:1578", "cho_doc": ["user_data/strategies/ZoneAbsorption.py:1173"], "ghi_chu": "da bat o TD-0246 (MT-46 (1)); ap ca Long, ket thuc 19,4% lenh Z0-T1 — da viet lai + dieu kien mo lai"}
+  },
+  "khong_doi": "Gia tri va trang thai FROZEN cua ca 12 giu nguyen; N giu 114; so trial 13 dong khong doi."
+}

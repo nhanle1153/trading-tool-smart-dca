@@ -26,6 +26,10 @@ params:
     chua_calibrate: true # 🆕 TD-0190 — máy đọc được, không chỉ nằm trong `note` # ✅ DR-D4-03 — rời TUNED_PENDING (L-Z15 chỉ cho TUNED|FROZEN)
     value: 1.0
     slot: "#4" # đúng số tunable trong §6.9.5 (12 tham số, KHÔNG đổi)
+    doc_boi_san_xuat: true
+    bang_chung:
+      - "tool-d-smart-dca.md:1311"
+      - "user_data/strategies/ZoneAbsorption.py:282"
     frozen_rationale: >-
       Mốc TRUNG TÍNH của một tỉ lệ so với chính trung bình 20 kỳ của nó —
       chọn bằng ĐỊNH NGHĨA, không bằng kết quả. PHẦN 3b tự mô tả ca xấu là
@@ -83,6 +87,10 @@ params:
     status: FROZEN
     value: 0.5
     slot: "#1"
+    doc_boi_san_xuat: true
+    bang_chung:
+      - "tool-d-smart-dca.md:750"
+      - "user_data/strategies/ZoneAbsorption.py:277"
     chua_calibrate: true
     frozen_rationale: >-
       §1.3, spec dòng 750, dấu [CẦN CALIBRATE] còn nguyên. Đóng băng ở giá
@@ -93,6 +101,10 @@ params:
     status: FROZEN
     value: 0.4
     slot: "#2"
+    doc_boi_san_xuat: true
+    bang_chung:
+      - "tool-d-smart-dca.md:980"
+      - "user_data/strategies/ZoneAbsorption.py:278"
     chua_calibrate: true
     frozen_rationale: >-
       §3.1, spec dòng 980, dấu [CẦN CALIBRATE] còn nguyên. Nó quyết định
@@ -103,6 +115,10 @@ params:
     status: FROZEN
     value: 0.5
     slot: "#3"
+    doc_boi_san_xuat: true
+    bang_chung:
+      - "tool-d-smart-dca.md:1080"
+      - "user_data/strategies/ZoneAbsorption.py:283"
     chua_calibrate: true
     frozen_rationale: >-
       §3.3b, spec dòng 1080, dấu [CẦN CALIBRATE] còn nguyên. 0,5 là chính
@@ -113,6 +129,10 @@ params:
     status: FROZEN
     value: -0.05
     slot: "#5"
+    doc_boi_san_xuat: false
+    bang_chung:
+      - "tool-d-smart-dca.md:1384"
+      - "tool-d-smart-dca.md:2344"
     chua_calibrate: true
     frozen_rationale: >-
       §3.3d + DG6-D, HAI chỗ gộp thành một khoá. 🔴 Mâu thuẫn nội tại của
@@ -124,6 +144,11 @@ params:
     status: FROZEN
     value: 8
     slot: "#7"
+    doc_boi_san_xuat: true
+    bang_chung:
+      - "tool-d-smart-dca.md:1346"
+      - "user_data/strategies/ZoneAbsorption.py:1053"
+      - "docs/du-lieu-do/td0246-tham-so-nao-ganh-viec.json:60"
     chua_calibrate: true
     frozen_rationale: >-
       §4, spec dòng 1346, dấu [CẦN CALIBRATE] còn nguyên (spec ghi "giảm
@@ -132,11 +157,18 @@ params:
       chú "= dg4_bars_1h", nên hai số phải mở cùng nhau hoặc không cái
       nào. 📌 TD-0190 đo được trên dữ liệu niêm phong: trần 8 nến cho qua
       17/24 trade đủ ba tranche (71%) — nó ĐANG chặn thật, không phải một
-      trần chết.
+      trần chết. ⚠️ PHẠM VI (TD-0277, 18/09/2026): con số 71% đo trên lệnh
+      DCA nhiều tranche. Trên arm ứng viên Z0-T1 (đơn tranche) DG1–DG5
+      KHÔNG BAO GIỜ được xét — cong_ap_dung() trả () trước khi tham số này
+      được đọc (td0246 json:60) — nên ở arm đó nó ràng buộc 0 lệnh.
   dg6a_atr_ratio:
     status: FROZEN
     value: 1.8
     slot: "#8"
+    doc_boi_san_xuat: true
+    bang_chung:
+      - "tool-d-smart-dca.md:1361"
+      - "user_data/strategies/ZoneAbsorption.py:279"
     chua_calibrate: true
     frozen_rationale: >-
       §4.1 điều kiện A, spec dòng 1361, dấu [CẦN CALIBRATE] còn nguyên.
@@ -147,16 +179,31 @@ params:
     status: FROZEN
     value: 20
     slot: "#9"
+    doc_boi_san_xuat: true
+    bang_chung:
+      - "tool-d-smart-dca.md:1656"
+      - "src/tool_d/take_profit.py:158"
+      - "docs/du-lieu-do/td0246-tham-so-nao-ganh-viec.json:132"
     chua_calibrate: true
     frozen_rationale: >-
-      §5.1, spec dòng 1656, dấu [CẦN CALIBRATE] còn nguyên. 🔴 Đang CHẶN
-      TD-0189 (chốt lời PHẦN 5 — MT-17, 0 dòng code). Đóng băng ở đây là
-      ĐỂ TD-0189 dựng được, KHÔNG phải kết luận rằng 20% đúng: tầng TP
-      chưa tồn tại nên chưa phép đo nào chạm tới con số này.
+      §5.1, spec dòng 1656, dấu [CẦN CALIBRATE] còn nguyên. Đóng băng ở
+      giá trị spec đề xuất, KHÔNG phải kết luận rằng 20% đúng. Tầng TP ĐÃ
+      NỐI (TD-0189 ✅): take_profit.py đọc khoá này, ZoneAbsorption gọi
+      doc_tham_so_tp() ở mọi lần tính TP1 — tức con số này ĐANG dịch mức
+      chốt lời của mọi lệnh TP-theo-zone. Là đầu vào LIÊN TỤC (dịch kết quả,
+      không chặn lệnh), nên đo tác động cần phân tích độ nhạy, và việc đó
+      tiêu trial (td0246 json:132). Mở lại cần phân bố khoảng cách giá
+      đỉnh-đạt-được so với zone đối diện của lệnh thật. 🔴 TD-0277: lời khai
+      trước ("đang chặn TD-0189 … tầng TP chưa tồn tại nên chưa phép đo nào
+      chạm tới") đúng lúc viết và SAI từ khi TD-0189 nối (MT-46).
   max_hold_bars_4h:
     status: FROZEN
     value: 24
     slot: "#11"
+    doc_boi_san_xuat: true
+    bang_chung:
+      - "tool-d-smart-dca.md:1476"
+      - "user_data/strategies/ZoneAbsorption.py:1168"
     chua_calibrate: true
     frozen_rationale: >-
       §4b.3, spec dòng 1476 — chính spec gọi nó là "ỨNG VIÊN CHỐT" kèm
@@ -172,6 +219,10 @@ params:
     status: FROZEN
     value: 0.5
     slot: "#6"
+    doc_boi_san_xuat: false
+    bang_chung:
+      - "tool-d-smart-dca.md:1386"
+      - "tool-d-smart-dca.md:1160"
     chua_calibrate: true
     frozen_rationale: >-
       §3.3d ngưỡng hồi 50%. KHÔNG mang dấu [CẦN CALIBRATE] dù là tunable
@@ -182,20 +233,45 @@ params:
     status: FROZEN
     value: [0.60, 0.85]
     slot: "#10"
+    doc_boi_san_xuat: true
+    bang_chung:
+      - "tool-d-smart-dca.md:1738"
+      - "user_data/strategies/ZoneAbsorption.py:723"
+      - "docs/du-lieu-do/td0246-tham-so-nao-ganh-viec.json:141"
     chua_calibrate: true
     frozen_rationale: >-
       §6.2 hệ số 3. KHÔNG mang dấu [CẦN CALIBRATE] dù là tunable #10.
-      🔴 Chưa có đường chạy nào dùng nó: `mult_corr` cần ma trận tương
-      quan DANH MỤC, mà tầng kết nạp danh mục là TD-0188 — vừa xong, chưa
-      nối hệ số này. Đóng băng một tham số của tầng chưa dùng tới là rẻ
-      nhất; mở lại khi nó thật sự chảy vào cỡ lệnh.
+      Ngưỡng 0,60/0,85 lấy nguyên từ công thức spec dòng 1738, chưa có dữ
+      liệu nào chọn chúng. Hệ số ĐÃ NỐI: ZoneAbsorption đọc khoá này khi
+      tính cỡ lệnh (mult_corr trên corr_pool với các vị thế đang mở), nên
+      nó ĐANG dịch cỡ lệnh mỗi khi có từ hai vị thế cùng mở. Là đầu vào LIÊN
+      TỤC (≤ 1.0, không chặn lệnh), đo tác động cần phân tích độ nhạy và
+      việc đó tiêu trial (td0246 json:141). Mở lại cần phân bố corr_pool
+      tại lúc vào lệnh của lệnh thật. 🔴 TD-0277: lời khai trước ("chưa có
+      đường chạy nào dùng nó … chưa nối hệ số này") đúng lúc viết và SAI
+      từ khi cỡ lệnh nối mult_corr (MT-46).
   dg7_funding_frac:
     status: FROZEN
     value: 0.3
     slot: "#12"
+    doc_boi_san_xuat: true
+    bang_chung:
+      - "tool-d-smart-dca.md:1578"
+      - "src/tool_d/funding_stop.py:7"
+      - "user_data/strategies/ZoneAbsorption.py:1173"
+      - "docs/du-lieu-do/td0246-tham-so-nao-ganh-viec.json:44"
     chua_calibrate: true
     frozen_rationale: >-
       §4c "0.3 × R_eff". KHÔNG mang dấu [CẦN CALIBRATE] — và spec ghi nó
-      là mục v5 CHƯA TỪNG ĐẾM ("bỏ sót", nay là tunable #12). DG7 chỉ áp
-      cho SHORT nên hiện chưa có đường chạy nào chạm tới; cùng lý do với
-      dg6d_retrace_frac.
+      là mục v5 CHƯA TỪNG ĐẾM ("bỏ sót", nay là tunable #12). Đóng băng ở
+      giá trị spec, chưa có dữ liệu nào chọn nó. DG7 áp CHO CẢ LONG LẪN
+      SHORT, VÔ ĐIỀU KIỆN (funding_stop.py:7-14; ZoneAbsorption gọi trong
+      custom_exit không kèm điều kiện hướng) — và trên EXPLORE nó ĐANG kết
+      thúc 19,4% lệnh của Z0-T1 (31/160), 27,3% của Z0 (td0246 json:44):
+      tham số ràng buộc nặng nhất trong 12. ⚠️ ĐIỀU KIỆN MỞ LẠI (viết
+      trước): một tham số FROZEN ràng buộc ≥ 1/5 số lệnh của cấu hình ứng
+      viên thì PHẢI được hiệu chỉnh — bằng suất khai trước — TRƯỚC khi kết
+      quả của cấu hình đó được dùng để đi live. 🔴 TD-0277: lời khai trước
+      ("DG7 chỉ áp cho SHORT nên hiện chưa có đường chạy nào chạm tới; cùng
+      lý do với dg6d_retrace_frac") SAI — kế thừa lý lẽ BẰNG THAM CHIẾU
+      tới một mục khai đúng (MT-46).

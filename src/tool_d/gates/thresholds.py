@@ -34,6 +34,9 @@ LIQ_BUFFER_RATIO_MEAN_MIN: float = 8.0  # §6.4b
 MAX_SINGLE_TRADE_LOSS_OVER_RISK_BUDGET_MAX: float = 1.15
 SKEWNESS_DIFF_VS_Z1_MAX: float = 0.5  # "không âm hơn Z1 quá 0.5"
 TRADES_PER_YEAR_MIN: float = 150.0  # SÀN, không phải trần
+# TD-0277 (MT-46, chủ dự án chốt 18/09/2026): dải CHẶN cả hai biên, đúng chữ
+# spec :4277-4278 + :4290. Trước đó hằng số này xuất hiện đúng một lần toàn
+# repo — tại dòng này — tức gate lặng lẽ bỏ một tiêu chí spec.
 TIME_STOP_RATIO_BAND: tuple[float, float] = (0.05, 0.25)
 TP_FALLBACK_RATIO_MAX: float = 0.40  # > 40% -> L2, không vào live
 PBO_MAX: float = 0.5  # H18: D4 chỉ GHI (pbo_chan=False), D9 CHẶN (pbo_chan=True) — DR-D9-01 §7, MT-51
@@ -76,7 +79,16 @@ def evaluate_branch1(metrics: Mapping[str, float], *, pbo_chan: bool) -> GateRes
 
     `metrics` thiếu khoá nào → khoá đó coi là FAIL (fail-closed, không
     coi thiếu dữ liệu là "PASS ngầm").
+
+    `time_stop_ratio` (TD-0277, MT-46) — tỉ lệ lệnh đóng bằng TIME_STOP phải
+    nằm TRONG `TIME_STOP_RATIO_BAND`, CẢ HAI biên đều chặn. Spec gọi nó là
+    "ngưỡng chẩn đoán" nhưng liệt nó trong danh sách ✅ Nhánh 1, và :4290 viết
+    *"thiếu một tiêu chí → không vào live"*. 🔴 Hệ quả biết TRƯỚC khi nối:
+    `Z0-T1` đo được 0% (`td0246`) ⇒ FAIL tiêu chí này. Không nới chiều < 5%
+    sau khi đã thấy con số đó — muốn nới phải viết DR (back-end-note MT-46).
     """
+    lo_ts, hi_ts = TIME_STOP_RATIO_BAND
+    time_stop_ratio = metrics.get("time_stop_ratio", math.nan)
     checks: dict[str, bool] = {
         "dsr_adjusted_expectancy": metrics.get("dsr_adjusted_expectancy", -math.inf)
         >= DSR_ADJ_EXPECTANCY_MIN,
@@ -91,6 +103,8 @@ def evaluate_branch1(metrics: Mapping[str, float], *, pbo_chan: bool) -> GateRes
         "trades_per_year": metrics.get("trades_per_year", -math.inf) >= TRADES_PER_YEAR_MIN,
         "tp_fallback_ratio": metrics.get("tp_fallback_ratio", math.inf)
         <= TP_FALLBACK_RATIO_MAX,
+        # NaN (thiếu khoá) so sánh ra False ở cả hai vế ⇒ FAIL.
+        "time_stop_ratio": lo_ts <= time_stop_ratio <= hi_ts,
     }
     if not isinstance(pbo_chan, bool):
         raise TypeError(f"pbo_chan phải là bool tường minh, nhận {pbo_chan!r}")
@@ -117,5 +131,6 @@ def best_known_result_for_test() -> dict[str, float]:
         "skewness_diff_vs_z1": 0.0,
         "trades_per_year": 10_000.0,
         "tp_fallback_ratio": 0.0,
+        "time_stop_ratio": 0.10,  # giữa dải 5–25% (TD-0277)
         "pbo": 0.0,
     }

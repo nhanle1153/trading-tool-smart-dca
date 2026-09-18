@@ -7,6 +7,7 @@ Mỗi hàm trả về `CheckResult` — không raise, không in gì, chỉ tính
 
 from __future__ import annotations
 
+import ast
 import json
 import re
 from collections import Counter, defaultdict
@@ -319,6 +320,152 @@ def check_lz15_calibrate_params_have_status(
             f"{len(declared)}/{len(moi_tham_so)} tham số tier_b đã khai trạng thái; "
             f"{len(cho_giu)} ở CHỖ GIỮ chưa calibrate, {len(da_tune)} đã TUNED bằng trial"
             + (f" — chỗ giữ: {cho_giu}" if cho_giu else "")
+        ),
+    )
+
+
+# ── TD-0277 (MT-46) ───────────────────────────────────────────────────
+#: Phạm vi "code sản xuất" khi đếm chỗ đọc một tham số tier_b. Gồm cả các
+#: chiến lược phụ (fixture) trong `user_data/strategies/` — thừa về phía
+#: nói "có người đọc", tức về phía KHÔNG cho một lời khai "chưa ai chạm" đi qua.
+PHAM_VI_DOC_SAN_XUAT: tuple[str, ...] = ("src/tool_d", "user_data/strategies")
+_TIEN_TO_TIER_B = "tier_b."
+_KHOA_DU_RE = re.compile(r"^tier_b\.[A-Za-z0-9_]+$")  # cả chuỗi là một tên khoá
+_KHOA_DO_RE = re.compile(r"^tier_b\.[A-Za-z0-9_]*$")  # tên khoá dở, chờ phần ghép
+_BANG_CHUNG_RE = re.compile(r"^(?P<duong>[^:]+):(?P<dong>[1-9][0-9]*)$")
+
+
+def _hang_docstring(cay: ast.AST) -> set[int]:
+    """id() của mọi nút chuỗi là docstring — chữ trong docstring không phải chỗ đọc."""
+    ra: set[int] = set()
+    for n in ast.walk(cay):
+        if isinstance(n, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)) and n.body:
+            dau = n.body[0]
+            if isinstance(dau, ast.Expr) and isinstance(dau.value, ast.Constant) and isinstance(dau.value.value, str):
+                ra.add(id(dau.value))
+    return ra
+
+
+def dem_cho_doc_tier_b(goc: Path = Path(".")) -> tuple[dict[str, list[str]], list[str]]:
+    """Đếm chỗ đọc THẬT của từng khoá tier_b trong `PHAM_VI_DOC_SAN_XUAT`.
+
+    Trả `(cho_doc, dong)`: `cho_doc[khoá]` = danh sách `file:dòng` có hằng
+    chuỗi `"tier_b.<khoá>"` (không tính docstring; chú thích không nằm trong
+    AST); `dong` = các chỗ GHÉP tên khoá động (f-string/phép cộng bắt đầu bằng
+    `tier_b.`) — phép đếm mù với chúng nên người gọi phải coi là vi phạm.
+
+    Vì sao một phép đếm CHUỖI là đại diện tin được cho "có người đọc": N4 ép
+    mọi lần đọc tham số đi qua đúng một đường, `resolve(cfg, "tier_b.<khoá>")`
+    (`config/loader.py`). Đây KHÔNG phải dò chữ trong văn xuôi để đoán nghĩa
+    (bài học 08/09) — nó đếm đúng cú pháp mà luật N4 bắt mọi lần đọc phải có.
+    """
+    cho_doc: dict[str, list[str]] = defaultdict(list)
+    dong: list[str] = []
+    for thu_muc in PHAM_VI_DOC_SAN_XUAT:
+        for f in sorted((goc / thu_muc).rglob("*.py")):
+            ten_file = f.relative_to(goc).as_posix()
+            cay = ast.parse(f.read_text(encoding="utf-8"), filename=ten_file)
+            bo_qua = _hang_docstring(cay)
+            for n in ast.walk(cay):
+                if isinstance(n, ast.JoinedStr):
+                    # Động = phần hằng ĐỨNG NGAY TRƯỚC chỗ chèn là một tên khoá DỞ
+                    # (`f"tier_b.{x}"`, `f"tier_b.dg{n}_bars"`). Thông điệp lỗi chỉ
+                    # BẮT ĐẦU bằng "tier_b.…" rồi chữ thường (loader.py) không phải.
+                    v = n.values
+                    if (
+                        len(v) >= 2
+                        and isinstance(v[0], ast.Constant)
+                        and _KHOA_DO_RE.match(str(v[0].value))
+                        and isinstance(v[1], ast.FormattedValue)
+                    ):
+                        dong.append(f"{ten_file}:{n.lineno}")
+                elif isinstance(n, ast.BinOp) and isinstance(n.op, ast.Add):
+                    trai = n.left
+                    if isinstance(trai, ast.Constant) and isinstance(trai.value, str) and _KHOA_DO_RE.match(trai.value):
+                        dong.append(f"{ten_file}:{n.lineno}")
+                elif (
+                    isinstance(n, ast.Constant)
+                    and isinstance(n.value, str)
+                    and id(n) not in bo_qua
+                    and _KHOA_DU_RE.match(n.value)
+                ):
+                    cho_doc[n.value[len(_TIEN_TO_TIER_B):]].append(f"{ten_file}:{n.lineno}")
+    return dict(cho_doc), dong
+
+
+def check_td0277_loi_khai_frozen_khop_dia(
+    status_path: Path = DEFAULT_PARAM_STATUS_PATH,
+    goc: Path = Path("."),
+) -> CheckResult:
+    """Lời khai của mỗi tham số FROZEN phải KHỚP ĐĨA, không chỉ CÓ MẶT.
+
+    `L-Z15` trả lời *"đã khai trạng thái chưa?"* (và tự khai điều đó). Phép
+    kiểm này trả lời câu khác: *"điều lời khai nói có còn đúng không?"*.
+    Rà 18/09/2026 (MT-46): **3/12** lời khai sai — `dg7_funding_frac`,
+    `tp1_haircut_pct`, `mult_corr_thresholds` — CÙNG một cơ chế: *"chưa có
+    đường chạy nào chạm tới"* đúng lúc viết rồi hết đúng khi code nối vào
+    sau, không ai quay lại sửa, và `L-Z15` vẫn xanh suốt.
+
+    Mỗi mục FROZEN phải có:
+      • `doc_boi_san_xuat: true|false` — máy đối chiếu với số chỗ đọc THẬT
+        (`dem_cho_doc_tier_b`). Lệch ⇒ vi phạm. Đây là phần CÓ RĂNG với lỗi
+        lỗi thời: code nối thêm một chỗ đọc là lời khai `false` đỏ ngay.
+      • `bang_chung: ["đường/dẫn:dòng", …]` không rỗng, file tồn tại, dòng
+        nằm trong file. ⚠️ Phần này chỉ để TRUY VẾT: con trỏ vẫn tồn tại khi
+        điều nó chứng minh đã hết đúng, nên một mình nó không bắt được lỗi
+        lỗi thời — vì thế nó đi KÈM, không thay `doc_boi_san_xuat`.
+    """
+    if not status_path.exists():
+        return CheckResult("TD-0277", Measured.ok(False), evidence=f"thiếu {status_path}")
+    khai_bao = (yaml.safe_load(status_path.read_text(encoding="utf-8")) or {}).get("params") or {}
+    try:
+        cho_doc, dong = dem_cho_doc_tier_b(goc)
+    except (SyntaxError, UnicodeDecodeError, OSError) as loi:
+        return CheckResult("TD-0277", Measured.unreadable(f"không quét được code sản xuất: {loi}"))
+
+    vi_pham: list[str] = [f"ghép tên khoá tier_b động tại {x} — phép đếm chỗ đọc mù với nó" for x in dong]
+    frozen = sorted(t for t, m in khai_bao.items() if ((m or {}).get("status") or "").strip() == "FROZEN")
+    co_doc: list[str] = []
+    for ten in frozen:
+        muc = khai_bao[ten] or {}
+        khai = muc.get("doc_boi_san_xuat")
+        that = cho_doc.get(ten, [])
+        if not isinstance(khai, bool):
+            vi_pham.append(f"{ten}: thiếu doc_boi_san_xuat (true/false), nhận {khai!r}")
+        elif khai != bool(that):
+            vi_pham.append(
+                f"{ten}: khai doc_boi_san_xuat={khai} nhưng đĩa có {len(that)} chỗ đọc"
+                + (f" ({', '.join(that)})" if that else "")
+            )
+        if that:
+            co_doc.append(ten)
+
+        bc = muc.get("bang_chung")
+        if not isinstance(bc, list) or not bc:
+            vi_pham.append(f"{ten}: bang_chung phải là danh sách 'file:dòng' không rỗng")
+            continue
+        for x in bc:
+            m = _BANG_CHUNG_RE.match(x) if isinstance(x, str) else None
+            if m is None:
+                vi_pham.append(f"{ten}: bang_chung {x!r} không đúng dạng 'đường/dẫn:dòng'")
+                continue
+            f = goc / m["duong"]
+            if not f.is_file():
+                vi_pham.append(f"{ten}: bang_chung {x} — file không tồn tại")
+                continue
+            so_dong = len(f.read_text(encoding="utf-8").splitlines())
+            if int(m["dong"]) > so_dong:
+                vi_pham.append(f"{ten}: bang_chung {x} — file chỉ có {so_dong} dòng")
+
+    if vi_pham:
+        return CheckResult("TD-0277", Measured.ok(False), evidence="; ".join(vi_pham))
+    khong_doc = sorted(set(frozen) - set(co_doc))
+    return CheckResult(
+        "TD-0277",
+        Measured.ok(True),
+        evidence=(
+            f"{len(frozen)} lời khai FROZEN khớp đĩa: {len(co_doc)} có code sản xuất đọc, "
+            f"{len(khong_doc)} không" + (f" ({', '.join(khong_doc)})" if khong_doc else "")
         ),
     )
 

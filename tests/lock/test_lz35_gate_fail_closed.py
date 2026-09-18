@@ -90,14 +90,15 @@ class TestThieuDuLieuLaFailKhongPhaiPassNgam:
     def test_metrics_rong_thi_fail_tat_ca(self) -> None:
         result = evaluate_branch1({}, pbo_chan=True)
         assert result.verdict is Verdict.FAIL
-        assert len(result.failed_criteria) == 7  # đủ 7 tiêu chí số của Nhánh 1
+        # đủ 8 tiêu chí số của Nhánh 1 (7 cũ + `time_stop_ratio`, TD-0277 / MT-46)
+        assert len(result.failed_criteria) == 8
 
     def test_d4_khong_chan_pbo_nhung_van_fail_sau_tieu_chi_con_lai(self) -> None:
-        """TD-0285 / DR-D9-01 §7: D4 chỉ GHI PBO. Cùng bộ rỗng, bỏ chặn PBO ⇒ đúng 6,
-        và 6 đó là 7 trừ ĐÚNG `pbo` — không tiêu chí nào khác bị nới theo."""
+        """TD-0285 / DR-D9-01 §7: D4 chỉ GHI PBO. Cùng bộ rỗng, bỏ chặn PBO ⇒ đúng 7,
+        và 7 đó là 8 trừ ĐÚNG `pbo` — không tiêu chí nào khác bị nới theo."""
         chan = evaluate_branch1({}, pbo_chan=True).failed_criteria
         ghi = evaluate_branch1({}, pbo_chan=False).failed_criteria
-        assert len(ghi) == 6
+        assert len(ghi) == 7
         assert set(chan) - set(ghi) == {"pbo"}
 
     def test_d4_pbo_te_van_pass_d9_thi_fail(self) -> None:
