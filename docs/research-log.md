@@ -3488,3 +3488,57 @@ lần sau ai đổi ngưỡng thì ca này **đỏ** chứ không lặng lẽ th
    Không đổi tham số để chạy nhanh: đó là nới một chốt bảo vệ vì tiện.
 5. **Log container im suốt lượt chạy dài** (stdout buffer khi không có tty) — tiến độ phải đo bằng
    đếm file trên đĩa. *"Không thấy output"* không suy ra được *"không chạy"*.
+
+## 18/09/2026 — Khối 27, bổ sung: mảnh THỨ TƯ của họ lỗi có thật trong lõi vừa giao; và tên phiên không bền qua khởi động lại
+
+> Nối tiếp mục *"Khối 27 (`DR-BC-01`): lõi bộ chạy backtest…"* ở trên. Tách thành mục riêng vì giữa hai lần ghi
+> đã có mục TD-0252 của phiên khác chen vào — thêm tiểu mục vào cuối file sẽ gán nhầm nó vào mục của họ.
+
+### 1. Mảnh thứ tư: chạy trên tập rỗng
+
+Phiên (lúc đó tên `-ef`) chạy `E8 --ro-do-phu` trên 143 mã và nhận: *"Nạp được khung chính 1h: 0/143 mã …
+✅ Không một giờ khung chính nào thiếu nến 5m, trên toàn bộ 0 mã nạp được"* — **exit 0**. Tầng dưới:
+`history.load_data(candle_type=FUTURES)` **tự nối `futures/`** vào `datadir`, nên truyền
+`.../pool_t0/futures` thành `.../pool_t0/futures/futures/` ⇒ 0 mã. Hàm thuần `cho_thieu_khung_chi_tiet({}, {})`
+trả rỗng **đúng đặc tả**; chốt thiếu nằm ở **người gọi** đọc "rỗng" thành "đủ".
+
+Soi lại lõi `chay_mot_luot()` thì thấy **đúng hình đó**: `ma_gioi_han=()` ⇒ `ma` rỗng ⇒ chốt 5m cho
+`thieu == []` ⇒ kết luận "đủ" **trên 0 mã**. Lượt chạy rồi cũng bị `dung_moi_truong()` chặn ở bước sau, nên
+hậu quả cuối không sai — nhưng **cổng 5m đã nói "đủ"**. Vá ở `d2f169a`: `if not ma` đứng **trước** mọi phép
+kiểm phổ quát, thông điệp nói *"KHÔNG ĐO ĐƯỢC, không phải 'đủ điều kiện'"* và nêu **cỡ mẫu**. Phá thật ⇒
+đúng 1 ca đỏ.
+
+Ca khoá tự đỏ một lượt: bản đầu khẳng định `"đủ" not in thông_điệp` và đỏ vì **chính thông điệp** chứa vế
+phủ định *"không phải 'đủ điều kiện'"*. Một phép kiểm quét chuỗi trần **không phân biệt được khẳng định với
+phủ định của nó** — cùng họ `L-Z25` bắt chữ `hyperopt` trong dòng cấm chính chữ đó. Đổi sang `"✅" not in`,
+đúng hình phiên kia dùng ở `f9222d6`.
+
+Họ lỗi giờ có bốn mảnh, đủ để có tên:
+
+| Mảnh | Ca | Lộ ra nhờ |
+|---|---|---|
+| không thể kích hoạt | ngưỡng `NEN_CHET_TOI_THIEU = 24`, fixture dựng đuôi 1 nến | phá thật |
+| chĩa nhầm tầng | spy `builtins.open` mù với `io.open` và pyarrow | phá thật |
+| hai đường hội tụ cùng mã thoát | bỏ chốt vẫn ra exit 98, qua đường khác | phá thật |
+| **chạy trên tập rỗng** | `--ro-do-phu` 0/143 mã; chốt 5m của lõi trên `ma = ()` | **đọc output, không nhìn exit code** |
+
+Điểm chung: **phép kiểm đúng, nhưng không phân biệt được thứ cần phân biệt.** Ba cái đầu chỉ lộ khi phá thật;
+cái thứ tư lộ vì có người đọc dòng chữ in ra thay vì tin mã thoát 0.
+
+### 2. 🔴 Tên phiên KHÔNG bền qua khởi động lại — và `TASKS.md` ghi chủ việc bằng tên phiên
+
+Chiều 18/09 các phiên khởi động lại và **nhận hậu tố tên mới**: phiên này từ `-13` thành `-a2`, `-93` thành
+`-2c`; tên `-ef` và `-a2` cũ biến mất. Hệ quả thấy ngay: `-2c` gửi phiên này một tin dành cho chủ Khối 26
+(*"DR-LOCKBOX-01 vẫn do BẠN viết"*), vì `TASKS.md:747` ghi chủ là `-a2` — tên mà giờ là của phiên khác.
+
+Không có hại thật lần này (bắt được, đối chiếu commit trên đĩa để tìm chủ đúng). Nhưng cơ chế thì nguy:
+**mọi chỗ ghi chủ việc bằng tên phiên** (`TASKS.md`, `CLAUDE.md` mục "Chia việc", research-log) **trỏ nhầm
+người sau mỗi lần khởi động lại, và trỏ nhầm IM LẶNG** — không có gì báo tên đã đổi chủ. Một phiên nhận tin
+dành cho người khác mà không để ý sẽ **hành động nhân danh chủ của một khối việc nó không giữ**.
+
+Và nó phá một quy ước đang dùng: phiên này giữ một commit *"chờ `-ef` báo chạy xong suite"*. Sau khởi động
+lại không còn ai tên `-ef` để báo. Giải bằng **đo thẳng** — `docker ps` rỗng ⇒ không suite nào đang chạy —
+thay vì chờ một tin có thể không bao giờ tới.
+
+Trọng tài bền duy nhất đang có là **commit trên đĩa** (đã là tiêu chí của N12 mục 6). `-2c` sẽ trình chủ dự
+án; phiên này không tự sửa quy ước.
