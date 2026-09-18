@@ -245,6 +245,9 @@ với dòng phiên kia đang gõ dở cùng lúc — đã gây ít nhất 3 lầ
    quyết định mới (`docs/decisions/DR-*.md`, một mục `MT-*` mới), NHẮN phiên kia tên/mã dự kiến —
    cùng hạng với quy ước "nhắn trước khi chạy full suite".**
 
+   ➡️ **18/09/2026: CƠ CHẾ của mục này được thay ở mục 7** (đặt chỗ bằng COMMIT, nhắn chỉ để báo). Lý do
+   bên dưới giữ nguyên hiệu lực.
+
    Mục 1-5 ở trên chặn được việc **nuốt file** của phiên khác qua index dùng chung. Chúng **không**
    chặn được việc hai phiên **độc lập viết hai file khác tên cho cùng một quyết định**: hai phiên
    cùng phát hiện mâu thuẫn §1.3/§5.1 của TD-0189, cùng lúc, mỗi phiên tự đặt tên `DR-D4-06` cho
@@ -263,6 +266,44 @@ với dòng phiên kia đang gõ dở cùng lúc — đã gây ít nhất 3 lầ
    TD-0119/TD-0120 của project Tool D: **phía nào có ĐỊNH DANH MÁY ĐỌC được (đường dẫn file bằng
    chứng, tên hàm/biến code đã trỏ tới) thì phía đó không đổi** — phía kia gộp nội dung vào rồi
    xoá, không giữ cả hai.
+
+7. 🔴 **Quy ước (18/09/2026, chủ dự án chốt): ĐĨA là trọng tài · VIỆC là địa chỉ · MÃ PHIÊN là chữ ký.**
+
+   **Vì sao:** hậu tố tên phiên (`-a2`, `-93`…) **ĐỔI khi phiên khởi động lại**, và một tên cũ có thể được
+   gán cho một phiên KHÁC. Đo 18/09: `-93` và `-2c` cùng là mã phiên `4168d1eb` (bền), nhưng tên `-a2` chỉ
+   **HAI** mã khác nhau trong cùng một ngày (`55661c40` giữ Khối 26, `c95baba3` từng là `-13`) ⇒ tin nhắn
+   gửi "`-a2`" rơi nhầm phiên. Tài liệu có ≈362 chỗ ghi tên phiên; ~15 chỗ dùng nó làm **địa chỉ** cho việc
+   còn mở, và sau mỗi lần khởi động lại chúng trỏ sai người **mà trông vẫn đúng**. Năm sự cố cùng một gốc —
+   dùng TIN NHẮN hoặc TÊN làm cơ chế thay vì ĐĨA: tin rơi nhầm phiên · va mã `TD-0304/0305` và `TD-0314`
+   (18/09), "hai `DR-D4-06`" (09/09) · khoá mồ côi `TD-0216`/`TD-0247` · chờ một phiên đã không còn tên đó
+   báo chạy xong suite · mục "Chia việc" cũ vẫn mang tiêu đề "hiện tại".
+
+   a. **Mã phiên = 8 ký tự đầu UUID phiên** — chính là tên thư mục nháp
+      `…/claude/c--Trading-Tool-Smart-DCA/<mã-phiên>/scratchpad` mà mỗi phiên được cấp. Bền qua khởi động
+      lại. Tra ngược một tên cũ ra mã: `grep -l "This session is trading-tool-smart-dca-<xx> "
+      ~/.claude/projects/c--Trading-Tool-Smart-DCA/*.jsonl`.
+   b. **Commit khoá / hoàn tất / đặt chỗ mang dòng chữ ký `Phien: <mã phiên>`** (đặt trước
+      `Co-Authored-By`). Ai giữ `TD-xxxx` tra được bằng máy: `git log -S"TD-xxxx" -- TASKS.md` → commit
+      khoá → dòng `Phien:`.
+      ⚠️ **Chỉ áp cho commit từ 18/09/2026.** Commit cũ **không** có dòng `Phien:` vì quy ước chưa tồn
+      tại — **thiếu dòng `Phien:` KHÔNG phải bằng chứng khoá mồ côi**; với commit cũ, tra theo mã việc
+      (`git log -S"TD-xxxx"`) rồi hỏi theo mã việc (phiên mã `95c7a7bf` nêu).
+   c. **Đặt chỗ mã `TD`/`DR`/`MT` bằng COMMIT, không bằng tin nhắn:** ghi mã dự kiến vào `TASKS.md` ngay
+      trong commit khoá (tiền lệ: Khối 26 đặt chỗ `DR-LOCKBOX-01` như vậy). **Ngay trước khi ghi**, chạy lại
+      `git log --oneline -10` và tra mã cuối đã cấp — trạng thái đĩa lúc lập kế hoạch đã cũ. Vẫn nhắn để
+      báo, nhưng **mã chỉ là của mình khi đã nằm trên đĩa**.
+   d. **Không dùng tên phiên làm ĐỊA CHỈ trong tài liệu.** Chủ việc hiện tại = 🔒 + commit khoá. Tên phiên
+      chỉ là nhãn lịch sử, kèm ngày (và mã phiên khi cần): *"phiên `-a2` (18/09, mã `55661c40`)"*. Muốn tìm
+      người đang làm một việc: hỏi theo **mã việc** hoặc **mã phiên**, không theo tên chép từ file.
+   e. **Tài nguyên dùng chung: ĐO, không chờ tin.** Trước khi chạy full suite: `docker ps` phải rỗng. Vẫn
+      nhắn báo, nhưng không chờ ai xác nhận — phiên được chờ có thể đã không còn mang tên đó.
+   f. **Khoá mồ côi** (🔒 mà không phiên nào nhận khi hỏi theo mã việc/mã phiên): phiên phát hiện **chỉ
+      BÁO chủ dự án, không tự nhận**. Chủ dự án giao lại; commit giao lại ghi `Phien: <mã cũ> → <mã mới>`.
+      File phiên `~/.claude/projects/c--Trading-Tool-Smart-DCA/<mã>.jsonl` lâu không cập nhật là **bằng
+      chứng**, không phải giấy phép tự nhận.
+
+   ⚠️ **Phạm vi:** ~300 chỗ tên phiên mang nghĩa **LỊCH SỬ / ghi công** giữ nguyên — chúng đúng tại thời
+   điểm viết. Chỉ các chỗ đang làm địa chỉ cho việc còn mở được gắn chú thích mã phiên (18/09/2026).
 
 ### N13 — `tu-dien-du-lieu.md`: phần máy sinh đi cùng code, phần nghĩa đi qua người
 
@@ -289,6 +330,10 @@ ca `idea_queue` đỏ ~2,5 ngày không ai nhận, 14–16/09).
 ## TRẠNG THÁI HIỆN TẠI
 
 **Cập nhật lần cuối: 09/09/2026**
+
+> 🔴 **18/09/2026 — đọc trước (N12 mục 7):** mọi câu *"phiên X giữ / nhận / đang làm Y"* trong mục này là
+> **LỊCH SỬ tại ngày ghi**, không phải phân việc hiện tại — tên phiên đổi sau mỗi lần khởi động lại. Chủ
+> việc hiện tại **chỉ** đọc từ 🔒 trong `TASKS.md` + dòng `Phien:` của commit khoá.
 
 > ⚠️ **Hai (nay ba) phiên Claude Code cùng làm việc song song trên repo này** (chủ dự án xác nhận).
 > Mục này có thể lệch nhịp vài phút so với phiên kia — luôn `git log --oneline` +
