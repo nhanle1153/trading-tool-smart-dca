@@ -3598,3 +3598,37 @@ phạm vi đã chốt. Bản kiểm kê phân loại theo *chữ* ("người gi�
 
 **Còn mở, chỉ báo:** `TD-0216` 🔒 từ 12/09, không ai nhận, file `DR-FAI-01` nằm ngoài git từ 13/09 — đúng ca
 (f). Chờ chủ dự án giao lại hoặc huỷ. File ngoài git còn có rủi ro bị một commit không pathspec nuốt.
+
+## 18/09/2026 — TD-0314: Freqtrade tự LẤP chỗ thủng khi nạp, nên "nạp đúng như backtest" không thấy được thủng
+
+Phiên mã `0074a97b`. Chủ dự án chốt cách lấy dữ liệu cho chốt độ phủ 5m của lõi bộ chạy: **nạp hai lần**
+(lõi tự nạp, không nhận lời khai của tiến trình con). Giá đo trước khi hỏi, rổ `T0`, 143 mã, `[T0,T1]`:
+nạp 1h **4,0 s**, nạp 5m **11,7 s**.
+
+### 1. Phát hiện: `fill_up_missing` mặc định `True` xoá chỗ thủng trước khi ai kịp nhìn
+
+Đọc `Backtesting._load_bt_data_detail()` trong image: 5m nạp bằng `history.load_data(..., startup_candles=0)`
+và **không** truyền `fill_up_missing` ⇒ mặc định `True`. Đo trên một file 5m tự dựng thủng 3 giờ:
+
+| Nạp | Số nến 5m | `cho_thieu_khung_chi_tiet()` |
+|---|---|---|
+| `fill_up_missing=True` (như backtest) | 576 | **rỗng** |
+| `fill_up_missing=False` | 540 | thủng 3/48 giờ, đúng 3 giờ đã bỏ |
+
+⇒ Một phép kiểm chép **nguyên** bộ tham số của backtest sẽ không bao giờ thấy thủng giữa chuỗi, đúng thứ
+nó sinh ra để thấy. Lõi nạp **không lấp** cho cả hai khung: tiêu chí `DR-D1-05` §3b.4 nói về nến 5m THẬT.
+Kiểm có răng: đổi lại `True` ⇒ đúng 1 ca đỏ (`test_thung_giua_chuoi_…`).
+
+🔑 Bài học đúng họ *"đọc dòng sinh ra đầu vào"*: câu "đi đúng đường Freqtrade nạp" trong dòng việc là
+đúng về tinh thần nhưng **sai nếu chép từng tham số** — đường sản xuất có một bước biến đổi dữ liệu nằm
+ngay trong hàm nạp.
+
+### 2. Hệ quả ngoài phạm vi — chỉ ghi, KHÔNG sửa: `E8 --ro-do-phu` yếu hơn nó tự khai
+
+`entrypoints/backfill_data.py` (`_nap`, TD-0252) cũng gọi `history.load_data` với mặc định lấp ⇒ artifact
+`td0252-do-phu-5m-calib.json` chỉ bắt được thiếu ở **hai đầu** chuỗi và mã thiếu hẳn, **không** bắt được thủng
+giữa chuỗi. Đo lại rổ `T0` thật với cả hai chế độ (0 trial, chỉ đếm): **143/143 mã, 0 giờ thiếu ở CẢ HAI**
+⇒ kết luận của TD-0252 **vẫn đứng** trên dữ liệu hiện có — nhưng đứng nhờ dữ liệu sạch, không nhờ phép đo.
+Lần tải dữ liệu tiếp theo (rổ `T1`, `T2`) sẽ không được phép đó che. Đã báo chủ dự án; sửa E8 là việc riêng.
+Đối chứng chéo mà dòng TD-0314 đòi (*"hai đường độc lập ra cùng số"*) vì thế **không phải là xác nhận** cho
+tới khi E8 nạp không lấp — hai đường cùng ra 0 trên rổ `T0`, nhưng một đường mù với loại lỗi đang xét.

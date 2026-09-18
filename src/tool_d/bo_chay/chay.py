@@ -10,7 +10,7 @@ lý do module này tồn tại: kịch bản đó **tự quét thư mục** đ�
 
   1. kiểm giấy phép   — `L-Z52`: TRƯỚC khi mở bất kỳ file dữ liệu nào
   2. `ro_cho_tap()`   — cửa duy nhất lấy rổ + thư mục (`DR-D1-05` §1)
-  3. kiểm `5m`        — fail-closed, TRƯỚC khi tốn thời gian dựng môi trường
+  3. kiểm độ phủ `5m` — fail-closed, TRƯỚC khi tốn thời gian dựng môi trường (TD-0314)
   4. dựng môi trường  — cấu hình phủ + `pair_whitelist`
   5. gọi Freqtrade
   6. đọc kết quả      — `observed_*` đọc THẬT (TD-0148)
@@ -38,6 +38,7 @@ from tool_d.bo_chay.yeu_cau import (
     YeuCauChay,
     chuoi_timerange,
     kiem_ma_thuoc_ro,
+    ten_cap_freqtrade,
 )
 from tool_d.ledger.registry import TrialState, UnknownTrialError
 from tool_d.pool_giai_doan import ro_cho_tap
@@ -86,6 +87,78 @@ def _kiem_giay_phep(giay_phep: GiayPhepChay) -> None:
         raise ChuaDatChoError(
             f"{giay_phep.trial_id} đang ở trạng thái {proj.state.value}, cần RESERVED — "
             "TỪ CHỐI khởi chạy (L-Z52)"
+        )
+
+
+#: Khung chính của mọi chiến lược Tool D — N3 / `L-Z33`: 1H chính, 5m chỉ là khung chi tiết.
+KHUNG_CHINH = "1h"
+
+
+def _kiem_do_phu_chi_tiet(thu_muc: Path, ma: tuple[str, ...], khung: str, timerange: str) -> None:
+    """`TD-0314` (`DR-D1-05` §3b.4): không một giờ khung chính nào thiếu nến `khung` tương ứng,
+    ở mọi mã — đủ hoặc TỪ CHỐI, không có mức giữa.
+
+    Chủ dự án chốt 18/09/2026: **NẠP HAI LẦN.** Tự nạp ở đây thay vì để tiến trình con khai,
+    vì lời khai của chính thứ đang bị kiểm không phải bằng chứng (`DR-014` §3 / `MT-10`); và
+    thiếu 5m phải bị bắt TRƯỚC khi chạy, không phải sau khi suất đã tiêu. Giá đo được trên rổ
+    `T0` (143 mã, [T0,T1]): ~4 s cho 1h + ~12 s cho 5m mỗi lượt.
+
+    Tham số nạp chép từ `Backtesting._load_bt_data_detail()` (đọc mã nguồn trong image,
+    18/09/2026): cùng `datadir` cha, cùng CHUỖI `timerange` sẽ truyền cho Freqtrade,
+    `startup_candles=0`, `feather`, `CandleType.FUTURES` — **trừ một khoá, cố ý:**
+
+    🔴 `fill_up_missing=False`. Mặc định của `history.load_data` là `True`, và khi đó Freqtrade
+    **tự lấp chỗ thủng bằng nến giả** (OHLC = giá đóng trước đó). Đo 18/09/2026 trên một file 5m
+    thủng 3 giờ: lấp ⇒ 576 nến, `cho_thieu_khung_chi_tiet()` trả RỖNG; không lấp ⇒ 540 nến, bắt
+    đúng 3 giờ. Tức nạp y hệt backtest thì phép kiểm **không bao giờ thấy thủng giữa chuỗi** —
+    đúng thứ nó sinh ra để thấy. Tiêu chí §3b.4 nói về nến 5m THẬT, không phải nến Freqtrade bịa.
+    Khung chính cũng nạp không lấp: một giờ 1H bịa ra không phải giờ cần phủ.
+
+    ⚠️ Chặt hơn backtest ở một ca, chấp nhận có ý thức: nếu thiếu nến khởi động, Freqtrade dời
+    điểm bắt đầu lên (`adjust_start_if_necessary`) và không giao dịch mấy giờ đầu; phép kiểm ở
+    đây vẫn xét chúng.
+
+    Bộ nhớ: hai `dict` dataframe chỉ sống trong hàm này, được giải phóng trước khi tiến trình
+    con backtest nạp lại lần nữa.
+    """
+    from freqtrade.configuration import TimeRange
+    from freqtrade.data import history
+    from freqtrade.enums import CandleType
+
+    from tool_d.data.do_phu_chi_tiet import cho_thieu_khung_chi_tiet
+
+    cap = [ten_cap_freqtrade(m) for m in ma]
+    tr = TimeRange.parse_timerange(timerange)
+
+    def _nap(k: str) -> dict:
+        # `datadir` là thư mục CHA: với FUTURES Freqtrade tự nối `futures/` (bẫy đã dính ở
+        # `E8 --ro-do-phu`, 18/09/2026 — truyền thẳng `.../futures` thì nạp được 0 mã).
+        return history.load_data(
+            datadir=thu_muc.parent,
+            pairs=cap,
+            timeframe=k,
+            timerange=tr,
+            startup_candles=0,
+            fail_without_data=False,
+            fill_up_missing=False,
+            data_format="feather",
+            candle_type=CandleType.FUTURES,
+        )
+
+    nen_chinh = _nap(KHUNG_CHINH)
+    # Tập rỗng: "không có giờ nào để phủ" KHÔNG phải "đủ" (N6) — cùng bẫy `if not ma` ở trên.
+    if not nen_chinh:
+        raise BoChayError(
+            f"KHÔNG ĐO ĐƯỢC độ phủ {khung}: nạp được 0/{len(cap)} mã khung {KHUNG_CHINH} trong "
+            f"timerange {timerange}. TỪ CHỐI — đây không phải 'đủ điều kiện'."
+        )
+    thieu = cho_thieu_khung_chi_tiet(nen_chinh, _nap(khung))
+    if thieu:
+        chi_tiet = "\n  ".join(t.mo_ta() for t in thieu[:10])
+        raise BoChayError(
+            f"xin --timeframe-detail {khung} nhưng {len(thieu)}/{len(nen_chinh)} mã không phủ đủ "
+            f"(`DR-D1-05` §3b.4):\n  {chi_tiet}\nTỪ CHỐI — chạy ở độ phân giải thô hơn mà không báo "
+            "là một phép đo nói dối về chính nó."
         )
 
 
@@ -163,22 +236,12 @@ def chay_mot_luot(
     #     lẽ tụt về 1H trong khi mã khác chạy 5m, và không cột nào trong bảng kết quả
     #     nói ra. Tức một phép đo trộn hai độ phân giải khớp lệnh mà tự khai là một.
     #
-    #     ⚠️ CHỐT NÀY YẾU HƠN tiêu chí đã chốt, nói rõ để không ai đọc rộng hơn nó
-    #     thật sự là: ở đây chỉ kiểm FILE 5m CÓ TỒN TẠI KHÔNG. `DR-D1-05` §3b.4 đòi
-    #     mạnh hơn — "không một giờ 1H nào thiếu nến 5m tương ứng, ở mọi mã". Một
-    #     file 5m tồn tại nhưng THỦNG GIỮA CHỪNG vẫn qua được chốt này. Khi `TD-0252`
-    #     cho ra hàm đo độ phủ (hàm thuần trong `src/tool_d/data/`, trả CHỖ THỦNG chứ
-    #     không trả `bool`), thay lời gọi `is_file()` bên dưới bằng nó và XOÁ chốt yếu
-    #     này — giữ cả hai là giữ hai nguồn sự thật cho một việc.
+    #     `TD-0314`: tiêu chí đầy đủ của `DR-D1-05` §3b.4 — mọi giờ 1H có nến 5m THẬT,
+    #     ở mọi mã, trên đúng `timerange` sẽ truyền cho Freqtrade. Chốt cũ (chỉ kiểm
+    #     FILE 5m có tồn tại) đã XOÁ: giữ cả hai là giữ hai nguồn sự thật cho một việc.
+    timerange = chuoi_timerange(yeu_cau.tu, yeu_cau.den_khong_gom)
     if yeu_cau.timeframe_detail:
-        khung = yeu_cau.timeframe_detail
-        thieu = [m for m in ma if not (thu_muc_du_lieu / _ten_file(m, khung)).is_file()]
-        if thieu:
-            raise BoChayError(
-                f"xin --timeframe-detail {khung} nhưng {len(thieu)}/{len(ma)} mã không có file "
-                f"{khung} trong {ro.thu_muc_du_lieu} (ví dụ: {sorted(thieu)[:3]}). TỪ CHỐI — "
-                "chạy ở độ phân giải thô hơn mà không báo là một phép đo nói dối về chính nó."
-            )
+        _kiem_do_phu_chi_tiet(thu_muc_du_lieu, ma, yeu_cau.timeframe_detail, timerange)
 
     # 4 — môi trường chạy tạm.
     goc = Path(tempfile.mkdtemp(prefix=f"bochay_{yeu_cau.tap.lower()}_")) if goc_tam is None else goc_tam
@@ -186,8 +249,7 @@ def chay_mot_luot(
         repo_dir=repo_dir, goc=goc, ghi_de=yeu_cau.ghi_de_config, ma_trong_ro=ma
     )
 
-    # 5 — gọi Freqtrade.
-    timerange = chuoi_timerange(yeu_cau.tu, yeu_cau.den_khong_gom)
+    # 5 — gọi Freqtrade. `timerange` là CÙNG chuỗi phép kiểm độ phủ ở bước 3 đã dùng.
     lenh = [
         sys.executable, "-m", "freqtrade", "backtesting",
         "--config", str(mt.config_freqtrade),
