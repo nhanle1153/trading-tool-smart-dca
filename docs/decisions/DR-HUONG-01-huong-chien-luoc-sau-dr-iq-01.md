@@ -116,6 +116,32 @@ thành một mục `MT` trong `back-end-note.md` ở lần *"chuẩn hóa và l�
 quyết **trước khi có ứng viên nào được CHỌN qua suất (d)** — từ lúc biết ý tưởng là gì, câu trả lời có thể bị
 dẫn dắt bởi việc ý tưởng đó trông hứa hẹn hay không.
 
+> ✅ **QUYẾT ĐỊNH 18/09/2026 — chủ dự án chốt, đóng câu hỏi mở ở trên.**
+>
+> **Mặc định:** dữ liệu mới sau `T3` tính cho điều kiện nối lại ZA LONG (`DR-IQ-01:43`).
+>
+> **Nhường:** ngay khi một ý tưởng được **CHỌN** qua suất (d) — mốc là lúc `selected_at` được ghi vào
+> `idea_queue.jsonl`, KHÔNG phải lúc nộp đơn hay lúc lọt vòng lọc sơ bộ — dữ liệu mới **từ thời điểm đó
+> trở đi** chuyển sang tính cho lockbox của ý tưởng đó, cho tới khi ý tưởng có kết cục tại cổng của nó
+> (PASS/FAIL/INCONCLUSIVE) hoặc bị rút. Sau đó, dữ liệu mới **trả lại** mặc định cho ZA LONG.
+>
+> **Vì sao phương án này, bằng hậu quả kinh doanh chứ không chỉ kỹ thuật:** không có khoảng trống chết.
+> Ngay lúc chốt, Idea Queue chỉ có `IQ-0001` (đã bị loại khỏi suất (d), thuộc Z-2) — tức suất (d) hiện
+> KHÔNG có ứng viên. Nếu mặc định dữ liệu mới thuộc về suất (d), toàn bộ thời gian không ai nộp ý tưởng
+> sẽ là thời gian chết cho cả hai bên. Mặc định về ZA LONG thì đồng hồ tái kích hoạt vẫn chạy trong lúc
+> chờ, và chỉ nhường khi có một ý tưởng THẬT được chọn — lúc đó ý tưởng mới không phải cạnh tranh với
+> một chiến lược đang đứng yên không làm gì.
+>
+> **Hệ quả phải khai rõ, không để ngầm:** trong khoảng thời gian ý tưởng (d) đang "giữ" dữ liệu, đồng hồ
+> tái kích hoạt ZA LONG (`DR-IQ-01` §1) **không cộng dồn thêm** — đúng khuôn *"không có cả hai cùng lúc"*
+> (`DR-IQ-01:47-49`) — dù về mặt kỹ thuật ZA LONG không "chạm" gì trong lúc đó. Nếu ý tưởng (d) kéo dài
+> nhiều quý (`DR-IQ-01:125-126`: *"cổng lockbox của nó sớm nhất vài quý sau"*), ZA LONG có thể phải chờ
+> tương ứng nhiều quý mới có dữ liệu mới tiếp theo tính cho nó — đây là giá đã biết trước, không phải
+> hệ quả bất ngờ phát sinh sau này.
+>
+> **Việc còn treo, không thuộc DR này:** ghi mục `MT-62` vào `back-end-note.md` tham chiếu quyết định này
+> — chờ lệnh *"chuẩn hóa và lưu"* theo N9, không tự ghi ở đây.
+
 ## 6. Điểm yếu, khai thẳng
 
 - DR này do một phiên **đã thấy số** soạn — đó là lý do §0 cấm phiên IDEA/CHỌN đọc nó, và lý do nó không nêu
