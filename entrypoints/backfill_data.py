@@ -196,7 +196,7 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help=(
             "Đo độ phủ khung chi tiết bằng ĐÚNG đường backtest đi (history.load_data, "
-            "startup_candles=0) và ghi artifact. Thiếu ⇒ exit khác 0."
+            "startup_candles=0, KHÔNG lấp chỗ thủng — TD-0317) và ghi artifact. Thiếu ⇒ exit khác 0."
         ),
     )
     parser.add_argument(
@@ -525,10 +525,17 @@ def do_ro_con_thieu(moc: str, chi_loai: str | None) -> int:
 def do_ro_do_phu(moc: str, chi_loai: str | None, out_path: Path) -> int:
     """TD-0252 (`DR-D1-05` §3b.4) — độ phủ khung chi tiết, đo bằng ĐÚNG đường backtest đi.
 
-    Dùng `history.load_data(..., startup_candles=0)` — đúng bộ tham số
+    Dùng `history.load_data(..., startup_candles=0)` — bộ tham số
     `Backtesting._load_bt_data_detail()` truyền — rồi hỏi đúng câu `backtesting.py:1739` hỏi
     (`pair in self.detail_data`), CỘNG phần mà câu đó không thấy: lỗ hổng GIỮA chuỗi của một mã
     đã có mặt. Đếm file trên đĩa chứng minh file tồn tại, không chứng minh bộ chạy nạp được.
+
+    🔴 `TD-0317`: TRỪ một khoá, cố ý — `fill_up_missing=False`. Mặc định của `load_data` là
+    `True`, và khi đó Freqtrade LẤP chỗ thủng bằng nến giả trước khi ai kịp nhìn: đo 18/09/2026
+    trên file 5m thủng 3 giờ, lấp ⇒ 576 nến và `cho_thieu_khung_chi_tiet()` trả RỖNG; không lấp
+    ⇒ 540 nến, bắt đúng 3 giờ. Bản TD-0252 dùng mặc định nên nó MÙ với đúng "lỗ hổng GIỮA chuỗi"
+    mà câu trên hứa bắt. Cùng tham số với `_kiem_do_phu_chi_tiet()` của lõi bộ chạy (TD-0314) —
+    hai đường độc lập, cùng luật nạp, nên cùng số mới là đối chứng thật.
 
     **0 trial:** không nạp strategy, không tính chỉ báo, không sinh một chỉ số hiệu năng nào —
     cùng tiền lệ TD-0200 (DR-014 §2 chỉ tính *đánh giá cấu hình*).
@@ -571,6 +578,7 @@ def do_ro_do_phu(moc: str, chi_loai: str | None, out_path: Path) -> int:
             timerange=tr,
             startup_candles=0,
             fail_without_data=False,
+            fill_up_missing=False,  # TD-0317 — lấp thì thủng giữa chuỗi biến mất, xem docstring
             data_format="feather",
             candle_type=CandleType.FUTURES,
         )
@@ -607,8 +615,9 @@ def do_ro_do_phu(moc: str, chi_loai: str | None, out_path: Path) -> int:
             {
                 "nguon": (
                     f"TD-0252 — độ phủ {khung_ct} rổ {moc.upper()} trên [{bat_dau}, {ket_thuc}]. Đo bằng "
-                    "history.load_data(startup_candles=0), ĐÚNG bộ tham số Backtesting."
-                    "_load_bt_data_detail() truyền; không nạp strategy, không sinh chỉ số hiệu năng. 0 trial."
+                    "history.load_data(startup_candles=0), bộ tham số Backtesting._load_bt_data_detail() "
+                    "truyền TRỪ fill_up_missing=False (TD-0317: Freqtrade mặc định lấp chỗ thủng bằng nến "
+                    "giả); không nạp strategy, không sinh chỉ số hiệu năng. 0 trial."
                 ),
                 "moc": {moc: str(bat_dau), moc_cuoi: str(ket_thuc)},
                 "ro": {"file": str(CAU_HINH_RO[moc][1]), "so_ma": len(ro)},

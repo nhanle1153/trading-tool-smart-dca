@@ -1,5 +1,5 @@
 {
- "nguon": "TD-0252 — độ phủ 5m rổ T0 trên [2024-04-09, 2025-06-12]. Đo bằng history.load_data(startup_candles=0), ĐÚNG bộ tham số Backtesting._load_bt_data_detail() truyền; không nạp strategy, không sinh chỉ số hiệu năng. 0 trial.",
+ "nguon": "TD-0252 — độ phủ 5m rổ T0 trên [2024-04-09, 2025-06-12]. Đo bằng history.load_data(startup_candles=0), bộ tham số Backtesting._load_bt_data_detail() truyền TRỪ fill_up_missing=False (TD-0317: Freqtrade mặc định lấp chỗ thủng bằng nến giả); không nạp strategy, không sinh chỉ số hiệu năng. 0 trial.",
  "moc": {
   "t0": "2024-04-09",
   "t1": "2025-06-12"

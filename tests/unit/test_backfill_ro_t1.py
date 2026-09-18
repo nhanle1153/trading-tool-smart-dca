@@ -292,3 +292,63 @@ def test_do_phu_ma_qua_ro_kiem_ma_khong_nap_duoc_thi_TU_CHOI(tmp_path: Path, mon
     assert ma_thoat == E8.EXIT_RO_T1_LOI
     assert "B/USDT:USDT" in ra and "KHÔNG nạp được" in ra
     assert dp.cho_thieu_khung_chi_tiet({}, {}) == []  # hàm thuần vẫn đúng; chốt nằm ở người gọi
+
+
+# ─── TD-0317 — `--ro-do-phu` nạp KHÔNG lấp: thủng GIỮA chuỗi phải hiện ra ───
+
+
+def _du_lieu_do_phu(tmp_path: Path, monkeypatch, *, thung: bool) -> Path:
+    """Rổ `t0` giả hai mã, file feather THẬT (không giả `load_data`): `A` 5m thủng 3 giờ giữa
+    chuỗi nếu `thung`, `B` phủ đủ. Nằm trọn trong [T0, T1] của cấu hình thật."""
+    import pandas as pd
+
+    ro_yaml = tmp_path / "pool_t0.yaml"
+    ro_yaml.write_text("moc_t0: x\ntrading:\n- AUSDT\n- BUSDT\n", encoding="utf-8")
+    td0230 = tmp_path / "td0230.json"
+    td0230.write_text('{"khoang_ton_tai": {}}', encoding="utf-8")
+    thu_muc = tmp_path / "d" / "futures"
+    thu_muc.mkdir(parents=True)
+    monkeypatch.setitem(E8.CAU_HINH_RO, "t0", (thu_muc, ro_yaml, tmp_path / "m.json", ()))
+    monkeypatch.setattr(E8, "NGUON_TD0230", td0230)
+
+    def _nen(idx):
+        return pd.DataFrame({"date": idx, "open": 1.0, "high": 1.0, "low": 1.0, "close": 1.0, "volume": 5.0})
+
+    idx1 = pd.date_range("2024-05-01", periods=48, freq="1h", tz="UTC")
+    idx5 = pd.date_range("2024-05-01", periods=48 * 12, freq="5min", tz="UTC")
+    for ma in ("A", "B"):
+        _nen(idx1).to_feather(thu_muc / f"{ma}_USDT_USDT-1h-futures.feather")
+        df5 = _nen(idx5)
+        if thung and ma == "A":
+            bo = (df5["date"] >= pd.Timestamp("2024-05-01 10:00", tz="UTC")) & (
+                df5["date"] < pd.Timestamp("2024-05-01 13:00", tz="UTC")
+            )
+            df5 = df5[~bo].reset_index(drop=True)
+        df5.to_feather(thu_muc / f"{ma}_USDT_USDT-5m-futures.feather")
+    return tmp_path / "do-phu.json"
+
+
+def test_do_phu_bat_thung_GIUA_chuoi_qua_duong_E8_that(tmp_path: Path, monkeypatch, capsys) -> None:
+    """🔴 Ca mà bản TD-0252 cho QUA: Freqtrade mặc định lấp 3 giờ thủng bằng nến giả ⇒ hàm độ phủ
+    trả rỗng ⇒ in ✅, exit 0. Kiểm CÓ RĂNG (đã làm 18/09/2026): bỏ `fill_up_missing=False` khỏi
+    `_nap` ⇒ ca này đỏ."""
+    out = _du_lieu_do_phu(tmp_path, monkeypatch, thung=True)
+    ma_thoat = E8.do_ro_do_phu("t0", "5m", out)
+    ra = capsys.readouterr().out
+    assert ma_thoat == E8.EXIT_RO_T1_LOI, ra
+    assert "A/USDT:USDT: thủng 3/48 giờ" in ra, ra
+    assert "✅" not in ra
+    art = json.loads(out.read_text(encoding="utf-8"))
+    assert [t["symbol"] for t in art["thieu"]] == ["A/USDT:USDT"], "chỉ mã thủng, không kể mã đủ"
+    assert art["thieu"][0]["ly_do"] == "THUNG_GIUA_CHUOI"
+    assert "fill_up_missing=False" in art["nguon"], "artifact phải khai cách nạp"
+
+
+def test_do_phu_du_thi_van_ra_du(tmp_path: Path, monkeypatch, capsys) -> None:
+    """Đối chứng dương: nạp không lấp KHÔNG được biến dữ liệu sạch thành 'thiếu' — một phép đo
+    luôn báo thiếu cũng làm ca trên xanh."""
+    out = _du_lieu_do_phu(tmp_path, monkeypatch, thung=False)
+    ma_thoat = E8.do_ro_do_phu("t0", "5m", out)
+    ra = capsys.readouterr().out
+    assert ma_thoat == 0, ra
+    assert "✅" in ra and "2 mã" in ra

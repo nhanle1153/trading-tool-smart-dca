@@ -3632,3 +3632,11 @@ giữa chuỗi. Đo lại rổ `T0` thật với cả hai chế độ (0 trial, 
 Lần tải dữ liệu tiếp theo (rổ `T1`, `T2`) sẽ không được phép đó che. Đã báo chủ dự án; sửa E8 là việc riêng.
 Đối chứng chéo mà dòng TD-0314 đòi (*"hai đường độc lập ra cùng số"*) vì thế **không phải là xác nhận** cho
 tới khi E8 nạp không lấp — hai đường cùng ra 0 trên rổ `T0`, nhưng một đường mù với loại lỗi đang xét.
+
+**➕ Cùng ngày — TD-0317 (chủ dự án duyệt sửa E8):** `_nap` của `--ro-do-phu` nay truyền
+`fill_up_missing=False`, cùng luật nạp với lõi. Test khoá chạy qua đúng `do_ro_do_phu()` trên file feather
+thật, thủng 3 giờ ⇒ exit lỗi + chỉ đích danh mã thủng; kiểm có răng: bỏ khoá đó ⇒ đúng 1 ca đỏ. Chạy lại E8
+trên rổ `T0` thật: **143/143 mã, 0 giờ thiếu, exit 0**; artifact `td0252-do-phu-5m-calib.json` chỉ đổi câu
+`nguon`, mọi con số giữ nguyên (tổng **16.555.667** nến 5m, trùng bản cũ ⇒ bản cũ cũng không có nến lấp nào
+— kết luận TD-0252 nay đứng nhờ PHÉP ĐO, không chỉ nhờ dữ liệu). Đối chứng chéo lõi ↔ E8 giờ là xác nhận thật:
+hai đường độc lập, cùng luật nạp, cùng ra 0 trên rổ `T0`.
