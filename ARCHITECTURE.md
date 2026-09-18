@@ -115,6 +115,7 @@ tool-d-smart-dca/                  ← git root = E:\Trading Tool_Smart DCA
 │  │                                  → DR-D1-05: vai RỔ HÔM NAY (live) + sổ 4 suất B0; KHÔNG
 │  │                                  dùng cho backtest CALIB/WFO/LOCKBOX (xem 3.5)
 │  ├─ pool_t0.yaml                 ← rổ ĐÚNG TẠI T0 cho CALIB (DR-D1-05, TD-0300 — CHƯA sinh)
+│  │                                  🔄 18/09: ✅ đã sinh, 143 mã (E7 --ro-t0 --ghi, `e538518`)
 │  ├─ pool_t1.yaml                 ← rổ ĐÚNG TẠI T1, 107 mã (E7 --ro-t1 --ghi, TD-0247,
 │  │                                  DR-D1-03) — CHƯA thay pool.yaml (DR-D1-02 §6)
 │  ├─ pool_t2.yaml                 ← rổ ĐÚNG TẠI T2 cho LOCKBOX, 86 mã (E7 --ro-t2 --ghi, TD-0307,
@@ -128,6 +129,8 @@ tool-d-smart-dca/                  ← git root = E:\Trading Tool_Smart DCA
 │  │                                  khỏi mọi rổ giao dịch (DR-D1-03 §1.1)
 │  ├─ pool_t0/futures/             ← rổ T0: 5 loại/mã [T0,T1], không 5m (DR-D1-05 §3,
 │  │                                  TD-0301 — CHƯA có)
+│  │                                  🔄 18/09: ✅ đã có — 143 mã × 6 loại, CÓ 5m (TD-0301 +
+│  │                                  TD-0252, DR-D1-05 §3b)
 │  └─ pool_t1/futures/             ← rổ T1: 107 mã × 6 file [T0,T2], cắt tại mốc ngừng
 │                                     giao dịch (DR-D1-03 §4–§5); E8 --ro-t1-kiem canh
 ├─ lockbox/                        ← NGOÀI user_data (xem 3.1)
@@ -229,13 +232,13 @@ trong giai đoạn đó. Đó là lệch sống sót theo chiều PASS (H1-D, `s
 
 | Tập | Rổ | Thư mục dữ liệu | Trạng thái |
 |---|---|---|---|
-| CALIB `[T0,T1]` | `config/pool_t0.yaml` | `user_data/data/pool_t0/futures/` | chưa sinh (TD-0300/0301) |
+| CALIB `[T0,T1]` | `config/pool_t0.yaml` | `user_data/data/pool_t0/futures/` | chưa sinh (TD-0300/0301) 🔄 18/09: ✅ 143 mã, 6 loại có 5m (TD-0300/0301/0252) |
 | WFO `[T1,T2]` | `config/pool_t1.yaml` | `user_data/data/pool_t1/futures/` | ✅ |
 | LOCKBOX `[T2,T3]` | rổ tại `T2` | — | ⏸ D8 (`MT-59`, `MT-60`); lockbox hiện niêm phong 102 mã `pool.yaml` 🔄 18/09: rổ = `config/pool_t2.yaml` (86 mã, TD-0307); dữ liệu `[T2,T3]` + niêm phong bản cấp lại ⏸ D8 (TD-0308/0310) |
 | live | `config/pool.yaml` | — | rổ hôm nay + sổ B0 |
 
 - **Bộ chạy không tự đọc file rổ.** Nó gọi đúng một hàm chọn rổ theo tên tập
-  (`src/tool_d/pool_giai_doan.py`, TD-0299, chưa có).
+  (`src/tool_d/pool_giai_doan.py`, TD-0299, chưa có). 🔄 18/09: ✅ đã có — `ro_cho_tap()`.
 - Hàm đó từ chối `LOCKBOX` cho tới khi `MT-60` giải, và **không bao giờ** trả `pool.yaml` cho backtest.
   🔄 **Đính chính 18/09/2026 (TD-0307):** `MT-60` đã giải phần rổ, nhưng hàm **VẪN từ chối `LOCKBOX` —
   vĩnh viễn**. Lõi bộ chạy (Khối 27) không có cửa chặn LOCKBOX riêng và dựa vào đúng việc hàm này từ chối;
@@ -396,3 +399,4 @@ mô tả cả ba sổ JSONL này thì phải **sinh/kiểm tự động từ sch
 | 17/09/2026 | Rổ pool đúng tại `T1` + dữ liệu `[T0,T2]` (TD-0247, `DR-D1-03`): `config/pool_t1.yaml`, `user_data/data/pool_t1/`, `src/tool_d/data/kho_luu_tru` · `pool_t1_du_lieu`; E7 cờ `--ro-t1 [--ghi]`; E8 cờ `--ro-t1-sao-chep` · `--ro-t1-nhap-kho` · `--cat-den-t2` · `--ro-t1-kiem`; `thay_doi_anh_huong_phep_do` chuyển từ E6 sang `measurement/gitinfo` | Cây không ghi `config/pool.yaml`, `pool.py`, `src/tool_d/data/` (có từ D0-PRE/D1) và chỉ ghi `user_data/data/` một dòng; không có đường nào dựng rổ quá khứ có xuất xứ hay nhập dữ liệu mã đã huỷ niêm yết | Thêm 3 nhóm dòng cây (config · user_data/data · src) + dòng này. **Không thêm entrypoint** (vẫn 8 file, L-Z36): đường nhập kho là cờ E8 — ngoại lệ có ý thức với docstring *"E8 không tự tải"*, lớp gác H19 vẫn không gọi nó và ngược lại (`DR-D1-03` §4) | Lệnh *"chuẩn hóa và lưu"* 17/09/2026, phiên `-01` |
 | 17/09/2026 | Rổ theo từng giai đoạn (`DR-D1-05`): thêm mục 3.5 + dòng cây `config/pool_t0.yaml` · `user_data/data/pool_t0/` (chưa sinh) + chú thích vai mới của `pool.yaml` | Cây coi `pool.yaml` là "pool SẢN XUẤT" duy nhất; không nói rổ nào dùng cho giai đoạn dữ liệu nào | CALIB→`pool_t0`, WFO→`pool_t1`, LOCKBOX→rổ `T2` (⏸ D8), live→`pool.yaml`; một hàm chọn rổ duy nhất (TD-0299), từ chối LOCKBOX và không bao giờ trả `pool.yaml` cho backtest | Lệnh *"chuẩn hóa và lưu"* 17/09/2026, phiên `-01`; khảo sát cho thấy không mã nào đọc `pool.yaml` khi chạy và mỗi giai đoạn cần rổ đúng tại mốc của nó |
 | 18/09/2026 | Lockbox đúng rổ + H17 tách theo service (`DR-LOCKBOX-01`, `DR-LOCKBOX-02`): cây thêm `config/pool_t2.yaml` · `src/tool_d/data/doi_song_ma` · `src/tool_d/lockbox/h17` · `ro_seal`; §3.1 thêm bảng H17 theo service; §3.5 đính chính dòng LOCKBOX + câu *"từ chối cho tới khi MT-60 giải"* | Lockbox niêm phong rổ 09/2026 (sai rổ, `MT-60`) và `verify_seal` mù với điều đó; H17 băm dữ liệu ở service mà dữ liệu bị che ⇒ E1/E2/E3 exit 89 mọi lần (`MT-63`) | Rổ `T2` 86 mã khoá trước mọi số; `verify_lockbox` = băm + xét rổ; service pipeline canh cách ly lúc chạy, băm về service `lockbox`; `ro_cho_tap("LOCKBOX")` từ chối vĩnh viễn. **Không thêm entrypoint** (vẫn 8, L-Z36): cờ mới là `E7 --ro-t2` | Lệnh *"chuẩn hóa và lưu"* 18/09/2026, phiên `55661c40`. ⚠️ Không đụng hai chỗ lỗi thời của phiên khác (`pool_t0.yaml` "CHƯA sinh", `pool_giai_doan` "chưa có" — cả hai thực tế đã xong) |
+| 18/09/2026 | Đính chính 4 chỗ lỗi thời về rổ `T0`: cây `config/pool_t0.yaml` + `user_data/data/pool_t0/futures/`, §3.5 bảng dòng CALIB + câu `pool_giai_doan.py` "chưa có" | Các chỗ này viết 17/09 lúc việc chưa làm; TD-0299/0300/0301/0252 đều ✅ nhưng chữ chưa theo kịp (dòng lịch sử trước đã ghi nhận mà chưa sửa) | Chỉ nối `🔄 18/09` sau chữ cũ, không xoá chữ nào: rổ `T0` 143 mã, dữ liệu 6 loại có 5m, `ro_cho_tap()` đã có | Lệnh *"chuẩn hóa và lưu"* 18/09/2026, phiên `55661c40`; đối chiếu đĩa trước khi ghi (file, số mã, loại file, trạng thái `TASKS.md`) |
