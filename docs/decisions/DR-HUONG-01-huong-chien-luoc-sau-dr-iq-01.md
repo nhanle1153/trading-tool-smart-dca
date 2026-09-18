@@ -68,21 +68,53 @@ D dùng chung cơ chế với chiều Long vừa cho ≈ 0.
 - Khối 26 (rổ `T2`, vá `verify_seal`) theo đúng phạm vi `DR-LOCKBOX-01` §4.
 - Nợ trước go-live (`TD-0277`), Risk Supervisor, đường D10–D12.
 
-## 5. 🔴 Câu hỏi MỞ — KHÔNG chốt trong DR này
+## 5. Lockbox của ứng viên suất (d) — ĐÃ có lập trường; câu còn mở thật nằm ở chỗ khác
 
-**Một lockbox, hai bên muốn dùng.** Spec §9c.7.5: mỗi ứng viên được chọn cần *"một lockbox trên dữ liệu
-CHƯA TỪNG DÙNG"*. Lockbox hiện có (`lockbox_seal_1.json`, `[T2,T3]` = 29/01 → 06/09/2026) **chưa bị chạm lần
-nào** — nhưng `DR-LOCKBOX-01` đã dành nó cho lần chạm của ZA (`TD-0274`, qua seal cấp lại trên rổ `T2`). Một
-lockbox đã chạm thì hết.
+> 🔴 **ĐÍNH CHÍNH 18/09/2026 — bản commit đầu của mục này SAI ở hai chỗ, phiên `-2b` bắt, đã kiểm trên đĩa.**
+> Chữ cũ giữ nguyên trong khối trích dưới đây làm lịch sử.
+>
+> 1. Tiền đề *"`DR-LOCKBOX-01` đã dành seal 1 cho lần chạm của ZA"* **sai**: DR đó không nhắc Zone Absorption lần
+>    nào (grep chuỗi cố định: "Zone" 0, "ZA " 0, "LONG" 0; `TD-0274` chỉ ghi *"không thuộc DR này"*). Nó quy định
+>    **rổ** nào và **cách niêm phong lại**, không gán lockbox cho chiến lược nào.
+> 2. Câu *"ứng viên mới có được dùng seal 1 không"* **không còn mở**: `DR-IQ-01:86` đòi ứng viên chọn qua (d) có
+>    *"lockbox MỚI trên dữ liệu chưa từng dùng"*; `DR-IQ-01:125-126` ghi *"Lockbox cho ứng viên mới chưa tồn tại:
+>    dữ liệu sạch sau `T3 = 2026-09-06` … cổng lockbox của nó sớm nhất vài quý sau"*; spec §9c.7.5 (`:4134`):
+>    *"Không dùng queue để né lockbox"*. Coi nó là câu mở là đặt `DR-HUONG-01` đứng khác `DR-IQ-01` ở cùng một
+>    điểm. Lỗi đọc: viết từ bản phân tích của chính phiên này mà không mở `DR-IQ-01` §5.
+>
+> <details><summary>Chữ cũ (sai)</summary>
+>
+> ## 5. 🔴 Câu hỏi MỞ — KHÔNG chốt trong DR này
+>
+> **Một lockbox, hai bên muốn dùng.** Spec §9c.7.5: mỗi ứng viên được chọn cần *"một lockbox trên dữ liệu
+> CHƯA TỪNG DÙNG"*. Lockbox hiện có (`lockbox_seal_1.json`, `[T2,T3]` = 29/01 → 06/09/2026) **chưa bị chạm lần
+> nào** — nhưng `DR-LOCKBOX-01` đã dành nó cho lần chạm của ZA (`TD-0274`, qua seal cấp lại trên rổ `T2`). Một
+> lockbox đã chạm thì hết.
+>
+> - Nếu ý tưởng mới **được** dùng seal 1 ⇒ nó chạy được đủ chu trình ngay, nhưng **ZA LONG mất lockbox của mình**:
+>   phương án A khi đó phải chờ cả dữ liệu mới cho CALIB/WFO **lẫn** một lockbox mới.
+> - Nếu **không** ⇒ ý tưởng mới cũng phải chờ dữ liệu sau `T3 = 06/09/2026`, như A.
+>
+> Đây là diễn giải luật về dữ liệu, cùng hạng với *"băm ≠ chạm"* (`DR-BC-01` §3). **Chủ dự án quyết**, và phải
+> quyết **TRƯỚC khi có ứng viên nào được CHỌN qua suất (d)** — từ lúc biết ý tưởng là gì, câu trả lời có thể bị
+> dẫn dắt bởi việc ý tưởng đó trông hứa hẹn hay không. *(Đính chính cùng ngày: bản commit đầu ghi "trước khi ý
+> tưởng tới D8" — sai mốc, vì rủi ro dẫn dắt bắt đầu ngay lúc CHỌN, không phải lúc chạm lockbox.)* Đề xuất ghi thành một `OQ` trong `back-end-note.md` ở lần *"chuẩn hóa và lưu"* kế tiếp.
+>
+> </details>
 
-- Nếu ý tưởng mới **được** dùng seal 1 ⇒ nó chạy được đủ chu trình ngay, nhưng **ZA LONG mất lockbox của mình**:
-  phương án A khi đó phải chờ cả dữ liệu mới cho CALIB/WFO **lẫn** một lockbox mới.
-- Nếu **không** ⇒ ý tưởng mới cũng phải chờ dữ liệu sau `T3 = 06/09/2026`, như A.
+**Lập trường giữ nguyên chữ `DR-IQ-01`:** ứng viên chọn qua suất (d) cần lockbox trên dữ liệu **sau `T3`**. Hệ
+quả phải nói rõ: chu trình D0→D9 của ứng viên chạy được ngay từ khi chọn (dữ liệu `[T0,T2]` chưa từng dùng
+cho *ý tưởng đó*), nhưng **cổng lockbox của nó sớm nhất vài quý sau**. Hướng C không có đường tắt tới tiền thật.
 
-Đây là diễn giải luật về dữ liệu, cùng hạng với *"băm ≠ chạm"* (`DR-BC-01` §3). **Chủ dự án quyết**, và phải
-quyết **TRƯỚC khi có ứng viên nào được CHỌN qua suất (d)** — từ lúc biết ý tưởng là gì, câu trả lời có thể bị
-dẫn dắt bởi việc ý tưởng đó trông hứa hẹn hay không. *(Đính chính cùng ngày: bản commit đầu ghi "trước khi ý
-tưởng tới D8" — sai mốc, vì rủi ro dẫn dắt bắt đầu ngay lúc CHỌN, không phải lúc chạm lockbox.)* Đề xuất ghi thành một `OQ` trong `back-end-note.md` ở lần *"chuẩn hóa và lưu"* kế tiếp.
+**Câu còn mở thật — nêu, KHÔNG chốt** (phiên `-2b` chỉ ra): **dữ liệu sau `T3` có hai bên cần**:
+- điều kiện nối lại ZA LONG (`DR-IQ-01:43`: *"dữ liệu MỚI chưa từng dùng (sau `T3`)"*), và
+- lockbox của ứng viên suất (d) (`DR-IQ-01:125`).
+
+Dữ liệu đã dùng cho bên này thì hết với bên kia. `DR-IQ-01:47-49` cấm hai bên chạy **cùng lúc**, nhưng không nói
+đoạn dữ liệu sau `T3` **thuộc về ai**. Theo quy tắc 11 đây là một chỗ hở giữa hai điều đã chốt ⇒ đề xuất ghi
+thành một mục `MT` trong `back-end-note.md` ở lần *"chuẩn hóa và lưu"* kế tiếp. **Chủ dự án quyết**, và nên
+quyết **trước khi có ứng viên nào được CHỌN qua suất (d)** — từ lúc biết ý tưởng là gì, câu trả lời có thể bị
+dẫn dắt bởi việc ý tưởng đó trông hứa hẹn hay không.
 
 ## 6. Điểm yếu, khai thẳng
 
