@@ -201,3 +201,10 @@ nguyên văn `DR-IQ-01` §1, và DR này **thêm** một câu để bịt một 
    buộc bởi `kiem_pham_vi_du_lieu` tầng (b)); còn `wfo/lenh.py:16-21` + `DR-D9-01` §5.1 chạy **1 lượt**
    toàn cửa sổ rồi cắt lát. Không phải lỗi — trạng thái danh mục §6.8f và biên fold khác nhau thật —
    nhưng là **hai nguồn số**, và phải khai bản nào nuôi cổng nào. Ghi thành `MT-61`.
+
+   > 🔴 **Đính chính 18/09/2026 (MT-61), giữ nguyên chữ trên làm lịch sử.** Câu *"phải khai bản nào
+   > nuôi cổng nào"* là **quá tay**: `DR-D9-01` §5 + §5.1 (chủ dự án chốt **17/09**, trước DR này) đã
+   > trả lời — D9 chạy MỘT lượt mỗi cấu hình rồi cắt lát bằng `wfo/lenh.py`, KHÔNG qua `chay_wfo`;
+   > *"Một cấu hình = một tập lệnh"*. Mục này viết từ lời khai của agent thiết kế, không mở §5.1. Phần
+   > còn mở thật hẹp hơn và đã giải ở MT-61: tài liệu của E2 còn chỉ đường sang `chay_wfo` (sửa ở
+   > `3ac9e0c`), và `chay_wfo` hiện **chưa có người dùng** (giữ nguyên, không xoá).
