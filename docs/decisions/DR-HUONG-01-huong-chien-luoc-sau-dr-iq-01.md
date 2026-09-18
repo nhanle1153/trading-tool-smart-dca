@@ -80,8 +80,9 @@ lockbox đã chạm thì hết.
 - Nếu **không** ⇒ ý tưởng mới cũng phải chờ dữ liệu sau `T3 = 06/09/2026`, như A.
 
 Đây là diễn giải luật về dữ liệu, cùng hạng với *"băm ≠ chạm"* (`DR-BC-01` §3). **Chủ dự án quyết**, và phải
-quyết **trước khi ý tưởng được chọn qua suất (d) tới D8** — sau thời điểm đó câu trả lời có thể bị dẫn dắt bởi
-việc đã biết ý tưởng là gì. Đề xuất ghi thành một `OQ` trong `back-end-note.md` ở lần *"chuẩn hóa và lưu"* kế tiếp.
+quyết **TRƯỚC khi có ứng viên nào được CHỌN qua suất (d)** — từ lúc biết ý tưởng là gì, câu trả lời có thể bị
+dẫn dắt bởi việc ý tưởng đó trông hứa hẹn hay không. *(Đính chính cùng ngày: bản commit đầu ghi "trước khi ý
+tưởng tới D8" — sai mốc, vì rủi ro dẫn dắt bắt đầu ngay lúc CHỌN, không phải lúc chạm lockbox.)* Đề xuất ghi thành một `OQ` trong `back-end-note.md` ở lần *"chuẩn hóa và lưu"* kế tiếp.
 
 ## 6. Điểm yếu, khai thẳng
 
