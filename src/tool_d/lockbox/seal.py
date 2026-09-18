@@ -46,14 +46,25 @@ class Seal:
     sealed_at: str
     date_range: dict[str, str]
     data_hashes: dict[str, str]
+    #: TD-0309 (`MT-60`): rổ mà seal niêm phong — `{moc, file, sha256, trading[]}`. `None` ở seal cũ.
+    pool: dict[str, Any] | None = None
+    #: TD-0309 (`DR-LOCKBOX-01` §3): tên seal mà bản CẤP LẠI này thay thế. `None` nếu không phải cấp lại.
+    thay_the: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        ra: dict[str, Any] = {
             "segment": self.segment,
             "sealed_at": self.sealed_at,
             "date_range": dict(self.date_range),
             "data_hashes": dict(self.data_hashes),
         }
+        # Khoá mới CHỈ xuất hiện khi có — seal cũ ra đúng dict như trước TD-0309.
+        if self.pool is not None:
+            ra["schema"] = 2
+            ra["pool"] = dict(self.pool)
+        if self.thay_the is not None:
+            ra["thay_the"] = self.thay_the
+        return ra
 
 
 def build_seal(
@@ -62,6 +73,8 @@ def build_seal(
     sealed_at: str,
     date_range: dict[str, str],
     data_files: dict[str, Path],
+    pool: dict[str, Any] | None = None,
+    thay_the: str | None = None,
 ) -> Seal:
     """Dựng một khối niêm phong — hash TOÀN BỘ file trong `data_files`
     (tên hiển thị -> đường dẫn thật), dùng `hash_many` sẵn có (0d.5) để
@@ -71,6 +84,8 @@ def build_seal(
         sealed_at=sealed_at,
         date_range=dict(date_range),
         data_hashes=hash_many(data_files),
+        pool=dict(pool) if pool is not None else None,
+        thay_the=thay_the,
     )
 
 
@@ -121,6 +136,33 @@ def verify_seal(seal_path: Path, data_dir: Path) -> list[str]:
     return errors
 
 
+TEN_SEAL_1 = "lockbox_seal_1.json"
+
+
+def seal_hieu_luc_doan_1(lockbox_dir: Path) -> Path | None:
+    """Seal ĐANG HIỆU LỰC của đoạn 1 (`DR-LOCKBOX-01` §3). Có bản cấp lại (`thay_the` = seal 1) thì
+    trả bản đó — seal bị thay thế KHÔNG BAO GIỜ được trả, nên không có đường nào chọn nhầm nó để
+    chạm. Hai bản cấp lại ⇒ raise (chốt 2: tối đa một lần). Seal không đọc được ⇒ raise (không
+    đoán). Không có seal nào ⇒ `None`."""
+    cap_lai: list[Path] = []
+    for sp in discover_seals(lockbox_dir):
+        try:
+            d = json.loads(sp.read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise ValueError(f"{sp.name} không đọc được — không xác định được seal hiệu lực: {exc}") from exc
+        if d.get("thay_the") == TEN_SEAL_1:
+            cap_lai.append(sp)
+    if len(cap_lai) > 1:
+        raise ValueError(
+            f"{len(cap_lai)} bản cấp lại cùng thay {TEN_SEAL_1}: {[p.name for p in cap_lai]} — "
+            "tối đa MỘT lần cấp lại (DR-LOCKBOX-01 §3, chốt 2)"
+        )
+    if cap_lai:
+        return cap_lai[0]
+    s1 = lockbox_dir / TEN_SEAL_1
+    return s1 if s1.is_file() else None
+
+
 def discover_seals(lockbox_dir: Path) -> list[Path]:
     """Liệt kê mọi `lockbox_seal_<n>.json` trong `lockbox_dir`, sắp theo
     tên (tức theo số đoạn). Thư mục chưa tồn tại -> danh sách rỗng."""
@@ -141,6 +183,10 @@ def verify_all_seals(lockbox_dir: Path, data_dir: Path) -> list[str]:
 
     Lỗi trả về có tiền tố tên file seal để phân biệt được đoạn nào lệch
     khi có nhiều đoạn cùng lúc.
+
+    🔴 CHỈ BĂM (`L-Z14`) — không xét rổ. Seal sai rổ (`MT-60`) vẫn PASS ở đây. Kiểm TOÀN DIỆN một
+    lockbox (băm + rổ) dùng `ro_seal.verify_lockbox()`; E4 `--verify-seal` gọi hàm đó (TD-0309).
+    Tách riêng để test khoá `L-Z14` giữ đúng nghĩa của nó, không phải sửa vì một mối lo khác.
     """
     errors: list[str] = []
     for seal_path in discover_seals(lockbox_dir):

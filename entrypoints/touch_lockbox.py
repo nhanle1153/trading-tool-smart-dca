@@ -38,7 +38,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from tool_d.lockbox.backup import backup_lockbox
-from tool_d.lockbox.seal import build_seal, verify_all_seals, verify_seal, write_seal
+from tool_d.lockbox.ro_seal import verify_lockbox
+from tool_d.lockbox.seal import build_seal, verify_seal, write_seal
 from tool_d.measurement.guard import EXIT_GUARD_BLOCKED, GuardOutcome, measurement_guard
 
 ENTRYPOINT = "E4"
@@ -155,16 +156,26 @@ def main(argv: list[str] | None = None) -> int:
         return EXIT_GUARD_BLOCKED
 
     if args.verify_seal:
-        errors = verify_all_seals(LOCKBOX_DIR, LOCKBOX_FUTURES_DIR)
-        if errors:
+        # TD-0309: băm (`L-Z14`) + xét rổ (`MT-60`) — `verify_all_seals` một mình mù với seal sai rổ.
+        kq = verify_lockbox(LOCKBOX_DIR, LOCKBOX_FUTURES_DIR)
+        if kq.loi_bam:
             print("🛑 L-Z14 FAIL — seal KHÔNG khớp dữ liệu lockbox:")
-            for e in errors:
+            for e in kq.loi_bam:
                 print(f"  - {e}")
+        if kq.loi_ro:
+            print("🛑 MT-60 FAIL — seal KHÔNG niêm phong đúng rổ (DR-LOCKBOX-01):")
+            for e in kq.loi_ro:
+                print(f"  - {e}")
+        if not kq.dat:
             return EXIT_LOCKBOX_VERIFY_FAILED
         print(
             "✅ verify-seal PASS (H17) — mọi đoạn niêm phong hiện có khớp "
-            f"dữ liệu ({LOCKBOX_FUTURES_DIR})."
+            f"dữ liệu ({LOCKBOX_FUTURES_DIR}); không đoạn nào khai SAI rổ."
         )
+        # Không viết "khai đúng rổ": đoạn được MIỄN không khai rổ nào cả — nói "đúng" là lời khai
+        # trông như quan sát. Đoạn miễn hiện ở dòng ⚠️ riêng dưới đây.
+        for g in kq.ghi_chu_mien:
+            print(f"⚠️ {g}")
         return 0
 
     if args.seal_initial:
