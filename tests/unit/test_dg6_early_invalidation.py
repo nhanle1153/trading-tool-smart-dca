@@ -6,7 +6,6 @@ import pytest
 
 from tool_d.dg6_early_invalidation import (
     NGUONG_DECAY_C,
-    NGUONG_FUNDING_D,
     NGUONG_HOI_GIA_D,
     SO_NEN_TOI_THIEU_B,
     dg6_dong_vi_the,
@@ -22,6 +21,10 @@ from tool_d.dg6_early_invalidation import (
 # Ngưỡng THỬ — `NGUONG_ATR_RATIO_A` đã bị xoá (TD-0195); giá trị thật đọc
 # từ `tier_b.dg6a_atr_ratio` ở tầng chiến lược.
 ATR_RATIO_THU = 1.8
+
+# Ngưỡng THỬ — `NGUONG_FUNDING_D` đã bị xoá (TD-0320); giá trị thật đọc từ
+# `tier_b.funding_rate_pct` (÷100) ở tầng chiến lược khi TD-0321 nối.
+FUNDING_THU = -0.0005
 
 
 class TestDieuKienA:
@@ -94,16 +97,28 @@ class TestTyLeHoiVeP1:
 
 class TestDieuKienD:
     def test_short_funding_am_va_hoi_qua_50pt_thi_true(self) -> None:
-        assert dieu_kien_d(-0.001, 0.6, huong="short") is True
+        assert dieu_kien_d(-0.001, 0.6, huong="short", nguong_funding=FUNDING_THU) is True
 
     def test_long_luon_false(self) -> None:
-        assert dieu_kien_d(-0.001, 0.6, huong="long") is False
+        assert dieu_kien_d(-0.001, 0.6, huong="long", nguong_funding=FUNDING_THU) is False
 
     def test_funding_chua_du_am_thi_false(self) -> None:
-        assert dieu_kien_d(NGUONG_FUNDING_D + 0.0001, 0.6, huong="short") is False
+        assert dieu_kien_d(
+            FUNDING_THU + 0.0001, 0.6, huong="short", nguong_funding=FUNDING_THU
+        ) is False
 
     def test_hoi_gia_chua_du_thi_false(self) -> None:
-        assert dieu_kien_d(-0.001, NGUONG_HOI_GIA_D - 0.01, huong="short") is False
+        assert dieu_kien_d(
+            -0.001, NGUONG_HOI_GIA_D - 0.01, huong="short", nguong_funding=FUNDING_THU
+        ) is False
+
+    def test_nguong_funding_khong_co_mac_dinh(self) -> None:
+        """Cùng khuôn `nguong_zss`/`nguong_atr_ratio` (TD-0195): mặc định
+        là chỗ để một đường gọi quên khai mà vẫn lặng lẽ chạy."""
+        import inspect
+
+        chu_ky = inspect.signature(dieu_kien_d)
+        assert chu_ky.parameters["nguong_funding"].default is inspect.Parameter.empty
 
 
 class TestDg6DongViThe:

@@ -49,10 +49,13 @@ MIEN_TRU: dict[str, str] = {
     # nối §3.3b vào `ZoneAbsorption.populate_indicators`, hai khoá nay có đường
     # đọc thật (`self._v_min`, `self._wick_frac`) và chảy tới `quet_xac_nhan_zone`.
     "funding_rate_pct": (
-        "DG6-D — `dieu_kien_d()` chưa có người gọi (`ZoneAbsorption` truyền "
-        "`d=False` cứng). 🔴 Gỡ miễn trừ PHẢI kèm chốt ĐƠN VỊ: YAML ghi "
-        "-0.05 (phần trăm), hằng số cũ là -0.0005 (tỉ lệ) — sai 100 lần nếu "
-        "nối mà quên ÷100 (lớp lỗi L-Z48c)."
+        "DG6-D — `dieu_kien_d()` chưa có người gọi SẢN XUẤT (`ZoneAbsorption` "
+        "vẫn truyền `d=False` cứng; nối là TD-0321). TD-0320 đã đóng nửa đầu: "
+        "`dieu_kien_d()` nay nhận `nguong_funding` qua đối số BẮT BUỘC, không "
+        "mặc định, hằng số cứng `NGUONG_FUNDING_D` đã xoá hẳn (canh ở "
+        "`TestCamBanSaoCungGiaTri` bên dưới). 🔴 Gỡ miễn trừ này còn cần TẦNG "
+        "GỌI chia YAML cho 100: YAML ghi -0.05 (phần trăm), tham số hàm là TỈ "
+        "LỆ — sai 100 lần nếu tầng gọi quên ÷100 (lớp lỗi L-Z48c)."
     ),
     "dg6d_retrace_frac": "DG6-D — cùng lý do với `funding_rate_pct`.",
 }
@@ -161,6 +164,9 @@ class TestCamBanSaoCungGiaTri:
             ("src/tool_d/zone_strength.py", "NGUONG_ZSS", "zss_threshold"),
             ("src/tool_d/trade_plan.py", "BUF_SL_HE_SO", "buf_sl_atr"),
             ("src/tool_d/dg6_early_invalidation.py", "NGUONG_ATR_RATIO_A", "dg6a_atr_ratio"),
+            # TD-0320 (DR-SHORT-01) — `NGUONG_FUNDING_D` xoá hẳn cùng đợt
+            # `dieu_kien_d()` nhận `nguong_funding` bắt buộc.
+            ("src/tool_d/dg6_early_invalidation.py", "NGUONG_FUNDING_D", "funding_rate_pct"),
         ],
     )
     def test_hang_so_khong_quay_lai(self, tep: str, ten_hang: str, khoa: str) -> None:

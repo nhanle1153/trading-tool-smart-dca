@@ -11,6 +11,24 @@ tham chiếu là lúc tranche 1 khớp, không phải lúc zone hình thành. G�
 `zone_strength.compression(..., i_hinh_thanh=i_tranche1, i_hien_tai=i)`
 ở tầng chiến lược, truyền kết quả vào `dieu_kien_a` ở đây — không viết
 lại phép tính ATR.
+
+════ TD-0320 (DR-SHORT-01) — `dieu_kien_d` nay đọc ngưỡng qua đối số ════
+
+🔴 TD-0195 — `NGUONG_ATR_RATIO_A = 1.8` ĐÃ BỊ XOÁ: bản sao cứng của
+`tier_b.dg6a_atr_ratio` (tunable #8). `dieu_kien_a()` nhận ngưỡng qua
+đối số bắt buộc; người gọi đọc YAML. Xem chú thích cùng loại ở
+`zone_strength.py`. Cùng cách vá nay áp cho `dieu_kien_d()`.
+
+🔴 **Bẫy đơn vị, đã khai TRƯỚC khi vá (ghi nợ từ TD-0123), nay đóng:**
+YAML ghi `tier_b.funding_rate_pct: -0.05` là PHẦN TRĂM; hằng số cũ
+`NGUONG_FUNDING_D = -0.0005` ở đây là TỈ LỆ — cùng một số vật lý, khác
+ĐƠN VỊ. `dieu_kien_d()` nhận `nguong_funding` qua đối số bắt buộc (cùng
+khuôn `nguong_atr_ratio`); người gọi ở tầng chiến lược đọc
+`resolve(cfg, "tier_b.funding_rate_pct") / 100` — CHIA 100 tường minh
+tại đúng MỘT chỗ, không lặp phép chia ở nơi khác. `dieu_kien_d()`
+**CHƯA** có người gọi trên đường chạy sản xuất tính tới TD-0320
+(`ZoneAbsorption.py` còn truyền `d=False` cứng — việc nối là TD-0321,
+phần dựng đường Short trong chiến lược).
 """
 
 from __future__ import annotations
@@ -19,23 +37,8 @@ from typing import Literal, Sequence
 
 Huong = Literal["long", "short"]
 
-# 🔴 TD-0195 — `NGUONG_ATR_RATIO_A = 1.8` ĐÃ BỊ XOÁ: bản sao cứng của
-# `tier_b.dg6a_atr_ratio` (tunable #8). `dieu_kien_a()` nhận ngưỡng qua
-# đối số bắt buộc; người gọi đọc YAML. Xem chú thích cùng loại ở
-# `zone_strength.py`.
-#
-# ⏳ CHƯA xử trong đợt này, ghi nợ tại chỗ để không ai tưởng đã xong:
-# `NGUONG_FUNDING_D` / `NGUONG_HOI_GIA_D` cũng là bản sao cứng
-# (`tier_b.funding_rate_pct` #5 và `tier_b.dg6d_retrace_frac` #6) —
-# nhưng `dieu_kien_d()` CHƯA có người gọi trên đường chạy sản xuất
-# (`ZoneAbsorption.py` truyền `d=False` cứng), nên vá bây giờ là vá một
-# đường không ai đi. 🔴 Và nó có một câu phải chốt trước: YAML ghi
-# `funding_rate_pct: -0.05` (PHẦN TRĂM) còn hằng số ở đây là `-0.0005`
-# (TỈ LỆ) — cùng một số vật lý, khác ĐƠN VỊ. Nối mà quên ÷100 thì ngưỡng
-# sai 100 lần, đúng lớp lỗi `L-Z48c` sinh ra để chặn.
 SO_NEN_TOI_THIEU_B = 8  # 🔒 = DG4, đóng băng
 NGUONG_DECAY_C = 0.7
-NGUONG_FUNDING_D = -0.0005  # -0.05%, [CẦN CALIBRATE]
 NGUONG_HOI_GIA_D = 0.5
 
 
@@ -94,11 +97,24 @@ def ty_le_hoi_ve_p1(*, gia_vao: float, gia_hien_tai: float, p1: float) -> float:
     return max(0.0, da_di) / quang_duong
 
 
-def dieu_kien_d(funding_rate_8h_gan_nhat: float, ty_le_hoi_p1: float, *, huong: Huong) -> bool:
-    """CHỈ áp dụng cho SHORT — rủi ro short squeeze (§3.3d)."""
+def dieu_kien_d(
+    funding_rate_8h_gan_nhat: float,
+    ty_le_hoi_p1: float,
+    *,
+    huong: Huong,
+    nguong_funding: float,
+) -> bool:
+    """CHỈ áp dụng cho SHORT — rủi ro short squeeze (§3.3d).
+
+    `nguong_funding` = `tier_b.funding_rate_pct` (tunable #5) ĐÃ CHIA 100
+    bởi tầng gọi — bắt buộc, không mặc định (TD-0320, cùng khuôn
+    `nguong_atr_ratio` của `dieu_kien_a`). Xem cảnh báo đơn vị ở docstring
+    module: truyền thẳng `-0.05` (chưa chia) thay vì `-0.0005` làm ngưỡng
+    sai 100 lần mà không phép kiểm kiểu nào tự bắt được.
+    """
     if huong != "short":
         return False
-    return funding_rate_8h_gan_nhat < NGUONG_FUNDING_D and ty_le_hoi_p1 > NGUONG_HOI_GIA_D
+    return funding_rate_8h_gan_nhat < nguong_funding and ty_le_hoi_p1 > NGUONG_HOI_GIA_D
 
 
 def dg6_dong_vi_the(*, a: bool, b: bool, c: bool, d: bool) -> bool:

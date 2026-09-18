@@ -64,16 +64,31 @@ chứng expectancy.
 
 ════ Diễn giải, ghi ra để cãi lại được ════
 
-1. **Mốc cho (b) ở lượt sau = (giá, RSI) TẠI ĐIỂM THẤP NHẤT (đáy thật)
-   của CẢ CỤM** chạm trước, KHÔNG phải tại nến ĐẦU TIÊN chạm vào zone.
+1. **Mốc cho (b) ở lượt sau = (giá, RSI) TẠI ĐIỂM CỰC TRỊ THẬT của CẢ
+   CỤM** chạm trước (đáy thấp nhất cho `loai="day"`, đỉnh cao nhất cho
+   `loai="dinh"`), KHÔNG phải tại nến ĐẦU TIÊN chạm vào zone.
    🔴 **Sửa 09/09/2026 (bắt bởi `-f4`):** bản đầu dùng giá/RSI tại nến
    *đầu* cụm — nông hơn đáy thật của cụm, nên (b) ("giá tạo đáy THẤP HƠN
    HOẶC BẰNG", đúng chữ dòng 1081-1082) dễ thoả hơn thiết kế, lệch về
    chiều NHIỀU LỆNH HƠN (lạc quan). Cửa sổ chờ xác nhận vẫn bắt đầu từ
    NẾN ĐẦU cụm (đúng chữ "chạm zone lần đầu... CHỜ", dòng 1075) — chỉ
-   MỐC dùng cho lượt sau đổi sang đáy thật. RSI lấy TẠI ĐÚNG nến đáy đó
-   (không phải RSI thấp nhất độc lập với giá): phân kỳ momentum so RSI
-   và giá CÙNG một mốc thời gian, đúng định nghĩa "phân kỳ" trong TA.
+   MỐC dùng cho lượt sau đổi sang cực trị thật. RSI lấy TẠI ĐÚNG nến cực
+   trị đó (không phải RSI thấp/cao nhất độc lập với giá): phân kỳ
+   momentum so RSI và giá CÙNG một mốc thời gian, đúng định nghĩa "phân
+   kỳ" trong TA.
+   🔴 **Sửa 18/09/2026 (TD-0320, DR-SHORT-01, DR-012 Hạng 1) — bản trước
+   chỉ đúng cho `loai="day"`.** Vòng quét cụm tìm cực trị (dòng `while
+   c_cum < den …` bên dưới) so `gia_bien_muc[c_cum] < gia_cuc_tri` VÔ
+   ĐIỀU KIỆN, tức luôn tìm GIÁ TRỊ NHỎ NHẤT của mảng `gia_bien_muc` —
+   đúng cho `loai="day"` (`gia_bien_muc = thap`, cần đáy thấp nhất) NHƯNG
+   SAI cho `loai="dinh"` (`gia_bien_muc = cao`, cần đỉnh CAO NHẤT, phải
+   so `>`). Lỗi code-vs-spec thuần tuý (không phải diễn giải mới), 0
+   trial: đường Long sản xuất chỉ gọi hàm này với `loai="day"`
+   (`ZoneAbsorption.py`) nên KHÔNG bị ảnh hưởng; ảnh hưởng duy nhất đã
+   biết là mốc phân kỳ ở lượt chạm thứ hai trở đi trong
+   `docs/du-lieu-do/do_short_pheu_tin_hieu_explore.py` (phễu ĐẾM tín
+   hiệu Short trên EXPLORE, không phải phán quyết) — ghi nhận, KHÔNG
+   chạy lại phễu (chạy lại là ĐO, thuộc D-đo của `DR-SHORT-01`, vẫn ⏸).
 2. **"Chạm"** = một CỤM nến liên tiếp nằm trong `[zone_low, zone_high]`,
    kết thúc khi giá RA khỏi khoảng đó — cùng khái niệm cụm của
    `touch_count()`, nhưng dùng lại VỊ TỪ trần (`zone_low <= gia <=
@@ -367,17 +382,23 @@ def quet_xac_nhan_zone(
             continue
 
         # `t` là điểm BẮT ĐẦU một lượt chạm mới. Quét luôn hết CẢ CỤM
-        # (tới khi giá RA khỏi zone) để tìm đáy THẬT (diễn giải #1) —
-        # an toàn: đây chỉ dựng MỐC cho lượt SAU, dùng khi đánh giá một
+        # (tới khi giá RA khỏi zone) để tìm CỰC TRỊ THẬT (diễn giải #1)
+        # — an toàn: đây chỉ dựng MỐC cho lượt SAU, dùng khi đánh giá một
         # sự kiện xảy ra sau khi cụm này đã kết thúc, không phải quyết
-        # định TẠI `t`.
+        # định TẠI `t`. `loai="day"` tìm giá trị NHỎ NHẤT (đáy); `"dinh"`
+        # tìm giá trị LỚN NHẤT (đỉnh) — sửa 18/09/2026 (TD-0320): bản
+        # trước so `<` vô điều kiện, đúng cho "day", SAI cho "dinh".
         lan += 1
-        t_day = t
-        gia_day = gia_bien_muc[t]
+        t_cuc_tri = t
+        gia_cuc_tri = gia_bien_muc[t]
         c_cum = t
         while c_cum < den and (zone_low <= gia_bien_muc[c_cum] <= zone_high):
-            if gia_bien_muc[c_cum] < gia_day:
-                gia_day, t_day = gia_bien_muc[c_cum], c_cum
+            moi_hon = (
+                gia_bien_muc[c_cum] < gia_cuc_tri if loai == "day"
+                else gia_bien_muc[c_cum] > gia_cuc_tri
+            )
+            if moi_hon:
+                gia_cuc_tri, t_cuc_tri = gia_bien_muc[c_cum], c_cum
             c_cum += 1
 
         # Cửa sổ xác nhận bắt đầu từ NẾN ĐẦU cụm `t` (chạm zone lần đầu —
@@ -401,12 +422,12 @@ def quet_xac_nhan_zone(
             lan_cham_phan_thuc = lan
             break
 
-        # Mốc cho lượt sau — TẠI ĐÁY THẬT của cụm (`t_day`, diễn giải
-        # #1), KHÔNG phải tại nến đầu `t`. NaN thì KHÔNG raise (quét
+        # Mốc cho lượt sau — TẠI CỰC TRỊ THẬT của cụm (`t_cuc_tri`, diễn
+        # giải #1), KHÔNG phải tại nến đầu `t`. NaN thì KHÔNG raise (quét
         # lịch sử dài, một nến hỏng giữa chừng không được làm hỏng toàn
         # vòng quét) — chỉ đơn giản không cập nhật được mốc.
-        if rsi[t_day] == rsi[t_day]:  # not NaN
-            lan_cham_truoc = (gia_day, rsi[t_day])
+        if rsi[t_cuc_tri] == rsi[t_cuc_tri]:  # not NaN
+            lan_cham_truoc = (gia_cuc_tri, rsi[t_cuc_tri])
 
         t = c_cum  # đã ở ngay sau cụm hiện tại — tìm lượt kế từ đây.
 
