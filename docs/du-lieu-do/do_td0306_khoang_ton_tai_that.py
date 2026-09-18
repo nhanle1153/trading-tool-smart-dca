@@ -95,6 +95,25 @@ def _git_sha() -> str:
         return "khong_doc_duoc"
 
 
+#: Mã mà con số phụ thuộc vào. Bẩn ⇒ `git_sha` ghi vào artifact trỏ tới một commit
+#: KHÔNG chứa mã đã sinh ra số — đúng lỗi cổng D1/D2/D3 (`CLAUDE.md`, *"ghi `git_sha` mà
+#: không cổng nào kiểm cây sạch"*), và lần chạy đầu của chính kịch bản này đã dính.
+DUONG_PHU_THUOC = ("src/", "config/", "docs/du-lieu-do/do_td0306_khoang_ton_tai_that.py")
+
+
+def _cay_ban() -> list[str]:
+    """Dòng `git status --porcelain` trên phần mã con số phụ thuộc. Không đọc được git ⇒
+    coi là bẩn (fail-closed): không chứng minh được xuất xứ thì không ghi."""
+    try:
+        ra = subprocess.run(
+            ["git", "status", "--porcelain", "--", *DUONG_PHU_THUOC],
+            cwd=REPO, capture_output=True, text=True, check=True,
+        ).stdout
+    except (OSError, subprocess.CalledProcessError) as exc:
+        return [f"không đọc được git status: {exc}"]
+    return [d for d in ra.splitlines() if d.strip()]
+
+
 def do_mot_ma(sym: str, k: dict, *, t2: date, t3: date) -> tuple[KetQuaDoiSong | None, str | None, int]:
     """(kết quả, lý do không đo được, số file tháng đã đọc)."""
     thang_dau = _thang(k["thang_dau"])
@@ -126,6 +145,13 @@ def main(argv: list[str] | None = None) -> int:
     if ghi and OUT.exists():
         print(f"🛑 {OUT.relative_to(REPO)} đã tồn tại — artifact là bằng chứng, không ghi đè.")
         return 2
+    if ghi:
+        ban = _cay_ban()
+        if ban:
+            print("🛑 Cây bẩn ở phần mã con số phụ thuộc — git_sha sẽ không chứa mã đã sinh ra số. Commit trước:")
+            for d in ban:
+                print(f"  {d}")
+            return 6
 
     cfg = load_tool_d_config()
     moc = resolve(cfg, "tier_c.data_split")
