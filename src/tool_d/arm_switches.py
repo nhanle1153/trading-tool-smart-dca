@@ -35,7 +35,7 @@ from __future__ import annotations
 from typing import Literal
 
 from tool_d.notional import tranche1_notional
-from tool_d.trade_plan import KeHoachTranche, tinh_ke_hoach
+from tool_d.trade_plan import Huong, KeHoachTranche, tinh_ke_hoach
 
 #: Chín cấu hình của B2 (§10.1 + §10.1b). `Z0-T2` KHÔNG có mặt: spec ghi
 #: *"Mốc so sánh — không phải arm mới, không tốn trial thêm"*, nó CHÍNH LÀ
@@ -90,8 +90,8 @@ def _kiem_arm(arm: str) -> None:
 
 # ── Z1: SL neo ATR thay vì neo zone ───────────────────────────────────
 
-def sl_neo_atr(*, p1: float, atr_4h: float) -> float:
-    """SL kiểu v1: `p1 − 2.2×ATR`, neo vào **điểm vào**, không vào zone.
+def sl_neo_atr(*, p1: float, atr_4h: float, huong: Huong = "long") -> float:
+    """SL kiểu v1: `p1 ∓ 2.2×ATR`, neo vào **điểm vào**, không vào zone.
 
     Đây là thiết kế mà spec dòng 1021 so sánh trực tiếp với thiết kế hiện
     tại (*"SL không còn cố định 2.2×ATR, mà theo zone"*).
@@ -101,10 +101,18 @@ def sl_neo_atr(*, p1: float, atr_4h: float) -> float:
     khung có chủ đích: câu hỏi của arm là *"neo zone hay neo ATR tốt hơn"*,
     nên chỉ được để **công thức** khác nhau. Cho hai chế độ hai khung ATR
     khác nhau thì kết quả trộn hai nguyên nhân và không tách ra được.
+
+    `huong="long"` (mặc định) là `p1 − 2.2×ATR`, code cũ nguyên vẹn.
+    `huong="short"` (TD-0319, DR-SHORT-01, D-dựng) gương: `p1 + 2.2×ATR` —
+    SL luôn ở phía BẤT LỢI của điểm vào, tức TRÊN với short.
     """
     if atr_4h < 0:
         raise ArmSwitchError(f"atr_4h không được âm: {atr_4h}")
-    return p1 - HE_SO_ATR_Z1 * atr_4h
+    if huong == "long":
+        return p1 - HE_SO_ATR_Z1 * atr_4h
+    if huong == "short":
+        return p1 + HE_SO_ATR_Z1 * atr_4h
+    raise ArmSwitchError(f"huong không hợp lệ: {huong!r}")
 
 
 def ke_hoach_theo_arm(
@@ -116,6 +124,7 @@ def ke_hoach_theo_arm(
     atr_4h: float,
     atr_1h_tai_tranche1: float,
     buf_sl_he_so: float,
+    huong: Huong = "long",
 ) -> KeHoachTranche:
     """`tinh_ke_hoach()` nguyên vẹn, chỉ thay `sl` khi arm đòi chế độ khác.
 
@@ -126,6 +135,10 @@ def ke_hoach_theo_arm(
 
     Chế độ `ZONE` trả về **đúng đối tượng** của `tinh_ke_hoach()`, không
     dựng lại — để không có nguồn sự thật thứ hai cho công thức §3.1.
+
+    `huong="long"` (mặc định) chạy đúng nhánh code cũ. `huong="short"`
+    (TD-0319, DR-SHORT-01, D-dựng, 0 trial) là phần dựng, `enable_short`
+    vẫn tắt — xem docstring module `arm_switches`/`trade_plan`.
     """
     _kiem_arm(arm)
     goc = tinh_ke_hoach(
@@ -135,25 +148,41 @@ def ke_hoach_theo_arm(
         atr_4h=atr_4h,
         atr_1h_tai_tranche1=atr_1h_tai_tranche1,
         buf_sl_he_so=buf_sl_he_so,
+        huong=huong,
     )
     if CHE_DO_SL_THEO_ARM[arm] == "ZONE":
         return goc
 
-    sl = sl_neo_atr(p1=goc.p1, atr_4h=atr_4h)
+    sl = sl_neo_atr(p1=goc.p1, atr_4h=atr_4h, huong=huong)
     p_avg = (goc.p1 + goc.p2 + goc.p3) / 3
-    if sl <= 0:
-        raise ArmSwitchError(
-            f"arm {arm}: SL neo ATR ra {sl} ≤ 0 — giá không âm được. ATR ({atr_4h}) "
-            f"quá lớn so với p1 ({goc.p1}). Chốt `sl < p_avg` một mình KHÔNG bắt được "
-            "ca này (SL rất âm vẫn nhỏ hơn p_avg) và `r_eff` sẽ ra > 100%, tức cỡ "
-            "lệnh nhỏ đi một cách vô nghĩa thay vì báo lỗi — fail-closed ở đây"
-        )
-    if sl >= p_avg:
-        raise ArmSwitchError(
-            f"arm {arm}: SL neo ATR ({sl}) không nằm dưới giá vào trung bình "
-            f"({p_avg}) — ATR quá lớn so với zone. `r_eff` sẽ ≤ 0 và cỡ lệnh mất "
-            "nghĩa; fail-closed thay vì sinh một con số âm chảy vào §6.8e"
-        )
+    if huong == "long":
+        if sl <= 0:
+            raise ArmSwitchError(
+                f"arm {arm}: SL neo ATR ra {sl} ≤ 0 — giá không âm được. ATR ({atr_4h}) "
+                f"quá lớn so với p1 ({goc.p1}). Chốt `sl < p_avg` một mình KHÔNG bắt được "
+                "ca này (SL rất âm vẫn nhỏ hơn p_avg) và `r_eff` sẽ ra > 100%, tức cỡ "
+                "lệnh nhỏ đi một cách vô nghĩa thay vì báo lỗi — fail-closed ở đây"
+            )
+        if sl >= p_avg:
+            raise ArmSwitchError(
+                f"arm {arm}: SL neo ATR ({sl}) không nằm dưới giá vào trung bình "
+                f"({p_avg}) — ATR quá lớn so với zone. `r_eff` sẽ ≤ 0 và cỡ lệnh mất "
+                "nghĩa; fail-closed thay vì sinh một con số âm chảy vào §6.8e"
+            )
+        r_eff_plan = (p_avg - sl) / p_avg
+    elif huong == "short":
+        # Gương của cặp chốt trên: với short không có ca "SL âm" (sl = p1 +
+        # số dương, luôn dương), chỉ có ca gương của "sl >= p_avg" — ở đây
+        # là "sl <= p_avg" (SL phải nằm TRÊN giá vào trung bình).
+        if sl <= p_avg:
+            raise ArmSwitchError(
+                f"arm {arm}: SL neo ATR ({sl}) không nằm trên giá vào trung bình "
+                f"({p_avg}) — ATR quá nhỏ so với zone. `r_eff` sẽ ≤ 0 và cỡ lệnh mất "
+                "nghĩa; fail-closed thay vì sinh một con số âm chảy vào §6.8e"
+            )
+        r_eff_plan = (sl - p_avg) / p_avg
+    else:
+        raise ArmSwitchError(f"huong không hợp lệ: {huong!r}")
     return KeHoachTranche(
         zone_low=goc.zone_low,
         zone_high=goc.zone_high,
@@ -161,7 +190,7 @@ def ke_hoach_theo_arm(
         p2=goc.p2,
         p3=goc.p3,
         sl=sl,
-        r_eff_plan=(p_avg - sl) / p_avg,
+        r_eff_plan=r_eff_plan,
         atr_1h_tai_tranche1=goc.atr_1h_tai_tranche1,
     )
 

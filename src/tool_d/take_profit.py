@@ -92,6 +92,22 @@ có zone"* — xem docstring `ChiSoH4`. Test khoá TD-0189 ghim cả hai khoá *
 nằm trong `tier_b`: dời sang đó là quyết định N 114 → 126, +12 trial,
 rào DSR 3,0777 → 3,1101 — phải là một DR có ý thức, không phải một
 dòng sửa lặng lẽ.
+
+════ TD-0319 — tham số `huong`, chỉ DỰNG, công tắc tắt (DR-SHORT-01) ════
+
+`huong` mặc định `"long"`: đường cũ nguyên vẹn. `huong="short"` gương:
+zone đối diện của LONG là zone TRÊN `p_avg` (zone đỉnh); của SHORT là
+zone DƯỚI `p_avg` (zone đáy). Nạng LONG cộng thêm `target_r×khoang`;
+SHORT trừ đi. `tp2_muc_trail` LONG trail DƯỚI đỉnh giá kể từ TP1; SHORT
+trail TRÊN đáy giá kể từ TP1.
+
+🔑 **Phép gương SẠCH khi mirror qua `p_avg` (K = 2·p_avg), KHÔNG sạch
+với K tuỳ ý** — khác `trade_plan.py` (nơi gương price-level đúng với
+mọi K). Lý do: `chon_muc_tp1`/`tp1_tu_zone` nhận `p_avg` như một đại
+lượng ĐỘC LẬP (không tự suy từ zone_low/zone_high), nên "gương" ở đây
+nghĩa là *cùng một `p_avg`*, chỉ đảo `huong` và phản chiếu danh sách
+zone quanh chính `p_avg` đó (`z' = 2·p_avg − z`). Test gương ở
+`tests/unit/test_td0319_module_thuan_huong.py` dùng đúng kỹ thuật này.
 """
 
 from __future__ import annotations
@@ -101,6 +117,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from tool_d.config.loader import ToolDConfig, resolve
+from tool_d.trade_plan import Huong
 
 # §5.1 — "chốt 50% vị thế tại đây". Không phải tham số: spec viết thẳng
 # con số, không mang dấu [CẦN CALIBRATE], không có khoá cấu hình nào.
@@ -201,9 +218,13 @@ def khoang_r_eff(*, p_avg: float, r_eff_plan: float) -> float:
 
 
 def tp1_tu_zone(
-    *, p_avg: float, gia_zone_doi_dien: float, tp1_haircut_pct: float
+    *,
+    p_avg: float,
+    gia_zone_doi_dien: float,
+    tp1_haircut_pct: float,
+    huong: Huong = "long",
 ) -> float:
-    """TP1 = `p_avg` + (1 − haircut) × (zone − `p_avg`), hướng LONG.
+    """TP1 = `p_avg` ± (1 − haircut) × |zone − `p_avg`| — dấu theo `huong`.
 
     🔑 DIỄN GIẢI, ghi ra để cãi lại được: spec viết *"zone đối diện gần
     nhất, trừ hao 20%"* mà không nói trừ hao trên đại lượng nào. Trừ
@@ -211,6 +232,10 @@ def tp1_tu_zone(
     nhất mạch lạc — trừ 20% trên GIÁ zone thì với một zone cách 3% mức
     chốt rơi xuống dưới cả giá vào lệnh, tức lệnh thắng thành lệnh lỗ.
     Lý do spec nêu (*"đóng một phần TRƯỚC KHI chạm"*) khớp cách đọc này.
+
+    `huong="long"` (mặc định) chạy đúng nhánh code cũ: zone đối diện PHẢI
+    ở TRÊN `p_avg`. `huong="short"` (TD-0319, DR-SHORT-01, D-dựng) gương:
+    zone đối diện PHẢI ở DƯỚI `p_avg`, TP1 trừ dần từ `p_avg` xuống.
     """
     gia = _so_duong("p_avg", p_avg)
     zone = _so_duong("gia_zone_doi_dien", gia_zone_doi_dien)
@@ -218,12 +243,21 @@ def tp1_tu_zone(
         raise TakeProfitError(
             f"tp1_haircut_pct phải trong [0, 100) phần trăm, nhận {tp1_haircut_pct}"
         )
-    if zone <= gia:
-        raise TakeProfitError(
-            f"zone đối diện (LONG) phải NẰM TRÊN p_avg: zone={zone}, p_avg={gia} "
-            "— một zone ở dưới là zone cùng chiều, không phải zone đối diện"
-        )
-    return gia + (1.0 - tp1_haircut_pct / 100.0) * (zone - gia)
+    if huong == "long":
+        if zone <= gia:
+            raise TakeProfitError(
+                f"zone đối diện (LONG) phải NẰM TRÊN p_avg: zone={zone}, p_avg={gia} "
+                "— một zone ở dưới là zone cùng chiều, không phải zone đối diện"
+            )
+        return gia + (1.0 - tp1_haircut_pct / 100.0) * (zone - gia)
+    if huong == "short":
+        if zone >= gia:
+            raise TakeProfitError(
+                f"zone đối diện (SHORT) phải NẰM DƯỚI p_avg: zone={zone}, p_avg={gia} "
+                "— một zone ở trên là zone cùng chiều, không phải zone đối diện"
+            )
+        return gia - (1.0 - tp1_haircut_pct / 100.0) * (gia - zone)
+    raise TakeProfitError(f"huong không hợp lệ: {huong!r}")
 
 
 @dataclass(frozen=True)
@@ -266,15 +300,22 @@ def chon_muc_tp1(
     r_eff_plan: float,
     gia_cac_zone_doi_dien: Sequence[float],
     tham_so: ThamSoTP,
+    huong: Huong = "long",
 ) -> KeHoachChotLoi:
     """§5.1 đầy đủ: zone đối diện gần nhất trong tầm, nếu không thì nạng.
 
-    `gia_cac_zone_doi_dien` là giá các zone `loai="dinh"` CÒN HỢP LỆ do
-    tầng gọi lọc sẵn — module này không dựng lại `zone_detection`.
+    `gia_cac_zone_doi_dien` là giá các zone đối diện CÒN HỢP LỆ do tầng
+    gọi lọc sẵn (`loai="dinh"` cho LONG, `loai="day"` cho SHORT) — module
+    này không dựng lại `zone_detection`.
 
     Biên: zone cách ĐÚNG BẰNG `tp_fallback_dist_r × R_eff` vẫn tính là
     "trong tầm", vì spec loại bằng chữ *"> 4 × R_eff"*. Cùng quy ước
     biên với DG4 (*"≤ 8 nến"*).
+
+    `huong="long"` (mặc định) chạy đúng nhánh code cũ: zone đối diện ở
+    TRÊN `p_avg`, chọn zone GẦN NHẤT PHÍA TRÊN (`min`). `huong="short"`
+    (TD-0319, DR-SHORT-01, D-dựng): zone đối diện ở DƯỚI `p_avg`, chọn
+    zone GẦN NHẤT PHÍA DƯỚI (`max`); nạng trừ thay vì cộng.
     """
     khoang = khoang_r_eff(p_avg=p_avg, r_eff_plan=r_eff_plan)
     tran = tham_so.tp_fallback_dist_r * khoang
@@ -286,12 +327,23 @@ def chon_muc_tp1(
                 "biến 'không đo được' thành 'không có zone', tức âm thầm dùng nạng"
             )
 
-    trong_tam = [float(z) for z in gia_cac_zone_doi_dien if float(z) - p_avg <= tran]
-    gan_nhat = min((z for z in trong_tam if z > p_avg), default=None)
+    if huong == "long":
+        trong_tam = [float(z) for z in gia_cac_zone_doi_dien if float(z) - p_avg <= tran]
+        gan_nhat = min((z for z in trong_tam if z > p_avg), default=None)
+    elif huong == "short":
+        trong_tam = [float(z) for z in gia_cac_zone_doi_dien if p_avg - float(z) <= tran]
+        gan_nhat = max((z for z in trong_tam if z < p_avg), default=None)
+    else:
+        raise TakeProfitError(f"huong không hợp lệ: {huong!r}")
 
     if gan_nhat is None:
+        tp1_nang = (
+            p_avg + tham_so.tp_fallback_target_r * khoang
+            if huong == "long"
+            else p_avg - tham_so.tp_fallback_target_r * khoang
+        )
         return KeHoachChotLoi(
-            tp1_gia=p_avg + tham_so.tp_fallback_target_r * khoang,
+            tp1_gia=tp1_nang,
             tp_source=TP_SOURCE_NANG,
             khoang_r_eff_gia=khoang,
             tran_tim_zone_gia=tran,
@@ -302,6 +354,7 @@ def chon_muc_tp1(
             p_avg=p_avg,
             gia_zone_doi_dien=gan_nhat,
             tp1_haircut_pct=tham_so.tp1_haircut_pct,
+            huong=huong,
         ),
         tp_source=TP_SOURCE_ZONE,
         khoang_r_eff_gia=khoang,
@@ -311,24 +364,40 @@ def chon_muc_tp1(
 
 
 def tp2_muc_trail(
-    *, gia_cao_nhat_sau_tp1: float, atr_1h: float, tp2_trail_atr: float
+    *,
+    gia_cao_nhat_sau_tp1: float | None = None,
+    gia_thap_nhat_sau_tp1: float | None = None,
+    atr_1h: float,
+    tp2_trail_atr: float,
+    huong: Huong = "long",
 ) -> float:
-    """TP2 §5.1 — trail `ATR(14,1H) × tp2_trail_atr` dưới đỉnh kể từ TP1.
+    """TP2 §5.1 — trail `ATR(14,1H) × tp2_trail_atr` từ cực trị kể từ TP1.
 
     Chỉ có nghĩa SAU khi TP1 chạm; bên gọi chịu trách nhiệm điều kiện đó.
     DG8 vẫn áp dụng KHÔNG ĐIỀU KIỆN kể cả khi TP2 đang trail (câu hỏi mở
     #11) — không xử ở đây, ghi ra để chặng 2 không quên.
+
+    `huong="long"` (mặc định) trail DƯỚI đỉnh giá `gia_cao_nhat_sau_tp1`
+    (code cũ nguyên vẹn) — mức ≤ 0 là fail-closed, ATR quá lớn so với
+    đỉnh. `huong="short"` (TD-0319, DR-SHORT-01, D-dựng) trail TRÊN đáy
+    giá `gia_thap_nhat_sau_tp1`; không có ca "≤ 0" tương ứng vì mức luôn
+    là đáy dương cộng thêm một số dương.
     """
-    dinh = _so_duong("gia_cao_nhat_sau_tp1", gia_cao_nhat_sau_tp1)
     atr = _so_duong("atr_1h", atr_1h)
     he_so = _so_duong("tp2_trail_atr", tp2_trail_atr)
-    muc = dinh - he_so * atr
-    if muc <= 0:
-        raise TakeProfitError(
-            f"mức trail ra số không dương ({muc}) — ATR({atr}) quá lớn so với "
-            f"đỉnh ({dinh}); trả về sẽ thành một mức thoát không bao giờ chạm"
-        )
-    return muc
+    if huong == "long":
+        dinh = _so_duong("gia_cao_nhat_sau_tp1", gia_cao_nhat_sau_tp1)
+        muc = dinh - he_so * atr
+        if muc <= 0:
+            raise TakeProfitError(
+                f"mức trail ra số không dương ({muc}) — ATR({atr}) quá lớn so với "
+                f"đỉnh ({dinh}); trả về sẽ thành một mức thoát không bao giờ chạm"
+            )
+        return muc
+    if huong == "short":
+        day = _so_duong("gia_thap_nhat_sau_tp1", gia_thap_nhat_sau_tp1)
+        return day + he_so * atr
+    raise TakeProfitError(f"huong không hợp lệ: {huong!r}")
 
 
 NGUONG_H4_L2 = 0.40  # spec dòng 1684 — ngưỡng phân loại L2, KHÔNG phải tham số
