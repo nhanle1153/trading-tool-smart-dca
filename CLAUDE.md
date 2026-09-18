@@ -362,6 +362,11 @@ việc nào):** đọc từ đĩa (`TASKS.md`, `runtime_state.json`, `git tag`, 
   (d) có kết cục tại cổng **và** DR viết trước khi đo tách lợi thế khỏi xu hướng giai đoạn. *"Long thất bại
   nên thử Short"* KHÔNG phải điều kiện. Điều kiện kỹ thuật `DR-D4-01` (DG7 riêng, Δ_R(SHORT), ≥ 9 suất) +
   `L-Z56` giữ nguyên.
+  🔑 **ĐÍNH CHÍNH 18/09/2026 (`DR-SHORT-01`, `MT-66`, phiên `aab049b6`) — chữ trên đúng cho khâu ĐO, SAI cho
+  khâu DỰNG:** code Short **đã dựng** (`TD-0318…0321`, `39946c1`): `ZoneAbsorption.py` `can_short = True`, nhưng
+  `tier_a.enable_short` vẫn `false` nên 0 lệnh Short, và đường Long không đổi một bit. Bằng chứng chỉ là chuỗi
+  giá TỔNG HỢP — không phải lợi thế của Short; khâu ĐO vẫn ⏸ nguyên điều kiện trên. Chưa nối DG6-D
+  (`TD-0323`); Long/Short trùng lặp có ý thức (`TD-0324`).
 - ❌ **Khối 17 FreqAI huỷ** (TD-0216…0225, `DR-FAI-01`).
 
 **Việc còn mở (34 dòng chưa ✅ trong `TASKS.md`):**
