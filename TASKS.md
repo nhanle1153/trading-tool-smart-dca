@@ -871,6 +871,26 @@
 
 ---
 
+## Khối 29 — Sổ ý tưởng thành nhật ký sự kiện, giải `MT-65` (mở 19/09/2026, thi hành `DR-IQ-02`)
+
+> **Chủ dự án chốt 19/09/2026 (phiên mã `2febd25e`, duyệt kế hoạch):** phương án (b) của `MT-65` — huỷ dòng CHỌN
+> `IQ-0002` ghi sớm (18/09, quý 3) bằng một sự kiện `VOIDED` có điều kiện chặt, chọn lại trong quý 4 qua công cụ.
+> Loại (a) miễn trừ đích danh và (c) đổi luật `TD-0120`. **0 suất trial**, không chạm dữ liệu thị trường.
+>
+> 🔑 **Gốc không phải IQ-0002:** sổ ý tưởng chưa từng có luật chuyển trạng thái (mâu thuẫn MT-01 chưa áp cho nó),
+> cửa CHỌN không có công cụ, và đường chọn thật (QUEUED rồi SELECTED chép nguyên văn) làm `TD-0126` tự so với
+> chính mã đó ⇒ đỏ. Mọi test khoá chỉ dựng dòng `SELECTED` đứng một mình.
+
+| Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
+|---|---|---|---|---|
+| TD-0325 | 🚪 **`DR-IQ-02`** — sổ ý tưởng là nhật ký sự kiện; sự kiện `VOIDED` (điều kiện: đang `SELECTED`, 0 trial mang `hypothesis_slot`, tối đa 1 lần/mã, trích DR có thật); trường nộp bất biến; `selected_at`/`voided_at` do máy đóng dấu; `TD-0120` siết thành ≤ `HAN_NGACH_CHON` | 🔒 | — | DR commit RIÊNG và TRƯỚC mọi dòng code của TD-0326 |
+| TD-0326 | **Thi hành `DR-IQ-02`** — schema (`VOIDED`, `voided_at`, `void_reason`); `idea_queue.py` (dựng trạng thái, `chon_y_tuong()`, `huy_chon()`, đếm trần nhập theo dòng đầu); `audit_checks.py` (TD-0120/0119/L-Z17 chỉ tính chọn hiệu lực, TD-0126 bỏ qua cùng mã, phép kiểm mới `TD-0326`); E6 `--chon-y-tuong`/`--huy-chon`; đính chính spec §9c.7.3 | 🔒 | TD-0325 | Test khoá mới gồm ca **đường thật** QUEUED→SELECTED xanh; sổ mẫu cũ chỉ CHÈN thêm dòng QUEUED, không nới khẳng định nào; phá thật 4 chỗ đều đỏ đúng test; full suite Docker 0 failed |
+| TD-0327 | **Áp cho `IQ-0002`** — chạy thử `--huy-chon` trên bản sao sổ, rồi ghi thật | 🔒 | TD-0326 | `trial_ledger_audit.py` exit 0 trên sổ thật; `TD-0120` xanh nhưng bằng chứng vẫn nêu dòng đã huỷ; diff sổ đúng 1 dòng |
+
+**Đặt chỗ mã (N12 mục 7c):** `TD-0325`…`TD-0327` + `DR-IQ-02`, commit này, `Phien: 2febd25e`.
+
+---
+
 ## Việc đã biết là sẽ có, chưa mở
 
 | Giai đoạn | Nội dung | Chặn bởi |
