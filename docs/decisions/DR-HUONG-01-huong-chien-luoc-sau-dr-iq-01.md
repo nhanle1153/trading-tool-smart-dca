@@ -28,7 +28,7 @@
 | **C** | Ý tưởng MỚI qua suất (d) | ✅ **HƯỚNG CHÍNH** |
 | **A** | Chờ dữ liệu mới rồi đo lại ZA LONG | ▶ **giữ ở chế độ nền** — không tốn gì, điều kiện nối lại giữ nguyên chữ `DR-IQ-01` §1 |
 | **B** | Gỡ ⏸, chạy D4 → D9 cho ZA LONG | ❌ **không làm** — ~36 suất để mua một kết cục gần như biết trước |
-| **D** | ZA SHORT | ⏸ **không làm lúc này** — xem §3 |
+| **D** | ZA SHORT | ⏸ **không làm lúc này** — xem §3. 📌 **Đính chính 18/09/2026 (`DR-SHORT-01`, `MT-66`):** D tách làm hai — *D-dựng* ✅ (viết code Short, công tắc `enable_short` TẮT, 0 trial, chỉ dữ liệu tổng hợp) và *D-đo* ⏸ (mọi điều kiện ở §3 giữ nguyên từng chữ). Chữ *"không làm lúc này"* ở trên nay chỉ còn đúng cho D-đo |
 | **E** | Tuyên bố L3, dừng dự án | ❌ **không làm** — số liệu nói *"không có bằng chứng lợi thế"*, không nói *"có bằng chứng không có lợi thế"*; spec cấm dùng EXPLORE làm phán quyết |
 | F | Nới bộ lọc / chỉnh tham số ZA | ❌ **cấm**, không phải lựa chọn (`DR-IQ-01A` Z-5; spec §11b *"không có đường nào từ L3 về L1"*) |
 
