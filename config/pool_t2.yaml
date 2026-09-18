@@ -1,0 +1,233 @@
+_doc: TD-0247/TD-0300 / DR-D1-03, DR-D1-05 — rổ pool ĐÚNG TẠI T2, sinh bằng E7 --ro-t2
+  --ghi. 0 trial. KHÔNG phải config/pool.yaml (rổ hôm nay, DR-D1-05 §1).
+moc_t2: '2026-01-29'
+criteria:
+  volume_24h_usdt_min: 15000000.0
+  listing_age_days_min: 180
+trading:
+- 1000BONKUSDT
+- 1000PEPEUSDT
+- 1000SHIBUSDT
+- 1INCHUSDT
+- AAVEUSDT
+- ADAUSDT
+- ALGOUSDT
+- APTUSDT
+- ARBUSDT
+- ARPAUSDT
+- ATOMUSDT
+- AUCTIONUSDT
+- AVAXUSDT
+- AXLUSDT
+- AXSUSDT
+- BCHUSDT
+- BNBUSDT
+- BULLAUSDT
+- CHZUSDT
+- CRVUSDT
+- DASHUSDT
+- DOGEUSDT
+- DOTUSDT
+- DUSKUSDT
+- DYDXUSDT
+- EIGENUSDT
+- ENAUSDT
+- ENJUSDT
+- ETCUSDT
+- ETHFIUSDT
+- FARTCOINUSDT
+- FETUSDT
+- FILUSDT
+- FLOWUSDT
+- FUNUSDT
+- GALAUSDT
+- GUNUSDT
+- HBARUSDT
+- HYPEUSDT
+- ICPUSDT
+- INJUSDT
+- IPUSDT
+- JTOUSDT
+- JUPUSDT
+- KAIAUSDT
+- LDOUSDT
+- LINKUSDT
+- LITUSDT
+- LTCUSDT
+- MANAUSDT
+- NEARUSDT
+- ONDOUSDT
+- OPUSDT
+- ORDIUSDT
+- PAXGUSDT
+- PENDLEUSDT
+- PENGUUSDT
+- PIPPINUSDT
+- PLAYUSDT
+- POLUSDT
+- PUMPUSDT
+- PYTHUSDT
+- RESOLVUSDT
+- SANDUSDT
+- SOLUSDT
+- SPXUSDT
+- STRKUSDT
+- SUIUSDT
+- SYNUSDT
+- TAOUSDT
+- TIAUSDT
+- TONUSDT
+- TRUMPUSDT
+- TRXUSDT
+- UNIUSDT
+- VETUSDT
+- VIRTUALUSDT
+- WIFUSDT
+- WLDUSDT
+- XLMUSDT
+- XMRUSDT
+- XRPUSDT
+- XVSUSDT
+- ZECUSDT
+- ZENUSDT
+- ZROUSDT
+loai:
+  explore_da_dung:
+  - ARKMUSDT
+  - BERAUSDT
+  - MERLUSDT
+  - NEWTUSDT
+  - RENDERUSDT
+  - ROSEUSDT
+  - SAHARAUSDT
+  - SEIUSDT
+  tradifi_perpetual: []
+khong_do_duoc:
+  kho_404: []
+  thieu_hang_dung_ngay_t2:
+  - INXUSDT
+  - MEGAUSDT
+  - XPDUSDT
+  - XPTUSDT
+dem:
+  ung_vien_song_tai_t2: 629
+  du_tieu_chi_tai_t2: 94
+  onboard_ngay_chinh_xac: 51
+  onboard_xap_xi_theo_thang: 574
+explore_da_dung_chup_luc_sinh:
+  thu_muc: user_data/data/explore/futures
+  n: 100
+  danh_sach:
+  - 0GUSDT
+  - 1000000BOBUSDT
+  - 1000RATSUSDT
+  - 2ZUSDT
+  - AEVOUSDT
+  - AGTUSDT
+  - AIOUSDT
+  - ALICEUSDT
+  - ALPINEUSDT
+  - ANKRUSDT
+  - ARKMUSDT
+  - ASTRUSDT
+  - ATUSDT
+  - AVAUSDT
+  - AZTECUSDT
+  - BANDUSDT
+  - BANKUSDT
+  - BATUSDT
+  - BERAUSDT
+  - BIRBUSDT
+  - BLESSUSDT
+  - BRETTUSDT
+  - BSBUSDT
+  - BTCUSDT
+  - C98USDT
+  - CARVUSDT
+  - CETUSUSDT
+  - CHIPUSDT
+  - CKBUSDT
+  - COAIUSDT
+  - CTKUSDT
+  - CVXUSDT
+  - CYSUSDT
+  - DIAUSDT
+  - DRIFTUSDT
+  - EDGEUSDT
+  - EDUUSDT
+  - ENSOUSDT
+  - ETHUSDT
+  - ETHWUSDT
+  - FIDAUSDT
+  - FIGHTUSDT
+  - FOLKSUSDT
+  - GASUSDT
+  - GMXUSDT
+  - GPSUSDT
+  - GTCUSDT
+  - HAEDALUSDT
+  - HIVEUSDT
+  - HOMEUSDT
+  - ICNTUSDT
+  - INITUSDT
+  - INXUSDT
+  - IRYSUSDT
+  - JSTUSDT
+  - KAVAUSDT
+  - KERNELUSDT
+  - KOMAUSDT
+  - LIGHTUSDT
+  - LSKUSDT
+  - LUMIAUSDT
+  - MANTAUSDT
+  - MAVUSDT
+  - MERLUSDT
+  - MEUSDT
+  - MMTUSDT
+  - MTLUSDT
+  - NAORISUSDT
+  - NEWTUSDT
+  - NXPCUSDT
+  - ONUSDT
+  - OPGUSDT
+  - OUSDT
+  - PHAUSDT
+  - PLUMEUSDT
+  - PNUTUSDT
+  - POWERUSDT
+  - PTBUSDT
+  - QTUMUSDT
+  - QUSDT
+  - RENDERUSDT
+  - RIVERUSDT
+  - ROSEUSDT
+  - RSRUSDT
+  - SAHARAUSDT
+  - SEIUSDT
+  - SHELLUSDT
+  - SKLUSDT
+  - SNXUSDT
+  - SOPHUSDT
+  - SPELLUSDT
+  - SQDUSDT
+  - STEEMUSDT
+  - SUPERUSDT
+  - SUSDT
+  - TACUSDT
+  - THETAUSDT
+  - TOWNSUSDT
+  - USUSDT
+  - XTZUSDT
+xuat_xu:
+  git_sha: 577b277c3ebbd953c015f72a6c54ce7e5f201bcc
+  sinh_luc_utc: '2026-09-18T04:37:11.937311+00:00'
+  nguon_khoang_ton_tai:
+    file: docs/du-lieu-do/td0306-khoang-ton-tai-that.json
+    sha256: 3ea598d495c95f604d7ee595f2994912060758242605de822e1839b6edfac09c
+  doi_chieu_td0231:
+    file: docs/du-lieu-do/td0231-pool-point-in-time.json
+    sha256: f8530b307d97a091e27c30565ce45d0de017de4ee3ba0412294fda159fb81c9f
+    kieu: bat_doi_xung
+    khit: true
+    chi_co_o_td0231_giai_thich_bang_chet_truoc_t2: []
+  trial: 0
