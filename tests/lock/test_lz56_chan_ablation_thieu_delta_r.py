@@ -167,7 +167,7 @@ class TestNoiThatVaoE3:
         assert EXIT_CHUA_CO_DELTA_R not in (86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97)
 
     def test_chot_dung_TRUOC_verify_seal(self) -> None:
-        """Từ chối sớm: chốt này rẻ, `verify_all_seals()` thì không."""
+        """Từ chối sớm: chốt này rẻ, cổng H17 (`kiem_h17()`, TD-0316) thì không."""
         src = (REPO_ROOT / "entrypoints/run_ablation.py").read_text("utf-8")
         than = src.split("def main(")[1]
-        assert than.index("kiem_cong_d35()") < than.index("verify_all_seals(")
+        assert than.index("kiem_cong_d35()") < than.index("kiem_h17(")

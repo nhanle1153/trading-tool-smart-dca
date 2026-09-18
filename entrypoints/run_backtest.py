@@ -4,7 +4,7 @@ Khung TD-0016: `main()` gọi `measurement_guard()` ở dòng đầu tiên sau p
 tham số (canh bởi L-Z36, TD-0017). TD-0018 nối thêm `assert_cache_none()`
 (L-Z38) ngay sau guard — TỪ CHỐI nếu thiếu `--cache none`, không tự chèn.
 TD-0057 nối `run_audit()` (E6, H16) ngay sau đó — "tự kiểm cả chính nó"
-TRƯỚC MỖI lần backtest (spec dòng 660). TD-0072 nối thêm `verify_all_seals()`
+TRƯỚC MỖI lần backtest (spec dòng 660). TD-0072 nối thêm cổng H17 (TD-0316/`DR-LOCKBOX-02`: nay là `kiem_h17()`, không còn `verify_all_seals()`)
 (H17) — không cho chạy nếu lockbox đang có seal không khớp dữ liệu.
 
 TD-0313 (`DR-BC-01`) nối phần CHẠY THẬT, **sau** năm cổng trên và không đụng
@@ -51,7 +51,7 @@ from tool_d.ledger.timerange import (
     assert_dataset_timerange,
     dataset_boundaries_from_config,
 )
-from tool_d.lockbox.seal import verify_all_seals
+from tool_d.lockbox.h17 import in_va_ma_thoat, kiem_h17
 from tool_d.measurement.gitinfo import get_git_info
 from tool_d.measurement.guard import EXIT_GUARD_BLOCKED, GuardOutcome, measurement_guard
 from tool_d.measurement.hashing import hash_many
@@ -161,12 +161,15 @@ def main(argv: list[str] | None = None) -> int:
         print(audit_text)
         return audit_exit
 
-    seal_errors = verify_all_seals(LOCKBOX_DIR, LOCKBOX_FUTURES_DIR)
-    if seal_errors:
-        print("🛑 L-Z14 FAIL — seal KHÔNG khớp dữ liệu lockbox:")
-        for e in seal_errors:
-            print(f"  - {e}")
-        return EXIT_LOCKBOX_VERIFY_FAILED
+    # H17 ở service CHE lockbox (DR-LOCKBOX-02, TD-0316): cách ly còn hiệu lực + seal không bị
+    # sửa + sổ truy cập. Băm dữ liệu (`verify_all_seals`, L-Z14) là việc của E4 ở service
+    # `lockbox` — ở đây dữ liệu bị che CÓ CHỦ ĐÍCH nên nó FAIL mọi lần (trước TD-0316: exit 89).
+    ma_h17 = in_va_ma_thoat(
+        kiem_h17(lockbox_dir=LOCKBOX_DIR, data_dir=LOCKBOX_FUTURES_DIR),
+        ma_that_bai=EXIT_LOCKBOX_VERIFY_FAILED,
+    )
+    if ma_h17 is not None:
+        return ma_h17
 
     # ── Từ đây là TD-0313. Năm cổng trên KHÔNG bị đụng. ──────────────────────
     if not args.tap:

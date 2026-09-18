@@ -3,13 +3,13 @@
 Khung TD-0016: chỉ dựng `main()` gọi `measurement_guard()` ở dòng đầu tiên
 sau parse tham số (canh bởi L-Z36, TD-0017). TD-0057 nối `run_audit()`
 (E6, H16) ngay sau đó — "tự kiểm cả chính nó" TRƯỚC MỖI lần chạy (spec
-dòng 660). TD-0072 nối thêm `verify_all_seals()` (H17). Logic ablation
+dòng 660). TD-0072 nối thêm cổng H17 (TD-0316/`DR-LOCKBOX-02`: nay là `kiem_h17()`). Logic ablation
 thật chưa có mã việc TD riêng tại thời điểm sửa file này, sẽ thêm khi
 tới Khối tương ứng.
 
 🔴 TD-0165 nối `kiem_cong_d35()` (`L-Z56` CRITICAL) — entrypoint này TỪ
 CHỐI chạy khi kết quả Δ_R của cổng D3.5 chưa commit đầy đủ. Chốt đó đứng
-TRƯỚC `verify_all_seals()` có chủ đích: nó rẻ, và nó chặn đúng thứ tự sai
+TRƯỚC cổng H17 (`kiem_h17()`) có chủ đích: nó rẻ, và nó chặn đúng thứ tự sai
 mà DR-015 §1 gọi là "trạng thái tệ nhất có thể".
 """
 
@@ -20,7 +20,7 @@ import sys
 
 from tool_d.dr015.cong_d35 import EXIT_CHUA_CO_DELTA_R, CongD35ChuaDongError, kiem_cong_d35
 from tool_d.gates.d0_pre import require_d0_pre_complete
-from tool_d.lockbox.seal import verify_all_seals
+from tool_d.lockbox.h17 import in_va_ma_thoat, kiem_h17
 from tool_d.measurement.guard import EXIT_GUARD_BLOCKED, GuardOutcome, measurement_guard
 from touch_lockbox import EXIT_LOCKBOX_VERIFY_FAILED, LOCKBOX_DIR, LOCKBOX_FUTURES_DIR
 from trial_ledger_audit import run_audit
@@ -65,12 +65,15 @@ def main(argv: list[str] | None = None) -> int:
         print(exc)
         return EXIT_CHUA_CO_DELTA_R
 
-    seal_errors = verify_all_seals(LOCKBOX_DIR, LOCKBOX_FUTURES_DIR)
-    if seal_errors:
-        print("🛑 L-Z14 FAIL — seal KHÔNG khớp dữ liệu lockbox:")
-        for e in seal_errors:
-            print(f"  - {e}")
-        return EXIT_LOCKBOX_VERIFY_FAILED
+    # H17 ở service CHE lockbox (DR-LOCKBOX-02, TD-0316): cách ly còn hiệu lực + seal không bị
+    # sửa + sổ truy cập. Băm dữ liệu (`verify_all_seals`, L-Z14) là việc của E4 ở service
+    # `lockbox` — ở đây dữ liệu bị che CÓ CHỦ ĐÍCH nên nó FAIL mọi lần (trước TD-0316: exit 89).
+    ma_h17 = in_va_ma_thoat(
+        kiem_h17(lockbox_dir=LOCKBOX_DIR, data_dir=LOCKBOX_FUTURES_DIR),
+        ma_that_bai=EXIT_LOCKBOX_VERIFY_FAILED,
+    )
+    if ma_h17 is not None:
+        return ma_h17
 
     raise NotImplementedError(
         "Logic D0.9 ablation chưa viết — TD-0016 chỉ dựng khung guard."

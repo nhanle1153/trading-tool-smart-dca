@@ -81,7 +81,7 @@ class TestThuTuTrongMain:
             "require_d0_pre_complete",
             "assert_cache_none",
             "run_audit",
-            "verify_all_seals",
+            "kiem_h17",
         ]
         dong = [_dong_goi(ham, t) for t in thu_tu]
         assert all(len(d) == 1 for d in dong), f"mỗi cổng phải xuất hiện đúng 1 lần: {dict(zip(thu_tu, dong))}"

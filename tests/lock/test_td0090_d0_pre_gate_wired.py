@@ -61,7 +61,7 @@ class TestCongNoiVaoMain:
         # vì không được làm bất cứ việc tốn thời gian nào khi còn chưa được phép.
         calls = _main_calls(f)
         assert calls.index("measurement_guard") < calls.index("require_d0_pre_complete")
-        for sau in ("run_audit", "verify_all_seals"):
+        for sau in ("run_audit", "kiem_h17"):
             assert calls.index("require_d0_pre_complete") < calls.index(sau), (
                 f"{f}: cổng D0-PRE phải đứng trước {sau}"
             )

@@ -3,7 +3,7 @@
 Khung TD-0016: chỉ dựng `main()` gọi `measurement_guard()` ở dòng đầu tiên
 sau parse tham số (canh bởi L-Z36, TD-0017). TD-0057 nối `run_audit()`
 (E6, H16) ngay sau đó — "tự kiểm cả chính nó" TRƯỚC MỖI lần chạy (spec
-dòng 660). TD-0072 nối thêm `verify_all_seals()` (H17). Logic WFO thật
+dòng 660). TD-0072 nối thêm cổng H17 (TD-0316/`DR-LOCKBOX-02`: nay là `kiem_h17()`). Logic WFO thật
 là "VIẾT LẠI TỪ ĐẦU" theo bảng H3-D (spec dòng 4340).
 
 TD-0145 nối phần ĐIỀU PHỐI: `wfo.orchestrator.chay_wfo()` gộp
@@ -45,7 +45,7 @@ import sys
 
 from tool_d.config.loader import load_tool_d_config
 from tool_d.gates.d0_pre import require_d0_pre_complete
-from tool_d.lockbox.seal import verify_all_seals
+from tool_d.lockbox.h17 import in_va_ma_thoat, kiem_h17
 from tool_d.measurement.guard import EXIT_GUARD_BLOCKED, GuardOutcome, measurement_guard
 from tool_d.wfo.folds import san_lenh_moi_fold, sinh_folds
 from touch_lockbox import EXIT_LOCKBOX_VERIFY_FAILED, LOCKBOX_DIR, LOCKBOX_FUTURES_DIR
@@ -122,12 +122,15 @@ def main(argv: list[str] | None = None) -> int:
         print(audit_text)
         return audit_exit
 
-    seal_errors = verify_all_seals(LOCKBOX_DIR, LOCKBOX_FUTURES_DIR)
-    if seal_errors:
-        print("🛑 L-Z14 FAIL — seal KHÔNG khớp dữ liệu lockbox:")
-        for e in seal_errors:
-            print(f"  - {e}")
-        return EXIT_LOCKBOX_VERIFY_FAILED
+    # H17 ở service CHE lockbox (DR-LOCKBOX-02, TD-0316): cách ly còn hiệu lực + seal không bị
+    # sửa + sổ truy cập. Băm dữ liệu (`verify_all_seals`, L-Z14) là việc của E4 ở service
+    # `lockbox` — ở đây dữ liệu bị che CÓ CHỦ ĐÍCH nên nó FAIL mọi lần (trước TD-0316: exit 89).
+    ma_h17 = in_va_ma_thoat(
+        kiem_h17(lockbox_dir=LOCKBOX_DIR, data_dir=LOCKBOX_FUTURES_DIR),
+        ma_that_bai=EXIT_LOCKBOX_VERIFY_FAILED,
+    )
+    if ma_h17 is not None:
+        return ma_h17
 
     print(in_so_do_fold())
     return EXIT_CHUA_CO_BO_CHAY

@@ -45,16 +45,17 @@ class TestAssertCacheNoneNoiVaoE1:
         assert "--cache none" in result.stdout
 
     def test_co_cache_none_thi_khong_bi_chan_boi_cache_check(self) -> None:
-        # Guard PASS, cache OK -> KHÔNG bị assert_cache_none chặn (exit
-        # khác 87). TD-0084: bước SAU (seal-verify, TD-0072) giờ chặn
-        # trước khi tới NotImplementedError vì service `tests` che
-        # `lockbox/data/` — exit 89 (EXIT_LOCKBOX_VERIFY_FAILED), không
-        # phải 1/NotImplementedError như trước khi có seal thật.
+        # Guard PASS, cache OK -> KHÔNG bị assert_cache_none chặn (exit khác 87).
+        # 🔁 ĐẢO CHIỀU 18/09/2026 (TD-0316, DR-LOCKBOX-02): bản trước khẳng định exit 89 —
+        # tức ghim ĐÚNG hành vi hỏng (E1 không bao giờ qua cổng seal ở service chạy nó). Nay
+        # E1 THẬT (tiến trình con, main() thật) qua H17 và dừng ở cổng KẾ: thiếu --tap (107).
+        # Đây là ca đường-chạy-thật duy nhất qua cổng H17 của E1.
         result = _run("--timerange", "X", "--cache", "none")
-        assert result.returncode == 89
-        assert "L-Z14 FAIL" in result.stdout
+        assert result.returncode == 107, result.stdout
+        assert "thiếu --tap" in result.stdout
+        assert "H17" not in result.stdout and "L-Z14" not in result.stdout
 
     def test_dang_viet_co_cach_khac_van_duoc_nhan_dien(self) -> None:
         result = _run("--timerange", "X", "--cache=none")
-        assert result.returncode == 89
-        assert "L-Z14 FAIL" in result.stdout
+        assert result.returncode == 107, result.stdout
+        assert "thiếu --tap" in result.stdout
