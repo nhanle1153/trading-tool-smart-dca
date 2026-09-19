@@ -200,6 +200,11 @@ def chay_mot_luot(
     # 1 — L-Z52. Đứng trước mọi thứ, kể cả trước khi biết thư mục dữ liệu ở đâu.
     _kiem_giay_phep(giay_phep)
 
+    # Bước 5 gọi Freqtrade với `cwd` = thư mục TẠM, nên mọi đường dẫn dựng từ `repo_dir` phải TUYỆT ĐỐI.
+    # E1/E3 truyền `Path(".")` ⇒ trước bản vá `--strategy-path`/`--datadir`/`PYTHONPATH` trỏ vào thư mục tạm,
+    # Freqtrade thoát 2 (lượt 1 lô `DR-D4-19`, `a2f4c60`; test `test_td0184_repo_dir_tuong_doi.py`).
+    repo_dir = repo_dir.resolve()
+
     # 2 — cửa DUY NHẤT lấy rổ. `yeu_cau` không mang đường dẫn rổ nào để mà lách.
     ro = ro_cho_tap(yeu_cau.tap, repo_dir=repo_dir)
     thu_muc_du_lieu = repo_dir / ro.thu_muc_du_lieu
