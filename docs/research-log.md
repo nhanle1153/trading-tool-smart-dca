@@ -3640,3 +3640,40 @@ trên rổ `T0` thật: **143/143 mã, 0 giờ thiếu, exit 0**; artifact `td02
 `nguon`, mọi con số giữ nguyên (tổng **16.555.667** nến 5m, trùng bản cũ ⇒ bản cũ cũng không có nến lấp nào
 — kết luận TD-0252 nay đứng nhờ PHÉP ĐO, không chỉ nhờ dữ liệu). Đối chứng chéo lõi ↔ E8 giờ là xác nhận thật:
 hai đường độc lập, cùng luật nạp, cùng ra 0 trên rổ `T0`.
+
+## 19/09/2026 — TD-0320: phễu Short sinh TRƯỚC bản vá cực trị `dinh` — ảnh hưởng chưa đo, KHÔNG chạy lại
+
+Ghi nợ của tiêu chí nghiệm thu `TD-0320` (*"ghi chú vào research-log rằng mốc phân kỳ của phễu … bị ảnh hưởng —
+KHÔNG chạy lại phễu"*), bổ sung khi đóng khoá quên `TD-0319`/`TD-0320` (chủ dự án giao lại 19/09/2026, phiên
+`e80a877c`). Thông tin đã có ở message `b76ae3d`, docstring `entry_confirmation.py` và `DR-SHORT-01`, nhưng chưa có
+ở nhật ký này — nơi tiêu chí chỉ đích danh.
+
+### 1. Sự việc
+
+- **Lỗi** (`b76ae3d`, 18/09): vòng quét cụm của `quet_xac_nhan_zone()` tìm mốc so cho điều kiện (b) bằng `<` vô
+  điều kiện, luôn ra giá NHỎ NHẤT. Đúng với `loai="day"`, SAI với `loai="dinh"` (cần đỉnh CAO nhất). Lỗi code ≠ spec
+  (`DR-012` Hạng 1), 0 trial.
+- **Phễu gọi thẳng hàm đó** với `loai="dinh"` (`docs/du-lieu-do/do_short_pheu_tin_hieu_explore.py:201-205`) và được
+  sinh ở `bb9744d` (**10/09** — 8 ngày TRƯỚC bản vá). `do_short_pheu_tin_hieu_explore.json` chưa từng được sinh lại
+  (`git log` hai file chỉ có `bb9744d`).
+- **Phần phễu KHÔNG mang lỗi này:** hàm mốc riêng của phễu `_moc_cham_truoc_xac_nhan_dinh()` (dòng 132-148) dùng `max`
+  đúng (đọc 19/09/2026). Lỗi nằm ở vòng quét BÊN TRONG `quet_xac_nhan_zone()`, nên ảnh hưởng đúng như docstring ghi:
+  **mốc phân kỳ ở lượt chạm thứ hai trở đi**.
+
+### 2. Cái gì bị nhiễm, cái gì không
+
+- **Không:** đường LONG (`ZoneAbsorption` chỉ gọi `loai="day"`) và mọi con số Long.
+- **Có thể lệch:** mọi con số Short suy từ phễu — 368,4 tín hiệu/năm (dòng 2050 ở trên), ước lượng 237,8 lệnh/năm và
+  tổng 301,4 (dòng 2055), tỉ lệ ưu thế tầng tín hiệu 3,740 (dòng 2132), và câu trích 237,8 ở `DR-D4-10` dòng 487.
+- **Hướng và độ lớn CHƯA đo.** Không suy đoán: đổi "min → max" cho zone đỉnh làm mốc thay đổi, nhưng số tín hiệu tăng
+  hay giảm còn tuỳ dữ liệu.
+
+### 3. Vì sao KHÔNG chạy lại
+
+Chạy lại phễu là ĐO trên dữ liệu thị trường — thuộc D-đo của `DR-SHORT-01`, vẫn ⏸ (`DR-D4-01` §2b, `DR-HUONG-01` §3).
+Không sinh lại JSON, không sửa số nào ở các nơi trích.
+
+### 4. Cách đọc đúng từ nay
+
+Các số Short nói trên là **mức độ lớn, CHƯA hiệu chỉnh lỗi**: dùng để biết Short không vô vọng về tần suất, KHÔNG dùng
+làm căn cứ chốt số mẫu, sàn 150 hay bất kỳ ngưỡng nào. Ai cần con số đúng phải đo lại khi D-đo mở, và viết DR TRƯỚC khi đo.
