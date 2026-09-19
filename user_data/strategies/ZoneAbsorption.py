@@ -101,9 +101,11 @@ phải làm đúng trước D11 (dry-run có API equity), không phải chỗ đ
     (TD-0323, chỉ arm `Z3b` + SHORT): `_funding_8h()` đọc funding rate gần nhất
     qua `dp` (`candle_type="funding_rate"`), cắt theo `current_time` (không
     lookahead); ngưỡng đọc YAML (`tier_b.funding_rate_pct` ÷ 100, `tier_b.
-    dg6d_retrace_frac`). ⚠️ Backtest tự tải funding từ đĩa; LIVE/dry-run cần
-    `informative_pairs()` khai thêm `funding_rate` — CHƯA làm (Short tắt, việc
-    của D10+ khi mở Short). Thiếu dữ liệu ⇒ `d=False` + cảnh báo một lần/cặp.
+    dg6d_retrace_frac`). Backtest tự tải funding từ đĩa; LIVE/dry-run cần
+    `informative_pairs()` khai `funding_rate` — ĐÃ LÀM ở TD-0328, CHỈ khi
+    `tier_a.enable_short` bật. 🔴 Chưa đo tần suất gọi API ở live (xem dòng
+    `TD-0328` trong `TASKS.md`) — phải kiểm log dry-run/testnet TRƯỚC khi mở
+    Short. Thiếu dữ liệu ⇒ `d=False` + cảnh báo một lần/cặp.
   - **DG6 chỉ bật ở arm `Z3b`** — DIỄN GIẢI: §10.1 định nghĩa Z3 = *"KHÔNG
     DG6"*, Z3b = *"CỘNG DG6"*, các arm khác không nhắc. Chọn tắt cho mọi arm
     ≠ Z3b để cặp Z3/Z3b cô lập được DG6; ghi ra để cãi lại được.
@@ -390,7 +392,19 @@ class ZoneAbsorption(IStrategy):
 
     def informative_pairs(self):
         pairs = self.dp.current_whitelist()
-        return [(p, self.informative_timeframe) for p in pairs] + [(p, self.informative_1d) for p in pairs]
+        ket_qua = [(p, self.informative_timeframe) for p in pairs] + [(p, self.informative_1d) for p in pairs]
+        # TD-0328 — LIVE/dry-run: `dp.get_pair_dataframe(candle_type="funding_rate")` chỉ
+        # đọc bộ nhớ đệm do CHÍNH danh sách này nạp; thiếu bộ ba dưới đây thì
+        # `_funding_8h()` nhận khung rỗng và DG6-D không bao giờ nổ. Backtest KHÔNG gọi
+        # hàm này (Freqtrade chỉ gọi ở `freqtradebot.py`), nên không bị ảnh hưởng.
+        # Chỉ khai khi SHORT bật: tắt thì giá trị trả về giống hệt từng phần tử như
+        # trước TD-0328 (đường LONG không đổi một bit) và bot không gọi
+        # `fetchFundingRateHistory` cho cả pool mà không ai dùng. Khung lấy từ `dp`
+        # (Freqtrade tự đổi kèm cảnh báo mỗi lần gọi nếu ta truyền khác), không hard-code.
+        if self._enable_short:
+            khung_funding = self.dp.get_funding_rate_timeframe()
+            ket_qua += [(p, khung_funding, "funding_rate") for p in pairs]
+        return ket_qua
 
     def populate_indicators(self, dataframe: pd.DataFrame, metadata: dict) -> pd.DataFrame:
         dataframe["atr_1h"] = talib.ATR(dataframe["high"], dataframe["low"], dataframe["close"], timeperiod=14)
