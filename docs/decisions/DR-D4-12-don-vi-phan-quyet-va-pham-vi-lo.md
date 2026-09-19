@@ -115,7 +115,7 @@ số **giống nhau tuyệt đối**, tức DCA được so ở một thang **kh
 Ở lệnh khớp **đủ ba tranche**: `Σ rui_ro_da_trien_khai` có bằng `planned_risk_usdt` không?
 Công thức nói **có** (đó là ý nghĩa của `p_avg`). Nhưng *"công thức nói có"* và *"fill thật cho bằng"*
 là hai phát biểu khác nhau — và dự án đã trả giá nhiều lần cho việc gộp chúng. Lệch ⇒ **DỪNG, báo**,
-không tự chỉnh hệ số cho khớp.
+không tự chỉnh hệ số cho khớp. ➜ 🔄 **SỬA 19/09/2026 bởi `DR-D4-15`** (chủ dự án chốt, giữ nguyên chữ cũ): *"công thức nói có"* SAI ở tầng công thức — tranche notional bằng nhau ⇒ `Σ rui_ro ≤ planned` (trung bình điều hoà ≤ cộng). Phép so thay bằng fill vs công thức ĐÚNG theo giá kế hoạch; DỪNG khi `|trung_vi(r) − 1| > 0,05` trên lệnh đủ ba tranche.
 
 ### 1.8 Phương án đã LOẠI
 
