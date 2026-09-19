@@ -912,8 +912,10 @@
 | TD-0335 | **Bộ chạy E3** `run_ablation.py` — thay `NotImplementedError`; `--chay` + khoá bật ⇒ từ chối TRƯỚC `reserve()` | ✅ `992aa9c` | TD-0334 | Test khoá: ghim khoá nêu `DR-IQ-01`/`DR-D4-14`; khoá bật ⇒ sổ 0 dòng mới; khoá tắt trên repo giả ⇒ 4 arm B2 đi đủ RESERVE→SEAL→CONSUME; `L-Z52`/`L-Z53` trên đường E3 thật |
 | TD-0336 | **Gate D0.9 §10.2 + `L-Z57`** — phần dựng của TD-0185 (`gates/d0_9.py`, thuần) | ✅ `d1d9cd4` | TD-0334 | `L-Z57`: bộ kết quả giả "Z0 vượt trội" ⇒ "chọn Z0, TIẾP TỤC", và có đường tới DỪNG khi Nhánh 1 FAIL |
 | TD-0337 | **`close_d4_gate()`** — phần dựng của TD-0186 (`--close-d4-gate` trên E6, khuôn `close_d3_5_gate`) | 🔓 | TD-0335, TD-0336 | Test trên `runtime_state` tạm; trên trạng thái THẬT hôm nay nó **từ chối** (0 bản ghi arm); chạy lại ⇒ 94 |
+| TD-0338 | **Nguồn đo cho 8 tiêu chí Nhánh 1 §10.2** mà `gates/d0_9.py` (TD-0336) hiện nhận là `pending`: `h4d` · `liq_buffer` · `lo_don_lenh` · `skewness_z1` · `so_lenh_nam` · `time_stop` · `h4_tp_fallback` · `lz10_lz33`. Chủ dự án chốt 19/09/2026: TD-0336 chỉ dựng KHUNG, tính từng tiêu chí là việc sau | 🔓 | TD-0336 · 🔴 `MT-53`/`TD-0289` (skewness so `Z1` khi `Z1` đã cắt, `DR-D4-12` §4) | Mỗi tiêu chí: nguồn đọc từ lệnh THẬT hoặc artifact đã commit, không lời khai; có thể phải mở rộng `arm_result.schema.json` (quyết định riêng). Thiếu nguồn ⇒ giữ `pending`, không điền `True` cho qua |
 
 **Đặt chỗ mã (N12 mục 7c):** `TD-0332`…`TD-0337` + `DR-D4-14`, commit này, `Phien: 69768527`.
+**Thêm 19/09/2026:** `TD-0338` (nguồn đo 8 tiêu chí Nhánh 1), commit riêng, `Phien: 69768527`.
 
 ---
 
