@@ -3745,3 +3745,27 @@ Nếu trên dữ liệu thật con số rơi sát 0,95, xem lại cơ chế kh�
   bản sao lưu (memory `pha-that-khong-tra-bang-git-checkout`).
 - **Gõ mã commit từ trí nhớ** vào ô ✅ của TD-0338/0339 (`4e7a1a0` — không tồn tại). Sửa ở `5daa6b1`. Cùng họ với N12
   mục 3: một mã commit trong `TASKS.md` là lời khai cho tới khi `git cat-file` xác nhận.
+
+## 19/09/2026 — TD-0343: "thiếu bảng bậc đòn bẩy" là chẩn đoán SAI; export cắt cột `liquidation_price`
+
+Phiên mã `69768527`. EXPLORE 65 mã, CALIB `[T0,T1)`, arm `Z0-T1`, 0 trial (`docs/du-lieu-do/td0343-gia-thanh-ly-explore.json`).
+
+**Kết quả:** 0/162 lệnh có `liquidation_price` trong export. Ở TD-0342 tôi ghi nguyên nhân là *"Freqtrade cần bảng bậc đòn
+bẩy của cặp"* — viết vào chú thích test VÀ vào ô Nội dung của TD-0343 — **mà chưa đo**. Đo tách ba tầng thì:
+
+1. **Sàn ảo tính được:** gọi thẳng `Exchange.get_liquidation_price()` cho ra giá (ROSE 0,0637 ở 3x); 65/65 mã có bảng bậc
+   trong `binance_leverage_tiers.json` của image.
+2. **Backtest CÓ gán giá lúc chạy:** bọc `update_liquidation_prices` trong tiến trình — giá được gán và đổi đúng khi DCA
+   thêm tranche (0,0896 → 0,0754 → 0,0643).
+3. **Export cắt cột:** Freqtrade ghi kết quả qua `trade_list_to_dataframe(..., columns=BT_DATA_COLUMNS)`
+   (`bt_fileutils.py:535`); 28 cột đó không có `liquidation_price` ⇒ mất khi ghi file. `x.get("liquidation_price")` trả
+   `None` vì KHOÁ KHÔNG TỒN TẠI, không phải vì giá trị rỗng.
+
+🔑 Bài học: tôi đã chẩn đoán theo **hình dạng hậu quả** (giá rỗng ⇒ chắc thiếu dữ liệu đầu vào) thay vì **kiểm cơ chế** —
+đúng bài học kép của `4ec0fd3`. Manh mối bác bỏ có sẵn từ đầu (lệnh fixture nhận đòn bẩy 3x ⇒ bảng bậc có tồn tại) — do
+một agent khảo sát chỉ ra, không phải tôi. Đính chính tại chỗ: `75172e1` (test), `b85ad48` (TASKS).
+
+**Hệ quả:** `liq_buffer_ratio_mean` (TD-0342) vẫn `unreadable` ⇒ Nhánh 1 không PASS được. Ba đường, cần chủ dự án chọn:
+(A) tầng đo tự tính lại bằng chính `Exchange.get_liquidation_price()` với tham số từ fill trong export (cùng hàm backtest
+gọi, đã chứng minh chạy được); (B) vá danh sách cột export của Freqtrade trong image — đụng digest image (MT-07) và parity;
+(C) để `unreadable`.
