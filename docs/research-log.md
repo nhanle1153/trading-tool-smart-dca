@@ -3769,3 +3769,30 @@ một agent khảo sát chỉ ra, không phải tôi. Đính chính tại chỗ:
 (A) tầng đo tự tính lại bằng chính `Exchange.get_liquidation_price()` với tham số từ fill trong export (cùng hàm backtest
 gọi, đã chứng minh chạy được); (B) vá danh sách cột export của Freqtrade trong image — đụng digest image (MT-07) và parity;
 (C) để `unreadable`.
+
+## 19/09/2026 — TD-0344/TD-0345: MT-19 có mã, và `n` 4 arm trên rổ T1 (điều kiện 3 của `DR-D4-14` §6)
+
+Phiên mã `69768527`. `DR-D4-16` (`312b43e`): CTRL dạng thứ ba *đo mô tả*, allowlist 5 tên, gỡ ⏸ CHỈ phần đếm.
+
+**Số đếm** (`docs/du-lieu-do/td0345-dem-n-4-arm-ro-t1.json`, rổ T1 107 mã, WFO `[T1, T2)`, 5m, CTRL `D-0007`…`D-0010`):
+
+| Arm | Số lệnh | Lệnh/năm (cửa sổ quan sát) | Mã có lệnh | Số cũ trên `pool.yaml` |
+|---|---|---|---|---|
+| `Z0-T1` | 255 | 403,2 | 92 | n = 206 · 325,6/năm quy đổi |
+| `Z0` | 50 | 79,1 | 34 | n = 28 · 44,8/năm quy đổi |
+| `Z0-T0` | 892 | 1410,4 | 98 | n = 883 |
+| `Z3` | 49 | 77,5 | 34 | n = 28 (tranche 1/2/3 = 19/8/22) |
+
+Chỉ SỐ ĐẾM — không một đại lượng lãi/lỗ nào được đọc hay ghi (artifact kiểm bằng máy: 0 khoá ngoài allowlist). Không so
+trực tiếp với số cũ (spec `:4338`); hai cách tính lệnh/năm cũng khác nhau (cũ: quy đổi pool từ EXPLORE; mới: trên toàn rổ).
+Sổ +12 sự kiện CTRL (+2 của lượt hỏng bên dưới), `n_used()` = 4 không đổi, E6 exit 0.
+
+**Lượt đầu bị chốt 5m từ chối — và nó lộ một lỗi biên có ở HAI entrypoint.** Tôi xin cửa sổ `[T1, T2 + 1 ngày)` (chép khuôn
+`bien.end + 1 ngày` của E1); dữ liệu 1h có nến `2026-01-29 00:00` còn 5m dừng ở 23:55 hôm trước ⇒ `cho_thieu_khung_chi_tiet`
+từ chối 98/107 mã. Giờ đó chính là mốc LOCKBOX: `DR-D9-01` định nghĩa WFO = `[T1, T2)` NỬA MỞ. `D-0006` hoàn trả theo nguyên
+nhân máy. Sửa ở kịch bản đếm và E3 (`run_ablation.py`, TD-0335 của chính tôi) — `7afc656`. ⚠️ **E1 `run_backtest.py` (TD-0313,
+phiên khác) mang CÙNG lỗi** (`bien.end + timedelta(days=1)`): chưa sửa (quy tắc 4); với `--timeframe-detail 5m` nó sẽ bị
+chốt 5m chặn, không có thì nó lấn một giờ qua mốc LOCKBOX mà không ai báo. Cần một mã việc.
+
+**Xuất xứ:** `cay_sach = false` ở cả bốn dòng CTRL — `get_git_info` coi mọi file chưa theo dõi là bẩn, và gốc repo có
+`.playwright-mcp/`, `scratch_dl/`, `user_data/backtest_results/` (không phải của phiên này). Code đo đã commit ở `380243c`/`7afc656`.
