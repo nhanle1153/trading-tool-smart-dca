@@ -6,7 +6,6 @@ import pytest
 
 from tool_d.dg6_early_invalidation import (
     NGUONG_DECAY_C,
-    NGUONG_HOI_GIA_D,
     SO_NEN_TOI_THIEU_B,
     dg6_dong_vi_the,
     dieu_kien_a,
@@ -25,6 +24,10 @@ ATR_RATIO_THU = 1.8
 # Ngưỡng THỬ — `NGUONG_FUNDING_D` đã bị xoá (TD-0320); giá trị thật đọc từ
 # `tier_b.funding_rate_pct` (÷100) ở tầng chiến lược khi TD-0321 nối.
 FUNDING_THU = -0.0005
+
+# Ngưỡng THỬ — `NGUONG_HOI_GIA_D` đã bị xoá (TD-0323); giá trị thật đọc từ
+# `tier_b.dg6d_retrace_frac` (tỉ lệ, KHÔNG chia 100) ở tầng chiến lược.
+HOI_GIA_THU = 0.5
 
 
 class TestDieuKienA:
@@ -97,20 +100,33 @@ class TestTyLeHoiVeP1:
 
 class TestDieuKienD:
     def test_short_funding_am_va_hoi_qua_50pt_thi_true(self) -> None:
-        assert dieu_kien_d(-0.001, 0.6, huong="short", nguong_funding=FUNDING_THU) is True
+        assert dieu_kien_d(
+            -0.001, 0.6, huong="short", nguong_funding=FUNDING_THU, nguong_hoi_gia=HOI_GIA_THU
+        ) is True
 
     def test_long_luon_false(self) -> None:
-        assert dieu_kien_d(-0.001, 0.6, huong="long", nguong_funding=FUNDING_THU) is False
+        assert dieu_kien_d(
+            -0.001, 0.6, huong="long", nguong_funding=FUNDING_THU, nguong_hoi_gia=HOI_GIA_THU
+        ) is False
 
     def test_funding_chua_du_am_thi_false(self) -> None:
         assert dieu_kien_d(
-            FUNDING_THU + 0.0001, 0.6, huong="short", nguong_funding=FUNDING_THU
+            FUNDING_THU + 0.0001, 0.6, huong="short",
+            nguong_funding=FUNDING_THU, nguong_hoi_gia=HOI_GIA_THU,
         ) is False
 
     def test_hoi_gia_chua_du_thi_false(self) -> None:
         assert dieu_kien_d(
-            -0.001, NGUONG_HOI_GIA_D - 0.01, huong="short", nguong_funding=FUNDING_THU
+            -0.001, HOI_GIA_THU - 0.01, huong="short",
+            nguong_funding=FUNDING_THU, nguong_hoi_gia=HOI_GIA_THU,
         ) is False
+
+    def test_nguong_hoi_gia_di_qua_doi_so(self) -> None:
+        """TD-0323: ngưỡng hồi giá là ĐỐI SỐ, không còn hằng cứng — đổi đối số
+        đổi kết quả tại cùng một tỉ lệ hồi 0.6."""
+        chung = dict(huong="short", nguong_funding=FUNDING_THU)
+        assert dieu_kien_d(-0.001, 0.6, nguong_hoi_gia=0.5, **chung) is True
+        assert dieu_kien_d(-0.001, 0.6, nguong_hoi_gia=0.7, **chung) is False
 
     def test_nguong_funding_khong_co_mac_dinh(self) -> None:
         """Cùng khuôn `nguong_zss`/`nguong_atr_ratio` (TD-0195): mặc định
@@ -119,6 +135,7 @@ class TestDieuKienD:
 
         chu_ky = inspect.signature(dieu_kien_d)
         assert chu_ky.parameters["nguong_funding"].default is inspect.Parameter.empty
+        assert chu_ky.parameters["nguong_hoi_gia"].default is inspect.Parameter.empty
 
 
 class TestDg6DongViThe:

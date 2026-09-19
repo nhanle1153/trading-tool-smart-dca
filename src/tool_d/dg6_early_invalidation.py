@@ -25,10 +25,15 @@ YAML ghi `tier_b.funding_rate_pct: -0.05` là PHẦN TRĂM; hằng số cũ
 ĐƠN VỊ. `dieu_kien_d()` nhận `nguong_funding` qua đối số bắt buộc (cùng
 khuôn `nguong_atr_ratio`); người gọi ở tầng chiến lược đọc
 `resolve(cfg, "tier_b.funding_rate_pct") / 100` — CHIA 100 tường minh
-tại đúng MỘT chỗ, không lặp phép chia ở nơi khác. `dieu_kien_d()`
-**CHƯA** có người gọi trên đường chạy sản xuất tính tới TD-0320
-(`ZoneAbsorption.py` còn truyền `d=False` cứng — việc nối là TD-0321,
-phần dựng đường Short trong chiến lược).
+tại đúng MỘT chỗ, không lặp phép chia ở nơi khác.
+
+════ TD-0323 (DR-SHORT-01) — `dieu_kien_d` NAY CÓ NGƯỜI GỌI SẢN XUẤT ════
+
+`ZoneAbsorption.custom_exit` (arm `Z3b`, chỉ SHORT) gọi `dieu_kien_d()` thay
+cho `d=False` cứng. `NGUONG_HOI_GIA_D = 0.5` ĐÃ BỊ XOÁ — bản sao cứng của
+`tier_b.dg6d_retrace_frac`, cùng lớp với `NGUONG_ATR_RATIO_A`/`NGUONG_FUNDING_D`
+(TD-0195). Ngưỡng hồi giá nay đi qua đối số BẮT BUỘC `nguong_hoi_gia`; tầng
+gọi đọc YAML (đã là tỉ lệ 0..1, KHÔNG chia 100 — khác `funding_rate_pct`).
 """
 
 from __future__ import annotations
@@ -39,7 +44,6 @@ Huong = Literal["long", "short"]
 
 SO_NEN_TOI_THIEU_B = 8  # 🔒 = DG4, đóng băng
 NGUONG_DECAY_C = 0.7
-NGUONG_HOI_GIA_D = 0.5
 
 
 def dieu_kien_a(
@@ -103,6 +107,7 @@ def dieu_kien_d(
     *,
     huong: Huong,
     nguong_funding: float,
+    nguong_hoi_gia: float,
 ) -> bool:
     """CHỈ áp dụng cho SHORT — rủi ro short squeeze (§3.3d).
 
@@ -111,10 +116,13 @@ def dieu_kien_d(
     `nguong_atr_ratio` của `dieu_kien_a`). Xem cảnh báo đơn vị ở docstring
     module: truyền thẳng `-0.05` (chưa chia) thay vì `-0.0005` làm ngưỡng
     sai 100 lần mà không phép kiểm kiểu nào tự bắt được.
+
+    `nguong_hoi_gia` = `tier_b.dg6d_retrace_frac` (tỉ lệ 0..1, KHÔNG chia
+    100) — bắt buộc, không mặc định (TD-0323).
     """
     if huong != "short":
         return False
-    return funding_rate_8h_gan_nhat < nguong_funding and ty_le_hoi_p1 > NGUONG_HOI_GIA_D
+    return funding_rate_8h_gan_nhat < nguong_funding and ty_le_hoi_p1 > nguong_hoi_gia
 
 
 def dg6_dong_vi_the(*, a: bool, b: bool, c: bool, d: bool) -> bool:

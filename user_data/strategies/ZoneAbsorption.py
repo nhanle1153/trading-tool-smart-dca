@@ -97,8 +97,13 @@ phải làm đúng trước D11 (dry-run có API equity), không phải chỗ đ
     ở `DR-HUONG-01` §3 + `DR-D4-01` §2b, không đổi. Đường SHORT là gương CỘNG
     THÊM (hàm/cột `_short` song song), không sửa thân hàm LONG — bất biến
     "đường LONG không đổi một bit" (`DR-SHORT-01` §7).
-  - DG6 điều kiện C vẫn `False` như Minimal. **DG6-D (short squeeze) CHƯA nối**:
-    cần nguồn funding rate 8h cắt an toàn theo thời gian — `TD-0323`.
+  - DG6 điều kiện C vẫn `False` như Minimal. **DG6-D (short squeeze) ĐÃ NỐI**
+    (TD-0323, chỉ arm `Z3b` + SHORT): `_funding_8h()` đọc funding rate gần nhất
+    qua `dp` (`candle_type="funding_rate"`), cắt theo `current_time` (không
+    lookahead); ngưỡng đọc YAML (`tier_b.funding_rate_pct` ÷ 100, `tier_b.
+    dg6d_retrace_frac`). ⚠️ Backtest tự tải funding từ đĩa; LIVE/dry-run cần
+    `informative_pairs()` khai thêm `funding_rate` — CHƯA làm (Short tắt, việc
+    của D10+ khi mở Short). Thiếu dữ liệu ⇒ `d=False` + cảnh báo một lần/cặp.
   - **DG6 chỉ bật ở arm `Z3b`** — DIỄN GIẢI: §10.1 định nghĩa Z3 = *"KHÔNG
     DG6"*, Z3b = *"CỘNG DG6"*, các arm khác không nhắc. Chọn tắt cho mọi arm
     ≠ Z3b để cặp Z3/Z3b cô lập được DG6; ghi ra để cãi lại được.
@@ -138,7 +143,13 @@ from tool_d.equity_peak import (
     luu_dinh_equity,
 )
 from tool_d.notional import bo_loc_tu_market, kiem_san_tool_d
-from tool_d.dg6_early_invalidation import dg6_dong_vi_the, dieu_kien_a, dieu_kien_b
+from tool_d.dg6_early_invalidation import (
+    dg6_dong_vi_the,
+    dieu_kien_a,
+    dieu_kien_b,
+    dieu_kien_d,
+    ty_le_hoi_ve_p1,
+)
 from tool_d.funding_stop import funding_paid_cumulative, is_funding_stop_triggered
 from tool_d.gap_ms import LenhSl, sinh_ban_ghi_doi_sl
 from tool_d.ledger.decision_log import DEFAULT_DECISION_LOG_PATH, ghi_neu_chua_co
@@ -312,6 +323,12 @@ class ZoneAbsorption(IStrategy):
         self._nguong_zss = float(resolve(self._cfg, "tier_b.zss_threshold"))
         self._buf_sl_he_so = float(resolve(self._cfg, "tier_b.buf_sl_atr"))
         self._dg6a_atr_ratio = float(resolve(self._cfg, "tier_b.dg6a_atr_ratio"))
+        # TD-0323 — DG6-D. 🔴 YAML ghi `funding_rate_pct: -0.05` là PHẦN TRĂM,
+        # `dieu_kien_d()` so với TỈ LỆ (-0.0005) ⇒ chia 100 ở ĐÚNG MỘT chỗ này.
+        # `dg6d_retrace_frac` đã là tỉ lệ 0..1 — KHÔNG chia.
+        self._dg6d_nguong_funding = float(resolve(self._cfg, "tier_b.funding_rate_pct")) / 100
+        self._dg6d_nguong_hoi = float(resolve(self._cfg, "tier_b.dg6d_retrace_frac"))
+        self._da_canh_bao_thieu_funding: set[str] = set()
         # TD-0193 (DR-D4-08) — hai tham số §3.3b, hai khoá cuối của MT-23 được
         # gỡ khỏi MIEN_TRU vì từ đây chúng THẬT SỰ chảy tới phép tính.
         self._v_min = float(resolve(self._cfg, "tier_b.v_min"))
@@ -1567,14 +1584,30 @@ class ZoneAbsorption(IStrategy):
                 dong, p1=kh.p1, so_nen_da_troi=len(dong),
                 huong="short" if _la_short(trade) else "long",  # TD-0321
             )
-        # ⏳ DG6-D (rủi ro short squeeze, CHỈ áp cho SHORT) VẪN `d=False` — CHƯA
-        # nối. `dieu_kien_d()` đã sẵn sàng (TD-0320: nhận `nguong_funding` bắt
-        # buộc), nhưng nó cần MỘT NGUỒN DỮ LIỆU mà chiến lược chưa có: funding rate
-        # 8h gần nhất dưới dạng cột dataframe cắt an toàn theo thời gian (không
-        # lookahead), và tỉ lệ hồi về p1. Dựng nguồn đó là một việc riêng
-        # (`TD-0323`) — không bịa dữ liệu ở đây. Với `enable_short` tắt, không có
-        # lệnh SHORT nào để DG6-D thiếu.
-        return "DG6_EARLY_INVALIDATION" if dg6_dong_vi_the(a=a, b=b, c=False, d=False) else None
+        d = self._dg6_dieu_kien_d(pair, trade, current_time, current_rate, kh)
+        return "DG6_EARLY_INVALIDATION" if dg6_dong_vi_the(a=a, b=b, c=False, d=d) else None
+
+    def _dg6_dieu_kien_d(self, pair: str, trade, current_time: datetime, current_rate: float, kh) -> bool:
+        """TD-0323 — DG6-D (rủi ro short squeeze, CHỈ áp cho SHORT). LONG luôn
+        `False` mà không đọc dữ liệu funding nào (đường LONG không đổi).
+
+        `gia_vao` = giá tranche KHỚP GẦN NHẤT (đúng chữ docstring `ty_le_hoi_ve_p1`,
+        chủ dự án chốt 19/09/2026) — khác DG6-A đang dùng `open_rate` (trung bình);
+        hai điểm neo khác nhau là có chủ ý: A đo ATR/giá so với mặt bằng vào lệnh,
+        D đo mức hồi so với điểm bơm mới nhất."""
+        if not _la_short(trade):
+            return False
+        funding = self._funding_8h(pair, current_time)
+        if funding is None:
+            return False
+        khop = trade.select_filled_orders(trade.entry_side)
+        if not khop:
+            return False
+        ty_le = ty_le_hoi_ve_p1(gia_vao=khop[-1].safe_price, gia_hien_tai=current_rate, p1=kh.p1)
+        return dieu_kien_d(
+            funding, ty_le, huong="short",
+            nguong_funding=self._dg6d_nguong_funding, nguong_hoi_gia=self._dg6d_nguong_hoi,
+        )
 
     def _xet_tp2(self, pair: str, trade, current_rate: float) -> str | None:
         """TD-0189 chặng 2b — TP2 §5.1: thoát TOÀN BỘ phần vị thế còn lại khi
@@ -1669,6 +1702,39 @@ class ZoneAbsorption(IStrategy):
         (callback, không phải populate). Cắt theo `date + 4h ≤ now`."""
         df = self.dp.get_pair_dataframe(pair=pair, timeframe=self.informative_timeframe)
         return df[df["date"] + pd.Timedelta(hours=4) <= current_time]
+
+    def _funding_8h(self, pair: str, current_time: datetime) -> float | None:
+        """TD-0323 — funding rate GẦN NHẤT ĐÃ BIẾT tại `current_time`, hoặc `None`.
+
+        🔴 Cùng họ lỗi với `_df_4h`: lấy `iloc[-1]` thẳng từ `dp` là rủi ro nhìn
+        thấy funding của tương lai. Freqtrade 2026.8 CÓ tự cắt trong backtest
+        (`dataprovider.py`: `date < timeframe_to_prev_date(tf, slice_date)`, `slice_
+        date` do `backtesting.py` đặt mỗi vòng) — nhưng phép cắt đó phụ thuộc trạng
+        thái nội bộ và phiên bản Freqtrade, không áp cho live (`ohlcv()`), và ta
+        không canh được nó bằng test. Nên cắt TƯỜNG MINH `date ≤ now`: một kỳ funding
+        đã CHỐT tại mốc `date` thì biết được từ `date`.
+
+        Khung thời gian lấy từ `dp.get_funding_rate_timeframe()` (Freqtrade tự đổi
+        nếu ta truyền khác — kèm cảnh báo mỗi lần gọi). Cột `funding_rate` (đo
+        trong container, Freqtrade 2026.8; file legacy được đổi tên khi đọc).
+
+        Trả `None` khi không có dữ liệu ⇒ DG6-D KHÔNG nổ (không bịa 0.0 — N6); cảnh
+        báo MỘT lần mỗi cặp để lỗ hổng bảo vệ này không im lặng."""
+        df = self.dp.get_pair_dataframe(
+            pair=pair, timeframe=self.dp.get_funding_rate_timeframe(), candle_type="funding_rate"
+        )
+        da_biet = None
+        if df is not None and not df.empty and "funding_rate" in df.columns:
+            da_biet = df.loc[df["date"] <= current_time, "funding_rate"].dropna()
+        if da_biet is None or da_biet.empty:
+            if pair not in self._da_canh_bao_thieu_funding:
+                self._da_canh_bao_thieu_funding.add(pair)
+                logger.warning(
+                    "DG6D_THIEU_FUNDING %s: không có funding rate tại %s ⇒ DG6-D không đánh giá",
+                    pair, current_time,
+                )
+            return None
+        return float(da_biet.iloc[-1])
 
     def _close_4h_ke_tu(self, trade, current_time: datetime) -> list[float]:
         df = self._df_4h(trade.pair, current_time)

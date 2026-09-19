@@ -235,12 +235,16 @@ class TestMoiDuongDocKhung4HDeuQuaMotCua:
     #:    tự cắt dataframe theo nhịp nến khi gọi populate, nên đọc thẳng ở
     #:    đó không phải lookahead.
     #:  • `_df_4h` — cửa duy nhất cho phía CALLBACK, và nó tự cắt.
+    #:  • `_funding_8h` — thêm CÓ CHỦ Ý ở TD-0323 (19/09/2026): cửa duy nhất
+    #:    đọc funding rate (`candle_type="funding_rate"`) cho DG6-D; nó tự cắt
+    #:    `date ≤ current_time` và có test khoá riêng (`test_td0323_…`, ca
+    #:    lookahead + AST) — không phải một lỗ hổng đục cho tiện.
     #: Mọi hàm khác đọc thẳng đều là lookahead.
     #: 📌 Bản đầu của ca này đòi "đúng MỘT lần trong file" và đỏ ngay —
     #: siết quá tay, vì nó cấm luôn cả đường hợp lệ ở `populate_indicators`.
     #: Một chốt không bao giờ thoả được thì tệ hơn không có chốt (bài học
     #: cổng D3): sớm muộn bị gỡ, và gỡ rồi mất luôn phần đúng của nó.
-    CHO_PHEP = {"populate_indicators", "_df_4h"}
+    CHO_PHEP = {"populate_indicators", "_df_4h", "_funding_8h"}
 
     def test_KHONG_callback_nao_doc_thang_get_pair_dataframe(self) -> None:
         goi_tu = {

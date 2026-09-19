@@ -129,10 +129,11 @@ params:
     status: FROZEN
     value: -0.05
     slot: "#5"
-    doc_boi_san_xuat: false
+    doc_boi_san_xuat: true # TD-0323 (19/09/2026): ZoneAbsorption đọc ở __init__, ÷100 một chỗ
     bang_chung:
       - "tool-d-smart-dca.md:1384"
       - "tool-d-smart-dca.md:2344"
+      - "user_data/strategies/ZoneAbsorption.py:329"
     chua_calibrate: true
     frozen_rationale: >-
       §3.3d + DG6-D, HAI chỗ gộp thành một khoá. 🔴 Mâu thuẫn nội tại của
@@ -219,16 +220,19 @@ params:
     status: FROZEN
     value: 0.5
     slot: "#6"
-    doc_boi_san_xuat: false
+    doc_boi_san_xuat: true # TD-0323 (19/09/2026): ZoneAbsorption đọc ở __init__
     bang_chung:
       - "tool-d-smart-dca.md:1386"
       - "tool-d-smart-dca.md:1160"
+      - "user_data/strategies/ZoneAbsorption.py:330"
     chua_calibrate: true
     frozen_rationale: >-
       §3.3d ngưỡng hồi 50%. KHÔNG mang dấu [CẦN CALIBRATE] dù là tunable
       #6. 0,5 là mốc "hồi một nửa" — chọn bằng định nghĩa. Chỉ áp cho
-      SHORT (DG6-D) nên hiện CHƯA có đường chạy nào chạm tới (chiến lược
-      LONG-only), đóng băng là rẻ nhất.
+      SHORT (DG6-D), arm Z3b. ĐÃ NỐI vào `custom_exit` ở TD-0323 (19/09/2026)
+      nên có đường đọc thật, nhưng SHORT vẫn tắt (`enable_short: false`)
+      ⇒ chưa chạm lệnh nào; đóng băng là rẻ nhất. (Chữ cũ "CHƯA có đường
+      chạy nào chạm tới" hết đúng từ TD-0323 — cùng cơ chế lỗi thời MT-46.)
   mult_corr_thresholds:
     status: FROZEN
     value: [0.60, 0.85]

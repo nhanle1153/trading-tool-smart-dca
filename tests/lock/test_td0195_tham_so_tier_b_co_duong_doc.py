@@ -48,16 +48,12 @@ MIEN_TRU: dict[str, str] = {
     # `v_min` và `wick_close_upper_frac` ĐÃ GỠ 09/09/2026 — TD-0193 (DR-D4-08)
     # nối §3.3b vào `ZoneAbsorption.populate_indicators`, hai khoá nay có đường
     # đọc thật (`self._v_min`, `self._wick_frac`) và chảy tới `quet_xac_nhan_zone`.
-    "funding_rate_pct": (
-        "DG6-D — `dieu_kien_d()` chưa có người gọi SẢN XUẤT (`ZoneAbsorption` "
-        "vẫn truyền `d=False` cứng; nối là TD-0321). TD-0320 đã đóng nửa đầu: "
-        "`dieu_kien_d()` nay nhận `nguong_funding` qua đối số BẮT BUỘC, không "
-        "mặc định, hằng số cứng `NGUONG_FUNDING_D` đã xoá hẳn (canh ở "
-        "`TestCamBanSaoCungGiaTri` bên dưới). 🔴 Gỡ miễn trừ này còn cần TẦNG "
-        "GỌI chia YAML cho 100: YAML ghi -0.05 (phần trăm), tham số hàm là TỈ "
-        "LỆ — sai 100 lần nếu tầng gọi quên ÷100 (lớp lỗi L-Z48c)."
-    ),
-    "dg6d_retrace_frac": "DG6-D — cùng lý do với `funding_rate_pct`.",
+    # `funding_rate_pct` và `dg6d_retrace_frac` ĐÃ GỠ 19/09/2026 — TD-0323 nối
+    # DG6-D vào `ZoneAbsorption.custom_exit`: hai khoá có đường đọc thật
+    # (`self._dg6d_nguong_funding` = YAML ÷ 100, `self._dg6d_nguong_hoi`) và chảy
+    # tới `dieu_kien_d()`; hằng `NGUONG_HOI_GIA_D` xoá hẳn (canh ở
+    # `TestCamBanSaoCungGiaTri`). MIEN_TRU nay rỗng — giữ dict để tầng mới thêm
+    # được dòng có hạn, không phải dựng lại cơ chế.
 }
 
 
@@ -167,6 +163,8 @@ class TestCamBanSaoCungGiaTri:
             # TD-0320 (DR-SHORT-01) — `NGUONG_FUNDING_D` xoá hẳn cùng đợt
             # `dieu_kien_d()` nhận `nguong_funding` bắt buộc.
             ("src/tool_d/dg6_early_invalidation.py", "NGUONG_FUNDING_D", "funding_rate_pct"),
+            # TD-0323 (DR-SHORT-01) — `NGUONG_HOI_GIA_D` xoá hẳn cùng đợt nối DG6-D.
+            ("src/tool_d/dg6_early_invalidation.py", "NGUONG_HOI_GIA_D", "dg6d_retrace_frac"),
         ],
     )
     def test_hang_so_khong_quay_lai(self, tep: str, ten_hang: str, khoa: str) -> None:
