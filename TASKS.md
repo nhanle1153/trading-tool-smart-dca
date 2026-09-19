@@ -913,9 +913,10 @@
 | TD-0336 | **Gate D0.9 §10.2 + `L-Z57`** — phần dựng của TD-0185 (`gates/d0_9.py`, thuần) | ✅ `d1d9cd4` | TD-0334 | `L-Z57`: bộ kết quả giả "Z0 vượt trội" ⇒ "chọn Z0, TIẾP TỤC", và có đường tới DỪNG khi Nhánh 1 FAIL |
 | TD-0337 | **`close_d4_gate()`** — phần dựng của TD-0186 (`--close-d4-gate` trên E6, khuôn `close_d3_5_gate`) | 🔒 | TD-0335, TD-0336 | Test trên `runtime_state` tạm; trên trạng thái THẬT hôm nay nó **từ chối** (0 bản ghi arm); chạy lại ⇒ 94 |
 | TD-0338 | **Nguồn đo cho 8 tiêu chí Nhánh 1 §10.2** mà `gates/d0_9.py` (TD-0336) hiện nhận là `pending`: `h4d` · `liq_buffer` · `lo_don_lenh` · `skewness_z1` · `so_lenh_nam` · `time_stop` · `h4_tp_fallback` · `lz10_lz33`. Chủ dự án chốt 19/09/2026: TD-0336 chỉ dựng KHUNG, tính từng tiêu chí là việc sau | 🔓 | TD-0336 · 🔴 `MT-53`/`TD-0289` (skewness so `Z1` khi `Z1` đã cắt, `DR-D4-12` §4) | Mỗi tiêu chí: nguồn đọc từ lệnh THẬT hoặc artifact đã commit, không lời khai; có thể phải mở rộng `arm_result.schema.json` (quyết định riêng). Thiếu nguồn ⇒ giữ `pending`, không điền `True` cho qua |
+| TD-0339 | **Nguồn máy cho 4 bằng chứng `DR-D4-04` §7** mà `close_d4_gate()` (TD-0337) đòi: tên chiến lược đã chạy · tỉ trọng tranche đo từ fill · stake theo `1/R_eff` · H-4. Hôm nay bản ghi arm không mang cái nào ⇒ cổng TỪ CHỐI (đúng chữ TD-0186 *"Thiếu một ⇒ cổng từ chối"*) | 🔓 | TD-0337 · gần TD-0338 (H-4 dùng chung) | Chỗ DUY NHẤT phải sửa là `_bang_chung_dr_d4_04()` ở `trial_ledger_audit.py`; nguồn đọc từ export/lệnh THẬT hoặc artifact E3, không lời khai (MT-10) |
 
 **Đặt chỗ mã (N12 mục 7c):** `TD-0332`…`TD-0337` + `DR-D4-14`, commit này, `Phien: 69768527`.
-**Thêm 19/09/2026:** `TD-0338` (nguồn đo 8 tiêu chí Nhánh 1), commit riêng, `Phien: 69768527`.
+**Thêm 19/09/2026:** `TD-0338` (nguồn đo 8 tiêu chí Nhánh 1), commit riêng, `Phien: 69768527`; `TD-0339` (bằng chứng DR-D4-04 §7), commit riêng.
 
 ---
 
