@@ -1,40 +1,37 @@
-"""`TD-0336` (`DR-D4-14`) — GATE D0.9 §10.2, phần DỰNG: khung hai nhánh + `L-Z57`.
+"""`TD-0336` → `TD-0341` (`DR-D4-14`) — GATE D0.9 §10.2 cho D4: khung hai nhánh + `L-Z57`.
 
-Tầng THUẦN. Nó không tính một tiêu chí nào từ lệnh — nó nhận kết quả từng tiêu chí dưới dạng
-`Measured[bool]` và trả lời hai câu của §10.2 (spec `:4251-4335`):
+🔄 **TD-0341 viết lại module này (19/09/2026).** Bản TD-0336 tự khai danh sách tiêu chí và nhận `Measured[bool]` —
+tức một bộ đánh giá Nhánh 1 THỨ HAI song song với `thresholds.evaluate_branch1()` + `d9_gate.danh_gia_cong_d9()`.
+Hai bộ ngưỡng song song sớm muộn trôi lệch (N1/MT-03). Nay:
 
-    Nhánh 1 — "hệ thống có đủ tốt để đem tiền thật ra không" (ngưỡng tuyệt đối)
-    Nhánh 2 — "cấu hình nào" (chỉ chạy khi Nhánh 1 PASS)
+* **Ngưỡng + danh sách tiêu chí số** = của CHUNG D4/D9: `thresholds.evaluate_branch1()` và `d9_gate.TIEU_CHI_KHAI`.
+  Module này KHÔNG chứa một con số ngưỡng nào.
+* **Phạm vi áp dụng** theo `DR-D9-02` (b′) đi qua tham số `arm` của `evaluate_branch1` — arm ứng viên `Z0-T1` là
+  entry đơn ⇒ skewness-so-`Z1` "không áp dụng", liệt kê tường minh.
+* **Chỉ D4 có thêm** hai tiêu chí dạng "bộ test PASS" mà `evaluate_branch1` cố ý không kiểm (docstring của nó):
+  `h4d` (H4-D + H4-D-b) và `lz10_lz33` — nhận `Measured[bool]` do người gọi chạy bộ test đưa vào.
+* D4 GHI PBO, không chặn (`pbo_chan=False`, spec :4326, `DR-D9-01` §7).
 
-════ Phạm vi đợt này — chủ dự án chốt 19/09/2026: "khung + L-Z57" ════
+⚠️ Phần tách ba kết cục (không đạt / chưa đo / còn lại) có mặt ở đây và ở `d9_gate` — ~10 dòng. Không gộp được vì
+`test_td0285` khoá bằng AST rằng `d9_gate` gọi TRỰC TIẾP `evaluate_branch1(pbo_chan=True)`; gộp là phải sửa khẳng
+định một test khoá cũ (điều kiện dừng `DR-D4-14` §7). Đổi lại: `test_lz57_gate_d09` có ca ĐỐI CHIẾU D4↔D9 — cùng đầu
+vào ⇒ cùng kết cục, nên hai nơi không thể trôi lệch mà không đỏ.
 
-Hôm nay CHỈ `dsr_adj` có nguồn máy (bản ghi arm `Z0-T1`, `ablation/ban_ghi.py`). Tám tiêu chí
-chặn còn lại chưa có đường trích từ lệnh thật; người gọi không đưa ⇒ `pending` ⇒ Nhánh 1
-**không thể PASS**, và kết quả liệt kê đích danh cái thiếu. Một cổng tự điền "đạt" cho ô chưa
-đo là PASS RỖNG dựng sẵn — đúng thứ `L-Z35` (ngưỡng trống = `+inf`) sinh ra để chặn.
+════ Ba kết cục — cùng luật `d9_gate` (DIỄN GIẢI, cãi lại được) ════
 
-════ Ba kết cục của Nhánh 1 — DIỄN GIẢI, ghi ra để cãi lại được ════
-
-Spec: *"THIẾU MỘT TIÊU CHÍ Ở NHÁNH 1 → KHÔNG VÀO LIVE. Xử lý theo BA KẾT CỤC của DR-011"*.
-  * **FAIL**         — có tiêu chí ĐO ĐƯỢC mà không đạt (kể cả `dsr_adj` ra FAIL theo `DR-D4-09`).
-  * **INCONCLUSIVE** — không tiêu chí nào trượt, nhưng có ô chưa đo/đọc lỗi, hoặc `dsr_adj` ra
-                       INCONCLUSIVE (thuế nhiễu > ngưỡng).
-  * **PASS**         — đủ mọi ô, mọi ô đạt.
-FAIL xét TRƯỚC INCONCLUSIVE: một tiêu chí đã trượt thì "không vào live" đã chắc, thêm mẫu cho ô
-khác không đổi được điều đó.
+    có tiêu chí ĐO ĐƯỢC mà không đạt            ⇒ FAIL
+    không, nhưng có ô chưa đo / DSR INCONCLUSIVE ⇒ INCONCLUSIVE
+    còn lại                                      ⇒ PASS
 
 ════ `L-Z57` — không có đường nào từ gate này tới DỪNG DỰ ÁN ════
 
-Kiểu kết quả **không có** giá trị "dừng dự án". Nhánh 1 không PASS ⇒ `buoc_tiep` trỏ `DR-011`
-(nơi ba kết cục được xử lý; *"không vào live KHÔNG đồng nghĩa dừng dự án"*). Nhánh 2 ra `Z0` ⇒
-*"DỰ ÁN TIẾP TỤC BÌNH THƯỜNG"* (spec `:4311-4313`). Đây là khoá chống hồi quy về lỗi v5.
+Kiểu kết quả không có giá trị "dừng dự án". Nhánh 1 không PASS ⇒ `buoc_tiep` trỏ `DR-011` (*"không vào live KHÔNG
+đồng nghĩa dừng dự án"*). Nhánh 2 ra `Z0` ⇒ *"DỰ ÁN TIẾP TỤC BÌNH THƯỜNG"* (spec `:4311-4313`).
 
 ════ Nhánh 2 trong D4 — đã chốt ở DR, module chỉ thi hành ════
 
-`DR-D4-10` §2.4 điều 1: **mặc định `Z0` single-entry**; D4 không phán quyết câu DCA (DCA vào
-Idea Queue, *"chưa từng được đo, không phải đã thất bại"*). `Z1`/`Z3b` đã bị cắt khỏi lô
-(`DR-D4-12` §4) nên vế *"tốt nhất trong {Z3, Z3b}"* và điều kiện `Z1` của spec không có đầu vào.
-⚠️ `Z0` ở đây là trục **DCA**; trục **trend** của arm sản xuất chưa chốt (`MT-35`).
+`DR-D4-10` §2.4 điều 1: mặc định `Z0` single-entry; D4 không phán quyết câu DCA. ⚠️ `Z0` ở đây là trục DCA; trục
+trend của arm sản xuất chưa chốt (`MT-35`).
 """
 
 from __future__ import annotations
@@ -43,30 +40,20 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
+from tool_d.gates import thresholds
 from tool_d.gates.arm_record import ARM_MUA_PHAN_QUYET, validate_arm_record
+from tool_d.gates.d9_gate import TIEU_CHI_DSR, TIEU_CHI_KHAI
 from tool_d.gates.ket_cuc import KetCuc
 from tool_d.measurement.tri_state import Measured, Status
 
-#: Tiêu chí CHẶN của Nhánh 1, đúng thứ tự spec `:4258-4288`. `dsr_adj` đứng đầu và là ô DUY
-#: NHẤT gate tự đọc (từ bản ghi arm); tám ô sau do người gọi đưa vào.
-TIEU_CHI_NHANH_1: tuple[tuple[str, str], ...] = (
-    ("dsr_adj", "DSR-adjusted expectancy ≥ ngưỡng (0,10; DR-D0PRE-03), N = 114"),
-    ("h4d", "H4-D + H4-D-b PASS (§7.2/§7.5)"),
-    ("liq_buffer", "liq_buffer_ratio trung bình ≥ 8 xuyên suốt mẫu (§6.4b)"),
-    ("lo_don_lenh", "max_single_trade_loss / risk_budget ≤ 1.15"),
-    ("skewness_z1", "skewness(cấu hình tốt nhất) không âm hơn skewness(Z1) quá 0.5 — ⚠️ Z1 đã cắt (DR-D4-12 §4), MT-53/TD-0289"),
-    ("so_lenh_nam", "số lệnh/năm ≥ 150, MỖI HƯỚNG (MT-29) — SÀN, không phải trần"),
-    ("time_stop", "tỉ lệ TIME_STOP trong dải 5%–25% (phân bố hold báo cáo cho mọi arm)"),
-    ("h4_tp_fallback", "tỉ lệ TP_fallback (H-4) ≤ 40% (§11b.2)"),
-    ("lz10_lz33", "L-Z10 → L-Z33 PASS (§9c.6, §4b.6, §4c.4)"),
-)
+#: Hai tiêu chí Nhánh 1 dạng "bộ test PASS" — `evaluate_branch1` không kiểm chúng (docstring của nó).
+TIEU_CHI_BO_TEST: tuple[str, ...] = ("h4d", "lz10_lz33")
 
-#: Spec ghi rõ KHÔNG chặn: funding "không có ngưỡng chặn ở vòng này"; PBO "🟡 P1 … chưa dùng làm
-#: điều kiện chặn ở D0.9 lần đầu". Nhận để báo cáo, không bao giờ đổi kết cục.
+#: Toàn bộ tiêu chí CHẶN của Nhánh 1 ở D4, theo thứ tự báo cáo. Ghép từ nguồn chung, không khai lại.
+TIEU_CHI_NHANH_1: tuple[str, ...] = (TIEU_CHI_DSR, *TIEU_CHI_KHAI, *TIEU_CHI_BO_TEST)
+
+#: Spec ghi rõ KHÔNG chặn ở D4: funding (*"không có ngưỡng chặn ở vòng này"*), PBO (🟡 P1).
 CHI_BAO_CAO: frozenset[str] = frozenset({"funding_paid_cumulative", "pbo"})
-
-MA_TIEU_CHI: frozenset[str] = frozenset(ma for ma, _ in TIEU_CHI_NHANH_1)
-_MA_NGOAI_DSR: tuple[str, ...] = tuple(ma for ma, _ in TIEU_CHI_NHANH_1 if ma != "dsr_adj")
 
 CAU_HINH_MAC_DINH_NHANH_2 = "Z0"
 
@@ -78,113 +65,134 @@ class GateD09Error(ValueError):
 @dataclass(frozen=True)
 class KetQuaGateD09:
     nhanh_1: KetCuc
-    tieu_chi: Mapping[str, Measured[bool]]
     truot: tuple[str, ...]
     thieu: tuple[str, ...]
+    khong_ap_dung: tuple[str, ...]
     dsr_ket_cuc: Measured[str]
     vao_live: bool
     nhanh_2_da_chay: bool
     cau_hinh_chon: str | None
     buoc_tiep: str
-    #: `L-Z57` — gate này KHÔNG có kết cục dừng dự án. Luôn `True`; là một trường để bộ đọc
-    #: không phải suy nó từ văn bản.
+    #: `L-Z57` — gate này KHÔNG có kết cục dừng dự án. Luôn `True`.
     du_an_tiep_tuc: bool = True
     bao_cao: Mapping[str, Measured[Any]] = field(default_factory=dict)
     ghi_chep_thieu: tuple[str, ...] = ()
 
 
-def _dsr_tu_ban_ghi(ban_ghi: Mapping[str, Any]) -> tuple[Measured[bool], Measured[str]]:
+def _kiem_ban_ghi(ban_ghi: Mapping[str, Any]) -> str:
     loi = validate_arm_record(ban_ghi)
     if loi:
         raise GateD09Error(f"bản ghi ứng viên không hợp lệ: {loi}")
-    if ban_ghi.get("arm") not in ARM_MUA_PHAN_QUYET or ban_ghi.get("pham_vi_phan_quyet") != "phan_quyet":
+    arm = ban_ghi.get("arm")
+    if arm not in ARM_MUA_PHAN_QUYET or ban_ghi.get("pham_vi_phan_quyet") != "phan_quyet":
         raise GateD09Error(
             f"Nhánh 1 phán quyết trên arm {sorted(ARM_MUA_PHAN_QUYET)} (DR-D4-10 §2.1, MT-26 (C)); "
-            f"nhận arm {ban_ghi.get('arm')!r} phạm vi {ban_ghi.get('pham_vi_phan_quyet')!r}"
+            f"nhận arm {arm!r} phạm vi {ban_ghi.get('pham_vi_phan_quyet')!r}"
         )
-    kc = ban_ghi["ket_cuc"]
-    if kc.get("status") != Status.OK.value:
-        chua: Measured[Any] = Measured(status=Status(kc["status"]), value=None, note=kc.get("note"))
-        return chua, chua
-    gia_tri = kc["value"]
-    kc_m: Measured[str] = Measured.ok(gia_tri)
-    if gia_tri == KetCuc.PASS.value:
-        return Measured.ok(True), kc_m
-    if gia_tri == KetCuc.FAIL.value:
-        return Measured.ok(False), kc_m
-    return Measured.pending("dsr_adj INCONCLUSIVE — thuế nhiễu > ngưỡng (DR-D4-09 §2.2)"), kc_m
+    return str(arm)
+
+
+def _kiem_khoa(ten: str, dau_vao: Mapping[str, Any], hop_le: tuple[str, ...] | frozenset[str]) -> None:
+    la = set(dau_vao) - set(hop_le)
+    if la:
+        raise GateD09Error(f"{ten}: khoá lạ {sorted(la)} — hợp lệ: {sorted(hop_le)}")
+    for k, m in dau_vao.items():
+        if not isinstance(m, Measured):
+            raise GateD09Error(f"{ten}[{k}]: phải là Measured, nhận {type(m).__name__} (N6)")
 
 
 def danh_gia_gate_d09(
     *,
     ban_ghi_ung_vien: Mapping[str, Any],
-    tieu_chi_khac: Mapping[str, Measured[bool]] | None = None,
+    chi_so: Mapping[str, Measured[float]] | None = None,
+    bo_test: Mapping[str, Measured[bool]] | None = None,
     bao_cao: Mapping[str, Measured[Any]] | None = None,
     ket_luan_z0t1_vs_z0t2: str | None = None,
 ) -> KetQuaGateD09:
-    """Hai nhánh §10.2 trên bản ghi ứng viên `Z0-T1` + các tiêu chí người gọi đo được.
+    """Hai nhánh §10.2 trên bản ghi ứng viên `Z0-T1`.
 
-    :param tieu_chi_khac: khoá ∈ tám tiêu chí ngoài `dsr_adj`. Khoá thiếu ⇒ `pending`.
-        Khoá lạ ⇒ raise (gõ nhầm tên không được lặng lẽ thành "chưa đo").
-    :param bao_cao: chỉ các khoá ở `CHI_BAO_CAO` — không đổi kết cục.
-    :param ket_luan_z0t1_vs_z0t2: spec `:4320-4321` — *"có kết luận GHI LẠI … không được bỏ
-        trống"*. Thiếu ⇒ ghi vào `ghi_chep_thieu`, không đổi kết cục Nhánh 1.
+    :param chi_so: khoá ∈ `d9_gate.TIEU_CHI_KHAI` (số). Khoá thiếu ⇒ `pending`. Khoá lạ ⇒ raise.
+    :param bo_test: khoá ∈ `TIEU_CHI_BO_TEST`, giá trị `Measured[bool]` từ lần chạy bộ test thật.
+    :param bao_cao: chỉ `CHI_BAO_CAO` — không đổi kết cục.
+    :param ket_luan_z0t1_vs_z0t2: spec `:4320-4321` *"không được bỏ trống"* ⇒ thiếu thì ghi vào `ghi_chep_thieu`.
     """
-    tieu_chi_khac = dict(tieu_chi_khac or {})
+    arm = _kiem_ban_ghi(ban_ghi_ung_vien)
+    chi_so = dict(chi_so or {})
+    bo_test = dict(bo_test or {})
     bao_cao = dict(bao_cao or {})
-    la = set(tieu_chi_khac) - set(_MA_NGOAI_DSR)
-    if la:
-        raise GateD09Error(
-            f"tiêu chí lạ {sorted(la)} — hợp lệ: {list(_MA_NGOAI_DSR)} "
-            "('dsr_adj' do gate tự đọc từ bản ghi arm, không nhận từ ngoài)"
-        )
-    la_bc = set(bao_cao) - CHI_BAO_CAO
-    if la_bc:
-        raise GateD09Error(f"khoá báo cáo lạ {sorted(la_bc)} — hợp lệ: {sorted(CHI_BAO_CAO)}")
-    for ma, m in tieu_chi_khac.items():
-        if not isinstance(m, Measured):
-            raise GateD09Error(f"tiêu chí {ma}: phải là Measured[bool], nhận {type(m).__name__}")
+    _kiem_khoa("chi_so", chi_so, TIEU_CHI_KHAI)
+    _kiem_khoa("bo_test", bo_test, TIEU_CHI_BO_TEST)
+    _kiem_khoa("bao_cao", bao_cao, CHI_BAO_CAO)
+    for k, m in bo_test.items():
         if m.status is Status.OK and not isinstance(m.value, bool):
-            raise GateD09Error(f"tiêu chí {ma}: giá trị phải là bool, nhận {m.value!r}")
+            raise GateD09Error(f"bo_test[{k}]: giá trị phải là bool, nhận {m.value!r}")
 
-    dsr_o, dsr_kc = _dsr_tu_ban_ghi(ban_ghi_ung_vien)
-    tieu_chi: dict[str, Measured[bool]] = {"dsr_adj": dsr_o}
-    for ma in _MA_NGOAI_DSR:
-        tieu_chi[ma] = tieu_chi_khac.get(ma) or Measured.pending(f"chưa có nguồn đo cho '{ma}' (DR-D4-14, TD-0336)")
+    metrics: dict[str, float] = {}
+    chua_do: list[str] = []
+    khong_dat: list[str] = []
 
-    truot = tuple(ma for ma, _ in TIEU_CHI_NHANH_1 if tieu_chi[ma].status is Status.OK and tieu_chi[ma].value is False)
-    thieu = tuple(ma for ma, _ in TIEU_CHI_NHANH_1 if tieu_chi[ma].status is not Status.OK)
-
-    if truot:
-        nhanh_1 = KetCuc.FAIL
-    elif thieu:
-        nhanh_1 = KetCuc.INCONCLUSIVE
+    # DSR — kết cục đã phân loại trong bản ghi arm (`ablation/ban_ghi.py` → `phan_loai_ket_cuc`).
+    kc_tho = ban_ghi_ung_vien["ket_cuc"]
+    dsr_kc: Measured[str] = (
+        Measured.ok(kc_tho["value"]) if kc_tho.get("status") == Status.OK.value
+        else Measured(status=Status(kc_tho["status"]), value=None, note=kc_tho.get("note"))
+    )
+    dsr_adj = ban_ghi_ung_vien["chi_so"].get("dsr_adj", {})
+    if dsr_kc.value in (KetCuc.PASS.value, KetCuc.FAIL.value) and dsr_adj.get("status") == Status.OK.value:
+        metrics[TIEU_CHI_DSR] = float(dsr_adj["value"])
     else:
-        nhanh_1 = KetCuc.PASS
+        chua_do.append(TIEU_CHI_DSR)
 
+    for k in TIEU_CHI_KHAI:
+        m = chi_so.get(k)
+        if m is not None and m.status is Status.OK:
+            metrics[k] = float(m.value)
+        else:
+            chua_do.append(k)
+
+    kq = thresholds.evaluate_branch1(metrics, pbo_chan=False, arm=arm)
+    khong_dat += [k for k in kq.failed_criteria if k not in chua_do]
+    chua_do = [k for k in chua_do if k not in kq.khong_ap_dung]
+
+    # Kết cục DSR của bản ghi phải KHỚP ngưỡng dùng chung — bản ghi dựng với ngưỡng khác là lỗi lắp ráp.
+    if dsr_kc.value == KetCuc.PASS.value and TIEU_CHI_DSR in khong_dat:
+        raise GateD09Error("bản ghi ghi DSR PASS nhưng dsr_adj < DSR_ADJ_EXPECTANCY_MIN — ngưỡng lệch nguồn chung")
+    if dsr_kc.value == KetCuc.FAIL.value and TIEU_CHI_DSR not in khong_dat:
+        raise GateD09Error("bản ghi ghi DSR FAIL nhưng dsr_adj ≥ DSR_ADJ_EXPECTANCY_MIN — ngưỡng lệch nguồn chung")
+
+    for k in TIEU_CHI_BO_TEST:
+        m = bo_test.get(k)
+        if m is None or m.status is not Status.OK:
+            chua_do.append(k)
+        elif m.value is False:
+            khong_dat.append(k)
+
+    thu_tu = {k: i for i, k in enumerate(TIEU_CHI_NHANH_1)}
+    truot = tuple(sorted(khong_dat, key=thu_tu.__getitem__))
+    thieu = tuple(sorted(chua_do, key=thu_tu.__getitem__))
+    nhanh_1 = KetCuc.FAIL if truot else (KetCuc.INCONCLUSIVE if thieu else KetCuc.PASS)
     ghi_chep_thieu = () if (ket_luan_z0t1_vs_z0t2 or "").strip() else ("ket_luan_z0t1_vs_z0t2",)
+    chung = dict(
+        nhanh_1=nhanh_1, truot=truot, thieu=thieu, khong_ap_dung=kq.khong_ap_dung, dsr_ket_cuc=dsr_kc,
+        bao_cao=bao_cao, ghi_chep_thieu=ghi_chep_thieu,
+    )
 
     if nhanh_1 is not KetCuc.PASS:
         chi_tiet = f"trượt {list(truot)}" if truot else f"chưa đủ {list(thieu)}"
         return KetQuaGateD09(
-            nhanh_1=nhanh_1, tieu_chi=tieu_chi, truot=truot, thieu=thieu, dsr_ket_cuc=dsr_kc,
-            vao_live=False, nhanh_2_da_chay=False, cau_hinh_chon=None,
+            **chung, vao_live=False, nhanh_2_da_chay=False, cau_hinh_chon=None,
             buoc_tiep=(
                 f"Nhánh 1 = {nhanh_1.value} ({chi_tiet}) ⇒ KHÔNG VÀO LIVE; xử lý theo DR-011 (ba kết "
                 "cục). 'Không vào live' KHÔNG đồng nghĩa 'dừng dự án' (spec §10.2). Nhánh 2 không chạy."
             ),
-            bao_cao=bao_cao, ghi_chep_thieu=ghi_chep_thieu,
         )
-
     return KetQuaGateD09(
-        nhanh_1=nhanh_1, tieu_chi=tieu_chi, truot=(), thieu=(), dsr_ket_cuc=dsr_kc,
-        vao_live=True, nhanh_2_da_chay=True, cau_hinh_chon=CAU_HINH_MAC_DINH_NHANH_2,
+        **chung, vao_live=True, nhanh_2_da_chay=True, cau_hinh_chon=CAU_HINH_MAC_DINH_NHANH_2,
         buoc_tiep=(
             "Nhánh 1 = PASS. Nhánh 2 ⇒ chọn Z0, hệ thống SINGLE-ENTRY neo zone — DỰ ÁN TIẾP TỤC BÌNH "
             "THƯỜNG (spec §10.2; DR-D4-10 §2.4 điều 1: D4 không phán quyết câu DCA, DCA vào Idea Queue). "
             "⚠️ Trục TREND của arm sản xuất chưa chốt (MT-35)."
         ),
-        bao_cao=bao_cao, ghi_chep_thieu=ghi_chep_thieu,
     )
 
 
@@ -193,7 +201,7 @@ __all__ = [
     "CHI_BAO_CAO",
     "GateD09Error",
     "KetQuaGateD09",
-    "MA_TIEU_CHI",
+    "TIEU_CHI_BO_TEST",
     "TIEU_CHI_NHANH_1",
     "danh_gia_gate_d09",
 ]
