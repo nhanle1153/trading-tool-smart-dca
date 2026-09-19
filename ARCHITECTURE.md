@@ -146,7 +146,9 @@ tool-d-smart-dca/                  ← git root = E:\Trading Tool_Smart DCA
 │  │                data.binance.vision → feather Freqtrade, đã đối chiếu khớp) ·
 │  │                pool_t1_du_lieu (sao chép · nhập kho · cắt T2 · kiểm đủ rổ) ·
 │  │                doi_song_ma (đời sống THẬT của mã từ nến có giao dịch — MT-59, TD-0306)
-│  ├─ ledger/       registry · budget · audit_checks · idea_queue · param_proposals
+│  ├─ ledger/       registry · budget · audit_checks · idea_queue · param_proposals ·
+│  │                backlog_check (báo cáo `--kiem-backlog` của E6 — khoá 🔒 quên đóng,
+│  │                trạng thái lệch; CHỈ ĐỌC `TASKS.md` + `git log`, không nối `run_audit()` — TD-0331)
 │  ├─ lockbox/      seal · access_log · h17 (cổng H17 ở service CHE lockbox: cách ly còn
 │  │                hiệu lực + seal không bị sửa — TD-0316) · ro_seal (verify_lockbox = băm +
 │  │                xét rổ, MT-60 — TD-0309)
@@ -172,6 +174,9 @@ tool-d-smart-dca/                  ← git root = E:\Trading Tool_Smart DCA
 ├─ entrypoints/                    ← ĐÚNG 8 file, không hơn (xem 3.3)
 ├─ tests/lock/                     ← 1 file / 1 test khoá L-Zxx
 ├─ tests/unit/  tests/fixtures/
+├─ tests/tools/                    ← CÔNG CỤ kiểm (không phải test, không thuộc `entrypoints/`):
+│                                    mutate_in_memory.py (phá-thật trong bộ nhớ, đĩa không đổi
+│                                    byte) + specs/*.json (đặc tả từng phép phá) — TD-0329
 ├─ runs/                           ← runs/<trial_id>/metrics.seal ·
 │                                    runs/risk_supervisor/state.json (TD-0241,
 │                                    bền vững hoá breaker/cờ LIQUIDATED qua
@@ -400,3 +405,4 @@ mô tả cả ba sổ JSONL này thì phải **sinh/kiểm tự động từ sch
 | 17/09/2026 | Rổ theo từng giai đoạn (`DR-D1-05`): thêm mục 3.5 + dòng cây `config/pool_t0.yaml` · `user_data/data/pool_t0/` (chưa sinh) + chú thích vai mới của `pool.yaml` | Cây coi `pool.yaml` là "pool SẢN XUẤT" duy nhất; không nói rổ nào dùng cho giai đoạn dữ liệu nào | CALIB→`pool_t0`, WFO→`pool_t1`, LOCKBOX→rổ `T2` (⏸ D8), live→`pool.yaml`; một hàm chọn rổ duy nhất (TD-0299), từ chối LOCKBOX và không bao giờ trả `pool.yaml` cho backtest | Lệnh *"chuẩn hóa và lưu"* 17/09/2026, phiên `-01`; khảo sát cho thấy không mã nào đọc `pool.yaml` khi chạy và mỗi giai đoạn cần rổ đúng tại mốc của nó |
 | 18/09/2026 | Lockbox đúng rổ + H17 tách theo service (`DR-LOCKBOX-01`, `DR-LOCKBOX-02`): cây thêm `config/pool_t2.yaml` · `src/tool_d/data/doi_song_ma` · `src/tool_d/lockbox/h17` · `ro_seal`; §3.1 thêm bảng H17 theo service; §3.5 đính chính dòng LOCKBOX + câu *"từ chối cho tới khi MT-60 giải"* | Lockbox niêm phong rổ 09/2026 (sai rổ, `MT-60`) và `verify_seal` mù với điều đó; H17 băm dữ liệu ở service mà dữ liệu bị che ⇒ E1/E2/E3 exit 89 mọi lần (`MT-63`) | Rổ `T2` 86 mã khoá trước mọi số; `verify_lockbox` = băm + xét rổ; service pipeline canh cách ly lúc chạy, băm về service `lockbox`; `ro_cho_tap("LOCKBOX")` từ chối vĩnh viễn. **Không thêm entrypoint** (vẫn 8, L-Z36): cờ mới là `E7 --ro-t2` | Lệnh *"chuẩn hóa và lưu"* 18/09/2026, phiên `55661c40`. ⚠️ Không đụng hai chỗ lỗi thời của phiên khác (`pool_t0.yaml` "CHƯA sinh", `pool_giai_doan` "chưa có" — cả hai thực tế đã xong) |
 | 18/09/2026 | Đính chính 4 chỗ lỗi thời về rổ `T0`: cây `config/pool_t0.yaml` + `user_data/data/pool_t0/futures/`, §3.5 bảng dòng CALIB + câu `pool_giai_doan.py` "chưa có" | Các chỗ này viết 17/09 lúc việc chưa làm; TD-0299/0300/0301/0252 đều ✅ nhưng chữ chưa theo kịp (dòng lịch sử trước đã ghi nhận mà chưa sửa) | Chỉ nối `🔄 18/09` sau chữ cũ, không xoá chữ nào: rổ `T0` 143 mã, dữ liệu 6 loại có 5m, `ro_cho_tap()` đã có | Lệnh *"chuẩn hóa và lưu"* 18/09/2026, phiên `55661c40`; đối chiếu đĩa trước khi ghi (file, số mã, loại file, trạng thái `TASKS.md`) |
+| 19/09/2026 | Công cụ phá-thật trong bộ nhớ (`TD-0329`) + báo cáo backlog (`TD-0331`): cây thêm `tests/tools/` (`mutate_in_memory.py` · `specs/*.json`) và `src/tool_d/ledger/backlog_check`; E6 thêm cờ `--kiem-backlog` — **KHÔNG phải entrypoint thứ 9**, `entrypoints/` vẫn đúng 8 file | Cây không có `tests/tools/`; `ledger/` = `registry · budget · audit_checks · idea_queue · param_proposals`; E6 không có cờ báo cáo backlog | Thêm `tests/tools/` + `backlog_check`. Cờ `--kiem-backlog` chỉ ĐỌC (`TASKS.md` + `git log`), không ghi file, không nối `run_audit()` hay cổng đóng; công cụ phá-thật đọc mã nguồn, đổi bản sao trong bộ nhớ, nạp vào `sys.modules`, đĩa không đổi byte | Kỷ luật "kiểm có răng" làm bằng tay không tái lập được (`OQ-14`) và khoá 🔒 quên đóng không lớp canh nào thấy (`OQ-15`); chủ dự án chọn làm và đặt ở `tests/tools/` 19/09/2026. Lệnh *"chuẩn hóa và lưu"* 19/09/2026, phiên `e80a877c` |

@@ -387,6 +387,19 @@ ca `idea_queue` đỏ ~2,5 ngày không ai nhận, 14–16/09).
   đoán từng file; máy bắt đúng cơ chế `MT-46` ngay trong đợt code. (2) chú thích của `_df_4h` nói `dp.get_pair_dataframe()`
   trả toàn bộ dữ liệu không cắt, còn mã Freqtrade 2026.8 đọc hôm nay CÓ cắt (`_set_dataframe_max_date` mỗi vòng backtest) —
   lệch chưa xác minh bằng chạy thật, **chưa sửa chú thích**; `_funding_8h` cắt tường minh nên đúng ở cả hai trường hợp.
+- ✅ **Đính chính cùng ngày — gạch "⏳ Hai câu chờ" ở trên HẾT ĐÚNG:** chủ dự án chọn làm cả hai. `OQ-14` ✅ (`TD-0329` công
+  cụ phá-thật trong bộ nhớ ở `tests/tools/`, `7f53ca9`; `TD-0330` test khoá hai chiều cực trị cụm, `727f74b`). `OQ-15` ✅ MỘT
+  PHẦN (`TD-0331` cờ `--kiem-backlog` trên E6, `f9554cb`; căn `TD-0184` + 11 dòng sang ⏸, `13cd37e`). Full suite Docker **2717
+  passed, 0 failed**. Không còn dòng 🔒 nào trong `TASKS.md`.
+- 🔧 **Cách dùng (Docker, cả hai CHỈ ĐỌC):** phá-thật: `docker compose -f docker/docker-compose.yml run --rm --entrypoint
+  python tests tests/tools/mutate_in_memory.py --spec tests/tools/specs/<đặc-tả>.json --variant all` (đặc tả:
+  `td0320_moi_hon`, `td0330_khoa_hai_chieu`, `td0331_backlog_check`). Backlog: `docker compose -f docker/docker-compose.yml
+  run --rm freqtrade entrypoints/trial_ledger_audit.py --kiem-backlog` (mã thoát 97 nếu có cảnh báo).
+- 🔴 **0 cảnh báo KHÔNG có nghĩa hết lệch (điểm mù đã biết):** cờ backlog ra 0 cảnh báo nhưng **18 dòng cùng họ vẫn 🔓 dù tạm
+  dừng** — 15 dòng D6–D8 (`TD-0262`…`0275`, `TD-0279`) cùng `TD-0227`, `TD-0251`, `TD-0255` — vì dòng không mang cụm *"⏸ TẠM
+  DỪNG"*. Chủ dự án chọn không đụng (ranh giới D8 chưa rõ: cùng ngày vẫn làm `TD-0276`). `TD-0289` cố ý 🔓. **Khi chọn việc kế
+  tiếp thuộc D4–D9, đừng tin cột 🔓: đọc `DR-IQ-01` §1** (và `OQ-15` ở `back-end-note.md`).
+- ↩️ **Khi nối lại D4/D8:** lật 11 dòng đã căn về 🔓 bằng `git log --grep "can o trang thai 11 dong"` (message liệt kê đủ mã).
 
 *(Đoạn "Đang ở" cũ bên dưới giữ nguyên làm lịch sử.)*
 
