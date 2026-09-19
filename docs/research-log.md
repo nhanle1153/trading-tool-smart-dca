@@ -3796,3 +3796,57 @@ chốt 5m chặn, không có thì nó lấn một giờ qua mốc LOCKBOX mà kh
 
 **Xuất xứ:** `cay_sach = false` ở cả bốn dòng CTRL — `get_git_info` coi mọi file chưa theo dõi là bẩn, và gốc repo có
 `.playwright-mcp/`, `scratch_dl/`, `user_data/backtest_results/` (không phải của phiên này). Code đo đã commit ở `380243c`/`7afc656`.
+
+## 19/09/2026 — Lượt 4: bốn câu treo (TD-0346 · TD-0347 · TD-0348 · TD-0261)
+
+Phiên mã `69768527`. Chủ dự án chốt cả bốn đề xuất. 0 trial ở cả bốn việc.
+
+### 1. H14 (TD-0261, `DR-D1-04`): overlap 19,65% ⇒ DR-007 KHÔNG áp, N cổng D4 giữ 114
+
+`docs/du-lieu-do/td0261-overlap-tool-a.json`, chụp `2026-09-19T13:20:38Z`. Định nghĩa commit TRƯỚC khi đo (`aa130b1`).
+
+| | |
+|---|---|
+| Tool A | 100 mã, `StaticPairList`, git `87ebf19` (file đọc sạch) |
+| Tool D | 107 mã, `config/pool_t1.yaml` |
+| Giao / hợp | 34 / 173 |
+| **overlap** (Jaccard, spec `:341`) | **0,1965** < 0,50 (`MT-50`) |
+| N cổng D4 · rào DSR | **114 · 3,0777** (tách) |
+| `N_A` (hàm của chính Tool A) | 116 (36 trial, 0 chưa khai). Nếu đã gộp: 230 · 3,2979, chỉ ghi cạnh |
+
+Không phụ thuộc cách chọn công thức: tỉ lệ một chiều 34/107 = 31,8% và 34/100 = 34% cũng dưới 50%. Dự báo ở spec §9.1
+(*"nhiều khả năng overlap SẼ CAO"*) **không đúng trên rổ T1**. Vì sao thì chưa đo: tiêu chí chọn whitelist của Tool A không
+được đọc ở phép đo này, nên không kết luận gì về nguyên nhân. ⚠️ Bản chụp tại lúc đo (`MT-56`): Tool A
+tiêu thêm trial thì `N_A` tăng, nhưng với overlap < 50% thì `N_A` không đi vào N của Tool D. Rổ đổi thì phải đo lại.
+
+**Lượt đầu tự từ chối, và đúng là phải từ chối.** Git trong container không có `core.autocrlf=true` của host, nên cả ba file
+Tool A hiện "đang sửa" (diff 169/169 dòng, chỉ khác ký tự xuống dòng). Kịch bản dừng TRƯỚC khi tính, chưa có con số nào lộ ra.
+Đã sửa bằng cách truyền đúng cấu hình của host, và ghi thêm mã blob đã commit để bản chụp tái lập được mà không phụ thuộc kiểu
+xuống dòng.
+
+**Va mã:** lượt đặt chỗ `5536b07` của tôi cấp `DR-D4-18` cho đúng quyết định mà `MT-56` đã giữ mã `DR-D1-04` từ 17/09. Tôi
+bắt được khi đọc MT-56 trước lúc viết DR. Đã rút `DR-D4-18` ở `62bcc80` (N12 mục 7c: mã nằm trên đĩa trước là mã đúng). Bài
+học: lúc đặt chỗ, ngoài `git log` còn phải `git grep` mã/chủ đề trong `back-end-note.md`, vì mã có thể được giữ bằng chữ, chưa
+có file.
+
+### 2. `liq_buffer` theo kế hoạch (TD-0348, `DR-D4-17`)
+
+Nguồn mới là giá kế hoạch trong `enter_tag`, `N_full` lấy từ tranche 1, qua `Exchange.get_liquidation_price()` của chính
+Freqtrade (dựng một lần, 0,1 s, không cần mạng). Đối chiếu với TD-0343: ROSE 0,0637 · 1000RATS 0,0896 khớp. Trên export thật
+của fixture `test_td0187`, chỉ số từ `unreadable` thành **có số**. 🔴 Ghi ở `DR-D4-17` §3: cổng đọc giá ĐÃ DỊCH đệm 0,05.
+Ước lượng tỉ số trung bình ≈ 10,7 so với ngưỡng 8, lề không lớn, nên lựa chọn đệm có thể lật cổng. 🔴 **Ngoài phạm vi:** cổng
+§6.4 lúc vào lệnh (`L-Z3`, từ chối mở khi < 8) **chưa có dòng mã nào**. Chờ lần "chuẩn hóa và lưu" tới.
+
+Test sai giả định một lần: `W` của config là `0,3333/0,3333/0,3334`, không phải ⅓ đúng. Đã sửa bằng cách tính kỳ vọng từ `W`
+thật, không nới dung sai.
+
+### 3. `cua_so_tap()` (TD-0347): biên E1 và kẽ hở của phép kiểm cũ
+
+`[start, end)` nửa mở, một chỗ tính cho E1/E3/kịch bản đếm. Phép kiểm kế hoạch cũ của E1 so `den − 1` với biên ĐÓNG
+`[start, end]`, nên nó **nhận** `den = end + 1`. Đó là lý do lỗi mặc định sống qua TD-0313, và `--den` gõ tay vượt mốc cũng
+lọt. Hàm mới từ chối cả hai. Phá thật (đưa lại `+1 ngày`): 2 ca đỏ.
+
+### 4. Test sổ thật (TD-0346)
+
+Ghim QUAN HỆ thay số đếm: trial thật đều B0 và đủ 4, mỗi CTRL khai đúng một dạng. Hai ca kiểm-có-răng chèn B2 giả và CTRL khai
+chồng ⇒ đỏ.
