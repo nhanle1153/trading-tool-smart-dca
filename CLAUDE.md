@@ -333,7 +333,7 @@ ca `idea_queue` đỏ ~2,5 ngày không ai nhận, 14–16/09).
 
 ## TRẠNG THÁI HIỆN TẠI
 
-**Cập nhật lần cuối: 18/09/2026**
+**Cập nhật lần cuối: 19/09/2026**
 
 > 🔴 **18/09/2026 — đọc trước (N12 mục 7):** mọi câu *"phiên X giữ / nhận / đang làm Y"* trong mục này là
 > **LỊCH SỬ tại ngày ghi**, không phải phân việc hiện tại — tên phiên đổi sau mỗi lần khởi động lại. Chủ
@@ -342,6 +342,34 @@ ca `idea_queue` đỏ ~2,5 ngày không ai nhận, 14–16/09).
 > ⚠️ **Hai (nay ba) phiên Claude Code cùng làm việc song song trên repo này** (chủ dự án xác nhận).
 > Mục này có thể lệch nhịp vài phút so với phiên kia — luôn `git log --oneline` +
 > đọc lại `TASKS.md` (cột 🔓/🔒/✅) trước khi chọn việc tiếp theo, đừng chỉ tin mục này.
+
+**Đang ở (cập nhật 19/09/2026, phiên mã `e80a877c` — nốt phần Short "dựng, không đo"; 0 trial, sổ trial vẫn
+13 dòng, N = 114, `enable_short` vẫn `false`):** đọc từ đĩa (`TASKS.md`, `git log`, `registry/`), không từ trí nhớ.
+
+- ✅ **Xong 19/09:** `TD-0276` (`5508db3`, đoạn bổ sung `DR-D4-01` §2b — Short cần lockbox MỚI) · `TD-0322` (`6b4fbad`,
+  bộ đo DR-015 bước 1+3 sẵn hướng Short, mặc định `long`, KHÔNG chạy, artifact niêm phong không đổi byte) ·
+  `TD-0323` (`cd0a8eb`, DG6-D nối vào `custom_exit`, chỉ arm `Z3b` + SHORT). Full suite Docker **2630 passed, 0 failed**.
+  Chủ dự án chốt trong phiên: bỏ `TD-0324` (gộp lõi Long/Short — *"KHÔNG ưu tiên"*, buộc sửa lock test AST); giá vào của
+  DG6-D = tranche khớp gần nhất.
+- ⏸ **`TD-0184` vẫn tạm dừng** theo `DR-IQ-01` §1, không đổi. ⚠️ **Ô trạng thái của dòng đó ghi 🔓 dù ô ghi chú cuối dòng
+  ghi ⏸** — người chỉ đọc cột trạng thái sẽ nhận nhầm (đúng hình dạng `MT-46` (6); chính tôi suýt nhận). Chưa sửa — dòng
+  `TASKS.md` đã chốt, chờ chủ dự án. Cùng họ: `TD-0308`/`TD-0310` ghi *"🔓 ⏸"*.
+- 🔑 **Đính chính khối 18/09 bên dưới:** `TD-0314` KHÔNG còn "làm được ngay" — ✅ từ `6dedac7`/`73b7ba2`
+  (`cho_thieu_khung_chi_tiet()` nối ở `bo_chay/chay.py:155`). Các dòng 🔓 còn lại trong `TASKS.md` (đối chiếu 19/09) đều
+  thuộc D4–D9/lockbox — bị `DR-IQ-01`/`DR-HUONG-01` chặn — ngoại trừ `TD-0324` (không ưu tiên); chưa rà từng dòng
+  cũ ở Khối 0–2 (`TD-0001…0018`, dạng ♻️ Sửa đổi).
+- 🔴 **`TD-0319`/`TD-0320` vẫn 🔒 dù code đã commit** (`ac04799`, `b76ae3d`; khoá `3cc0204`/`3efcc9a` mang
+  `Phien: aab049b6`, 18/09; `TD-0321` cùng chuỗi đã ✅). Là khoá quên đóng, không phải mồ côi — nhưng theo N12 mục 7f **chỉ
+  báo, không tự đóng**: phiên giữ hoặc chủ dự án đóng ✅ (kiểm bằng đĩa trước).
+- 📌 **Nợ còn lại, ghi ở `MT-66`:** LIVE/dry-run cần `informative_pairs()` khai thêm `funding_rate` (backtest tự tải từ đĩa
+  nên chạy được) — việc D10+ khi mở khâu ĐO Short. Thiếu funding ⇒ `d=False` + cảnh báo, không bịa 0.0.
+- 🔑 **Hai bài học đo được:** (1) nối DG6-D làm lớp canh `doc_boi_san_xuat` (`TD-0277`) báo **23 ca đỏ chung MỘT nguyên
+  nhân** (lời khai `param_status.yaml` lỗi thời) — đọc đầu ra `run_audit` thật (exit 92, dòng `TD-0277: CHƯA ĐẠT`) thay vì
+  đoán từng file; máy bắt đúng cơ chế `MT-46` ngay trong đợt code. (2) chú thích của `_df_4h` nói `dp.get_pair_dataframe()`
+  trả toàn bộ dữ liệu không cắt, còn mã Freqtrade 2026.8 đọc hôm nay CÓ cắt (`_set_dataframe_max_date` mỗi vòng backtest) —
+  lệch chưa xác minh bằng chạy thật, **chưa sửa chú thích**; `_funding_8h` cắt tường minh nên đúng ở cả hai trường hợp.
+
+*(Đoạn "Đang ở" cũ bên dưới giữ nguyên làm lịch sử.)*
 
 **Đang ở (cập nhật 18/09/2026, phiên mã `0074a97b` — bản tổng hợp tiến độ, 0 trial, không đổi trạng thái
 việc nào):** đọc từ đĩa (`TASKS.md`, `runtime_state.json`, `git tag`, `docs/decisions/`), không từ trí nhớ.
