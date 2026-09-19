@@ -1,0 +1,91 @@
+{
+  "nguon": "TD-0261 — DR-D1-04 (aa130b1), H14 + DR-007, 0 trial, không đọc dữ liệu thị trường",
+  "chup_luc_utc": "2026-09-19T13:20:38Z",
+  "tool_d": {
+    "git_sha": "aa130b1173a9867a9c8756039d677ed8b326163d",
+    "ro": "config/pool_t1.yaml",
+    "sha256_ro": "7e3d15174b0a8ca5d7848886fe992e12d3afec864d0922f6f17ccca16e18ec6c",
+    "so_ma": 107
+  },
+  "tool_a": {
+    "git_sha": "87ebf1994a42c3a9bfba4f97692ec6d3dc8a412c",
+    "file_doc_sach": true,
+    "sha256_cay_lam_viec": {
+      "tool-a/config.json": "71bdda60f95b9ef3be316a0a747be432eb0cd0f1c3dacd6a562cae0dea947b3e",
+      "logs/trials/trial_registry.json": "73edd5439ec0ac2b6d1adf6132da445ffc70f457eeb8f467c7d8f7c62dccc2d6",
+      "lib/trial_registry/dsr_trial_count.py": "52341e6bf31e54552a704dbb488f8c0da3626a72723cffd1ff62079163dc0353"
+    },
+    "git_blob_da_commit": {
+      "tool-a/config.json": "c1c525b11d4d292f429f25b7aa8af5410eca9df8",
+      "logs/trials/trial_registry.json": "f29582aff73790257b1a0c30176179ddc41d651b",
+      "lib/trial_registry/dsr_trial_count.py": "dc4dd305ed0a725b0e4e5914e2f260f485f68712"
+    },
+    "pairlists": [
+      {
+        "method": "StaticPairList"
+      }
+    ],
+    "so_ma": 100,
+    "so_trial_trong_so": 36,
+    "N_A": 116,
+    "trial_chua_khai_tinh_la_1": []
+  },
+  "overlap": {
+    "cong_thuc": "|A ∩ D| / |A ∪ D| (spec :341)",
+    "giao": 34,
+    "hop": 173,
+    "gia_tri": 0.19653179190751446,
+    "nguong": 0.5,
+    "danh_sach_giao": [
+      "1000BONKUSDT",
+      "ADAUSDT",
+      "ALGOUSDT",
+      "APTUSDT",
+      "AVAXUSDT",
+      "AXSUSDT",
+      "BNBUSDT",
+      "CAKEUSDT",
+      "DOGEUSDT",
+      "DOTUSDT",
+      "ETHFIUSDT",
+      "FILUSDT",
+      "HBARUSDT",
+      "ICPUSDT",
+      "INJUSDT",
+      "JTOUSDT",
+      "JUPUSDT",
+      "KASUSDT",
+      "LDOUSDT",
+      "LINKUSDT",
+      "LTCUSDT",
+      "MASKUSDT",
+      "NEARUSDT",
+      "ONDOUSDT",
+      "OPUSDT",
+      "SOLUSDT",
+      "STRKUSDT",
+      "SUIUSDT",
+      "TAOUSDT",
+      "TIAUSDT",
+      "TRXUSDT",
+      "VIRTUALUSDT",
+      "WLDUSDT",
+      "XMRUSDT"
+    ]
+  },
+  "dr_007": {
+    "ap_dung": false,
+    "N_cong_D4": 114,
+    "rao_dsr": 3.077725929446771,
+    "N_union_neu_ap": 230,
+    "rao_neu_ap": 3.29790215407407,
+    "N_tach": 114,
+    "rao_tach": 3.077725929446771
+  },
+  "dr_phai_doc_lai_con_so": [],
+  "han_che": [
+    "Bản chụp TẠI LÚC ĐO (MT-56), không phải lúc chạy cổng: Tool A tiêu thêm trial sau giờ chụp thì N thật lớn hơn",
+    "Chỉ trùng MÃ, không đo trùng KHOẢNG THỜI GIAN dữ liệu giữa hai tool — spec :341 định nghĩa theo tập mã",
+    "Nối N vào gates/dsr.py và cổng D4 là việc riêng (DR-D1-04 §4) — artifact này không đổi mã nào"
+  ]
+}
