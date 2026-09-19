@@ -74,6 +74,18 @@ Fail-closed đòi chiều ngược lại: không nằm trong ba khoá này thì 
 """
 
 
+CTRL_MO_TA_ALLOWED = frozenset(
+    {"so_lenh", "lenh_moi_nam", "so_lenh_theo_thang", "so_ma_co_lenh", "phan_bo_so_tranche"}
+)
+"""Đầu ra cho phép của CTRL dạng thứ BA *đo mô tả* — `MT-19` đường (c), liệt kê ĐÍCH DANH ở `DR-D4-16` §3,
+mỗi tên kèm một câu vì-sao-không-phải-chỉ-số-hiệu-năng. Toàn là SỐ ĐẾM sự kiện vào lệnh/khớp lệnh.
+
+🔴 Cố ý KHÔNG có `exit_reason` (tỉ lệ TP/SL rò thắng/thua), thời gian giữ lệnh, hay bất cứ thứ gì mang
+`profit`/`pnl`/`R_realized`/`R_trien_khai`. Thêm tên = DR mới. Tách hẳn khỏi `CTRL_OUTPUT_ALLOWED` (D3.5 Bước 1): hai phạm vi, hai danh
+sách — gộp là nới danh sách của D3.5 một cách lặng lẽ (`MT-19`: *"KHÔNG nới danh sách của D3.5"*).
+"""
+
+
 class TrialState(Enum):
     RESERVED = "RESERVED"
     CONSUMED = "CONSUMED"
@@ -371,6 +383,7 @@ class TrialLedger:
         *,
         reproduces_trial_id: str | None,
         ctrl_output_whitelist: Sequence[str] | None,
+        ctrl_mo_ta_whitelist: Sequence[str] | None = None,
         params_frozen_hash: str,
         config_hash: str,
     ) -> None:
@@ -378,36 +391,47 @@ class TrialLedger:
 
         CTRL đứng ngoài ngân sách, nên "khai CTRL" là một đặc quyền. Nếu
         nhận lời khai suông thì bất kỳ trial nào cũng trốn được kế toán chỉ
-        bằng cách đổi một chuỗi. Phải thuộc ĐÚNG MỘT trong hai dạng spec
-        cho phép, và máy tự đối chiếu được cả hai.
+        bằng cách đổi một chuỗi. Phải thuộc ĐÚNG MỘT trong BA dạng, và máy
+        tự đối chiếu được cả ba: *tái lập* (§0d.4), *đo thước* (D3.5 Bước 1),
+        *đo mô tả* (`MT-19` đường (c), `DR-D4-16`).
+
+        🔴 `MT-19`: ba phép kiểm cũ là NHỊ PHÂN — thêm dạng thứ ba mà không
+        đổi chúng thì khai chồng với `ctrl_output_whitelist` sẽ QUA và danh
+        sách mô tả bị bỏ qua IM LẶNG. Nên đếm số dạng đã khai, không so cặp.
 
         🔴 L-Z55 một mình KHÔNG đủ ở đây: một điểm kiểm soát HỢP LỆ *có*
         chạm CALIB nên nó không vi phạm timerange. Chỗ phân biệt phải là
         ĐẦU RA, không phải dữ liệu được chạm.
         """
-        khai_tai_lap = reproduces_trial_id is not None
-        khai_do_thuoc = ctrl_output_whitelist is not None
+        khai = {
+            "tái lập (reproduces_trial_id)": reproduces_trial_id is not None,
+            "đo thước (ctrl_output_whitelist)": ctrl_output_whitelist is not None,
+            "đo mô tả (ctrl_mo_ta_whitelist)": ctrl_mo_ta_whitelist is not None,
+        }
+        da_khai = [ten for ten, co in khai.items() if co]
 
-        if khai_tai_lap and khai_do_thuoc:
+        if len(da_khai) > 1:
             raise CtrlClaimError(
-                "dòng CTRL khai CẢ HAI dạng (tái lập + đo thước) — chọn đúng một. "
-                "Khai chồng là chừa đường lách sang dạng dễ kiểm hơn"
+                f"dòng CTRL khai CHỒNG {len(da_khai)} dạng {da_khai} — chọn đúng một. "
+                "Khai chồng là chừa đường lách sang dạng dễ kiểm hơn (MT-19)"
             )
-        if not khai_tai_lap and not khai_do_thuoc:
+        if not da_khai:
             raise CtrlClaimError(
-                "dòng CTRL phải khai một trong hai dạng: *tái lập* "
-                "(reproduces_trial_id, §0d.4) hoặc *đo thước* "
-                "(ctrl_output_whitelist, D3.5 Bước 1) — TỪ CHỐI ghi"
+                "dòng CTRL phải khai một trong BA dạng: *tái lập* (reproduces_trial_id, §0d.4), "
+                "*đo thước* (ctrl_output_whitelist, D3.5 Bước 1) hoặc *đo mô tả* "
+                "(ctrl_mo_ta_whitelist, MT-19 / DR-D4-16) — TỪ CHỐI ghi"
             )
 
-        if khai_tai_lap:
+        if reproduces_trial_id is not None:
             self._kiem_ctrl_tai_lap(
                 reproduces_trial_id=str(reproduces_trial_id),
                 params_frozen_hash=params_frozen_hash,
                 config_hash=config_hash,
             )
+        elif ctrl_output_whitelist is not None:
+            self._kiem_ctrl_do_thuoc(list(ctrl_output_whitelist))
         else:
-            self._kiem_ctrl_do_thuoc(list(ctrl_output_whitelist or []))
+            self._kiem_ctrl_mo_ta(list(ctrl_mo_ta_whitelist or []))
 
     def _kiem_ctrl_tai_lap(
         self, *, reproduces_trial_id: str, params_frozen_hash: str, config_hash: str
@@ -453,6 +477,20 @@ class TrialLedger:
                 f"Chỉ cho phép {sorted(CTRL_OUTPUT_ALLOWED)} (spec dòng 3605-3607)"
             )
 
+    def _kiem_ctrl_mo_ta(self, whitelist: list[str]) -> None:
+        """Dạng *đo mô tả* (`MT-19` đường (c), `DR-D4-16`): chỉ SỐ ĐẾM, cưỡng chế bằng ĐẦU RA —
+        xem `CTRL_MO_TA_ALLOWED`."""
+        if not whitelist:
+            raise CtrlClaimError(
+                "CTRL khai đo mô tả nhưng danh sách đầu ra RỖNG — khai suông, không đo gì"
+            )
+        ngoai = sorted(set(whitelist) - CTRL_MO_TA_ALLOWED)
+        if ngoai:
+            raise CtrlClaimError(
+                f"CTRL đo mô tả có đầu ra ngoài danh sách cho phép: {ngoai}. "
+                f"Chỉ cho phép {sorted(CTRL_MO_TA_ALLOWED)} (DR-D4-16 §3) — thêm tên = DR mới"
+            )
+
     def _kiem_cua_b1(
         self, *, dataset: str, direction: str, param_under_test: str, param_value: Any
     ) -> None:
@@ -492,6 +530,7 @@ class TrialLedger:
         contribution: int,
         reproduces_trial_id: str | None = None,
         ctrl_output_whitelist: Sequence[str] | None = None,
+        ctrl_mo_ta_whitelist: Sequence[str] | None = None,
     ) -> str:
         """Đặt chỗ. Raise `BudgetExhaustedError` nếu Khả dụng < contribution
         — TRƯỚC KHI CHẠM BẤT KỲ DỮ LIỆU NÀO (L-Z52, spec dòng 3471-3472).
@@ -499,7 +538,7 @@ class TrialLedger:
         Dòng `budget_line="CTRL"` đi đường riêng (MT-08): không kiểm ngân
         sách (điểm kiểm soát phải chạy được đúng lúc N đã cạn — chính lúc
         sắp go-live là lúc cần kiểm tra tái lập nhất), nhưng ĐỔI LẠI phải
-        qua `_kiem_khai_ctrl()`. Hai tham số cuối chỉ dùng cho CTRL.
+        qua `_kiem_khai_ctrl()`. Ba tham số cuối chỉ dùng cho CTRL.
         """
         if contribution < 1:
             raise LedgerError("contribution phải >= 1 — không có mức 0 (fail-closed)")
@@ -507,6 +546,7 @@ class TrialLedger:
             self._kiem_khai_ctrl(
                 reproduces_trial_id=reproduces_trial_id,
                 ctrl_output_whitelist=ctrl_output_whitelist,
+                ctrl_mo_ta_whitelist=ctrl_mo_ta_whitelist,
                 params_frozen_hash=params_frozen_hash,
                 config_hash=config_hash,
             )
@@ -535,6 +575,8 @@ class TrialLedger:
                 khai_ctrl["reproduces_trial_id"] = reproduces_trial_id
             if ctrl_output_whitelist is not None:
                 khai_ctrl["ctrl_output_whitelist"] = list(ctrl_output_whitelist)
+            if ctrl_mo_ta_whitelist is not None:
+                khai_ctrl["ctrl_mo_ta_whitelist"] = list(ctrl_mo_ta_whitelist)
         self._append(
             {
                 "event": "RESERVE",

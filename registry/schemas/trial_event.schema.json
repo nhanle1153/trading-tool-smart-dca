@@ -72,6 +72,13 @@
           "minItems": 1,
           "uniqueItems": true,
           "description": "CHỈ dòng budget_line=CTRL dạng *đo thước* (D3.5 Bước 1, MT-08). Danh sách CHO PHÉP, không phải danh sách cấm — spec dòng 3605-3607: {chênh lệch giá, chỉ số tranche, hướng}, TUYỆT ĐỐI không PnL/win-loss/metric theo arm."
+        },
+        "ctrl_mo_ta_whitelist": {
+          "type": "array",
+          "items": { "enum": ["so_lenh", "lenh_moi_nam", "so_lenh_theo_thang", "so_ma_co_lenh", "phan_bo_so_tranche"] },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "CHỈ dòng budget_line=CTRL dạng *đo mô tả* (MT-19 đường (c), DR-D4-16 §3). Danh sách CHO PHÉP, liệt kê đích danh — toàn là SỐ ĐẾM; cố ý KHÔNG có exit_reason, thời gian giữ, hay bất cứ gì mang profit/pnl/R. Loại trừ với reproduces_trial_id và ctrl_output_whitelist — cửa ghi (registry.reserve) cưỡng chế."
         }
       },
       "additionalProperties": false
