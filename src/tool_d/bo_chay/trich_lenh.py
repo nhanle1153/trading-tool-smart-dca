@@ -7,7 +7,7 @@ một kịch bản đo (`docs/du-lieu-do/do_td0291_song_con_explore.py:109` `_r_
 
 ════ Hai vế rủi ro, hai nguồn — đọc kỹ trước khi sửa ════
 
-* **`rui_ro_da_trien_khai_usdt`** (mẫu số của `R` phán quyết, `DR-D4-12` §1) — đọc
+* **`rui_ro_da_trien_khai_usdt`** (mẫu số của `R_trien_khai`, đơn vị phán quyết `DR-D4-12` §1) — đọc
   THẲNG từ fill: mỗi tranche đã khớp mang `amount × safe_price` và giá khớp thật, `sl`
   từ `enter_tag`. Không suy gì cả.
 * **`planned_risk_usdt`** (mẫu số của `R_realized`, và của `ty_le_rui_ro_da_trien_khai`

@@ -5,7 +5,7 @@ Freqtrade, không đụng sổ trial. Người gọi: bộ chạy E3 (`chay_lo.p
 
 ════ Module này KHÔNG viết lại luật nào ════
 
-* Công thức `R` theo rủi ro đã triển khai — `wfo/lenh.py` (`DR-D4-12` §1.4).
+* Công thức `R_trien_khai` (theo rủi ro đã triển khai) — `wfo/lenh.py` (`DR-D4-12` §1.4).
 * Thuế nhiễu + ba kết cục — `gates/ket_cuc.py` (`DR-D4-09` §2.2).
 * Cờ phạm vi, cấm `mo_ta` mang `PASS`, khai phạm vi Δ_R — `gates/arm_record.py`
   (`build_arm_record` tự kiểm và raise).
@@ -120,7 +120,7 @@ def co_do_nhom_c(arm: str, ket_cuc: Measured[str]) -> str | None:
         return None
     return (
         f"🚩 arm {arm} (nhóm C) ra {ket_cuc.value} — DR-D4-10 §2.2 đã dự báo INCONCLUSIVE. "
-        "Nghi ngờ BỘ ĐO trước (thang R sai, lookahead, kế toán), không mừng. "
+        "Nghi ngờ BỘ ĐO trước (thang R_trien_khai sai, lookahead, kế toán), không mừng. "
         "Câu hỏi đầu tiên theo N10: lệnh THẬT có đúng thiết kế không?"
     )
 
