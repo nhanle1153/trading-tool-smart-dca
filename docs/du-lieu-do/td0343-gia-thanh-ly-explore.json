@@ -1,0 +1,36 @@
+{
+  "nguon": "TD-0343 — EXPLORE, 0 trial, CALIB [T0,T1) (khuôn TD-0291 §8)",
+  "chay_luc_utc": "2026-09-19T11:37:35Z",
+  "git_sha": "1d757089965919a0fe44cdb8e56b984195f97ffb",
+  "arm": "Z0-T1",
+  "so_ma": 65,
+  "timerange": "20240409-20250612",
+  "giay": 47.2,
+  "b_backtest_ghi_vao_lenh": {
+    "tong_lenh": 162,
+    "lenh_co_liquidation_price": 0,
+    "mau_gia_tri": [],
+    "so_dong_canh_bao_freqtrade": 0
+  },
+  "a_san_ao_tinh_truc_tiep": {
+    "cap": "ROSE/USDT:USDT",
+    "open_rate": 0.09196,
+    "amount": 345.0,
+    "don_bay": 3.0,
+    "ket_qua": 0.06372625719120134,
+    "co_bac_cho_cap": true,
+    "max_leverage": 50.0
+  },
+  "bang_bac_don_bay": {
+    "file": "/freqtrade/freqtrade/exchange/binance_leverage_tiers.json",
+    "co": true,
+    "so_cap": 877,
+    "so_ma_explore_co_bac": 65,
+    "ma_explore_khong_bac": []
+  },
+  "c_nguyen_nhan_export": {
+    "liquidation_price_trong_BT_DATA_COLUMNS": false,
+    "so_cot_export": 28,
+    "noi_cat": "freqtrade/data/btanalysis/bt_fileutils.py:[535]"
+  }
+}
