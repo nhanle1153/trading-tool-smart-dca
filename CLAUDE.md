@@ -363,6 +363,10 @@ ca `idea_queue` đỏ ~2,5 ngày không ai nhận, 14–16/09).
   báo, không tự đóng**: phiên giữ hoặc chủ dự án đóng ✅ (kiểm bằng đĩa trước).
 - 📌 **Nợ còn lại, ghi ở `MT-66`:** LIVE/dry-run cần `informative_pairs()` khai thêm `funding_rate` (backtest tự tải từ đĩa
   nên chạy được) — việc D10+ khi mở khâu ĐO Short. Thiếu funding ⇒ `d=False` + cảnh báo, không bịa 0.0.
+- ✅ **Đính chính cùng ngày, gạch trên hết đúng một phần:** phần *"`informative_pairs()` khai `funding_rate`"* ĐÃ LÀM — `TD-0328`
+  (`5e5b03a`, đóng `8cdc656`), chỉ khi `enable_short` bật, Long không đổi một bit, full suite **2638 passed, 0 failed**.
+  🔴 **Còn treo:** tần suất gọi `fetchFundingRateHistory` ở live CHƯA ĐO (nguy cơ chạm giới hạn API Binance ở pool ~100 cặp) —
+  đọc log dry-run/testnet (D10/D11) TRƯỚC khi mở `enable_short`; chưa có máy canh, chỉ là chữ (`MT-66`, dòng `TD-0328`).
 - 🔑 **Hai bài học đo được:** (1) nối DG6-D làm lớp canh `doc_boi_san_xuat` (`TD-0277`) báo **23 ca đỏ chung MỘT nguyên
   nhân** (lời khai `param_status.yaml` lỗi thời) — đọc đầu ra `run_audit` thật (exit 92, dòng `TD-0277: CHƯA ĐẠT`) thay vì
   đoán từng file; máy bắt đúng cơ chế `MT-46` ngay trong đợt code. (2) chú thích của `_df_4h` nói `dp.get_pair_dataframe()`
