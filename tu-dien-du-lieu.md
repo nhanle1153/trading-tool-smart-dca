@@ -37,7 +37,7 @@ là ảnh chụp mã nguồn Freqtrade tại thời điểm đọc, không phả
 
 ### Ba trạng thái của cột *Ý nghĩa* — vì sao không điền cho đủ
 
-- **đã tra** (49/109 cột): ý nghĩa đọc ra từ mã nguồn Freqtrade, có `file:line` kèm theo.
+- **đã tra** (50/109 cột): ý nghĩa đọc ra từ mã nguồn Freqtrade, có `file:line` kèm theo.
 - **⏳ chưa tra cứu**: chưa ai đọc mã cho cột này.
 
 Quy tắc 7 cấm *"suy đoán ý nghĩa từ tên trường"*. Điền nốt phần còn lại bằng suy đoán sẽ
@@ -152,7 +152,7 @@ wallet_history   pairlocks   KeyValueStore    (độc lập, không khoá ngoạ
 
 ## Bảng: trades
 
-**51 cột** · đã tra ý nghĩa: **21/51**
+**51 cột** · đã tra ý nghĩa: **22/51**
 
 | Trường | Kiểu dữ liệu | Ý nghĩa (định nghĩa rõ, không nhập nhằng) | Bắt buộc? | Giá trị hợp lệ | Ràng buộc/Khóa ngoại | Dùng bởi (module/function nào) | Version | Ngày cập nhật |
 |---|---|---|---|---|---|---|---|---|
@@ -202,7 +202,7 @@ wallet_history   pairlocks   KeyValueStore    (độc lập, không khoá ngoạ
 | `contract_size` | FLOAT | ⏳ chưa tra cứu | — | — | — | — | v1.0 | 14/09/2026 |
 | `leverage` | FLOAT | Đòn bẩy của lệnh. `stake_amount × leverage = giá trị vị thế` — _nguồn: `/freqtrade/freqtrade/persistence/trade_model.py:1787`_ | — | — | — | `user_data/strategies/ZoneAbsorption.py` | v1.0 | 14/09/2026 |
 | `is_short` | BOOLEAN | Hướng lệnh. 🔴 Quy ước DẤU của funding đảo theo cột này — _nguồn: `/freqtrade/freqtrade/persistence/trade_model.py:1788`_ | ✅ | 0 hoặc 1 | — | `src/tool_d/reporting/freqtrade_db.py::_rut_gon` · `src/tool_d/reporting/report_model.py::_tinh_winrate` · `user_data/strategies/ZoneAbsorption.py::ZoneAbsorption.custom_stoploss` | v1.0 | 14/09/2026 |
-| `liquidation_price` | FLOAT | ⏳ chưa tra cứu | — | — | — | — | v1.0 | 14/09/2026 |
+| `liquidation_price` | FLOAT | Giá thanh lý ƯỚC TÍNH của vị thế tại lần cập nhật cuối. Backtest/dry-run: `dry_run_liquidation_price` (margin isolated, đòn bẩy của lệnh); live: `fetchPositions` của sàn. 🔴 ĐÃ DỊCH về phía giá vào một đoạn `liquidation_buffer` × trị tuyệt đối (open_rate − liq) (config không khai ⇒ mặc định 0,05) — KHÔNG phải giá thanh lý thô của sàn; dùng cho đệm thanh lý là thận trọng hơn thực tế ~5%. NULL ở spot. Duyệt nghĩa 19/09/2026 ('chuẩn hóa và lưu', TD-0342) — _nguồn: `/freqtrade/freqtrade/persistence/trade_model.py:1789 · /freqtrade/freqtrade/exchange/exchange.py:4036-4083 · :220`_ | — | — | — | — | v1.0 | 14/09/2026 |
 | `interest_rate` | FLOAT | ⏳ chưa tra cứu | ✅ | — | — | — | v1.0 | 14/09/2026 |
 | `funding_fees` | FLOAT | Funding tích luỹ đã CHỐT. 🔴 DƯƠNG = lệnh ĐƯỢC NHẬN, ÂM = phải TRẢ. Đã được cộng/trừ vào `close_profit_abs` rồi — trừ lần nữa là tính hai lần — _nguồn: `/freqtrade/freqtrade/persistence/trade_model.py:1795 · 1128-1135`_ | — | — | — | `user_data/strategies/ZoneAbsorption.py::ZoneAbsorption.custom_exit` · `user_data/strategies/ZoneAbsorptionMinimal.py::ZoneAbsorptionMinimal.custom_exit` | v1.0 | 14/09/2026 |
 | `funding_fee_running` | FLOAT | Funding đang chạy của phần vị thế CHƯA đóng — tách khỏi `funding_fees` để phần đã chốt không đổi khi giá funding kỳ sau thay đổi — _nguồn: `/freqtrade/freqtrade/persistence/trade_model.py:1796`_ | — | — | — | — | v1.0 | 14/09/2026 |

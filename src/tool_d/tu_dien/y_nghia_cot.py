@@ -123,6 +123,14 @@ Y_NGHIA: dict[tuple[str, str], NghiaCot] = {
         "của tranche 1",
         _tm("1745"),
     ),
+    ("trades", "liquidation_price"): NghiaCot(
+        "Giá thanh lý ƯỚC TÍNH của vị thế tại lần cập nhật cuối. Backtest/dry-run: "
+        "`dry_run_liquidation_price` (margin isolated, đòn bẩy của lệnh); live: `fetchPositions` của sàn. "
+        "🔴 ĐÃ DỊCH về phía giá vào một đoạn `liquidation_buffer` × trị tuyệt đối (open_rate − liq) (config không khai ⇒ "
+        "mặc định 0,05) — KHÔNG phải giá thanh lý thô của sàn; dùng cho đệm thanh lý là thận trọng hơn thực tế "
+        "~5%. NULL ở spot. Duyệt nghĩa 19/09/2026 ('chuẩn hóa và lưu', TD-0342)",
+        f"{GOC_MA_NGUON}trade_model.py:1789 · /freqtrade/freqtrade/exchange/exchange.py:4036-4083 · :220",
+    ),
     ("trades", "realized_profit"): NghiaCot(
         "Lãi/lỗ tuyệt đối ĐÃ THỰC HIỆN, CỘNG DỒN qua mọi lần thoát từng phần. "
         "Đây mới là 'đã thực hiện' — KHÔNG phải `close_profit_abs`",
