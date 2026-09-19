@@ -25,6 +25,27 @@ def _load_jsonl(path: Path) -> list[dict]:
     return [json.loads(line) for line in lines if line.strip()]
 
 
+#: Ba dạng khai CTRL (TD-0130 · MT-19/TD-0344) — mỗi dòng CTRL khai ĐÚNG MỘT.
+_KHOA_DANG_CTRL = ("reproduces_trial_id", "ctrl_output_whitelist", "ctrl_mo_ta_whitelist")
+
+
+def _kiem_so_that(events: list[dict]) -> None:
+    """TD-0346 — quan hệ của sổ trial thật, thay cho số đếm ghim cứng.
+
+    * Trial THẬT (không phải CTRL): mọi dòng là B0 và đủ 4 (TD-0083, chốt pool). Đây vẫn là ghim CHẶT có chủ đích —
+      một trial B1/B2/B3 xuất hiện là một QUYẾT ĐỊNH tiêu suất, phải có người cập nhật dòng này kèm DR.
+    * CTRL (0 trial, MT-08): số lượng tự do, nhưng mỗi dòng khai ĐÚNG MỘT trong ba dạng.
+    """
+    reserve = [e for e in events if e["event"] == "RESERVE"]
+    that = [e for e in reserve if e["budget_line"] != "CTRL"]
+    assert all(e["budget_line"] == "B0" for e in that), [(e["trial_id"], e["budget_line"]) for e in that]
+    assert len(that) == 4, f"{len(that)} trial thật (không phải CTRL) — tiêu suất mới là quyết định cần DR"
+    for e in reserve:
+        if e["budget_line"] == "CTRL":
+            dang = [k for k in _KHOA_DANG_CTRL if k in e]
+            assert len(dang) == 1, f"{e['trial_id']}: CTRL khai {dang} — phải đúng một dạng"
+
+
 class TestTrialEventFixtureHopLe:
     def test_du_5_loai_su_kien(self) -> None:
         events = _load_jsonl(REPO_ROOT / "tests/fixtures/trial_events_valid.jsonl")
@@ -154,9 +175,23 @@ class TestFileRegistryThatHopLe:
         # 1 dòng CTRL (D3.5 Bước 1, budget_line="CTRL", 0 trial, không tính
         # vào N — MT-08). CTRL đứng NGOÀI ngân sách B0-B3 theo thiết kế, nên
         # loại nó khỏi phép kiểm "mọi B0" thay vì gộp nó vào B0.
+        #
+        # 🔄 TD-0346 (19/09/2026, chủ dự án duyệt sửa khẳng định — điều kiện dừng `DR-D4-16` §6): dòng cũ
+        # `len(reserve_events) == 5` ghim SỐ ĐẾM cả CTRL — đỏ mỗi lần có một điểm kiểm soát hợp lệ (TD-0345 thêm 5).
+        # Thay bằng QUAN HỆ (bài học TD-0171): trial THẬT vẫn ghim chặt (đổi = một quyết định), CTRL thì kiểm HÌNH.
+        _kiem_so_that(_load_jsonl(REPO_ROOT / "registry/trial_registry.jsonl"))
+
+    def test_quan_he_co_rang_mot_trial_B2_lot_vao_la_do(self) -> None:
+        """Kiểm-có-răng TD-0346, viết thành ca: bản sao sổ thật + một RESERVE B2 ⇒ phải raise."""
         events = _load_jsonl(REPO_ROOT / "registry/trial_registry.jsonl")
-        reserve_events = [e for e in events if e["event"] == "RESERVE"]
-        b0_events = [e for e in reserve_events if e["budget_line"] != "CTRL"]
-        assert all(e["budget_line"] == "B0" for e in b0_events)
-        assert len(b0_events) == 4
-        assert len(reserve_events) == 5
+        gia = dict(next(e for e in events if e["event"] == "RESERVE" and e["budget_line"] == "B0"))
+        gia.update(trial_id="D-9999", budget_line="B2")
+        with pytest.raises(AssertionError):
+            _kiem_so_that([*events, gia])
+
+    def test_quan_he_co_rang_ctrl_khai_chong_la_do(self) -> None:
+        events = _load_jsonl(REPO_ROOT / "registry/trial_registry.jsonl")
+        gia = dict(next(e for e in events if e["event"] == "RESERVE" and e["budget_line"] == "CTRL"))
+        gia.update(trial_id="D-9998", reproduces_trial_id="D-0001", ctrl_output_whitelist=["price_delta"])
+        with pytest.raises(AssertionError):
+            _kiem_so_that([*events, gia])
