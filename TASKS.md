@@ -925,7 +925,7 @@
 | TD-0348 | **`liq_buffer` theo KẾ HOẠCH** (`DR-D4-17`) — giá thanh lý của toàn vị thế kế hoạch bằng `Exchange.get_liquidation_price()` của Freqtrade (tiêm vào), `(p_avg_plan − liq)/(p_avg_plan − sl)`; thay nguồn export đã bị cắt (TD-0343) | ✅ | DR-D4-17 · TD-0342 | Hàm thuần + test hàm giả + một ca đối chiếu Freqtrade thật trong Docker; `chay_lo` ghi `liq_buffer_ratio_mean` có số |
 
 **Đặt chỗ mã (N12 mục 7c):** `TD-0332`…`TD-0337` + `DR-D4-14`, commit này, `Phien: 69768527`.
-**Thêm 19/09/2026 (lượt 2):** `TD-0340`…`TD-0342` + `DR-D4-15`, commit này, `Phien: 69768527`. `TD-0343` thêm ở commit riêng sau đó. `TD-0344`, `TD-0345` + `DR-D4-16` đặt chỗ ở commit riêng (lượt 3). `TD-0346`…`TD-0348` + `DR-D4-17` (liq_buffer) + `DR-D4-18` (TD-0261, đo overlap Tool A) đặt chỗ ở commit riêng (lượt 4).
+**Thêm 19/09/2026 (lượt 2):** `TD-0340`…`TD-0342` + `DR-D4-15`, commit này, `Phien: 69768527`. `TD-0343` thêm ở commit riêng sau đó. `TD-0344`, `TD-0345` + `DR-D4-16` đặt chỗ ở commit riêng (lượt 3). `TD-0346`…`TD-0348` + `DR-D4-17` (liq_buffer) + `DR-D4-18` (TD-0261, đo overlap Tool A) đặt chỗ ở commit riêng (lượt 4). 🔄 **Rút lại `DR-D4-18` (19/09/2026, cùng phiên):** trùng mã đã giữ TRƯỚC trên đĩa, `DR-D1-04` (`back-end-note.md` MT-56, `d092d43`, 17/09) cho đúng quyết định *"chụp số trial Tool A tại lúc đo overlap"*. Theo N12 mục 7c, mã nằm trên đĩa trước là mã đúng ⇒ TD-0261 dùng `DR-D1-04`. Mã `DR-D4-18` **bỏ trống, không cấp lại** cho việc khác.
 **Thêm 19/09/2026:** `TD-0338` (nguồn đo 8 tiêu chí Nhánh 1), commit riêng, `Phien: 69768527`; `TD-0339` (bằng chứng DR-D4-04 §7), commit riêng.
 
 ---
