@@ -110,6 +110,18 @@ DUONG_DAN_TEST_D3_5 = (
     "tests/lock/test_lz58_hieu_chinh_hai_chieu.py",
     "tests/lock/test_lz56_chan_ablation_thieu_delta_r.py",
 )
+# TD-0337 (`DR-D4-14`) — file test khoá CỐT LÕI của D4, mỗi file chạy RIÊNG một lượt: tiêu chí
+# đóng cổng (DR-D4-11), bản ghi arm (MT-36/37), trích lệnh, lệnh → bản ghi, bộ chạy E3 (L-Z52/53
+# trên đường E3), gate §10.2 (L-Z57), và chốt L-Z56 mà E3 đứng sau.
+DUONG_DAN_TEST_D4 = (
+    "tests/lock/test_td0236_tieu_chi_dong_cong_d4.py",
+    "tests/lock/test_td0232_ban_ghi_arm.py",
+    "tests/lock/test_td0333_trich_lenh.py",
+    "tests/lock/test_td0334_ban_ghi_arm_d4.py",
+    "tests/lock/test_td0335_e3_bo_chay_ablation.py",
+    "tests/lock/test_lz57_gate_d09.py",
+    "tests/lock/test_lz56_chan_ablation_thieu_delta_r.py",
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -175,6 +187,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--close-d3-5-gate",
         action="store_true",
         help="TD-0166 — đóng cổng D3.5, ghi runtime_state.json.d3_5_complete. Chạy được đúng một lần.",
+    )
+    parser.add_argument(
+        "--close-d4-gate",
+        action="store_true",
+        help="TD-0337 — đóng cổng D4 (DR-D4-11 §3), ghi runtime_state.json.d4_complete. Chạy được đúng một lần.",
     )
     return parser
 
@@ -921,6 +938,181 @@ def close_d3_5_gate(
     )
 
 
+#: `DR-D4-04` §7 (TD-0186): bốn bằng chứng `do-duoc` cổng D4 phải có — thiếu một ⇒ TỪ CHỐI.
+#: "D4 chạy trên hệ thống 40 USDT / ¼¼½ / không-TP là D4 của một hệ thống khác."
+BANG_CHUNG_DR_D4_04 = (
+    ("chien_luoc_da_chay", "tên chiến lược đã chạy = ZoneAbsorption (không phải Minimal)"),
+    ("ti_trong_tranche_fill", "tỉ trọng tranche đo từ fill THẬT = ⅓⅓⅓"),
+    ("stake_theo_r_eff", "stake biến thiên theo 1/R_eff"),
+    ("h4_tp_fallback", "H-4 — tỉ lệ TP rơi nạng"),
+)
+
+D4_HAN_CHE = (
+    "(1) D4 KHÔNG phán quyết câu DCA — DR-D4-10 §2.4: mặc định Z0 single-entry, DCA vào Idea "
+    "Queue với nhãn 'chưa từng được đo, không phải đã thất bại'. Arm Z3 chỉ mua một con số MÔ TẢ. "
+    "(2) Chỉ hướng LONG (DR-D4-01); Short HOÃN, cần DG7 riêng + Δ_R(SHORT) + lockbox mới — "
+    "'đã đóng cho Long' KHÔNG có nghĩa 'đã phủ cả hai hướng'. "
+    "(3) Lô 4/9 arm (DR-D4-12 §4): chỉ Z0-T1 mua phán quyết Nhánh 1; Z0/Z0-T0/Z3 là mô tả; "
+    "5 arm bị cắt là 'chưa từng được đo'. N giữ 114. "
+    "(4) Nhánh 1 phán quyết trên R_trien_khai theo rủi ro ĐÃ TRIỂN KHAI (DR-D4-12 §1); "
+    "planned_risk_usdt SUY NGƯỢC từ fill tranche 1 (DR-D4-14 §10)."
+)
+
+
+def _dem_b2_da_tieu(registry_path: Path) -> int:
+    from tool_d.ledger.registry import TrialLedger, TrialState
+
+    return sum(
+        1
+        for p in TrialLedger(path=registry_path).projections().values()
+        if p.budget_line == "B2" and p.state is TrialState.CONSUMED
+    )
+
+
+def _doc_ban_ghi_arm(runs_dir: Path) -> tuple[list[dict], list[str]]:
+    ban_ghi: list[dict] = []
+    loi: list[str] = []
+    for duong in sorted(runs_dir.glob("*/arm_result.json")):
+        try:
+            ban_ghi.append(json.loads(duong.read_text(encoding="utf-8")))
+        except (OSError, json.JSONDecodeError) as exc:
+            loi.append(f"{duong}: không đọc được ({exc})")
+    return ban_ghi, loi
+
+
+def _bang_chung_dr_d4_04(ban_ghi: list[dict]) -> tuple[dict, list[str]]:
+    """Bốn bằng chứng `DR-D4-04` §7. Hôm nay KHÔNG cái nào có nguồn máy: bản ghi arm
+    (`arm_result.schema.json`) không mang tên chiến lược, tỉ trọng tranche, stake hay H-4.
+    Trả về danh sách THIẾU — cổng từ chối theo đúng chữ TD-0186 (*"Thiếu một ⇒ cổng từ
+    chối"*). Dựng nguồn cho chúng là `TD-0339`; khi có, hàm này là chỗ DUY NHẤT phải sửa.
+    🔴 Không nhận lời khai thay nguồn máy — một bằng chứng `do-duoc` gõ tay là MT-10."""
+    return {}, [ten for ten, _ in BANG_CHUNG_DR_D4_04]
+
+
+def close_d4_gate(
+    *,
+    runtime_state_path: Path = DEFAULT_RUNTIME_STATE_PATH,
+    repo_dir: Path = Path("."),
+    runs_dir: Path = Path("runs"),
+    registry_path: Path = DEFAULT_REGISTRY_PATH,
+    pytest_cmd: list[str] | None = None,
+    pytest_d4_cmd: list[str] | None = None,
+    **run_audit_kwargs,
+) -> tuple[int, str]:
+    """TD-0337 (`DR-D4-14`, phần dựng của TD-0186) — ghi `d4_complete: true` (điều kiện vào D5).
+
+    Khuôn `close_d3_5_gate()`. Tiêu chí là `DR-D4-11` §3 — cổng đóng bằng HIỆN VẬT, không bằng
+    số trial đã tiêu — và hàm này **gọi** `kiem_tieu_chi_dong_d4()` chứ không khai lại luật.
+    Cộng bốn bằng chứng `DR-D4-04` §7 mà TD-0186 đòi.
+
+    Các phép kiểm RẺ (bản ghi, sổ, tiêu chí, bằng chứng) đứng TRƯỚC suite pytest: từ chối sớm.
+
+    🔴 Hành vi mong đợi hôm nay (`DR-D4-14` §8): TỪ CHỐI — 0 bản ghi arm, 0 suất B2, và bốn
+    bằng chứng `DR-D4-04` §7 chưa có nguồn. Đó là cổng làm đúng việc, không phải cổng hỏng.
+    """
+    if not is_d0_pre_complete():
+        return EXIT_GATE_AUDIT_DIRTY, "🛑 TỪ CHỐI đóng cổng D4 — D0-PRE chưa đóng (§N2)."
+
+    state: dict = {}
+    if runtime_state_path.exists():
+        try:
+            state = json.loads(runtime_state_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            state = {}
+    for khoa in ("d1_complete", "d2_complete", "d3_complete", "d3_5_complete"):
+        if state.get(khoa) is not True:
+            return EXIT_GATE_AUDIT_DIRTY, f"🛑 TỪ CHỐI đóng cổng D4 — chưa có {khoa}=true."
+    if state.get("d4_complete") is True:
+        return (
+            EXIT_GATE_ALREADY_CLOSED,
+            f"🛑 {runtime_state_path} đã có d4_complete=true — cổng đã đóng, không ghi lại.",
+        )
+
+    git_info = get_git_info(repo_dir)
+    ban = _thay_doi_anh_huong_phep_do(repo_dir)
+    if ban:
+        return (
+            EXIT_GATE_AUDIT_DIRTY,
+            "🛑 TỪ CHỐI đóng cổng D4 — cây làm việc có thay đổi ẢNH HƯỞNG PHÉP ĐO nhưng chưa "
+            f"commit. d4_git_sha = {git_info.sha[:12]} sẽ KHÔNG khớp thứ vừa được kiểm.\n"
+            + "\n".join(f"  {d}" for d in ban),
+        )
+
+    from tool_d.gates.d4_gate import kiem_tieu_chi_dong_d4
+
+    ban_ghi, loi_doc = _doc_ban_ghi_arm(runs_dir)
+    ly_do = list(loi_doc)
+    ly_do += kiem_tieu_chi_dong_d4(
+        ban_ghi_arm=ban_ghi,
+        so_dong_b2_consumed=_dem_b2_da_tieu(registry_path),
+        d4_huong="LONG",
+        d4_han_che=D4_HAN_CHE,
+    )
+    bang_chung_he_thong, thieu_bang_chung = _bang_chung_dr_d4_04(ban_ghi)
+    if thieu_bang_chung:
+        ly_do.append(
+            f"thiếu bằng chứng DR-D4-04 §7 (chưa có nguồn máy): {thieu_bang_chung} — TD-0339"
+        )
+    if ly_do:
+        return (
+            EXIT_GATE_AUDIT_DIRTY,
+            "🛑 TỪ CHỐI đóng cổng D4 (DR-D4-11 §3 + DR-D4-04 §7):\n" + "\n".join(f"  - {x}" for x in ly_do),
+        )
+
+    suite = subprocess.run(
+        pytest_cmd or [sys.executable, "-m", "pytest", "-q"],
+        cwd=repo_dir,
+        capture_output=True,
+        text=True,
+    )
+    suite_summary = suite.stdout.strip().splitlines()[-1] if suite.stdout.strip() else "(không có output)"
+    if suite.returncode != 0:
+        return (
+            EXIT_GATE_AUDIT_DIRTY,
+            f"🛑 TỪ CHỐI đóng cổng D4 — suite pytest CHƯA sạch:\n{suite_summary}\n{suite.stdout[-2000:]}",
+        )
+
+    ly_do_test, d4_bang_chung = _chay_rieng_tung_file(
+        DUONG_DAN_TEST_D4, ten_cong="D4", repo_dir=repo_dir, pytest_cmd=pytest_d4_cmd
+    )
+    if ly_do_test:
+        return EXIT_GATE_AUDIT_DIRTY, ly_do_test
+
+    # Cùng MỘT sổ cho phép đếm B2 ở trên và cho audit — hai sổ khác nhau là hai sự thật.
+    audit_exit, audit_text = run_audit(registry_path=registry_path, **run_audit_kwargs)
+    if audit_exit != 0:
+        return EXIT_GATE_AUDIT_DIRTY, f"🛑 TỪ CHỐI đóng cổng D4 — audit sổ trial chưa sạch:\n{audit_text}"
+
+    state["d4_complete"] = True
+    state["d4_closed_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    state["d4_git_sha"] = git_info.sha
+    state["d4_cay_sach"] = True
+    state["d4_huong"] = "LONG"
+    state["d4_evidence"] = {
+        "full_suite": {"nguon": "do-duoc", "noi_dung": suite_summary},
+        "test_khoa_d4": {"nguon": "do-duoc", "noi_dung": " | ".join(d4_bang_chung)},
+        "tieu_chi_dr_d4_11": {
+            "nguon": "do-duoc",
+            "noi_dung": f"kiem_tieu_chi_dong_d4() PASS — {len(ban_ghi)} bản ghi arm, "
+            f"{len(ban_ghi)} suất B2 CONSUMED",
+        },
+        **{ten: {"nguon": "do-duoc", "noi_dung": v} for ten, v in bang_chung_he_thong.items()},
+        "trial_ledger_audit": {"nguon": "do-duoc", "noi_dung": audit_text.splitlines()[0]},
+    }
+    state["d4_han_che"] = {"nguon": "nguoi-khai", "noi_dung": D4_HAN_CHE}
+    runtime_state_path.parent.mkdir(parents=True, exist_ok=True)
+    runtime_state_path.write_text(
+        json.dumps(state, ensure_ascii=False, indent=2, sort_keys=False) + "\n",
+        encoding="utf-8",
+    )
+    return (
+        0,
+        f"✅ Đã đóng cổng D4 — ghi {runtime_state_path}.\n{suite_summary}\n"
+        + "\n".join(f"  {d}" for d in d4_bang_chung)
+        + f"\n{audit_text}",
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else list(argv)
     args, _ = build_parser().parse_known_args(argv)
@@ -976,6 +1168,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.close_d3_5_gate:
         exit_code, text = close_d3_5_gate()
+        print(text)
+        return exit_code
+
+    if args.close_d4_gate:
+        exit_code, text = close_d4_gate()
         print(text)
         return exit_code
 
