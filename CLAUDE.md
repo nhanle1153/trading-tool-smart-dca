@@ -367,6 +367,21 @@ ca `idea_queue` đỏ ~2,5 ngày không ai nhận, 14–16/09).
   (`5e5b03a`, đóng `8cdc656`), chỉ khi `enable_short` bật, Long không đổi một bit, full suite **2638 passed, 0 failed**.
   🔴 **Còn treo:** tần suất gọi `fetchFundingRateHistory` ở live CHƯA ĐO (nguy cơ chạm giới hạn API Binance ở pool ~100 cặp) —
   đọc log dry-run/testnet (D10/D11) TRƯỚC khi mở `enable_short`; chưa có máy canh, chỉ là chữ (`MT-66`, dòng `TD-0328`).
+- ✅ **Đính chính cùng ngày, hai gạch về `TD-0184` và `TD-0319`/`TD-0320` ở trên HẾT ĐÚNG:** chủ dự án giao lại khoá quên
+  (N12 mục 7f) — `TD-0319` ✅ (`ffb07cc`) và `TD-0320` ✅ (`e8ffc68`), cả hai mang `Phien: aab049b6 → e80a877c`; `TD-0184`
+  ô trạng thái đã ⏸ (`da7bc44`). Khi đối chiếu, `TD-0320` **thiếu mục research-log** mà tiêu chí đòi (bổ sung `e893a6f`) và
+  phần (b) chỉ làm nửa đầu ở `b76ae3d` — nửa sau do `TD-0323` hoàn tất. Không còn dòng 🔒 nào trong `TASKS.md`. Các dòng cùng
+  họ vẫn 🔓 dù cùng bị `DR-IQ-01` tạm dừng (`TD-0185`, `TD-0186`, `TD-0227`, D5–D9, `TD-0261`; `TD-0308`/`TD-0310` ghi
+  *"🔓 ⏸"*) — chủ dự án chỉ chọn căn `TD-0184`.
+- 🔑 **Hai phát hiện của đợt đóng khoá:** (1) phễu Short `do_short_pheu_tin_hieu_explore.json` sinh ở `bb9744d` (10/09),
+  **8 ngày TRƯỚC** bản vá cực trị `dinh` (`b76ae3d`) ⇒ 368,4 tín hiệu/năm, 237,8 và 301,4 lệnh/năm chỉ là *mức độ lớn, chưa
+  hiệu chỉnh lỗi*; hướng và độ lớn lệch **chưa đo**, không chạy lại (D-đo ⏸); `DR-D4-10` đã gọi 237,8 là ƯỚC LƯỢNG nên không
+  quyết định nào dựa vào nó như số đo (`docs/research-log.md`, `e893a6f`). (2) Phá-thật `TD-0320` (a) **tái lập được KHÔNG
+  cần sửa `src/`** — biến đổi mã nguồn trong bộ nhớ, trong Docker (`1be9b88`; câu *"cần sửa `src/` tạm thời"* tôi từng nói là
+  SAI): lỗi cũ đúng 1 ca đỏ, kịch bản âm `(5, 2)`; vá quá tay chỉ **một** test Long ngoài ca `day` của TD-0320 bắt được
+  (`test_lz6`, `test_td0294` vẫn xanh) — đường `dinh` qua backtest thật (tiến trình con) chưa phá được.
+- ⏳ **Hai câu chờ chủ dự án, không chặn:** `OQ-14` (cố định công cụ phá-thật trong bộ nhớ + test khoá chiều Long của cực trị
+  cụm?) và `OQ-15` (phép kiểm cho khoá 🔒 quên đóng / cột trạng thái lệch ghi chú?) — cả hai là mã mới, cần "bắt đầu code".
 - 🔑 **Hai bài học đo được:** (1) nối DG6-D làm lớp canh `doc_boi_san_xuat` (`TD-0277`) báo **23 ca đỏ chung MỘT nguyên
   nhân** (lời khai `param_status.yaml` lỗi thời) — đọc đầu ra `run_audit` thật (exit 92, dòng `TD-0277: CHƯA ĐẠT`) thay vì
   đoán từng file; máy bắt đúng cơ chế `MT-46` ngay trong đợt code. (2) chú thích của `_df_4h` nói `dp.get_pair_dataframe()`
