@@ -35,11 +35,22 @@ def _kiem_so_that(events: list[dict]) -> None:
     * Trial THẬT (không phải CTRL): mọi dòng là B0 và đủ 4 (TD-0083, chốt pool). Đây vẫn là ghim CHẶT có chủ đích —
       một trial B1/B2/B3 xuất hiện là một QUYẾT ĐỊNH tiêu suất, phải có người cập nhật dòng này kèm DR.
     * CTRL (0 trial, MT-08): số lượng tự do, nhưng mỗi dòng khai ĐÚNG MỘT trong ba dạng.
+
+    🔄 19/09/2026 (chủ dự án duyệt sửa khẳng định, `DR-D4-19` §5): đúng cái QUYẾT ĐỊNH mà dòng trên chờ — lô D4
+    `DR-D4-19` tiêu suất `B2`. B0 vẫn ghim đủ 4; B2 chỉ hợp lệ khi mang `hypothesis_slot = DR-D4-19` và số suất B2
+    KHÔNG bị REFUND ≤ 4 (một lô 4 arm, `DR-D4-12` §4). B1/B3 vẫn cấm. RESERVE B2 đã REFUND (lượt 1, `a2f4c60`)
+    không tiêu suất nên không vào trần.
     """
     reserve = [e for e in events if e["event"] == "RESERVE"]
     that = [e for e in reserve if e["budget_line"] != "CTRL"]
-    assert all(e["budget_line"] == "B0" for e in that), [(e["trial_id"], e["budget_line"]) for e in that]
-    assert len(that) == 4, f"{len(that)} trial thật (không phải CTRL) — tiêu suất mới là quyết định cần DR"
+    assert all(e["budget_line"] in ("B0", "B2") for e in that), [(e["trial_id"], e["budget_line"]) for e in that]
+    b0 = [e for e in that if e["budget_line"] == "B0"]
+    assert len(b0) == 4, f"{len(b0)} trial B0 — tiêu suất mới là quyết định cần DR"
+    b2 = [e for e in that if e["budget_line"] == "B2"]
+    assert all(e["hypothesis_slot"] == "DR-D4-19" for e in b2), [(e["trial_id"], e["hypothesis_slot"]) for e in b2]
+    hoan = {e["trial_id"] for e in events if e["event"] == "REFUND"}
+    b2_khong_hoan = [e["trial_id"] for e in b2 if e["trial_id"] not in hoan]
+    assert len(b2_khong_hoan) <= 4, f"{b2_khong_hoan}: quá một lô 4 arm DR-D4-19 — cần DR mới"
     for e in reserve:
         if e["budget_line"] == "CTRL":
             dang = [k for k in _KHOA_DANG_CTRL if k in e]
@@ -188,6 +199,16 @@ class TestFileRegistryThatHopLe:
         gia.update(trial_id="D-9999", budget_line="B2")
         with pytest.raises(AssertionError):
             _kiem_so_that([*events, gia])
+
+    def test_quan_he_co_rang_B2_dung_slot_nhung_qua_mot_lo_la_do(self) -> None:
+        """DR-D4-19: slot đúng không đủ — suất B2 thứ năm không REFUND (vượt lô 4 arm) ⇒ phải raise."""
+        events = _load_jsonl(REPO_ROOT / "registry/trial_registry.jsonl")
+        mau = dict(next(e for e in events if e["event"] == "RESERVE" and e["budget_line"] == "B0"))
+        gia = [
+            {**mau, "trial_id": f"D-99{i:02d}", "budget_line": "B2", "hypothesis_slot": "DR-D4-19"} for i in range(5)
+        ]
+        with pytest.raises(AssertionError):
+            _kiem_so_that([*events, *gia])
 
     def test_quan_he_co_rang_ctrl_khai_chong_la_do(self) -> None:
         events = _load_jsonl(REPO_ROOT / "registry/trial_registry.jsonl")
