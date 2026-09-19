@@ -1,0 +1,141 @@
+{
+  "nguon": "TD-0345 — DR-D4-16 §4, CTRL đo mô tả (MT-19), 0 trial trong N",
+  "chay_luc_utc": "2026-09-19T12:09:58Z",
+  "git_sha": "d8ed85ea61a8f673dbe0bb0485a608dae56eb1c3",
+  "cay_sach": false,
+  "ro": "config/pool_t1.yaml",
+  "moc_ro": "t1",
+  "so_ma_ro": 107,
+  "cua_so": [
+    "2025-06-12",
+    "2026-01-29"
+  ],
+  "timeframe_detail": "5m",
+  "allowlist": [
+    "lenh_moi_nam",
+    "phan_bo_so_tranche",
+    "so_lenh",
+    "so_lenh_theo_thang",
+    "so_ma_co_lenh"
+  ],
+  "arm": {
+    "Z0-T1": {
+      "trial_id": "D-0007",
+      "observed": [
+        "2025-06-12",
+        "2026-01-28"
+      ],
+      "so_ma_da_chay": 107,
+      "so_lenh": 255,
+      "lenh_moi_nam": 403.1980519480519,
+      "so_lenh_theo_thang": {
+        "2025-06": 15,
+        "2025-07": 66,
+        "2025-08": 30,
+        "2025-09": 41,
+        "2025-10": 28,
+        "2025-11": 14,
+        "2025-12": 22,
+        "2026-01": 39
+      },
+      "so_ma_co_lenh": 92,
+      "phan_bo_so_tranche": {
+        "1": 255
+      }
+    },
+    "Z0": {
+      "trial_id": "D-0008",
+      "observed": [
+        "2025-06-12",
+        "2026-01-28"
+      ],
+      "so_ma_da_chay": 107,
+      "so_lenh": 50,
+      "lenh_moi_nam": 79.05844155844156,
+      "so_lenh_theo_thang": {
+        "2025-06": 6,
+        "2025-07": 17,
+        "2025-08": 13,
+        "2025-09": 9,
+        "2025-10": 2,
+        "2025-12": 2,
+        "2026-01": 1
+      },
+      "so_ma_co_lenh": 34,
+      "phan_bo_so_tranche": {
+        "1": 50
+      }
+    },
+    "Z0-T0": {
+      "trial_id": "D-0009",
+      "observed": [
+        "2025-06-12",
+        "2026-01-28"
+      ],
+      "so_ma_da_chay": 107,
+      "so_lenh": 892,
+      "lenh_moi_nam": 1410.4025974025974,
+      "so_lenh_theo_thang": {
+        "2025-06": 116,
+        "2025-07": 115,
+        "2025-08": 145,
+        "2025-09": 129,
+        "2025-10": 94,
+        "2025-11": 120,
+        "2025-12": 141,
+        "2026-01": 32
+      },
+      "so_ma_co_lenh": 98,
+      "phan_bo_so_tranche": {
+        "1": 892
+      }
+    },
+    "Z3": {
+      "trial_id": "D-0010",
+      "observed": [
+        "2025-06-12",
+        "2026-01-28"
+      ],
+      "so_ma_da_chay": 107,
+      "so_lenh": 49,
+      "lenh_moi_nam": 77.47727272727272,
+      "so_lenh_theo_thang": {
+        "2025-06": 6,
+        "2025-07": 17,
+        "2025-08": 12,
+        "2025-09": 9,
+        "2025-10": 2,
+        "2025-12": 2,
+        "2026-01": 1
+      },
+      "so_ma_co_lenh": 34,
+      "phan_bo_so_tranche": {
+        "1": 19,
+        "2": 8,
+        "3": 22
+      }
+    }
+  },
+  "so_cu_ro_pool_yaml": {
+    "Z0-T1": {
+      "n": 206,
+      "lenh_moi_nam_quy_doi": 325.6
+    },
+    "Z0": {
+      "n": 28,
+      "lenh_moi_nam_quy_doi": 44.8
+    },
+    "Z0-T0": {
+      "n": 883
+    },
+    "Z3": {
+      "n": 28
+    }
+  },
+  "han_che": [
+    "Chỉ SỐ ĐẾM (DR-D4-16 §3) — không một đại lượng lãi/lỗ nào được đọc hay ghi",
+    "Thêm một lượt nhìn cửa sổ WFO cho giả thuyết đang tạm dừng (DR-D4-16 §1, chủ dự án chấp nhận)",
+    "Số cũ đo trên pool.yaml (102 mã, ảnh chụp 09/2026) — không so trực tiếp (spec :4338); ghi cạnh để thấy độ lệch",
+    "lenh_moi_nam = so_lenh / năm phủ của cửa sổ QUAN SÁT trên toàn rổ — không quy đổi pool như số cũ"
+  ]
+}
