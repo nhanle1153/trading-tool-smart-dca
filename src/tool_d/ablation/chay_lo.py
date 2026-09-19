@@ -11,6 +11,7 @@ liệu) nằm SAU khoá.
   1. `ro_cho_tap("WFO")` — đọc YAML rổ, CHƯA chạm dữ liệu.
   2. băm dữ liệu — `DR-BC-01` §3: băm ≠ chạm, được đứng trước đặt chỗ.
   3. dựng môi trường cho TỪNG arm — `config_hash` của dòng RESERVE phải là của bản sẽ chạy.
+     3b. dựng sàn ảo tính giá thanh lý (`DR-D4-17`) — hỏng ở đây thì 0 suất.
   4. 🔴 ĐẶT CHỖ ĐỦ CẢ LÔ TRƯỚC KHI CHẠY ARM ĐẦU — `DR-D4-10` §2.3: *"vẫn RESERVE cả 9 trước
      khi chạy arm đầu"*; `DR-D4-01` §4b từ chối *"chạy từng arm rồi dừng khi thấy kết quả"*.
      Đặt chỗ từng arm ngay trước khi chạy nó sẽ mở đúng cửa đó.
@@ -41,6 +42,7 @@ from typing import Any
 from tool_d.ablation import khoa_do
 from tool_d.ablation.ban_ghi import LO_ARM_D4, co_do_nhom_c, dung_ban_ghi_arm
 from tool_d.ablation.chi_so_export import bat_bien_1_7_lech, chi_so_tu_export
+from tool_d.ablation.thanh_ly import HamThanhLy, tinh_liq_freqtrade
 from tool_d.bo_chay.chay import BacktestHongError, chay_mot_luot
 from tool_d.bo_chay.moi_truong import MoiTruongChay, dung_moi_truong
 from tool_d.bo_chay.trich_lenh import lenh_tu_freqtrade
@@ -111,8 +113,13 @@ def chay_lo(
     git_info: GitInfo,
     runtime_image_digest: str,
     chay: Callable[..., Any] = chay_mot_luot,
+    ham_thanh_ly: HamThanhLy | None = None,
 ) -> list[KetQuaArm]:
-    """Chạy cả lô. Xem thứ tự ở docstring module."""
+    """Chạy cả lô. Xem thứ tự ở docstring module.
+
+    `ham_thanh_ly` (TD-0348, `DR-D4-17`): mặc định dựng sàn ảo Freqtrade từ config của arm đầu, TRƯỚC khi đặt chỗ.
+    Dựng lỗi thì từ chối khi chưa tiêu suất nào, thay vì phát hiện sau con dấu, khi suất đã không hoàn lại được.
+    """
     # 0 — khoá đo. Lệnh ĐẦU TIÊN (test khoá kiểm bằng AST).
     _tu_choi_neu_khoa()
 
@@ -142,6 +149,13 @@ def chay_lo(
         moi_truong[arm] = dung_moi_truong(
             repo_dir=repo_dir, goc=goc, ghi_de={KHOA_ARM: arm}, ma_trong_ro=ma
         )
+
+    # 3b — hàm giá thanh lý cho `liq_buffer_ratio_mean` (DR-D4-17). Trước đặt chỗ: hỏng thì 0 suất.
+    if ham_thanh_ly is None:
+        try:
+            ham_thanh_ly = tinh_liq_freqtrade(moi_truong[ke_hoach.arms[0]].config_freqtrade)
+        except Exception as exc:
+            raise BoChayError(f"không dựng được sàn ảo tính giá thanh lý (DR-D4-17): {exc}") from exc
 
     # 4 — ĐẶT CHỖ ĐỦ CẢ LÔ trước khi chạy arm đầu (DR-D4-10 §2.3).
     trial_theo_arm: dict[str, str] = {}
@@ -210,7 +224,7 @@ def chay_lo(
             # TD-0338/TD-0339 — chỉ số Nhánh 1 + bằng chứng DR-D4-04 §7 + bất biến §1.7, đọc THẲNG từ export.
             chi_so_them = chi_so_tu_export(
                 lenh=kq.lenh, lenhs=lenhs, cfg=mt.cfg_phu,
-                observed_start=kq.observed_start, observed_end=kq.observed_end,
+                observed_start=kq.observed_start, observed_end=kq.observed_end, ham_thanh_ly=ham_thanh_ly,
             )
             ban_ghi = dung_ban_ghi_arm(
                 arm=arm,

@@ -25,6 +25,7 @@ from tool_d.ablation.chi_so_export import (
     bat_bien_1_7,
     bat_bien_1_7_lech,
     chi_so_tu_export,
+    dem_thanh_ly_lenh,
     lenh_moi_nam,
     liq_buffer_ratio_mean,
     max_lo_don_lenh_tren_ngan_sach,
@@ -35,6 +36,7 @@ from tool_d.ablation.chi_so_export import (
     time_stop_ratio,
     tp_fallback_ratio,
 )
+from tool_d.ablation.thanh_ly import HamThanhLy, tinh_liq_freqtrade
 from tool_d.config.loader import load_tool_d_config, resolve
 from tool_d.measurement.tri_state import Measured, Status
 from tool_d.sizing import doc_trong_so_tranche
@@ -151,23 +153,99 @@ class TestBatBien17:
         assert not bat_bien_1_7_lech(Measured.ok(0.96))
 
 
-class TestLiqBuffer:
-    def test_cong_thuc_spec_1866(self) -> None:
-        # p_avg = 98, sl = 94 ⇒ mẫu số 4; liq 66 ⇒ (98 − 66) / 4 = 8,0 ; liq 58 ⇒ 10,0 ; trung bình 9,0
-        lenh = [{"enter_tag": _tag(), "liquidation_price": 66.0}, {"enter_tag": _tag(), "liquidation_price": 58.0}]
-        assert liq_buffer_ratio_mean(lenh).value == pytest.approx(9.0)
+class _SanGia:
+    """Hàm thanh lý GIẢ: ghi lại đối số, trả giá cố định theo cặp (None = cặp không có trong bảng bậc)."""
 
-    def test_thieu_mot_lenh_thi_unreadable_khong_bo_lenh(self) -> None:
-        lenh = [{"enter_tag": _tag(), "liquidation_price": 66.0}, {"enter_tag": _tag(), "liquidation_price": None}]
-        m = liq_buffer_ratio_mean(lenh)
-        assert m.status is Status.UNREADABLE and "1/2" in m.note
+    def __init__(self, gia: dict[str, float | None]) -> None:
+        self.gia, self.goi = gia, []
+
+    def __call__(self, pair, open_rate, amount, stake_amount, leverage):
+        self.goi.append((pair, open_rate, amount, stake_amount, leverage))
+        return self.gia[pair]
+
+
+def _ham(gia: dict[str, float | None], buffer: float = 0.05) -> HamThanhLy:
+    return HamThanhLy(tinh=_SanGia(gia), liquidation_buffer=buffer)
+
+
+class TestLiqBufferKeHoach:
+    """TD-0348 (`DR-D4-17`) — nguồn cũ (`liquidation_price` của export, TD-0342) đã bỏ vì Freqtrade cắt cột đó (TD-0343)."""
+
+    def test_doi_so_dua_cho_san_la_vi_the_KE_HOACH(self) -> None:
+        ham = _ham({"LTC/USDT:USDT": 66.0})
+        liq_buffer_ratio_mean([_lenh_ba_tranche_dung_gia(n_full=300.0)], cfg=CFG, ham=ham)
+        (pair, open_rate, amount, stake, don_bay), = ham.tinh.goi
+        L = resolve(CFG, "tier_a.L_exchange")
+        amount_ke = sum(300.0 * w / p for w, p in zip(W, P))
+        assert pair == "LTC/USDT:USDT" and don_bay == L
+        assert amount == pytest.approx(amount_ke) and open_rate == pytest.approx(300.0 / amount_ke)
+        assert stake == pytest.approx(300.0 / L)
+
+    def test_cong_thuc_spec_1866(self) -> None:
+        # p_avg_plan = Σ w·p (W của config là 0,3333/0,3333/0,3334 ⇒ ≈ 98), sl = 94; liq 66 ⇒ ≈ (98 − 66) / 4 = 8,0
+        p_avg = sum(w * p for w, p in zip(W, P))
+        m = liq_buffer_ratio_mean([_lenh_ba_tranche_dung_gia()], cfg=CFG, ham=_ham({"LTC/USDT:USDT": 66.0}))
+        assert m.value == pytest.approx((p_avg - 66.0) / (p_avg - SL))
+        assert m.value == pytest.approx(8.0, abs=1e-3)
+
+    def test_KHONG_doc_cot_export_va_KHONG_phu_thuoc_fill(self) -> None:
+        """Theo kế hoạch: đổi giá khớp tranche 2/3 hay nhét `liquidation_price` vào lệnh đều không đổi số."""
+        goc = liq_buffer_ratio_mean([_lenh_ba_tranche_dung_gia()], cfg=CFG, ham=_ham({"LTC/USDT:USDT": 66.0})).value
+        lech = _lenh_ba_tranche_dung_gia()
+        lech["liquidation_price"] = 1.0
+        lech["orders"][1]["safe_price"] = 90.0
+        lech["orders"] = lech["orders"][:2]  # chỉ khớp 2/3 tranche
+        assert liq_buffer_ratio_mean([lech], cfg=CFG, ham=_ham({"LTC/USDT:USDT": 66.0})).value == goc
+
+    def test_ghi_du_tu_mau_va_gia_tho(self) -> None:
+        d = dem_thanh_ly_lenh(_lenh_ba_tranche_dung_gia(), cfg=CFG, ham=_ham({"LTC/USDT:USDT": 66.0}, buffer=0.05))
+        open_vt = 300.0 / sum(300.0 * w / p for w, p in zip(W, P))
+        p_avg = sum(w * p for w, p in zip(W, P))
+        assert d.p_avg_plan == pytest.approx(p_avg)
+        assert d.liq_dist_pct == pytest.approx((p_avg - 66.0) / p_avg) and d.r_eff_pct == pytest.approx((p_avg - SL) / p_avg)
+        assert d.liq_price_tho == pytest.approx((66.0 - 0.05 * open_vt) / 0.95)
+        assert d.liq_price_tho < d.liq_price  # thô xa giá vào hơn ⇒ số cổng đọc là số THẬN TRỌNG
+
+    def test_mot_lenh_san_khong_tinh_duoc_thi_unreadable_khong_bo_lenh(self) -> None:
+        b = _lenh_ba_tranche_dung_gia()
+        b["pair"] = "KHONGCO/USDT:USDT"
+        m = liq_buffer_ratio_mean([_lenh_ba_tranche_dung_gia(), b], cfg=CFG,
+                                  ham=_ham({"LTC/USDT:USDT": 66.0, "KHONGCO/USDT:USDT": None}))
+        assert m.status is Status.UNREADABLE and "1/2" in m.note and "KHONGCO" in m.note
+
+    def test_sl_khong_duoi_gia_vao_thi_raise(self) -> None:
+        t = _lenh_ba_tranche_dung_gia()
+        t["enter_tag"] = _tag(sl=99.0)
+        with pytest.raises(ChiSoExportError):
+            liq_buffer_ratio_mean([t], cfg=CFG, ham=_ham({"LTC/USDT:USDT": 66.0}))
+
+
+@pytest.fixture(scope="module")
+def san_that() -> HamThanhLy:
+    return tinh_liq_freqtrade(REPO_ROOT / "config" / "freqtrade" / "config.json")
+
+
+class TestSanFreqtradeThat:
+    """Đối chiếu hàm THẬT với số đã đo ở TD-0343 (`td0343-gia-thanh-ly-explore.json`), 3x."""
+
+    @pytest.mark.parametrize(("cap", "gia", "khoi_luong", "ky_vong"), [
+        ("ROSE/USDT:USDT", 0.09196, 345.0, 0.0637), ("1000RATS/USDT:USDT", 0.12868, 71.0, 0.0896)])
+    def test_khop_TD0343(self, san_that, cap, gia, khoi_luong, ky_vong) -> None:
+        assert san_that.tinh(cap, gia, khoi_luong, gia * khoi_luong / 3, 3.0) == pytest.approx(ky_vong, abs=5e-5)
+
+    def test_buffer_la_cua_chinh_san(self, san_that) -> None:
+        assert san_that.liquidation_buffer == 0.05
+
+    def test_cap_khong_co_bac_tra_None(self, san_that) -> None:
+        assert san_that.tinh("KHONGCO/USDT:USDT", 100.0, 1.0, 100 / 3, 3.0) is None
 
 
 class TestTongHop:
     def test_short_bi_tu_choi(self) -> None:
         with pytest.raises(ChiSoExportError, match="SHORT"):
             chi_so_tu_export(lenh=[{"is_short": True}], lenhs=[], cfg=CFG,
-                             observed_start=date(2025, 1, 1), observed_end=date(2025, 2, 1))
+                             observed_start=date(2025, 1, 1), observed_end=date(2025, 2, 1),
+                             ham_thanh_ly=_ham({}))
 
 
 def _nap_td0187():
@@ -192,20 +270,17 @@ def export_that(tmp_path_factory):
 
 
 class TestExportThat:
-    def test_moi_chi_so_tinh_duoc_va_tranche_dat(self, export_that) -> None:
+    def test_moi_chi_so_tinh_duoc_va_tranche_dat(self, export_that, san_that) -> None:
         lenh, lenhs, cfg = export_that
         cs = chi_so_tu_export(lenh=lenh, lenhs=lenhs, cfg=cfg,
-                              observed_start=date(2025, 3, 15), observed_end=date(2025, 4, 1))
+                              observed_start=date(2025, 3, 15), observed_end=date(2025, 4, 1), ham_thanh_ly=san_that)
         for k in ("time_stop_ratio", "max_single_trade_loss_over_risk_budget", "trades_per_year",
-                  "ti_trong_tranche_dat", "bat_bien_1_7_ty_so_trung_vi"):
+                  "ti_trong_tranche_dat", "bat_bien_1_7_ty_so_trung_vi", "liq_buffer_ratio_mean"):
             assert cs[k].status is Status.OK, (k, cs[k])
-        # TD-0342 — export backtest KHÔNG mang `liquidation_price`. Chỉ số phải NÓI RA điều đó, không bịa số (N6).
-        # 🔄 ĐÍNH CHÍNH (TD-0343, đo 19/09/2026): nguyên nhân KHÔNG phải thiếu bảng bậc đòn bẩy (chẩn đoán ban đầu SAI).
-        # Backtest CÓ tính giá thanh lý lúc chạy; Freqtrade ghi kết quả qua `trade_list_to_dataframe(...,
-        # columns=BT_DATA_COLUMNS)` (`bt_fileutils.py:535`), 28 cột không có `liquidation_price` ⇒ bị cắt khi ghi file.
-        # Trên EXPLORE thật: 0/162 lệnh (`docs/du-lieu-do/td0343-gia-thanh-ly-explore.json`).
-        assert cs["liq_buffer_ratio_mean"].status is Status.UNREADABLE
-        assert "liquidation_price" in cs["liq_buffer_ratio_mean"].note
+        # 🔄 TD-0348 (`DR-D4-17`): trước đây ca này KHẲNG ĐỊNH `unreadable`, vì export không mang `liquidation_price`
+        # (Freqtrade cắt cột, `bt_fileutils.py:535`, TD-0343: 0/162 lệnh EXPLORE). Nay nguồn là giá KẾ HOẠCH + sàn ảo
+        # Freqtrade, nên có số trên export thật. Đổi khẳng định là đúng quyết định chủ dự án chọn (A), không phải nới.
+        assert 0 < cs["liq_buffer_ratio_mean"].value < math.inf
         assert cs["ti_trong_tranche_dat"].value is True
         assert math.isfinite(cs["bat_bien_1_7_ty_so_trung_vi"].value)
         assert resolve(cfg, "tier_a.L_exchange") > 0

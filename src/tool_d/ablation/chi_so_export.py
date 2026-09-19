@@ -15,7 +15,7 @@ và/hoặc `LenhWFO` đã trích. Không đọc `custom_data` — export KHÔNG 
 | `ti_trong_tranche_dat` | `orders[].cost` của lệnh đủ 3 tranche | tiền lệ `test_td0187::TestTiTrongTrancheThat` (±1%) |
 | `stake_theo_r_eff_rho` | Spearman(notional tranche 1, `1/R_eff`) | mốc 0 tự nhiên — hằng số thì ρ không định nghĩa |
 | `bat_bien_1_7_ty_so_trung_vi` | fill vs công thức ĐÚNG theo giá kế hoạch | `DR-D4-15` §2.1 |
-| `liq_buffer_ratio_mean` | `(p_avg_plan − liquidation_price) / (p_avg_plan − sl)`, trung bình | spec `:1866`; TD-0342, nghĩa cột duyệt 19/09/2026 |
+| `liq_buffer_ratio_mean` | KHÔNG từ export: giá kế hoạch trong `enter_tag` + `N_full` từ tranche 1 → giá thanh lý của sàn ảo Freqtrade | spec `:1866`; `DR-D4-17` (TD-0348) thay nguồn TD-0342 |
 
 🔴 Không số nào ở đây được bịa: không đo được ⇒ `unreadable` kèm lý do (N6). Tag TP1 lạ ⇒ raise (một tag mới mà
 bộ đếm không biết là một TP1 bị đếm sót — đúng hình PASS RỖNG).
@@ -30,8 +30,9 @@ from datetime import date
 from statistics import median
 from typing import Any
 
+from tool_d.ablation.thanh_ly import DemThanhLy, HamThanhLy, ThanhLyError, liq_buffer_ke_hoach
 from tool_d.bo_chay.trich_lenh import TrichLenhError, doc_tag_long
-from tool_d.config.loader import ToolDConfig
+from tool_d.config.loader import ToolDConfig, resolve
 from tool_d.gates.thresholds import BAT_BIEN_1_7_DUNG_SAI
 from tool_d.measurement.tri_state import Measured
 from tool_d.sizing import doc_trong_so_tranche
@@ -192,31 +193,54 @@ def bat_bien_1_7(lenh: Sequence[Mapping[str, Any]], *, cfg: ToolDConfig) -> Meas
     return Measured.ok(median(ty_so))
 
 
-def liq_buffer_ratio_mean(lenh: Sequence[Mapping[str, Any]]) -> Measured[float]:
-    """Spec `:1866` — `liq_buffer_ratio = (p_avg_plan − liq_price) / (p_avg_plan − sl)`, trung bình trên mọi lệnh.
+def dem_thanh_ly_lenh(t: Mapping[str, Any], *, cfg: ToolDConfig, ham: HamThanhLy) -> DemThanhLy | None:
+    """`DR-D4-17` §2 cho MỘT lệnh: giá kế hoạch + `sl` từ `enter_tag`, `N_full` từ tranche 1 đã khớp (cùng `bat_bien_1_7`)."""
+    vao = _vao_da_khop(t)
+    if not vao:
+        raise ChiSoExportError(f"{t.get('pair')}: không có tranche nào khớp — không suy được N_full")
+    try:
+        sl, _ = doc_tag_long(t.get("enter_tag"))
+    except TrichLenhError as exc:
+        raise ChiSoExportError(f"{t.get('pair')}: {exc}") from exc
+    tag = json.loads(t["enter_tag"])
+    w = doc_trong_so_tranche(cfg)
+    try:
+        return liq_buffer_ke_hoach(
+            pair=str(t["pair"]),
+            p=[float(tag["p1"]), float(tag["p2"]), float(tag["p3"])],
+            sl=sl,
+            w=w,
+            n_full=float(vao[0]["amount"]) * float(vao[0]["safe_price"]) / w[0],
+            don_bay=float(resolve(cfg, "tier_a.L_exchange")),
+            liquidation_buffer=ham.liquidation_buffer,
+            tinh_liq=ham.tinh,
+        )
+    except ThanhLyError as exc:
+        raise ChiSoExportError(str(exc)) from exc
 
-    `liquidation_price` của export là giá thanh lý ƯỚC TÍNH ĐÃ DỊCH về phía giá vào một đoạn `liquidation_buffer`
-    (nghĩa cột duyệt 19/09/2026) ⇒ tỉ số ở đây THẬN TRỌNG hơn tỉ số với giá thanh lý thô. Một lệnh thiếu giá thanh lý
-    ⇒ cả chỉ số `unreadable` kèm số lệnh thiếu — không bỏ lệnh đó cho đẹp trung bình.
+
+def liq_buffer_ratio_mean(
+    lenh: Sequence[Mapping[str, Any]], *, cfg: ToolDConfig, ham: HamThanhLy
+) -> Measured[float]:
+    """Spec `:1866` — `liq_buffer_ratio` trung bình trên mọi lệnh, tính theo KẾ HOẠCH (`DR-D4-17`, TD-0348).
+
+    Nguồn cũ (`liquidation_price` của export, TD-0342) bị Freqtrade cắt khi ghi file (TD-0343) ⇒ đã bỏ. Một lệnh mà sàn
+    ảo không tính được giá thanh lý ⇒ cả chỉ số `unreadable` kèm số lệnh — không bỏ lệnh đó cho đẹp trung bình (N6).
     """
     if not lenh:
         return Measured.unreadable("0 lệnh")
     ty_so: list[float] = []
-    thieu = 0
+    thieu: list[str] = []
     for t in lenh:
-        liq = t.get("liquidation_price")
-        if liq is None:
-            thieu += 1
+        d = dem_thanh_ly_lenh(t, cfg=cfg, ham=ham)
+        if d is None:
+            thieu.append(str(t.get("pair")))
             continue
-        try:
-            sl, _ = doc_tag_long(t.get("enter_tag"))
-        except TrichLenhError as exc:
-            raise ChiSoExportError(f"{t.get('pair')}: {exc}") from exc
-        tag = json.loads(t["enter_tag"])
-        p_avg = (float(tag["p1"]) + float(tag["p2"]) + float(tag["p3"])) / 3
-        ty_so.append((p_avg - float(liq)) / (p_avg - sl))
+        ty_so.append(d.ty_so)
     if thieu:
-        return Measured.unreadable(f"{thieu}/{len(lenh)} lệnh không có liquidation_price trong export")
+        return Measured.unreadable(
+            f"{len(thieu)}/{len(lenh)} lệnh sàn ảo không tính được giá thanh lý: {sorted(set(thieu))[:10]}"
+        )
     return Measured.ok(math.fsum(ty_so) / len(ty_so))
 
 
@@ -227,7 +251,7 @@ def bat_bien_1_7_lech(m: Measured[float]) -> bool:
 
 def chi_so_tu_export(
     *, lenh: Sequence[Mapping[str, Any]], lenhs: Sequence[LenhWFO], cfg: ToolDConfig,
-    observed_start: date, observed_end: date,
+    observed_start: date, observed_end: date, ham_thanh_ly: HamThanhLy,
 ) -> dict[str, Measured[Any]]:
     """Toàn bộ khoá thêm cho `chi_so` của bản ghi arm. Tên bốn khoá đầu TRÙNG `d9_gate.TIEU_CHI_KHAI`."""
     if any(t.get("is_short") is True for t in lenh):
@@ -241,7 +265,7 @@ def chi_so_tu_export(
         "ti_trong_tranche_dat": ti_trong_tranche(lenh),
         "stake_theo_r_eff_rho": stake_theo_r_eff(lenh),
         "bat_bien_1_7_ty_so_trung_vi": bat_bien_1_7(lenh, cfg=cfg),
-        "liq_buffer_ratio_mean": liq_buffer_ratio_mean(lenh),
+        "liq_buffer_ratio_mean": liq_buffer_ratio_mean(lenh, cfg=cfg, ham=ham_thanh_ly),
     }
 
 
@@ -250,6 +274,7 @@ __all__ = [
     "bat_bien_1_7",
     "bat_bien_1_7_lech",
     "chi_so_tu_export",
+    "dem_thanh_ly_lenh",
     "lenh_moi_nam",
     "liq_buffer_ratio_mean",
     "max_lo_don_lenh_tren_ngan_sach",
