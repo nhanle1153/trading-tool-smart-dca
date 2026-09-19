@@ -70,11 +70,14 @@ class KetQuaCongD9:
     pbo: Measured[float]
     n_trials: int
     n_lenh_phan_quyet: int
+    #: `DR-D9-02` §3.3 — tiêu chí không áp dụng cho arm này, liệt kê tường minh (khác `chua_do`, khác đạt).
+    khong_ap_dung: tuple[str, ...] = ()
 
     def dien_giai(self) -> str:
         return (
             f"D9 {self.ket_cuc.value} · N = {self.n_trials} · n = {self.n_lenh_phan_quyet} · "
             f"không đạt {list(self.khong_dat)} · chưa đo {list(self.chua_do)} · PBO {self.pbo.render()}"
+            + (f" · không áp dụng (DR-D9-02) {list(self.khong_ap_dung)}" if self.khong_ap_dung else "")
         )
 
 
@@ -84,8 +87,12 @@ def danh_gia_cong_d9(
     n_trials: int,
     chi_so: Mapping[str, Measured[float]],
     ket_qua_pbo: KetQuaPBO,
+    arm: str,
 ) -> KetQuaCongD9:
-    """Kết cục D9 của cấu hình đã chọn, trên lệnh ĐOẠN TEST (`MT-36`)."""
+    """Kết cục D9 của cấu hình đã chọn, trên lệnh ĐOẠN TEST (`MT-36`).
+
+    `arm` BẮT BUỘC, không mặc định (`DR-D9-02` §4): tiêu chí skewness-so-`Z1` không áp dụng cho arm entry đơn.
+    """
     if not isinstance(n_trials, int) or isinstance(n_trials, bool) or n_trials < 2:
         raise CongD9Error(f"n_trials phải là số nguyên ≥ 2 đọc từ kế toán, nhận {n_trials!r}")
     thieu = [k for k in TIEU_CHI_KHAI if k not in chi_so]
@@ -131,10 +138,12 @@ def danh_gia_cong_d9(
     else:
         chua_do.append(TIEU_CHI_PBO)
 
-    ket_qua_nhanh1 = thresholds.evaluate_branch1(metrics, pbo_chan=True)
+    ket_qua_nhanh1 = thresholds.evaluate_branch1(metrics, pbo_chan=True, arm=arm)
     for k in ket_qua_nhanh1.failed_criteria:
         if k not in chua_do:
             khong_dat.append(k)
+    # DR-D9-02 §3.3: "không áp dụng" KHÔNG phải "chưa đo" — rút khỏi `chua_do` dù người gọi khai `pending`.
+    chua_do = [k for k in chua_do if k not in ket_qua_nhanh1.khong_ap_dung]
 
     if khong_dat:
         kc = KetCuc.FAIL
@@ -150,6 +159,7 @@ def danh_gia_cong_d9(
         pbo=ket_qua_pbo.pbo,
         n_trials=n_trials,
         n_lenh_phan_quyet=len(xs),
+        khong_ap_dung=ket_qua_nhanh1.khong_ap_dung,
     )
 
 

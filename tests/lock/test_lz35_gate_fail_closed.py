@@ -51,7 +51,7 @@ class TestKetQuaTotNhatHienCoVanFail:
         # Mọi tiêu chí KHÁC trong bộ số đều đạt dư dả (giả lập) — chỉ DSR
         # fail, chứng minh gate chặn đúng chỗ, không "ăn gian" bằng cách
         # fail lung tung.
-        result = evaluate_branch1(best_known_result_for_test(), pbo_chan=True)
+        result = evaluate_branch1(best_known_result_for_test(), pbo_chan=True, arm="Z3")
         assert result.verdict is Verdict.FAIL
         assert result.failed_criteria == ("dsr_adjusted_expectancy",)
 
@@ -60,7 +60,7 @@ class TestGateHoatDongNhuPhepKiemThat:
     def test_pass_khi_dsr_vuot_nguong_that(self) -> None:
         metrics = best_known_result_for_test()
         metrics["dsr_adjusted_expectancy"] = DSR_ADJ_EXPECTANCY_MIN + 0.01
-        result = evaluate_branch1(metrics, pbo_chan=True)
+        result = evaluate_branch1(metrics, pbo_chan=True, arm="Z3")
         assert result.verdict is Verdict.PASS
         assert result.failed_criteria == ()
 
@@ -68,12 +68,12 @@ class TestGateHoatDongNhuPhepKiemThat:
         # "≥" theo đúng chữ của spec dòng 4260.
         metrics = best_known_result_for_test()
         metrics["dsr_adjusted_expectancy"] = DSR_ADJ_EXPECTANCY_MIN
-        assert evaluate_branch1(metrics, pbo_chan=True).verdict is Verdict.PASS
+        assert evaluate_branch1(metrics, pbo_chan=True, arm="Z3").verdict is Verdict.PASS
 
     def test_fail_khi_duoi_nguong_mot_chut(self) -> None:
         metrics = best_known_result_for_test()
         metrics["dsr_adjusted_expectancy"] = DSR_ADJ_EXPECTANCY_MIN - 0.01
-        assert evaluate_branch1(metrics, pbo_chan=True).verdict is Verdict.FAIL
+        assert evaluate_branch1(metrics, pbo_chan=True, arm="Z3").verdict is Verdict.FAIL
 
     def test_nguong_van_dung_khi_thay_doi_qua_monkeypatch(self, monkeypatch: pytest.MonkeyPatch) -> None:
         # Gate đọc hằng số module lúc gọi, không "đóng băng" ở import — nếu
@@ -83,12 +83,12 @@ class TestGateHoatDongNhuPhepKiemThat:
         monkeypatch.setattr(th, "DSR_ADJ_EXPECTANCY_MIN", 0.5)
         metrics = best_known_result_for_test()
         metrics["dsr_adjusted_expectancy"] = 0.4
-        assert th.evaluate_branch1(metrics, pbo_chan=True).verdict is Verdict.FAIL
+        assert th.evaluate_branch1(metrics, pbo_chan=True, arm="Z3").verdict is Verdict.FAIL
 
 
 class TestThieuDuLieuLaFailKhongPhaiPassNgam:
     def test_metrics_rong_thi_fail_tat_ca(self) -> None:
-        result = evaluate_branch1({}, pbo_chan=True)
+        result = evaluate_branch1({}, pbo_chan=True, arm="Z3")
         assert result.verdict is Verdict.FAIL
         # đủ 8 tiêu chí số của Nhánh 1 (7 cũ + `time_stop_ratio`, TD-0277 / MT-46)
         assert len(result.failed_criteria) == 8
@@ -96,8 +96,8 @@ class TestThieuDuLieuLaFailKhongPhaiPassNgam:
     def test_d4_khong_chan_pbo_nhung_van_fail_sau_tieu_chi_con_lai(self) -> None:
         """TD-0285 / DR-D9-01 §7: D4 chỉ GHI PBO. Cùng bộ rỗng, bỏ chặn PBO ⇒ đúng 7,
         và 7 đó là 8 trừ ĐÚNG `pbo` — không tiêu chí nào khác bị nới theo."""
-        chan = evaluate_branch1({}, pbo_chan=True).failed_criteria
-        ghi = evaluate_branch1({}, pbo_chan=False).failed_criteria
+        chan = evaluate_branch1({}, pbo_chan=True, arm="Z3").failed_criteria
+        ghi = evaluate_branch1({}, pbo_chan=False, arm="Z3").failed_criteria
         assert len(ghi) == 7
         assert set(chan) - set(ghi) == {"pbo"}
 
@@ -105,18 +105,18 @@ class TestThieuDuLieuLaFailKhongPhaiPassNgam:
         metrics = best_known_result_for_test()
         metrics["dsr_adjusted_expectancy"] = DSR_ADJ_EXPECTANCY_MIN + 0.01
         metrics["pbo"] = 0.9
-        assert evaluate_branch1(metrics, pbo_chan=False).verdict is Verdict.PASS
-        r = evaluate_branch1(metrics, pbo_chan=True)
+        assert evaluate_branch1(metrics, pbo_chan=False, arm="Z3").verdict is Verdict.PASS
+        r = evaluate_branch1(metrics, pbo_chan=True, arm="Z3")
         assert r.verdict is Verdict.FAIL and r.failed_criteria == ("pbo",)
 
     def test_pbo_chan_khong_co_mac_dinh(self) -> None:
         with pytest.raises(TypeError):
-            evaluate_branch1({})  # type: ignore[call-arg]
+            evaluate_branch1({}, arm="Z3")  # type: ignore[call-arg]
 
     @pytest.mark.parametrize("xau", [None, 0, 1, "True"])
     def test_pbo_chan_phai_la_bool_tuong_minh(self, xau) -> None:
         with pytest.raises(TypeError):
-            evaluate_branch1({}, pbo_chan=xau)  # type: ignore[arg-type]
+            evaluate_branch1({}, pbo_chan=xau, arm="Z3")  # type: ignore[arg-type]
 
 
 class TestGateResultRender:

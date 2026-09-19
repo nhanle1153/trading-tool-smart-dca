@@ -59,6 +59,7 @@ def _goi(r=None, *, n_trials: int = N_DANG_KY, chi_so=None, pbo: Measured[float]
         n_trials=n_trials,
         chi_so=_chi_so() if chi_so is None else chi_so,
         ket_qua_pbo=_pbo(pbo),
+        arm="Z3",
     )
 
 
@@ -115,7 +116,7 @@ class TestNKhongGhim:
 
     def test_n_trials_khong_co_mac_dinh(self) -> None:
         with pytest.raises(TypeError):
-            danh_gia_cong_d9(r_trien_khai_test=_on_dinh(1.0), chi_so=_chi_so(), ket_qua_pbo=_pbo(Measured.ok(0.1)))  # type: ignore[call-arg]
+            danh_gia_cong_d9(r_trien_khai_test=_on_dinh(1.0), chi_so=_chi_so(), ket_qua_pbo=_pbo(Measured.ok(0.1)), arm="Z3")  # type: ignore[call-arg]
 
     @pytest.mark.parametrize("xau", [True, 1, 0, 2.0, "114"])
     def test_n_trials_xau(self, xau) -> None:
@@ -160,6 +161,6 @@ class TestDuongNoi:
     def test_tieu_chi_khai_cong_expectancy_pbo_bang_bay_tieu_chi_nhanh1(self) -> None:
         from tool_d.gates.thresholds import evaluate_branch1
 
-        assert set(evaluate_branch1({}, pbo_chan=True).failed_criteria) == set(TIEU_CHI_KHAI) | {
+        assert set(evaluate_branch1({}, pbo_chan=True, arm="Z3").failed_criteria) == set(TIEU_CHI_KHAI) | {
             "dsr_adjusted_expectancy", "pbo"
         }

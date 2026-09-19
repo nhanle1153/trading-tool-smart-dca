@@ -56,26 +56,26 @@ class TestTimeStopChanCaHaiBien:
 
     @pytest.mark.parametrize("ty_le", [0.05, 0.10, 0.25])
     def test_trong_dai_ke_ca_bien_thi_pass(self, ty_le: float) -> None:
-        assert evaluate_branch1(_metrics_dat(time_stop_ratio=ty_le), pbo_chan=True).verdict is Verdict.PASS
+        assert evaluate_branch1(_metrics_dat(time_stop_ratio=ty_le), pbo_chan=True, arm="Z3").verdict is Verdict.PASS
 
     @pytest.mark.parametrize("ty_le", [0.0, 0.049, 0.251, 0.30])
     def test_ngoai_dai_thi_fail_dung_mot_tieu_chi(self, ty_le: float) -> None:
         """0.0 chính là con số `Z0-T1` đo được (td0246) — hệ quả biết trước, khai trong MT-46."""
-        r = evaluate_branch1(_metrics_dat(time_stop_ratio=ty_le), pbo_chan=True)
+        r = evaluate_branch1(_metrics_dat(time_stop_ratio=ty_le), pbo_chan=True, arm="Z3")
         assert r.verdict is Verdict.FAIL and r.failed_criteria == ("time_stop_ratio",)
 
     def test_thieu_khoa_thi_fail_khong_pass_ngam(self) -> None:
         m = _metrics_dat()
         del m["time_stop_ratio"]
-        assert evaluate_branch1(m, pbo_chan=True).failed_criteria == ("time_stop_ratio",)
+        assert evaluate_branch1(m, pbo_chan=True, arm="Z3").failed_criteria == ("time_stop_ratio",)
 
     def test_nan_thi_fail(self) -> None:
-        r = evaluate_branch1(_metrics_dat(time_stop_ratio=math.nan), pbo_chan=True)
+        r = evaluate_branch1(_metrics_dat(time_stop_ratio=math.nan), pbo_chan=True, arm="Z3")
         assert r.failed_criteria == ("time_stop_ratio",)
 
     def test_d4_cung_chan_khong_chi_d9(self) -> None:
         """Khác PBO (D4 chỉ ghi): TIME_STOP chặn ở mọi nơi gọi."""
-        r = evaluate_branch1(_metrics_dat(time_stop_ratio=0.0), pbo_chan=False)
+        r = evaluate_branch1(_metrics_dat(time_stop_ratio=0.0), pbo_chan=False, arm="Z3")
         assert r.failed_criteria == ("time_stop_ratio",)
 
 
@@ -94,7 +94,7 @@ def _goi_d9(ts: Measured[float]):
     )
     return danh_gia_cong_d9(
         r_trien_khai_test=[1.0 + (0.1 if i % 2 else -0.1) for i in range(100)],
-        n_trials=N_DANG_KY, chi_so=chi_so, ket_qua_pbo=pbo,
+        n_trials=N_DANG_KY, chi_so=chi_so, ket_qua_pbo=pbo, arm="Z3",
     )
 
 

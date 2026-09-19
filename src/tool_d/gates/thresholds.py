@@ -18,6 +18,12 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import Enum
 
+from tool_d.arm_switches import ARM_DON_TRANCHE, ARM_HOP_LE
+
+#: `DR-D9-02` §3.1 (b′) — tiêu chí KHÔNG áp dụng cho arm entry đơn (`ARM_DON_TRANCHE`), áp dụng và chặn như cũ
+#: cho arm DCA. Tên khoá là của chính tiêu chí trong `evaluate_branch1`.
+TIEU_CHI_SKEWNESS_Z1 = "skewness_diff_vs_z1"
+
 # ═══════════ Đã điền — DR-D0PRE-03 (TD-0041), blocker B6 gỡ ═══════════
 # Đơn vị: R mỗi lệnh. Đổi số này = DR mới, viết TRƯỚC khi thấy kết quả gate
 # kế tiếp (spec dòng 3956-3958).
@@ -55,14 +61,17 @@ class Verdict(Enum):
 class GateResult:
     verdict: Verdict
     failed_criteria: tuple[str, ...] = field(default_factory=tuple)
+    #: `DR-D9-02` §3.3 — "không áp dụng có căn cứ" KHÁC "chưa đo" và KHÁC "đạt": liệt kê tường minh, không xoá khoá.
+    khong_ap_dung: tuple[str, ...] = field(default_factory=tuple)
 
     def render(self) -> str:
+        them = f" · không áp dụng (DR-D9-02): {', '.join(self.khong_ap_dung)}" if self.khong_ap_dung else ""
         if self.verdict is Verdict.PASS:
-            return "PASS"
-        return "FAIL — " + ", ".join(self.failed_criteria)
+            return "PASS" + them
+        return "FAIL — " + ", ".join(self.failed_criteria) + them
 
 
-def evaluate_branch1(metrics: Mapping[str, float], *, pbo_chan: bool) -> GateResult:
+def evaluate_branch1(metrics: Mapping[str, float], *, pbo_chan: bool, arm: str) -> GateResult:
     """Kiểm các tiêu chí SỐ của Nhánh 1 (spec dòng 4257-4276).
 
     `pbo_chan` — BẮT BUỘC khai, KHÔNG có mặc định (`DR-D9-01` §7, `MT-51`):
@@ -108,12 +117,21 @@ def evaluate_branch1(metrics: Mapping[str, float], *, pbo_chan: bool) -> GateRes
     }
     if not isinstance(pbo_chan, bool):
         raise TypeError(f"pbo_chan phải là bool tường minh, nhận {pbo_chan!r}")
+    if arm not in ARM_HOP_LE:
+        raise ValueError(f"arm {arm!r} không thuộc {ARM_HOP_LE} — DR-D9-02 §4: arm lạ ⇒ raise")
     if pbo_chan:
         checks["pbo"] = metrics.get("pbo", math.inf) <= PBO_MAX
+    khong_ap_dung: tuple[str, ...] = ()
+    if arm in ARM_DON_TRANCHE:
+        # DR-D9-02 §3.1: entry đơn + SL bất biến không tạo được đuôi lỗ kiểu trung bình giá xuống; đuôi lỗ
+        # từng lệnh vẫn bị chặn bởi `max_single_trade_loss_over_risk_budget`. Đọc ĐÚNG hằng số, không chép.
+        checks.pop(TIEU_CHI_SKEWNESS_Z1)
+        khong_ap_dung = (TIEU_CHI_SKEWNESS_Z1,)
     failed = tuple(name for name, ok in checks.items() if not ok)
     return GateResult(
         verdict=Verdict.PASS if not failed else Verdict.FAIL,
         failed_criteria=failed,
+        khong_ap_dung=khong_ap_dung,
     )
 
 
