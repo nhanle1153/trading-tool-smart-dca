@@ -20,6 +20,9 @@ phải xuất hiện đúng MỘT lần trong file), ``bien_the`` (tên → dòn
 đối chứng không phá), ``tests``, và tuỳ chọn ``ky_vong`` (``"xanh"``/``"do"`` cho từng
 biến thể, viết TRƯỚC khi chạy) cùng ``ky_vong_do_gom`` (các test PHẢI đỏ).
 
+Một biến thể có thể là ĐỐI TƯỢNG ``{"khoi_dong": [...], "thay": ...}`` để phá một khối KHÁC
+với khối mặc định — một đặc tả phủ được nhiều vị trí phá (TD-0331 dùng 6 vị trí).
+
 🔴 **Không phải entrypoint thứ 9** (``L-Z36``): nằm ở ``tests/tools/``, không ở
 ``entrypoints/``, và không ghi dữ liệu thị trường hay sổ nào.
 
@@ -105,15 +108,22 @@ def dot_bien(src: str, dac_ta: DacTa, ten_bien_the: str) -> str:
     if ten_bien_the not in dac_ta.bien_the:
         raise DotBienError(f"không có biến thể {ten_bien_the!r}; có: {sorted(dac_ta.bien_the)}")
     lines = src.splitlines(keepends=True)
-    i = tim_khoi(lines, dac_ta.khoi_dong)
+    # Khối MẶC ĐỊNH luôn được kiểm (kể cả với M0): đặc tả lệch mã thật thì báo, không phá bừa.
+    tim_khoi(lines, dac_ta.khoi_dong)
     thay = dac_ta.bien_the[ten_bien_the]
     if thay is None:
         return src
+    khoi = dac_ta.khoi_dong
+    if isinstance(thay, dict):
+        # Biến thể có khối RIÊNG: một đặc tả phủ nhiều vị trí phá, thay vì mỗi vị trí một file.
+        khoi = tuple(thay["khoi_dong"])
+        thay = thay["thay"]
+    i = tim_khoi(lines, khoi)
     moi = [thay] if isinstance(thay, str) else list(thay)
     dau = lines[i]
     thut = dau[: len(dau) - len(dau.lstrip())]
     eol = dau[len(dau.rstrip("\r\n")):] or "\n"
-    lines[i : i + len(dac_ta.khoi_dong)] = [thut + m + eol for m in moi]
+    lines[i : i + len(khoi)] = [thut + m + eol for m in moi]
     ket = "".join(lines)
     if ket == src:
         raise DotBienError(f"biến thể {ten_bien_the!r} không đổi gì so với mã gốc")

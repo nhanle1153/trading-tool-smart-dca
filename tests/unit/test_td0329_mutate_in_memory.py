@@ -31,7 +31,11 @@ SPEC_THAT = SPEC_DIR / "td0320_moi_hon.json"
 #: Mọi đặc tả thật. `td0330` nghiệm thu test khoá hai chiều: `tests` của nó là CHỈ file
 #: `test_td0330…`, nên nghiệm thu chạy Ở ĐÂY (file này) chứ không trong file TD-0330 — đặt trong
 #: chính file đó thì tiến trình con sẽ chạy lại chính nó và đệ quy vô hạn.
-SPECS_THAT = [SPEC_DIR / "td0320_moi_hon.json", SPEC_DIR / "td0330_khoa_hai_chieu.json"]
+SPECS_THAT = [
+    SPEC_DIR / "td0320_moi_hon.json",
+    SPEC_DIR / "td0330_khoa_hai_chieu.json",
+    SPEC_DIR / "td0331_backlog_check.json",
+]
 
 
 def _nap_cong_cu():
@@ -127,6 +131,23 @@ class TestDotBien:
 
     def test_ban_pha_van_la_python_hop_le(self) -> None:
         compile(M.dot_bien(NGUON, _dac_ta(), "M1"), "f.py", "exec")
+
+    def test_bien_the_co_khoi_rieng_pha_dung_khoi_do_khong_dung_khoi_mac_dinh(self) -> None:
+        dt = _dac_ta(bien_the={"M1": {"khoi_dong": ["return ket"], "thay": "return None"}})
+        ket = M.dot_bien(NGUON, dt, "M1")
+        assert "    return None\n" in ket
+        assert "hon = (\n            x > ket\n        )\n" in ket, "khối mặc định không được bị đụng"
+
+    def test_bien_the_khoi_rieng_lech_ma_that_thi_loi(self) -> None:
+        dt = _dac_ta(bien_the={"M1": {"khoi_dong": ["return khong_co"], "thay": "return None"}})
+        with pytest.raises(M.DotBienError, match="0 lần"):
+            M.dot_bien(NGUON, dt, "M1")
+
+    def test_khoi_mac_dinh_van_duoc_kiem_khi_bien_the_co_khoi_rieng(self) -> None:
+        """Khối riêng không được làm mất phép kiểm khối mặc định (chống đặc tả lệch mã im lặng)."""
+        dt = _dac_ta(bien_the={"M1": {"khoi_dong": ["return ket"], "thay": "return None"}})
+        with pytest.raises(M.DotBienError, match="lệch đặc tả"):
+            M.dot_bien(NGUON.replace("x > ket", "x >= ket"), dt, "M1")
 
 
 @pytest.fixture

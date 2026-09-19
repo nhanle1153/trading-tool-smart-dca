@@ -58,6 +58,7 @@ from tool_d.ledger.audit_checks import (
     check_lz27_tran_b3,
     check_lz28_doi_tham_so_dung_diem_quyet_dinh,
 )
+from tool_d.ledger.backlog_check import bao_cao as bao_cao_backlog
 from tool_d.ledger.idea_queue import IdeaQueueError, chon_y_tuong, huy_chon, submit_idea
 from tool_d.ledger.param_proposals import ParamProposalError, submit_proposal
 from tool_d.ledger.registry import DEFAULT_REGISTRY_PATH
@@ -81,6 +82,9 @@ EXIT_GATE_ALREADY_CLOSED = 94
 EXIT_GATE_AUDIT_DIRTY = 95
 # TD-0124 — tờ đơn không hợp lệ: TỪ CHỐI ghi, sổ không bị đụng tới.
 EXIT_DON_TU_CHOI = 96
+# TD-0331 (OQ-15) — `--kiem-backlog` có cảnh báo. CHỈ để người đọc: không nối vào `run_audit()`
+# hay cổng đóng, nên không thay đổi bất kỳ mã thoát nào của luồng audit/đóng cổng.
+EXIT_BACKLOG_CO_CANH_BAO = 97
 
 DEFAULT_RUNTIME_STATE_PATH = Path("registry/runtime_state.json")
 # TD-0117 — file test khoá L-Z49/L-Z50 phải được chạy RIÊNG lúc đóng cổng D2:
@@ -139,6 +143,12 @@ def build_parser() -> argparse.ArgumentParser:
         "Bắt buộc kèm --ly-do trích một DR có thật.",
     )
     parser.add_argument("--ly-do", metavar="TEXT", help="Lý do cho --huy-chon.")
+    parser.add_argument(
+        "--kiem-backlog",
+        action="store_true",
+        help="TD-0331 (OQ-15) — báo dòng 🔒 đã có commit mã việc, ô trạng thái lẫn ký hiệu, "
+        "và dòng mang cụm '⏸ TẠM DỪNG' mà trạng thái không ⏸. Chỉ BÁO, không chặn, không ghi file.",
+    )
     parser.add_argument(
         "--nop-de-xuat",
         metavar="DE_XUAT.yaml",
@@ -938,6 +948,11 @@ def main(argv: list[str] | None = None) -> int:
         exit_code, text = nop_de_xuat_doi_tham_so(Path(args.nop_de_xuat))
         print(text)
         return exit_code
+
+    if args.kiem_backlog:
+        co_canh_bao, text = bao_cao_backlog()
+        print(text)
+        return EXIT_BACKLOG_CO_CANH_BAO if co_canh_bao else 0
 
     if args.close_gate:
         exit_code, text = close_d0_pre_gate()

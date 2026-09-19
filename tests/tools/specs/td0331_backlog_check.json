@@ -1,0 +1,62 @@
+{
+  "mo_ta": "TD-0331 (OQ-15): nghiem thu rang cua test phep kiem backlog. `tests` la CHI file test_td0331; moi bien the pha MOT hanh vi cua backlog_check.py va test PHAI do dung cho do. Sau 6 vi tri phá: loai 1 sai ky hieu, bo chot khi khong co git, bo mien tru trang thai da co dau, bo qua dau ngoac nguoc khi tach o, nguong loai 2, ranh gioi ma viec.",
+  "module": "tool_d.ledger.backlog_check",
+  "file": "src/tool_d/ledger/backlog_check.py",
+  "khoi_dong": [
+    "if \"🔒\" in d.trang_thai and tieu_de_commit is not None:"
+  ],
+  "bien_the": {
+    "M0": null,
+    "M1": "if \"🔓\" in d.trang_thai and tieu_de_commit is not None:",
+    "M2": "if \"🔒\" in d.trang_thai:",
+    "M3": {
+      "khoi_dong": ["if not any(k in d.trang_thai for k in (\"⏸\", \"✅\", \"❌\")):"],
+      "thay": "if True:"
+    },
+    "M4": {
+      "khoi_dong": ["if c == \"`\":"],
+      "thay": "if False:"
+    },
+    "M5": {
+      "khoi_dong": ["if len(ky) >= 2:"],
+      "thay": "if len(ky) >= 3:"
+    },
+    "M6": {
+      "khoi_dong": ["mau = re.compile(rf\"^{re.escape(d.ma)}(?!\\d)\")"],
+      "thay": "mau = re.compile(rf\"^{re.escape(d.ma)}\")"
+    }
+  },
+  "tests": [
+    "tests/unit/test_td0331_backlog_check.py"
+  ],
+  "ky_vong": {
+    "M0": "xanh",
+    "M1": "do",
+    "M2": "do",
+    "M3": "do",
+    "M4": "do",
+    "M5": "do",
+    "M6": "do"
+  },
+  "ky_vong_do_gom": {
+    "M1": [
+      "tests/unit/test_td0331_backlog_check.py::TestLoai1KhoaCoCommit::test_khoa_co_commit_ma_viec_thi_bao",
+      "tests/unit/test_td0331_backlog_check.py::TestAnhChupLichSuThat::test_bat_hai_khoa_quen_dong"
+    ],
+    "M2": [
+      "tests/unit/test_td0331_backlog_check.py::TestLoai1KhoaCoCommit::test_khong_doc_duoc_git_thi_bo_loai_1_khong_no"
+    ],
+    "M3": [
+      "tests/unit/test_td0331_backlog_check.py::TestLoai3NghiLechTamDung::test_trang_thai_da_co_dau_thi_khong_nghi"
+    ],
+    "M4": [
+      "tests/unit/test_td0331_backlog_check.py::TestTachO::test_dau_gach_dung_trong_ngoac_nguoc_khong_tach"
+    ],
+    "M5": [
+      "tests/unit/test_td0331_backlog_check.py::TestLoai2TrangThaiLan::test_hai_ky_hieu_thi_bao"
+    ],
+    "M6": [
+      "tests/unit/test_td0331_backlog_check.py::TestLoai1KhoaCoCommit::test_ranh_gioi_ma_khong_khop_ma_dai_hon"
+    ]
+  }
+}
