@@ -86,23 +86,29 @@ def _lech_tranche1(fills: dict[int, dict[str, Any]], p: dict[int, float], risk: 
     return abs(qty * (fills[1]["fill_price"] - p[1]) / risk)
 
 
-def tinh_doi_chung(du_lieu_tho: dict[str, Any]) -> dict[str, KetQuaDoiChung]:
+def tinh_doi_chung(du_lieu_tho: dict[str, Any], huong: str = "long") -> dict[str, KetQuaDoiChung]:
     """Δ_R cho CẢ HAI nhánh trên cùng bộ dữ liệu, cùng mẫu số.
 
-    Trả `{"Z0": ..., "DCA": ...}`. Chỉ tính hướng LONG — Short chưa có dữ
-    liệu (TD-0114 LONG-only) và `N6` cấm bịa 0.0; hàm này KHÔNG dựng ra
-    một nhánh Short rỗng để bảng trông cân đối.
+    Trả `{"Z0": ..., "DCA": ...}` cho MỘT hướng. Mặc định `huong="long"` —
+    Short chưa có dữ liệu (TD-0114 LONG-only) và `N6` cấm bịa 0.0; hàm này
+    KHÔNG dựng ra một nhánh Short rỗng để bảng trông cân đối: không có dòng
+    của hướng được hỏi thì `Buoc1Error`. `huong="short"` (TD-0322,
+    DR-SHORT-01, D-dựng, KHÔNG chạy) chỉ bật khi được truyền TƯỜNG MINH.
     """
-    rows = [r for r in du_lieu_tho["luot_khop"] if r["huong"] == "long"]
+    if huong not in ("long", "short"):
+        raise Buoc1Error(f"huong không hợp lệ: {huong!r} (chỉ long/short)")
+    rows = [r for r in du_lieu_tho["luot_khop"] if r["huong"] == huong]
     if not rows:
-        raise Buoc1Error("Không có lượt khớp LONG nào — không dựng được đối chứng")
+        raise Buoc1Error(
+            f"Không có lượt khớp {huong.upper()} nào — không dựng được đối chứng"
+        )
 
     theo_trade = _gom_theo_trade(rows)
     lech_z0: list[float] = []
     lech_dca: list[float] = []
     for fills in theo_trade.values():
         p1 = fills[1]["p_ke_hoach"]
-        p = _gia_ke_hoach_ca_ba_tranche(fills[1], p1)
+        p = _gia_ke_hoach_ca_ba_tranche(fills[1], p1, huong)
         cost_full = _uoc_luong_cost_tranche({i: fills[i]["cost"] for i in fills})
         risk = _planned_risk_usdt(cost_full, p, fills[1]["sl"])
         lech_z0.append(_lech_tranche1(fills, p, risk))
@@ -120,7 +126,7 @@ def tinh_doi_chung(du_lieu_tho: dict[str, Any]) -> dict[str, KetQuaDoiChung]:
         dung_p90 = n >= SAN_N_CHO_P90
         ket_qua[nhanh] = KetQuaDoiChung(
             nhanh=nhanh,
-            huong="LONG",
+            huong=huong.upper(),
             so_lenh=n,
             lech_moi_lenh=tuple(ds),
             delta_r=Measured.ok(_p90(ds) if dung_p90 else max(ds)),

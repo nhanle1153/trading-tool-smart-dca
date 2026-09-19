@@ -133,12 +133,20 @@ def _uoc_luong_cost_tranche(cost_da_biet: dict[int, float]) -> dict[int, float]:
     return {1: c1, 2: c2, 3: c3}
 
 
-def _gia_ke_hoach_ca_ba_tranche(mot_dong_bat_ky: dict[str, Any], p1: float) -> dict[int, float]:
+def _gia_ke_hoach_ca_ba_tranche(
+    mot_dong_bat_ky: dict[str, Any], p1: float, huong: str = "long"
+) -> dict[int, float]:
     """`p2`/`p3` suy từ `zone_low`/`zone_high` — có trên MỌI dòng, kể cả
     dòng của tranche chưa từng khớp trong CÙNG trade (vì zone là thuộc
-    tính của cả trade, không phải của riêng một tranche)."""
+    tính của cả trade, không phải của riêng một tranche).
+
+    `huong="long"` (mặc định) là code CŨ nguyên vẹn: `p3 = zone_low`.
+    `huong="short"` (TD-0322, DR-SHORT-01, D-dựng, KHÔNG chạy) neo mép TRÊN
+    zone: `p3 = zone_high` — cùng công thức `trade_plan.tinh_ke_hoach()`."""
+    if huong not in ("long", "short"):
+        raise Buoc1Error(f"huong không hợp lệ: {huong!r} (chỉ long/short)")
     zl, zh = mot_dong_bat_ky["zone_low"], mot_dong_bat_ky["zone_high"]
-    return {1: p1, 2: (zh + zl) / 2, 3: zl}
+    return {1: p1, 2: (zh + zl) / 2, 3: zh if huong == "short" else zl}
 
 
 def _planned_risk_usdt(cost_full: dict[int, float], p: dict[int, float], sl: float) -> float:
@@ -179,8 +187,11 @@ def _p90(gia_tri: list[float]) -> float:
 
 
 def tinh_buoc1(du_lieu_tho: dict[str, Any]) -> dict[str, KetQuaBuoc1]:
-    """Tính `KetQuaBuoc1` cho cả hai hướng. Short luôn `unreadable` —
-    `ZoneAbsorptionMinimal` hiện LONG-only (TD-0114), N6 cấm bịa 0.0."""
+    """Tính `KetQuaBuoc1` cho cả hai hướng. Hướng nào chưa có lệnh nào trong
+    dữ liệu thì `unreadable` — dữ liệu niêm phong D3.5 chỉ có LONG
+    (`ZoneAbsorptionMinimal` LONG-only, TD-0114), N6 cấm bịa 0.0. Từ TD-0322
+    hướng Short đã TÍNH ĐƯỢC nếu có dòng `huong="short"` (p3 = `zone_high`),
+    nhưng không có đường chạy nào cấp dòng đó: Δ_R(SHORT) chưa được đo."""
     rows = du_lieu_tho["luot_khop"]
     huong_co_that = {r["huong"] for r in rows}
     if huong_co_that - {"long", "short"}:
@@ -209,7 +220,7 @@ def tinh_buoc1(du_lieu_tho: dict[str, Any]) -> dict[str, KetQuaBuoc1]:
         for tid, fills in trades_huong.items():
             p1 = fills[1]["p_ke_hoach"]
             sl = fills[1]["sl"]
-            p = _gia_ke_hoach_ca_ba_tranche(fills[1], p1)
+            p = _gia_ke_hoach_ca_ba_tranche(fills[1], p1, huong_du_lieu)
             cost_that = {i: fills[i]["cost"] for i in fills}
             cost_full = _uoc_luong_cost_tranche(cost_that)
             risk = _planned_risk_usdt(cost_full, p, sl)
