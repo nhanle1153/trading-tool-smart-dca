@@ -199,9 +199,11 @@ class TestExportThat:
         for k in ("time_stop_ratio", "max_single_trade_loss_over_risk_budget", "trades_per_year",
                   "ti_trong_tranche_dat", "bat_bien_1_7_ty_so_trung_vi"):
             assert cs[k].status is Status.OK, (k, cs[k])
-        # TD-0342 — đo 19/09/2026: backtest fixture TỔNG HỢP cho `liquidation_price = None` (Freqtrade cần bảng bậc
-        # đòn bẩy của cặp, `get_maintenance_ratio_and_amt`). Chỉ số phải NÓI RA điều đó, không bịa số (N6).
-        # Export trên rổ thật có giá thanh lý hay không: CHƯA đo (khâu đo khoá) — xem TD-0343.
+        # TD-0342 — export backtest KHÔNG mang `liquidation_price`. Chỉ số phải NÓI RA điều đó, không bịa số (N6).
+        # 🔄 ĐÍNH CHÍNH (TD-0343, đo 19/09/2026): nguyên nhân KHÔNG phải thiếu bảng bậc đòn bẩy (chẩn đoán ban đầu SAI).
+        # Backtest CÓ tính giá thanh lý lúc chạy; Freqtrade ghi kết quả qua `trade_list_to_dataframe(...,
+        # columns=BT_DATA_COLUMNS)` (`bt_fileutils.py:535`), 28 cột không có `liquidation_price` ⇒ bị cắt khi ghi file.
+        # Trên EXPLORE thật: 0/162 lệnh (`docs/du-lieu-do/td0343-gia-thanh-ly-explore.json`).
         assert cs["liq_buffer_ratio_mean"].status is Status.UNREADABLE
         assert "liquidation_price" in cs["liq_buffer_ratio_mean"].note
         assert cs["ti_trong_tranche_dat"].value is True
