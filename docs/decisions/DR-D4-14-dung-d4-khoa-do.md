@@ -113,3 +113,25 @@ FAIL/INCONCLUSIVE; thời gian trôi qua.
 
 `ARCHITECTURE.md` (cây thêm `src/tool_d/ablation/`) và một mục `MT` ở `back-end-note.md` §7 trỏ về DR này (va
 chạm với `DR-IQ-01` §1 / `DR-HUONG-01` §2, giải bằng tách dựng/đo) — chờ lệnh *"chuẩn hóa và lưu"* theo N9.
+
+## 10. BỔ SUNG 19/09/2026 — `planned_risk_usdt` suy ngược từ fill (điều kiện dừng §7 đã nổ, chủ dự án chốt)
+
+Chữ §1–§9 giữ nguyên. Khi làm `TD-0333`, điều kiện dừng thứ tư của §7 **đã nổ**: đo trong image, Freqtrade
+2026.8 `LocalTrade.to_json` **không** xuất `custom_data`, nên `co_lenh` — nơi chiến lược cất `planned_risk_usdt`
+(`ZoneAbsorption.py:1204`) — không có trong export backtest. Decision Log cũng không mang con số này. Mà
+`arm_record.CHI_SO_BAT_BUOC` đòi `ty_le_rui_ro_da_trien_khai`, cần đúng con số đó (`DR-D4-12` §1.4).
+
+Chủ dự án chọn giữa ba đường (*suy ngược từ fill* · *sửa chiến lược để xuất số* · *để `unreadable`*):
+
+✅ **Suy ngược từ fill thật**, bằng đúng hàm chiến lược dùng khi restart: `sizing.phuc_hoi_ke_hoach_sau_restart()`
+(MT-41) nhận `R_eff` giải từ `enter_tag` + ký quỹ tranche 1 ĐÃ KHỚP (`amount × safe_price / leverage` của order
+vào đầu tiên). Thi hành ở `src/tool_d/bo_chay/trich_lenh.py`.
+
+- **Sai số đã biết:** chỉ phần làm tròn khối lượng theo bước sàn của tranche 1.
+- **Chốt kèm:** đòn bẩy của lệnh phải bằng `tier_a.L_exchange`, lệch ⇒ từ chối (phép suy `n_full` chỉ đúng khi hai
+  số bằng nhau).
+- **Kiểm độc lập trên export thật** (`test_td0333_…::test_n_full_suy_nguoc_khop_notional_tranche_hai_that`):
+  `n_full` suy từ tranche 1 nhân `w[1]` khớp notional tranche 2 mà chiến lược thật sự đặt (sai lệch < 1%). Phá thật
+  (bỏ chia đòn bẩy) ⇒ đúng 3 ca đỏ, gồm ca trên export thật.
+- **Loại:** sửa chiến lược sản xuất (đụng bất biến Long, có thể buộc sửa test cũ — chính điều kiện dừng §7);
+  để `unreadable` (ràng buộc `DR-D4-12` §1 thành không kiểm được lúc đo thật).
