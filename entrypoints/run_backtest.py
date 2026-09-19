@@ -49,6 +49,7 @@ from tool_d.ledger.registry import TrialLedger
 from tool_d.ledger.timerange import (
     TimerangeViolationError,
     assert_dataset_timerange,
+    cua_so_tap,
     dataset_boundaries_from_config,
 )
 from tool_d.lockbox.h17 import in_va_ma_thoat, kiem_h17
@@ -83,7 +84,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--tap", choices=TAP_HOP_LE, help="Tập dữ liệu — quyết định rổ qua ro_cho_tap().")
     parser.add_argument("--tu", help="YYYY-MM-DD, mặc định = đầu biên của --tap.")
-    parser.add_argument("--den", help="YYYY-MM-DD, cận KHÔNG BAO GỒM. Mặc định = cuối biên + 1 ngày.")
+    parser.add_argument("--den", help="YYYY-MM-DD, cận KHÔNG BAO GỒM. Mặc định = mốc cuối tập (DR-D9-01).")
     parser.add_argument("--chien-luoc", default="ZoneAbsorption")
     parser.add_argument("--budget-line", choices=DONG_NGAN_SACH, help="BẮT BUỘC khi --chay. Không có mặc định.")
     parser.add_argument("--hypothesis-slot", help="BẮT BUỘC khi --chay.")
@@ -116,13 +117,15 @@ def _doc_ghi_de(cac_cap: list[str]) -> dict[str, Any]:
 
 
 def _cua_so(args, bien) -> tuple[date, date]:
-    """Mặc định = trọn biên của `--tap`. `--den` là cận KHÔNG BAO GỒM, nên mặc
-    định phải là `bien.end + 1 ngày` mới phủ hết nến cuối của tập."""
-    from datetime import timedelta
+    """Mặc định = trọn tập `--tap` NỬA MỞ `[start, end)` (`DR-D9-01`); tính và kiểm ở `cua_so_tap()` (TD-0347).
 
-    tu = date.fromisoformat(args.tu) if args.tu else bien.start
-    den = date.fromisoformat(args.den) if args.den else bien.end + timedelta(days=1)
-    return tu, den
+    Bản TD-0313 mặc định `bien.end + 1 ngày` với lý do *"mới phủ hết nến cuối"* — SAI: `bien.end` đã là cận không
+    bao gồm (mốc 00:00 của tập sau), nên +1 ngày đọc thêm trọn một ngày của tập đó (với WFO: LOCKBOX)."""
+    return cua_so_tap(
+        bien,
+        tu=date.fromisoformat(args.tu) if args.tu else None,
+        den=date.fromisoformat(args.den) if args.den else None,
+    )
 
 
 def _thieu_co(args) -> list[str]:

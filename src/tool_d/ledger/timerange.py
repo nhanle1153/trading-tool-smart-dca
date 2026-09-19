@@ -87,3 +87,26 @@ def dataset_boundaries_from_config(cfg: ToolDConfig) -> dict[str, DatasetBoundar
         "WFO": DatasetBoundary("WFO", t1, t2),
         "LOCKBOX": DatasetBoundary("LOCKBOX", t2, t3),
     }
+
+
+def cua_so_tap(
+    bien: DatasetBoundary, *, tu: date | None = None, den: date | None = None
+) -> tuple[date, date]:
+    """TD-0347 — cửa sổ chạy `[tu, den)` NỬA MỞ của một tập, MỘT chỗ tính cho E1, E3 và kịch bản đo.
+
+    `DR-D9-01`: tập = `[bien.start, bien.end)` — giờ 00:00 của `bien.end` là mốc của tập SAU (với WFO: mốc
+    LOCKBOX). Mặc định trả đúng cặp đó. `tu`/`den` người gọi truyền vào phải nằm trong: `start ≤ tu < den ≤ end`,
+    sai thì `TimerangeViolationError` (fail-closed, L-Z55).
+
+    Vì sao cần hàm riêng: `assert_dataset_timerange` so ngày quan sát với biên ĐÓNG `[start, end]`, nên cách gọi cũ
+    "`observed_end = den − 1 ngày`" nhận cả `den = end + 1 ngày` — đúng cửa sổ lấn một ngày qua mốc tập sau mà E1
+    dùng làm MẶC ĐỊNH (TD-0313) và E3 chép lại (TD-0335). Lỗi chỉ lộ khi chốt 5m từ chối lượt đếm TD-0345.
+    """
+    tu = bien.start if tu is None else tu
+    den = bien.end if den is None else den
+    if not (bien.start <= tu < den <= bien.end):
+        raise TimerangeViolationError(
+            f"Cửa sổ [{tu}, {den}) không nằm trong tập {bien.name!r} [{bien.start}, {bien.end}) NỬA MỞ "
+            "(DR-D9-01) — cận phải KHÔNG bao gồm và tối đa bằng mốc cuối tập; TỪ CHỐI (L-Z55)."
+        )
+    return tu, den

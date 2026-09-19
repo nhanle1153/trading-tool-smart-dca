@@ -33,7 +33,7 @@ from tool_d.bo_chay.yeu_cau import BoChayError, GiayPhepChay, YeuCauChay  # noqa
 from tool_d.config.loader import load_tool_d_config  # noqa: E402
 from tool_d.gates.dsr import N_DANG_KY  # noqa: E402
 from tool_d.ledger.registry import CTRL_MO_TA_ALLOWED, TrialLedger  # noqa: E402
-from tool_d.ledger.timerange import dataset_boundaries_from_config  # noqa: E402
+from tool_d.ledger.timerange import cua_so_tap, dataset_boundaries_from_config  # noqa: E402
 from tool_d.measurement.gitinfo import get_git_info  # noqa: E402
 from tool_d.measurement.hashing import hash_many  # noqa: E402
 from tool_d.pool_giai_doan import ro_cho_tap  # noqa: E402
@@ -58,7 +58,7 @@ def main() -> int:
     bien = dataset_boundaries_from_config(cfg)[TAP]
     # DR-D9-01: WFO = [T1, T2) NỬA MỞ — giờ 00:00 của ngày T2 là mốc LOCKBOX, không thuộc WFO. Lượt đầu (19/09) xin
     # [T1, T2 + 1 ngày) và chốt 5m từ chối đúng giờ đó (98/107 mã) — D-0006 đã hoàn trả theo nguyên nhân máy.
-    tu, den = bien.start, bien.end
+    tu, den = cua_so_tap(bien)  # TD-0347
     ro = ro_cho_tap(TAP, repo_dir=REPO)
     thu_muc = REPO / ro.thu_muc_du_lieu
     data_hashes = hash_many({f.name: f for f in sorted(thu_muc.glob("*.feather"))})
