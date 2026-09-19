@@ -1,0 +1,38 @@
+{
+  "mo_ta": "TD-0330 (OQ-14b): nghiem thu test khoa hai chieu cua cuc tri cum. `tests` la CHI file moi, nen file moi phai TU bat ca ba cach chon moc sai: M1 (loi cu TD-0320, luon <) lam do ca am dinh; M2 (va qua tay, luon >) lam do ca am day; M3 (moc o nen DAU cum, loi 09/09) lam do ca ca hai.",
+  "module": "tool_d.entry_confirmation",
+  "file": "src/tool_d/entry_confirmation.py",
+  "khoi_dong": [
+    "moi_hon = (",
+    "gia_bien_muc[c_cum] < gia_cuc_tri if loai == \"day\"",
+    "else gia_bien_muc[c_cum] > gia_cuc_tri",
+    ")"
+  ],
+  "bien_the": {
+    "M0": null,
+    "M1": "moi_hon = gia_bien_muc[c_cum] < gia_cuc_tri",
+    "M2": "moi_hon = gia_bien_muc[c_cum] > gia_cuc_tri",
+    "M3": "moi_hon = False"
+  },
+  "tests": [
+    "tests/lock/test_td0330_cuc_tri_cum_hai_chieu.py"
+  ],
+  "ky_vong": {
+    "M0": "xanh",
+    "M1": "do",
+    "M2": "do",
+    "M3": "do"
+  },
+  "ky_vong_do_gom": {
+    "M1": [
+      "tests/lock/test_td0330_cuc_tri_cum_hai_chieu.py::TestCucTriCumHaiChieu::test_xac_nhan_khi_va_chi_khi_gia_toi_cuc_tri_that[dinh-96-khong_xac_nhan]"
+    ],
+    "M2": [
+      "tests/lock/test_td0330_cuc_tri_cum_hai_chieu.py::TestCucTriCumHaiChieu::test_xac_nhan_khi_va_chi_khi_gia_toi_cuc_tri_that[day-93-khong_xac_nhan]"
+    ],
+    "M3": [
+      "tests/lock/test_td0330_cuc_tri_cum_hai_chieu.py::TestCucTriCumHaiChieu::test_xac_nhan_khi_va_chi_khi_gia_toi_cuc_tri_that[day-93-khong_xac_nhan]",
+      "tests/lock/test_td0330_cuc_tri_cum_hai_chieu.py::TestCucTriCumHaiChieu::test_xac_nhan_khi_va_chi_khi_gia_toi_cuc_tri_that[dinh-96-khong_xac_nhan]"
+    ]
+  }
+}

@@ -26,7 +26,12 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TOOL = REPO_ROOT / "tests" / "tools" / "mutate_in_memory.py"
-SPEC_THAT = REPO_ROOT / "tests" / "tools" / "specs" / "td0320_moi_hon.json"
+SPEC_DIR = REPO_ROOT / "tests" / "tools" / "specs"
+SPEC_THAT = SPEC_DIR / "td0320_moi_hon.json"
+#: Mọi đặc tả thật. `td0330` nghiệm thu test khoá hai chiều: `tests` của nó là CHỈ file
+#: `test_td0330…`, nên nghiệm thu chạy Ở ĐÂY (file này) chứ không trong file TD-0330 — đặt trong
+#: chính file đó thì tiến trình con sẽ chạy lại chính nó và đệ quy vô hạn.
+SPECS_THAT = [SPEC_DIR / "td0320_moi_hon.json", SPEC_DIR / "td0330_khoa_hai_chieu.json"]
 
 
 def _nap_cong_cu():
@@ -290,30 +295,40 @@ class TestCongCuThatSuDoiHanhViVaKhongDoiDia:
 # ── (4) đặc tả THẬT khớp mã THẬT, và tái lập kết quả 1be9b88 ─────────────────────────
 
 
+@pytest.mark.parametrize("spec", SPECS_THAT, ids=lambda p: p.stem)
 class TestDacTaThatKhopMaThat:
-    def test_khoi_duy_nhat_va_moi_bien_the_dot_duoc(self) -> None:
-        dt = M.DacTa.tu_json(SPEC_THAT)
+    def test_khoi_duy_nhat_va_moi_bien_the_dot_duoc(self, spec) -> None:
+        dt = M.DacTa.tu_json(spec)
         nguon = (REPO_ROOT / dt.file).read_text(encoding="utf-8")
         M.tim_khoi(nguon.splitlines(keepends=True), dt.khoi_dong)
         for ten in dt.bien_the:
             compile(M.dot_bien(nguon, dt, ten), dt.file, "exec")
 
-    def test_moi_file_test_trong_dac_ta_ton_tai(self) -> None:
-        for t in M.DacTa.tu_json(SPEC_THAT).tests:
+    def test_moi_file_test_trong_dac_ta_ton_tai(self, spec) -> None:
+        for t in M.DacTa.tu_json(spec).tests:
             assert (REPO_ROOT / t).is_file(), t
 
-    def test_tai_lap_1be9b88_khop_du_doan_va_dia_khong_doi(self) -> None:
-        """Chạy THẬT ba biến thể trên `entry_confirmation.py`. Đây cũng là ca canh LONG: nếu
-        ai đó làm yếu các test bắt lỗi cực trị cụm, `ky_vong_do_gom` báo LỆCH ở đây."""
-        dt = M.DacTa.tu_json(SPEC_THAT)
+    def test_moi_test_phai_do_deu_ton_tai_trong_tap_tests(self, spec) -> None:
+        """`ky_vong_do_gom` trỏ vào một nodeid không có thật thì ca "PHẢI đỏ" không bao giờ
+        thoả được — hoặc tệ hơn, bị đọc là đỏ vì lỗi khác. Đòi file của nodeid nằm trong `tests`."""
+        dt = M.DacTa.tu_json(spec)
+        for ten, ds in dt.ky_vong_do_gom.items():
+            for nodeid in ds:
+                assert nodeid.split("::")[0] in dt.tests, (ten, nodeid)
+
+    def test_chay_that_khop_du_doan_va_dia_khong_doi(self, spec) -> None:
+        """Chạy THẬT mọi biến thể trên mã nguồn thật. Đây cũng là ca canh LONG: nếu ai đó làm yếu
+        các test bắt lỗi cực trị cụm, `ky_vong_do_gom` báo LỆCH ở đây và suite đỏ."""
+        dt = M.DacTa.tu_json(spec)
         nguon = REPO_ROOT / dt.file
         truoc = _sha(nguon)
         kq = subprocess.run(
-            [sys.executable, str(TOOL), "--spec", str(SPEC_THAT), "--variant", "all",
+            [sys.executable, str(TOOL), "--spec", str(spec), "--variant", "all",
              "--root", str(REPO_ROOT)],
             capture_output=True, text=True, encoding="utf-8", cwd=str(REPO_ROOT),
         )
         assert kq.returncode == 0, kq.stdout + kq.stderr
         assert "== M0: XANH" in kq.stdout
-        assert "== M1: DO" in kq.stdout and "== M2: DO" in kq.stdout
+        for ten, mong in dt.ky_vong.items():
+            assert f"== {ten}: {mong.upper()}" in kq.stdout, (ten, kq.stdout)
         assert _sha(nguon) == truoc, "công cụ đã đổi file trên đĩa"
