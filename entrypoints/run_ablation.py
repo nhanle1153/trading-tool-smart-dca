@@ -121,7 +121,9 @@ def main(argv: list[str] | None = None) -> int:
         cfg = load_tool_d_config()
         ro = ro_cho_tap(TAP)  # đọc YAML rổ; CHƯA chạm dữ liệu thị trường
         bien = dataset_boundaries_from_config(cfg)[TAP]
-        tu, den = bien.start, bien.end + timedelta(days=1)  # `den` KHÔNG bao gồm
+        # DR-D9-01: WFO = [T1, T2) NỬA MỞ — `bien.end` là T2, và giờ 00:00 của T2 là mốc LOCKBOX. Bản đầu (TD-0335) dùng
+        # `bien.end + 1 ngày` và lấn một giờ qua mốc đó; lộ ra khi chốt 5m từ chối lượt đếm TD-0345 (19/09/2026).
+        tu, den = bien.start, bien.end  # `den` KHÔNG bao gồm
         assert_dataset_timerange(dataset=TAP, observed_start=tu, observed_end=den - timedelta(days=1), boundary=bien)
     except (RoGiaiDoanError, TimerangeViolationError, KeyError) as exc:
         print(f"🛑 {type(exc).__name__}: {exc}")

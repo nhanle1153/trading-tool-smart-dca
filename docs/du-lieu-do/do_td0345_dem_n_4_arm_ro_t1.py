@@ -19,7 +19,7 @@ import json
 import sys
 import tempfile
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
@@ -56,7 +56,9 @@ def main() -> int:
         return 3
     cfg = load_tool_d_config(REPO / "config" / "tool_d_config.yaml")
     bien = dataset_boundaries_from_config(cfg)[TAP]
-    tu, den = bien.start, bien.end + timedelta(days=1)
+    # DR-D9-01: WFO = [T1, T2) NỬA MỞ — giờ 00:00 của ngày T2 là mốc LOCKBOX, không thuộc WFO. Lượt đầu (19/09) xin
+    # [T1, T2 + 1 ngày) và chốt 5m từ chối đúng giờ đó (98/107 mã) — D-0006 đã hoàn trả theo nguyên nhân máy.
+    tu, den = bien.start, bien.end
     ro = ro_cho_tap(TAP, repo_dir=REPO)
     thu_muc = REPO / ro.thu_muc_du_lieu
     data_hashes = hash_many({f.name: f for f in sorted(thu_muc.glob("*.feather"))})
