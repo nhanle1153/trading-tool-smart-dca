@@ -931,6 +931,28 @@
 
 ---
 
+## Khối 31 — Triển khai liên tục D5 → D9.5 + dry-run D11 song song (mở 19/09/2026, thi hành `DR-TRIEN-KHAI-01`)
+
+> **Vì sao khối này tồn tại:** chủ dự án chốt 19/09/2026 (phiên mã `dd855fee`): **không chờ** 01/10, 31/12 hay dữ
+> liệu sau `T3`. D5 → D9 → D9.5 chạy liền trên dữ liệu lịch sử; dry-run D11 chạy **song song** (ghi đè `spec:2954`);
+> **giữ cổng tiền ở D12**; suất (d) hạ xuống phụ, không chặn. Việc đã có mã thì **dùng lại mã cũ**: D5 = TD-0251/0255/
+> 0257/0258 · D6 = TD-0262…0267 · D7 = TD-0268…0273 · D8 = TD-0274/0275/0279 + TD-0302/0308/0310 · D9 = TD-0286…0288.
+> Khối này chỉ chứa việc **chưa có dòng nào**. 🔴 Lô D4 (`TD-0184…0186`, `DR-D4-19`) là của phiên `58cebb70` — Khối 31
+> không đụng; mọi việc cần `d4_complete` chờ khoá đó có trên đĩa.
+
+| Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
+|---|---|---|---|---|
+| TD-0349 | 🚪 **`DR-TRIEN-KHAI-01`** — ghi đè có ý thức `DR-IQ-01` §1, `DR-HUONG-01` §2/§5, `DR-D4-19` §3 + vế *"về ⏸"* §4, `spec:2954`; bốn điều kiện cổng tiền D12 viết TRƯỚC khi có kết quả D9/D9.5 | 🔓 | — | Commit **RIÊNG và TRƯỚC** mọi dòng mã; khai thẳng quyết SAU khi thấy EXPLORE ≈ 0 |
+| TD-0350 | **Dry-run D11 chạy được**: `ops/dry_run.py` (phủ 4 khoá vận hành lên `config/freqtrade/config.json`, rổ `pool.yaml` hôm nay, từ chối nếu `dry_run ≠ true` / có key / rổ rỗng) · heartbeat nối vào `ZoneAbsorption.bot_loop_start()` (chỉ live/dry_run) · watchdog `--runmode` bắt buộc · hai service `dryrun`/`dryrun-watchdog` sau profile `van_hanh`, che `lockbox/data/` | 🔓 | TD-0349 | Test qua đường sản xuất + phá thật (mỗi phép phá đúng 1 ca đỏ); chạy thật trong Docker: bot RUNNING, đủ rổ, heartbeat ghi đều; `entrypoints/` vẫn 8 file |
+| TD-0351 | **Lật ⏸ → 🔓** các dòng được nối lại theo `DR-TRIEN-KHAI-01`: TD-0257/0258 · TD-0286/0287/0288 · TD-0302/0308/0310 + đầu Khối 20–22 (mốc căn ⏸ gốc `13cd37e`) | 🔓 | TD-0349 | Commit riêng, chỉ đổi ô trạng thái/nhãn ⏸, mỗi dòng trỏ `DR-TRIEN-KHAI-01`; `--kiem-backlog` exit 0 |
+| TD-0352 | **D9.5 — chạm lockbox đúng một lần**: chế độ chạm thật của E4 (`touch_lockbox.py:190-196` hôm nay luôn từ chối) trên seal CẤP LẠI rổ T2 (`DR-LOCKBOX-01`), đánh giá theo luật `TD-0274`, ghi `d9_5_complete` một lần | 🔓 | TD-0287 (`d9_complete`), TD-0310, TD-0274 | Chạy lại ⇒ từ chối; chạm lần hai ⇒ từ chối trước khi mở file dữ liệu; kết cục DR-011 ghi sổ |
+| TD-0353 | **Tách file trạng thái vận hành theo runmode trước D10**: `equity_peak.DUONG_DAN_MAC_DINH` dùng CHUNG cho dry-run và live ⇒ dry-run + lệnh live tối thiểu D10 chạy cùng lúc sẽ ghi đè đỉnh equity của nhau (N11) | 🔓 | TD-0350 | Hai runmode hai file; test TD-0238 xanh không sửa khẳng định; phá thật ⇒ đỏ |
+
+**Đặt chỗ mã (N12 mục 7c):** `TD-0349`…`TD-0353` + `DR-TRIEN-KHAI-01`, commit này, `Phien: dd855fee`. Chưa đặt chỗ mã cho
+bộ chạy D10 (`DR-D10-02`): chờ chủ dự án làm xong phần tài khoản Binance phụ (`DR-D11-01` §3).
+
+---
+
 ## Việc đã biết là sẽ có, chưa mở
 
 | Giai đoạn | Nội dung | Chặn bởi |
