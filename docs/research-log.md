@@ -3677,3 +3677,37 @@ Không sinh lại JSON, không sửa số nào ở các nơi trích.
 
 Các số Short nói trên là **mức độ lớn, CHƯA hiệu chỉnh lỗi**: dùng để biết Short không vô vọng về tần suất, KHÔNG dùng
 làm căn cứ chốt số mẫu, sàn 150 hay bất kỳ ngưỡng nào. Ai cần con số đúng phải đo lại khi D-đo mở, và viết DR TRƯỚC khi đo.
+
+## 19/09/2026 — Khối 30 (`DR-D4-14`): dựng D4, khoá đo — ba điều học được
+
+Phiên mã `69768527`. TD-0332…TD-0337 xong, 0 trial, sổ trial thật giữ 13 dòng, `runtime_state.json` không đổi.
+Khoá `D4_DO_TAM_DUNG = True` (`src/tool_d/ablation/khoa_do.py`); E3 `--chay` thoát 110 trước mọi đặt chỗ.
+
+### 1. Export backtest KHÔNG mang `custom_data` — `planned_risk_usdt` phải suy ngược
+
+Đo trong image (Freqtrade 2026.8): `LocalTrade.to_json` không có trường `custom_data`, nên `co_lenh` — nơi chiến lược
+cất `planned_risk_usdt` — biến mất khỏi export. Điều kiện dừng `DR-D4-14` §7 đã nổ đúng như viết trước; chủ dự án chốt
+suy ngược qua `phuc_hoi_ke_hoach_sau_restart()` (`DR-D4-14` §10). Phép kiểm ĐỘC LẬP trên export thật: `n_full` suy từ
+tranche 1 nhân `w[1]` khớp notional tranche 2 chiến lược thật sự đặt (< 1%). ⚠️ Mọi đo lường sau này cần một thứ chiến
+lược chỉ cất trong `custom_data` sẽ gặp đúng chỗ hở này — kiểm export TRƯỚC khi thiết kế phép đo.
+
+### 2. Tôi làm đỏ L-Z48c ở hai commit và không thấy — vì chỉ chạy file test của chính mình
+
+TD-0333/TD-0334 chỉ chạy test riêng rồi commit; ba chữ `R` trần trong docstring (`trich_lenh.py`, `ban_ghi.py`) vi phạm
+L-Z48c. Bắt được lúc chạy lớp canh quét mã trước TD-0335, sửa ở `30b5333` (diễn đạt lại, không nới phép kiểm). Bài học:
+file mới trong `src/`/`entrypoints/` rơi vào tầm quét của L-Z25/L-Z37/L-Z39/L-Z46/L-Z48c — chạy
+`tests/lock -k "lz2 or lz3 or lz4"` cùng test riêng TRƯỚC khi commit, không để tới full suite.
+
+### 3. 🔴 `DR-D4-12` §1.7 — "công thức nói CÓ" là SAI ở tầng công thức, chưa cần tới fill thật
+
+§1.7 hỏi: ở lệnh khớp đủ ba tranche, `Σ rui_ro_da_trien_khai` có bằng `planned_risk_usdt` không — và ghi *"Công thức nói
+**có** (đó là ý nghĩa của `p_avg`)"*, lệch ⇒ DỪNG, báo. Suy từ chính công thức (CHƯA đo):
+
+    Σ rui_ro = N_full · Σ w_j·(p_j − sl)/p_j = N_full · (1 − sl·Σ w_j/p_j)
+    planned  = N_full · (p_avg − sl)/p_avg    = N_full · (1 − sl/p_avg),   p_avg = trung bình CỘNG
+
+Tranche có notional bằng nhau nên `Σ w_j/p_j ≥ 1/p_avg` (trung bình điều hoà ≤ trung bình cộng) ⇒ **Σ rui_ro ≤ planned**,
+bằng nhau chỉ khi `p1 = p2 = p3`. Ví dụ `p = (100, 98, 96)`, `sl = 94`: tỉ số **0,99342**; zone hẹp `(100; 99,5; 99)`,
+`sl = 97`: **0,99933**. Lệch là bậc hai theo độ rộng zone — nhỏ, nhưng KHÁC 0 theo công thức, nên phép đo §1.7 trên fill
+thật sẽ luôn "lệch" dù fill hoàn hảo. ⇒ Nếu giữ nguyên chữ §1.7, TD-0184 sẽ DỪNG vì một hệ quả số học chứ không vì fill.
+**Không tự sửa DR** — trình chủ dự án (quy tắc 11): cần chốt dung sai hoặc so với công thức điều hoà thay vì bằng tuyệt đối.
