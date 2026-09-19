@@ -947,16 +947,79 @@ BANG_CHUNG_DR_D4_04 = (
     ("h4_tp_fallback", "H-4 — tỉ lệ TP rơi nạng"),
 )
 
-D4_HAN_CHE = (
-    "(1) D4 KHÔNG phán quyết câu DCA — DR-D4-10 §2.4: mặc định Z0 single-entry, DCA vào Idea "
-    "Queue với nhãn 'chưa từng được đo, không phải đã thất bại'. Arm Z3 chỉ mua một con số MÔ TẢ. "
-    "(2) Chỉ hướng LONG (DR-D4-01); Short HOÃN, cần DG7 riêng + Δ_R(SHORT) + lockbox mới — "
-    "'đã đóng cho Long' KHÔNG có nghĩa 'đã phủ cả hai hướng'. "
-    "(3) Lô 4/9 arm (DR-D4-12 §4): chỉ Z0-T1 mua phán quyết Nhánh 1; Z0/Z0-T0/Z3 là mô tả; "
-    "5 arm bị cắt là 'chưa từng được đo'. N giữ 114. "
-    "(4) Nhánh 1 phán quyết trên R_trien_khai theo rủi ro ĐÃ TRIỂN KHAI (DR-D4-12 §1); "
-    "planned_risk_usdt SUY NGƯỢC từ fill tranche 1 (DR-D4-14 §10)."
+#: TD-0338 — hai tiêu chí Nhánh 1 dạng "bộ test PASS" (`gates/d0_9.TIEU_CHI_BO_TEST`), mỗi file chạy RIÊNG.
+DUONG_DAN_TEST_H4D = (
+    "tests/lock/test_lz1_confirmed_at_bar.py",
+    "tests/lock/test_td0105_zss_confirmed_at_bar_audit.py",
+    "tests/lock/test_td0170_lookahead_cong_dg.py",
 )
+#: L-Z10…L-Z33 (spec §9c.6). L-Z10/11/12/15/16/17 sống trong `test_audit_checks.py`, L-Z20 trong `test_notional.py`;
+#: L-Z21/22 có test từ TD-0338; L-Z23 không có trong spec. Phần tử có thể là mẫu glob — mỗi mẫu phải khớp ĐÚNG MỘT file
+#: (`_mo_rong_mau`), thiếu hay thừa ⇒ tiêu chí `unreadable`, không PASS rỗng.
+DUONG_DAN_TEST_LZ10_LZ33 = (
+    "tests/unit/test_audit_checks.py",
+    "tests/lock/test_lz13_lockbox_access_log.py",
+    "tests/lock/test_lz14_lockbox_seal_hash.py",
+    "tests/lock/test_td0190_lz15_pham_vi_tu_tier_b.py",
+    "tests/lock/test_td0118_lz17_canh_bao_khong_chan.py",
+    "tests/lock/test_lz18_time_stop_ceiling.py",
+    "tests/lock/test_lz19_hold_duration_recorded.py",
+    "tests/unit/test_notional.py",
+    "tests/lock/test_lz21_lz22_ket_nap_danh_muc.py",
+    "tests/lock/test_lz24_freqtrade_config_flags.py",
+    "tests/lock/test_lz25_*.py",  # mẫu glob: tên file chứa chuỗi L-Z25 cấm trong mã chạy được
+    "tests/lock/test_lz26_de_xuat_doi_tham_so.py",
+    "tests/lock/test_lz27_lz28_ngan_sach_b3_va_diem_quyet_dinh.py",
+    "tests/lock/test_lz29_dof_accounting.py",
+    "tests/lock/test_lz30_funding_stop_ceiling.py",
+    "tests/lock/test_lz31_funding_paid_recorded.py",
+    "tests/lock/test_lz32_forbidden_leverage_vars.py",
+    "tests/lock/test_lz33_no_15m_timeframe.py",
+)
+
+
+def _theo_arm(ban_ghi: list[dict]) -> dict[str, dict]:
+    return {bg.get("arm"): bg for bg in ban_ghi}
+
+
+def _chi_so(bg: dict | None, khoa: str):
+    """Một ô `chi_so` của bản ghi arm → `Measured`; thiếu bản ghi/thiếu khoá ⇒ `pending` (không bịa)."""
+    from tool_d.measurement.tri_state import Measured, Status
+
+    if bg is None:
+        return Measured.pending("không có bản ghi arm")
+    o = (bg.get("chi_so") or {}).get(khoa)
+    if not isinstance(o, dict) or "status" not in o:
+        return Measured.pending(f"bản ghi không có chi_so.{khoa}")
+    return Measured(status=Status(o["status"]), value=o.get("value"), note=o.get("note"))
+
+
+def _d4_han_che(ban_ghi: list[dict]) -> str:
+    """`DR-D4-12` §10(f) — SÁU điều, cộng nguồn `planned_risk_usdt` (`DR-D4-14` §10) và §1.7 (`DR-D4-15`)."""
+    theo = _theo_arm(ban_ghi)
+    kc = (theo.get("Z0-T1") or {}).get("ket_cuc", {}).get("value")
+    b17 = _chi_so(theo.get("Z3"), "bat_bien_1_7_ty_so_trung_vi")
+    muc_17 = f"trung vị {b17.value:.4f}" if b17.is_ok() else f"không đo được — {b17.note}"
+    muc_6 = (
+        f"(6) Kết cục Z0-T1 = {kc} — khai thẳng: ở cỡ mẫu này D4 KHÔNG phân biệt được lợi thế với may mắn "
+        "(DR-D4-12 §2). "
+        if kc == "INCONCLUSIVE"
+        else f"(6) Kết cục Z0-T1 = {kc}. "
+    )
+    return (
+        "(1) Chỉ hướng LONG (DR-D4-01); Short HOÃN — cần DG7 riêng + Δ_R(SHORT) + lockbox mới; 'đã đóng cho Long' "
+        "KHÔNG có nghĩa 'đã phủ cả hai hướng'. "
+        "(2) D4 KHÔNG phán quyết câu DCA (DR-D4-10 §2.4): mặc định Z0 single-entry, DCA vào Idea Queue với nhãn "
+        "'chưa từng được đo, không phải đã thất bại'; arm Z3 chỉ mua con số MÔ TẢ. "
+        "(3) Rổ: K = 52,6% (DR-D4-12 §3) — chiều lệch tần suất CHƯA ĐO. "
+        "(4) Chỉ chạy 4/9 arm (DR-D4-12 §4): Z0-T1 phán quyết; Z0/Z0-T0/Z3 mô tả; 5 arm bị cắt 'chưa từng được đo'; "
+        "N giữ 114. "
+        "(5) Skewness-so-Z1: KHÔNG ÁP DỤNG cho Z0-T1 (arm entry đơn, DR-D9-02 b′) — không phải 'đạt', không phải "
+        "'chưa đo'. "
+        + muc_6
+        + "(7) planned_risk_usdt SUY NGƯỢC từ fill tranche 1 (DR-D4-14 §10). "
+        + f"(8) Bất biến §1.7 (DR-D4-15): {muc_17}."
+    )
 
 
 def _dem_b2_da_tieu(registry_path: Path) -> int:
@@ -980,13 +1043,76 @@ def _doc_ban_ghi_arm(runs_dir: Path) -> tuple[list[dict], list[str]]:
     return ban_ghi, loi
 
 
-def _bang_chung_dr_d4_04(ban_ghi: list[dict]) -> tuple[dict, list[str]]:
-    """Bốn bằng chứng `DR-D4-04` §7. Hôm nay KHÔNG cái nào có nguồn máy: bản ghi arm
-    (`arm_result.schema.json`) không mang tên chiến lược, tỉ trọng tranche, stake hay H-4.
-    Trả về danh sách THIẾU — cổng từ chối theo đúng chữ TD-0186 (*"Thiếu một ⇒ cổng từ
-    chối"*). Dựng nguồn cho chúng là `TD-0339`; khi có, hàm này là chỗ DUY NHẤT phải sửa.
-    🔴 Không nhận lời khai thay nguồn máy — một bằng chứng `do-duoc` gõ tay là MT-10."""
-    return {}, [ten for ten, _ in BANG_CHUNG_DR_D4_04]
+def _bang_chung_dr_d4_04(ban_ghi: list[dict], runs_dir: Path) -> tuple[dict, list[str]]:
+    """Bốn bằng chứng `DR-D4-04` §7 (TD-0339), đọc từ hiện vật của E3 — không nhận lời khai (MT-10).
+
+    (i) `ket_qua_chay.json` của MỌI bản ghi: `chien_luoc` = `ZoneAbsorption` (khoá báo cáo thật, `doc_ket_qua`).
+    (ii) `Z3` (arm DCA duy nhất của lô): `ti_trong_tranche_dat` đo được và đạt.
+    (iii) `Z0-T1`: `stake_theo_r_eff_rho` đo được và > 0.
+    (iv) `Z0-T1`: `tp_fallback_ratio` đo được (ngưỡng ≤ 40% là việc của gate §10.2, không phải của bằng chứng).
+    Trả `(bằng chứng, vấn đề)`; vấn đề ≠ rỗng ⇒ cổng TỪ CHỐI (TD-0186: *"Thiếu một ⇒ cổng từ chối"*).
+    """
+    theo = _theo_arm(ban_ghi)
+    bc: dict[str, str] = {}
+    van_de: list[str] = []
+
+    if not ban_ghi:
+        van_de.append("chien_luoc_da_chay: 0 bản ghi arm")
+    else:
+        sai = []
+        for bg in ban_ghi:
+            f = runs_dir / str(bg.get("trial_id")) / "ket_qua_chay.json"
+            try:
+                ten = json.loads(f.read_text(encoding="utf-8")).get("chien_luoc")
+            except (OSError, json.JSONDecodeError):
+                ten = None
+            if ten != "ZoneAbsorption":
+                sai.append(f"{bg.get('arm')}: {ten!r}")
+        if sai:
+            van_de.append(f"chien_luoc_da_chay: {sai}")
+        else:
+            bc["chien_luoc_da_chay"] = f"{len(ban_ghi)}/{len(ban_ghi)} lượt = ZoneAbsorption (khoá báo cáo thật)"
+
+    for ten, arm, khoa, dat in (
+        ("ti_trong_tranche_fill", "Z3", "ti_trong_tranche_dat", lambda v: v is True),
+        ("stake_theo_r_eff", "Z0-T1", "stake_theo_r_eff_rho", lambda v: v > 0),
+        ("h4_tp_fallback", "Z0-T1", "tp_fallback_ratio", lambda v: True),
+    ):
+        m = _chi_so(theo.get(arm), khoa)
+        if not m.is_ok():
+            van_de.append(f"{ten}: {arm}.{khoa} không đo được — {m.note}")
+        elif not dat(m.value):
+            van_de.append(f"{ten}: {arm}.{khoa} = {m.value!r} — ĐO ĐƯỢC mà không đạt")
+        else:
+            bc[ten] = f"{arm}.{khoa} = {m.value!r}"
+    return bc, van_de
+
+
+def _mo_rong_mau(duong_dans: tuple[str, ...], repo_dir: Path) -> tuple[str, ...]:
+    """Mẫu glob → đường dẫn thật; mỗi phần tử phải khớp ĐÚNG MỘT file."""
+    ra = []
+    for d in duong_dans:
+        khop = sorted(repo_dir.glob(d)) if any(c in d for c in "*?[") else [repo_dir / d]
+        if len(khop) != 1 or not khop[0].is_file():
+            raise FileNotFoundError(f"{d}: khớp {len(khop)} file (cần đúng 1)")
+        ra.append(str(khop[0].relative_to(repo_dir)).replace("\\", "/"))
+    return tuple(ra)
+
+
+def _chay_bo_test(duong_dans: tuple[str, ...], *, ten: str, repo_dir: Path, pytest_cmd: list[str] | None):
+    """Tiêu chí dạng "bộ test PASS" → `Measured[bool]`. 0 ca PASS là KHÔNG ĐO ĐƯỢC, không phải trượt."""
+    from tool_d.measurement.tri_state import Measured
+
+    try:
+        duong_dans = _mo_rong_mau(duong_dans, repo_dir)
+    except FileNotFoundError as exc:
+        return Measured.unreadable(str(exc))
+    ly_do, _ = _chay_rieng_tung_file(duong_dans, ten_cong=ten, repo_dir=repo_dir, pytest_cmd=pytest_cmd)
+    if ly_do is None:
+        return Measured.ok(True)
+    if "0 ca PASS" in ly_do:
+        return Measured.unreadable(ly_do.splitlines()[0])
+    return Measured.ok(False)
 
 
 def close_d4_gate(
@@ -997,6 +1123,7 @@ def close_d4_gate(
     registry_path: Path = DEFAULT_REGISTRY_PATH,
     pytest_cmd: list[str] | None = None,
     pytest_d4_cmd: list[str] | None = None,
+    pytest_bo_test_cmd: list[str] | None = None,
     **run_audit_kwargs,
 ) -> tuple[int, str]:
     """TD-0337 (`DR-D4-14`, phần dựng của TD-0186) — ghi `d4_complete: true` (điều kiện vào D5).
@@ -1046,12 +1173,17 @@ def close_d4_gate(
         ban_ghi_arm=ban_ghi,
         so_dong_b2_consumed=_dem_b2_da_tieu(registry_path),
         d4_huong="LONG",
-        d4_han_che=D4_HAN_CHE,
+        d4_han_che=_d4_han_che(ban_ghi),
     )
-    bang_chung_he_thong, thieu_bang_chung = _bang_chung_dr_d4_04(ban_ghi)
-    if thieu_bang_chung:
+    bang_chung_he_thong, van_de_bang_chung = _bang_chung_dr_d4_04(ban_ghi, runs_dir)
+    if van_de_bang_chung:
+        ly_do.append(f"bằng chứng DR-D4-04 §7 chưa đạt: {van_de_bang_chung}")
+    from tool_d.ablation.chi_so_export import bat_bien_1_7_lech
+
+    b17 = _chi_so(_theo_arm(ban_ghi).get("Z3"), "bat_bien_1_7_ty_so_trung_vi")
+    if bat_bien_1_7_lech(b17):
         ly_do.append(
-            f"thiếu bằng chứng DR-D4-04 §7 (chưa có nguồn máy): {thieu_bang_chung} — TD-0339"
+            f"bất biến §1.7 LỆCH — trung vị D_fill/D_ke = {b17.value:.4f} (DR-D4-15) ⇒ DỪNG, mở lại DR-D4-12 §1"
         )
     if ly_do:
         return (
@@ -1083,6 +1215,29 @@ def close_d4_gate(
     if audit_exit != 0:
         return EXIT_GATE_AUDIT_DIRTY, f"🛑 TỪ CHỐI đóng cổng D4 — audit sổ trial chưa sạch:\n{audit_text}"
 
+    # Gate §10.2 (TD-0336/0341) — GHI, không chặn: DR-D4-11 đóng cổng bằng HIỆN VẬT phán quyết; kết cục nào
+    # (PASS/INCONCLUSIVE/FAIL) cũng là kết quả của D4. Hai tiêu chí bộ-test chạy THẬT ở đây.
+    from tool_d.gates.d0_9 import danh_gia_gate_d09
+    from tool_d.gates.d9_gate import TIEU_CHI_KHAI
+
+    theo = _theo_arm(ban_ghi)
+    z0 = theo.get("Z0") or {}
+    ung_vien = theo["Z0-T1"]
+    gate = danh_gia_gate_d09(
+        ban_ghi_ung_vien=ung_vien,
+        chi_so={k: _chi_so(ung_vien, k) for k in TIEU_CHI_KHAI},
+        bo_test={
+            "h4d": _chay_bo_test(DUONG_DAN_TEST_H4D, ten="D4/h4d", repo_dir=repo_dir, pytest_cmd=pytest_bo_test_cmd),
+            "lz10_lz33": _chay_bo_test(
+                DUONG_DAN_TEST_LZ10_LZ33, ten="D4/lz10_lz33", repo_dir=repo_dir, pytest_cmd=pytest_bo_test_cmd
+            ),
+        },
+        ket_luan_z0t1_vs_z0t2=(
+            f"Z0-T1 {ung_vien['ket_cuc']['value']} (n = {ung_vien['n_toan_cua_so']}) vs Z0 = Z0-T2 "
+            f"{z0.get('ket_cuc', {}).get('value')} (n = {z0.get('n_toan_cua_so')}) — đọc từ bản ghi"
+        ),
+    )
+
     state["d4_complete"] = True
     state["d4_closed_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
     state["d4_git_sha"] = git_info.sha
@@ -1097,9 +1252,16 @@ def close_d4_gate(
             f"{len(ban_ghi)} suất B2 CONSUMED",
         },
         **{ten: {"nguon": "do-duoc", "noi_dung": v} for ten, v in bang_chung_he_thong.items()},
+        "gate_d09": {
+            "nguon": "do-duoc",
+            "noi_dung": (
+                f"Nhánh 1 = {gate.nhanh_1.value} · trượt {list(gate.truot)} · chưa đủ {list(gate.thieu)} · "
+                f"không áp dụng {list(gate.khong_ap_dung)} · {gate.buoc_tiep}"
+            ),
+        },
         "trial_ledger_audit": {"nguon": "do-duoc", "noi_dung": audit_text.splitlines()[0]},
     }
-    state["d4_han_che"] = {"nguon": "nguoi-khai", "noi_dung": D4_HAN_CHE}
+    state["d4_han_che"] = {"nguon": "nguoi-khai", "noi_dung": _d4_han_che(ban_ghi)}
     runtime_state_path.parent.mkdir(parents=True, exist_ok=True)
     runtime_state_path.write_text(
         json.dumps(state, ensure_ascii=False, indent=2, sort_keys=False) + "\n",
