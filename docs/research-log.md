@@ -3850,3 +3850,41 @@ lọt. Hàm mới từ chối cả hai. Phá thật (đưa lại `+1 ngày`): 2 
 
 Ghim QUAN HỆ thay số đếm: trial thật đều B0 và đủ 4, mỗi CTRL khai đúng một dạng. Hai ca kiểm-có-răng chèn B2 giả và CTRL khai
 chồng ⇒ đỏ.
+
+## 19/09/2026 — Lô `DR-D4-19` (E3 thật, 4 arm, rổ T1, WFO): hai lượt dừng, chẩn đoán N10
+
+Phiên mã `58cebb70`. Khoá đo lật ở `50249a3` theo `DR-D4-19` (chủ dự án ghi đè `DR-IQ-01` §1).
+
+### Lượt 1 — lỗi bộ chạy, 0 suất mất (`a2f4c60`, vá `878bdf0`)
+
+Freqtrade thoát 2 ở arm đầu: *"Impossible to load Strategy 'ZoneAbsorption'"*. Nguyên nhân: E1/E3 truyền `repo_dir=Path(".")`,
+còn `chay_mot_luot()` gọi Freqtrade với `cwd` = thư mục tạm ⇒ `--strategy-path`/`--datadir`/`PYTHONPATH` trỏ vào thư mục tạm.
+Test cũ không bắt: `test_td0312` gọi bộ chạy thật với `repo_dir` TUYỆT ĐỐI, `test_td0335` gọi E3 với bộ chạy GIẢ — không ca nào đi
+qua tổ hợp *entrypoint thật + đường dẫn tương đối*. Lỗi máy trước con dấu ⇒ 4 suất REFUND (`L-Z53` làm đúng việc). Test mới
+`test_td0184_repo_dir_tuong_doi.py` đỏ TRƯỚC bản vá với đúng thông báo của lượt thật, xanh SAU.
+
+Phụ: full suite lượt đó có 1 ca đỏ giả (`test_td0145` cache) vì phiên khác commit `5d2c3f1` giữa hai lần gọi — vân tay cache
+lấy HEAD. Chạy riêng 19/19 xanh.
+
+### Lượt 2 — lỗi SAU con dấu, `D-0015` (Z0-T1) đã tiêu (`708a268`)
+
+Backtest `Z0-T1` chạy xong; bước trích lệnh từ chối: FIL/USDT 2025-09-15 10:05, tranche 1 **entry 2,426 ≤ sl 2,4365** —
+`lenh.py:68` không định nghĩa rủi ro âm (N6, fail-closed đúng). `D-0015` CONSUME, ba arm chưa chạy REFUND. `n_used` 4 → 5.
+
+**Câu hỏi N10 — "lệnh thật có đúng thiết kế không?" — trả lời: KHÔNG, và lỗi ở phía chiến lược/backtest, không ở tầng đo.**
+Đọc mã Freqtrade 2026.8 trong image (không suy):
+- `backtesting.py get_valid_entry_price_and_stake`: với LONG, `propose_rate = min(custom_entry_price, row[HIGH])`.
+- `_get_order_filled`: khớp tại `order.ft_price` khi `low ≤ giá ≤ high`.
+
+⇒ Khi CẢ nến nằm dưới `p1`, lệnh limit bị kẹp xuống **đỉnh nến** và khớp ở đó — có thể dưới SL. Trên sàn thật, lệnh mua
+post-only tại `p1` khi thị trường đã dưới `p1` sẽ **bị từ chối** (nó lấy thanh khoản) — §3.5 post-only. Tức backtest sinh ra
+một lệnh mà live không bao giờ có. `confirm_trade_entry` (`ZoneAbsorption.py:1116`) không có chốt nào cho ca này. Cùng cơ chế
+áp cho `p2`/`p3` (kẹp về đỉnh ⇒ khớp TỐT hơn kế hoạch, live cũng từ chối) — chưa đo tần suất.
+
+🔴 **Chưa đo, không suy rộng:** bao nhiêu lệnh của mỗi arm dính kẹp giá; ảnh hưởng lên số đếm `TD-0345` và Δ_R D3.5 (cả hai
+đo trên cùng đường backtest). Chỉ biết ≥ 1 lệnh `Z0-T1` trên WFO.
+
+### Phát hiện phụ — con dấu không có hiện vật
+
+`chay_lo.py:220` ghi `seal_path="runs/{tid}/metrics.seal"` vào sổ nhưng không dòng mã nào ghi file đó; export backtest nằm trong
+thư mục tạm của container `--rm`. ⇒ `D-0015` đã tiêu mà **không còn hiện vật nào để đọc lại**. Chưa sửa — chờ chủ dự án.
