@@ -1,0 +1,36 @@
+{
+  "mo_ta": "TD-0320 (a): vong quet cum cua quet_xac_nhan_zone() tim moc cuc tri cho dieu kien (b). M1 = loi cu (so < vo dieu kien, sai cho loai=dinh); M2 = va qua tay (luon so >, lam hong loai=day). Ket qua goc: commit 1be9b88.",
+  "module": "tool_d.entry_confirmation",
+  "file": "src/tool_d/entry_confirmation.py",
+  "khoi_dong": [
+    "moi_hon = (",
+    "gia_bien_muc[c_cum] < gia_cuc_tri if loai == \"day\"",
+    "else gia_bien_muc[c_cum] > gia_cuc_tri",
+    ")"
+  ],
+  "bien_the": {
+    "M0": null,
+    "M1": "moi_hon = gia_bien_muc[c_cum] < gia_cuc_tri",
+    "M2": "moi_hon = gia_bien_muc[c_cum] > gia_cuc_tri"
+  },
+  "tests": [
+    "tests/unit/test_td0320_quet_dinh_cuc_tri.py",
+    "tests/lock/test_td0193_quet_xac_nhan_zone.py",
+    "tests/lock/test_lz6_xac_nhan_entry_confirmation.py",
+    "tests/lock/test_td0294_xac_nhan_thung_sl.py"
+  ],
+  "ky_vong": {
+    "M0": "xanh",
+    "M1": "do",
+    "M2": "do"
+  },
+  "ky_vong_do_gom": {
+    "M1": [
+      "tests/unit/test_td0320_quet_dinh_cuc_tri.py::TestQuetDinhDungCucTriCaoNhatKhongPhaiMin::test_gia_giua_min_va_max_KHONG_xac_nhan_o_dung_code"
+    ],
+    "M2": [
+      "tests/unit/test_td0320_quet_dinh_cuc_tri.py::TestQuetDayKhongDoiHanhVi::test_day_van_tim_dung_min_nhu_truoc",
+      "tests/lock/test_td0193_quet_xac_nhan_zone.py::TestMocLaDayThatCuaCum_KhongPhaiNenDau::test_dung_diem_thap_nhat_cua_cum_khong_phai_nen_dau_cum"
+    ]
+  }
+}
