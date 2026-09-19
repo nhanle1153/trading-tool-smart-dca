@@ -47,6 +47,10 @@ TIME_STOP_RATIO_BAND: tuple[float, float] = (0.05, 0.25)
 TP_FALLBACK_RATIO_MAX: float = 0.40  # > 40% -> L2, không vào live
 PBO_MAX: float = 0.5  # H18: D4 chỉ GHI (pbo_chan=False), D9 CHẶN (pbo_chan=True) — DR-D9-01 §7, MT-51
 
+# DR-D4-15 (sửa DR-D4-12 §1.7): trung vị D_fill / D_ke trên lệnh đủ ba tranche lệch khỏi 1 quá mức này ⇒
+# DỪNG D4. Lấy từ ngưỡng 0,95 CÓ SẴN ở DR-D4-12 §9.1 ("hai vế đơn vị trùng nhau"), đối xứng — không phải số mới.
+BAT_BIEN_1_7_DUNG_SAI: float = 0.05
+
 # Nhánh 2 (§10.2, chỉ chạy nếu Nhánh 1 PASS) — cùng loại "đã có số".
 BRANCH2_DCA_BEATS_Z0_MIN_PCT: float = 20.0
 BRANCH2_LIQ_BUFFER_RATIO_FACTOR: float = 1.3

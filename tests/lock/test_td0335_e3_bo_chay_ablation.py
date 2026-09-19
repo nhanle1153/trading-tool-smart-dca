@@ -40,6 +40,7 @@ from tool_d.bo_chay.yeu_cau import KetQuaChay
 from tool_d.gates.arm_record import validate_arm_record
 from tool_d.ledger.registry import TrialLedger, TrialState
 from tool_d.measurement.gitinfo import GitInfo
+from tool_d.measurement.tri_state import Measured
 from tool_d.wfo.folds import Fold
 
 REPO = Path(__file__).resolve().parents[2]
@@ -174,7 +175,7 @@ def _kq_gia(lenh=()) -> KetQuaChay:
         timerange_yeu_cau="20250315-20250402", observed_start=TU, observed_end=date(2025, 4, 1),
         du_lieu_co_tu=TU, du_lieu_co_den=date(2025, 4, 1), starting_balance=750.0,
         final_balance=750.0, pnl_abs=tuple(0.0 for _ in lenh), lenh=tuple(lenh),
-        config_sha256="x", duong_ket_qua=Path("x.zip"),
+        config_sha256="x", duong_ket_qua=Path("x.zip"), chien_luoc="ZoneAbsorption",
     )
 
 
@@ -214,6 +215,7 @@ class TestThuTuVaLZ52LZ53:
     def test_loi_may_truoc_con_dau_hoan_tra_arm_do_va_arm_chua_chay(self, repo_nhe, monkeypatch) -> None:
         monkeypatch.setattr(khoa_do, "D4_DO_TAM_DUNG", False)
         monkeypatch.setattr(mod_chay_lo, "lenh_tu_freqtrade", lambda t, **k: t)
+        monkeypatch.setattr(mod_chay_lo, "chi_so_tu_export", lambda **k: {"bat_bien_1_7_ty_so_trung_vi": Measured.unreadable("giả")})
         monkeypatch.setattr(mod_chay_lo, "dung_ban_ghi_arm", lambda **k: {
             "chi_so": {"mean_r": {"status": "ok", "value": 0.1}}, "ket_cuc": {"status": "ok", "value": "INCONCLUSIVE"},
         })

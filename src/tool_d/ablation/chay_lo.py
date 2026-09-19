@@ -40,6 +40,7 @@ from typing import Any
 
 from tool_d.ablation import khoa_do
 from tool_d.ablation.ban_ghi import LO_ARM_D4, co_do_nhom_c, dung_ban_ghi_arm
+from tool_d.ablation.chi_so_export import bat_bien_1_7_lech, chi_so_tu_export
 from tool_d.bo_chay.chay import BacktestHongError, chay_mot_luot
 from tool_d.bo_chay.moi_truong import MoiTruongChay, dung_moi_truong
 from tool_d.bo_chay.trich_lenh import lenh_tu_freqtrade
@@ -206,6 +207,11 @@ def chay_lo(
 
         try:
             lenhs = [lenh_tu_freqtrade(t, cfg=mt.cfg_phu, arm=arm) for t in kq.lenh]
+            # TD-0338/TD-0339 — chỉ số Nhánh 1 + bằng chứng DR-D4-04 §7 + bất biến §1.7, đọc THẲNG từ export.
+            chi_so_them = chi_so_tu_export(
+                lenh=kq.lenh, lenhs=lenhs, cfg=mt.cfg_phu,
+                observed_start=kq.observed_start, observed_end=kq.observed_end,
+            )
             ban_ghi = dung_ban_ghi_arm(
                 arm=arm,
                 lenhs=lenhs,
@@ -224,11 +230,25 @@ def chay_lo(
                     runtime_image_digest=runtime_image_digest,
                 ),
                 trial_id=tid,
+                chi_so_them=chi_so_them,
             )
             thu_muc = thu_muc_ra / tid
             thu_muc.mkdir(parents=True, exist_ok=True)
             duong = thu_muc / "arm_result.json"
             duong.write_text(json.dumps(ban_ghi, indent=2, ensure_ascii=False), encoding="utf-8")
+            # DR-D4-04 §7 (i): tên chiến lược ĐÃ chạy — lấy từ `KetQuaChay`, tức từ khoá báo cáo thật.
+            (thu_muc / "ket_qua_chay.json").write_text(
+                json.dumps(
+                    {
+                        "trial_id": tid, "arm": arm, "chien_luoc": kq.chien_luoc,
+                        "config_sha256": kq.config_sha256, "so_lenh": kq.so_lenh,
+                        "observed_start": kq.observed_start.isoformat(),
+                        "observed_end": kq.observed_end.isoformat(),
+                    },
+                    indent=2, ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
         except Exception as exc:
             ledger.consume(
                 tid,
@@ -252,9 +272,15 @@ def chay_lo(
         )
         kc = ban_ghi["ket_cuc"]["value"]
         kc_m: Measured[str] = Measured(status=Status(ban_ghi["ket_cuc"]["status"]), value=kc)
-        ket_qua.append(
-            KetQuaArm(arm=arm, trial_id=tid, duong_ban_ghi=duong, ket_cuc=kc, co_do=co_do_nhom_c(arm, kc_m))
-        )
+        co_do = co_do_nhom_c(arm, kc_m)
+        b17 = chi_so_them["bat_bien_1_7_ty_so_trung_vi"]
+        if bat_bien_1_7_lech(b17):
+            dung = (
+                f"🛑 arm {arm}: bất biến §1.7 LỆCH — trung vị D_fill/D_ke = {b17.value:.4f} (DR-D4-15). "
+                "DỪNG: mở lại DR-D4-12 §1 toàn bộ (§9 điều kiện 2)."
+            )
+            co_do = f"{co_do}\n{dung}" if co_do else dung
+        ket_qua.append(KetQuaArm(arm=arm, trial_id=tid, duong_ban_ghi=duong, ket_cuc=kc, co_do=co_do))
     return ket_qua
 
 

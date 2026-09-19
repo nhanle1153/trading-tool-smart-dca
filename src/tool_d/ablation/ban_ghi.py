@@ -156,11 +156,14 @@ def dung_ban_ghi_arm(
     trial_id: str | None,
     huong: str = "LONG",
     nguong: float = DSR_ADJ_EXPECTANCY_MIN,
+    chi_so_them: Mapping[str, Measured[Any]] | None = None,
 ) -> dict[str, Any]:
     """Một bản ghi arm, đã qua `validate_arm_record()` (bên trong `build_arm_record`).
 
     :param cua_so: `(observed_start, observed_end)` — ngày THẬT engine đọc (TD-0148),
         không phải ngày xin chạy.
+    :param chi_so_them: khoá `measured` thêm vào `chi_so` (`chi_so_export.chi_so_tu_export`, TD-0338/0339) — schema
+        cho phép khoá thêm; trùng khoá cơ sở ⇒ raise.
     :param folds: sơ đồ fold của WFO (`wfo/folds.sinh_folds`) — chỉ để ĐẾM `n_chi_test`
         (MT-36); Nhánh 1 phán quyết trên toàn cửa sổ (`NGUON_PHAN_QUYET_D4`).
     """
@@ -179,6 +182,10 @@ def dung_ban_ghi_arm(
     n_chi_test = sum(len(x) for x in lat)
 
     chi_so, ket_cuc, _ = thong_ke_arm(lenhs, nguong=nguong)
+    trung = set(chi_so) & set(chi_so_them or {})
+    if trung:
+        raise BanGhiArmError(f"chi_so_them trùng khoá cơ sở {sorted(trung)} — không ghi đè số đã tính")
+    chi_so = {**chi_so, **(chi_so_them or {})}
     return build_arm_record(
         arm=arm,
         huong=huong,

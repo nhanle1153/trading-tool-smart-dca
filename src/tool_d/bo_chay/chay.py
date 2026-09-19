@@ -302,4 +302,5 @@ def chay_mot_luot(
         lenh=doc["lenh"],
         config_sha256=mt.sha256_phu,
         duong_ket_qua=files[-1],
+        chien_luoc=yeu_cau.chien_luoc,
     )

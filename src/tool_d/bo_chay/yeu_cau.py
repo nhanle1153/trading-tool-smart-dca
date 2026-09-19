@@ -113,6 +113,9 @@ class KetQuaChay:
     # — xuất xứ —
     config_sha256: str
     duong_ket_qua: Path
+    #: TD-0339 (`DR-D4-04` §7 (i)) — tên chiến lược ĐÃ chạy. `doc_ket_qua()` đọc báo cáo THEO tên này và từ chối
+    #: nếu báo cáo không có nó, nên giá trị ở đây là tên có trong file kết quả thật, không phải lời khai.
+    chien_luoc: str
 
     @property
     def so_lenh(self) -> int:
