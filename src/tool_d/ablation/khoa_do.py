@@ -21,7 +21,9 @@ KHÔNG phải điều kiện: *"code đã dựng xong"*; ý tưởng (d) ra FAIL
 from __future__ import annotations
 
 #: `DR-IQ-01` §1 + `DR-D4-14` §2.2. Lật giá trị này = nối lại D4-đo — cần DR nối lại.
-D4_DO_TAM_DUNG: bool = True
+#: 19/09/2026: `False` theo `DR-D4-19` (chủ dự án GHI ĐÈ điều kiện 1 của `DR-D4-14` §6, không thoả nó) —
+#: đúng MỘT lô 4 arm, xong thì lật lại `True` (`DR-D4-19` §4).
+D4_DO_TAM_DUNG: bool = False
 
 LY_DO_KHOA = (
     "D4-đo đang TẠM DỪNG — `DR-IQ-01` §1, khoá `D4_DO_TAM_DUNG` (`DR-D4-14` §2.2). "

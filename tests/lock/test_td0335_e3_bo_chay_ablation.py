@@ -4,6 +4,8 @@ Canh, theo thứ tự quan trọng giảm dần:
 
 1. 🔴 **Khoá đo GHIM `True`** — `DR-IQ-01` §1 + `DR-D4-14` §2.2. Ca này đỏ ⇔ ai đó đã lật
    khoá; sửa nó là nối lại D4-đo và phải đi cùng DR nối lại (`DR-D4-14` §6).
+   19/09/2026: ghim `False` theo `DR-D4-19` cho đúng một lô; các ca "khoá bật" ở mục 2 nay tự đặt
+   `True` bằng monkeypatch (tiền điều kiện tường minh, câu kiểm không đổi).
 2. 🔴 **Khoá bật ⇒ 0 suất, 0 dữ liệu**: `chay_lo()` từ chối ở LỆNH ĐẦU (AST), không dựng môi
    trường, không mở sổ; E3 `--chay` thoát `EXIT_D4_DO_TAM_DUNG` và không tạo `TrialLedger`.
 3. 🔴 **Đặt chỗ ĐỦ CẢ LÔ trước arm đầu** (`DR-D4-10` §2.3) — mỗi lần gọi bộ chạy, cả 4 suất đã
@@ -61,9 +63,11 @@ FOLDS = (
 
 class TestKhoaGhim:
     def test_khoa_do_dang_BAT(self) -> None:
-        assert khoa_do.D4_DO_TAM_DUNG is True, (
-            "D4-đo đang TẠM DỪNG theo DR-IQ-01 §1; khoá D4_DO_TAM_DUNG ghim theo DR-D4-14 §2.2. "
-            "Lật khoá = nối lại D4-đo — chỉ khi đủ điều kiện DR-D4-14 §6 và có DR nối lại."
+        # 19/09/2026 — ghim `False` theo DR-D4-19 (nối lại đo, GHI ĐÈ DR-IQ-01 §1, một lô 4 arm).
+        # DR-D4-19 §4: lô xong thì lật lại `True` và dòng này trả về `is True`.
+        assert khoa_do.D4_DO_TAM_DUNG is False, (
+            "DR-D4-19 mở khoá đo cho ĐÚNG một lô D4 (ghi đè DR-IQ-01 §1; khoá ghim theo DR-D4-14 §2.2). "
+            "Lô xong ⇒ lật lại True (DR-D4-19 §4)."
         )
 
 
@@ -86,6 +90,7 @@ class TestKhoaBat:
         assert getattr(dau.value.func, "id", None) == "_tu_choi_neu_khoa"
 
     def test_chay_lo_khong_dung_moi_truong_khong_mo_so(self, tmp_path, monkeypatch) -> None:
+        monkeypatch.setattr(khoa_do, "D4_DO_TAM_DUNG", True)  # tiền điều kiện tường minh (DR-D4-19)
         goi: list[str] = []
         monkeypatch.setattr(mod_chay_lo, "dung_moi_truong", lambda **k: goi.append("mt"))
         monkeypatch.setattr(mod_chay_lo, "ro_cho_tap", lambda *a, **k: goi.append("ro"))
@@ -147,11 +152,13 @@ class TestE3Main:
     def test_khong_co_chay_chi_in_ke_hoach(self, e3_qua_nam_cong) -> None:
         assert e3_qua_nam_cong.main([]) == e3_qua_nam_cong.EXIT_E3_CHUA_XAC_NHAN_CHAY == 109
 
-    def test_chay_khi_khoa_bat_thi_tu_choi(self, e3_qua_nam_cong, capsys) -> None:
+    def test_chay_khi_khoa_bat_thi_tu_choi(self, e3_qua_nam_cong, capsys, monkeypatch) -> None:
+        monkeypatch.setattr(khoa_do, "D4_DO_TAM_DUNG", True)  # tiền điều kiện tường minh (DR-D4-19)
         assert e3_qua_nam_cong.main(["--chay", "--hypothesis-slot", "X"]) == e3_qua_nam_cong.EXIT_D4_DO_TAM_DUNG == 110
         assert "DR-IQ-01" in capsys.readouterr().out
 
-    def test_khoa_dung_truoc_ca_kiem_hypothesis_slot(self, e3_qua_nam_cong) -> None:
+    def test_khoa_dung_truoc_ca_kiem_hypothesis_slot(self, e3_qua_nam_cong, monkeypatch) -> None:
+        monkeypatch.setattr(khoa_do, "D4_DO_TAM_DUNG", True)  # tiền điều kiện tường minh (DR-D4-19)
         assert e3_qua_nam_cong.main(["--chay"]) == 110
 
 
