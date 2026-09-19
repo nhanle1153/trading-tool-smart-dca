@@ -3711,3 +3711,37 @@ bằng nhau chỉ khi `p1 = p2 = p3`. Ví dụ `p = (100, 98, 96)`, `sl = 94`: t
 `sl = 97`: **0,99933**. Lệch là bậc hai theo độ rộng zone — nhỏ, nhưng KHÁC 0 theo công thức, nên phép đo §1.7 trên fill
 thật sẽ luôn "lệch" dù fill hoàn hảo. ⇒ Nếu giữ nguyên chữ §1.7, TD-0184 sẽ DỪNG vì một hệ quả số học chứ không vì fill.
 **Không tự sửa DR** — trình chủ dự án (quy tắc 11): cần chốt dung sai hoặc so với công thức điều hoà thay vì bằng tuyệt đối.
+
+➜ ✅ Đã giải cùng ngày: chủ dự án chọn phương án (A) — `DR-D4-15` (`8e6509b`).
+
+## 19/09/2026 — Khối 30 lượt 2: gỡ §1.7, MT-53, nguồn số cho cổng D4 — và hai lỗi của chính tôi
+
+Phiên mã `69768527`. TD-0340/0289/0341/0338/0339 xong, TD-0342 chờ duyệt nghĩa cột. 0 trial, khoá đo vẫn bật.
+
+### 1. Tôi đã dựng một bộ đánh giá Nhánh 1 THỨ HAI mà không thấy (TD-0336)
+
+`gates/d0_9.py` bản đầu tự khai danh sách tiêu chí, trong khi `thresholds.evaluate_branch1()` + `d9_gate` đã có sẵn ngưỡng
+và luật ba kết cục. Bắt được lúc khảo sát nguồn số cho TD-0338, không phải lúc viết. Sửa ở TD-0341: dùng chung ngưỡng +
+danh sách + `evaluate_branch1`. Phần tách ba kết cục (~10 dòng) buộc phải có mặt ở hai nơi vì `test_td0285` khoá bằng AST
+rằng `d9_gate` gọi TRỰC TIẾP `evaluate_branch1` — nên thay vì gộp, có ca ĐỐI CHIẾU D4↔D9 (cùng đầu vào ⇒ cùng kết cục).
+Bài học: trước khi dựng một "cổng", grep tên các tiêu chí của nó — thứ đã có thường đã có dưới tên khác.
+
+### 2. MT-53 đã có lời giải từ 17/09, chỉ thiếu mã
+
+`DR-D9-02` (b′) chốt skewness-so-`Z1` không áp dụng cho arm entry đơn. Thi hành ở TD-0289 (`4cf5ed0`): `arm` bắt buộc,
+"không áp dụng" liệt kê tường minh. Ô trạng thái MT-53 ở `back-end-note.md` vẫn ghi "⏳ chờ chủ dự án" — lỗi thời, chờ
+"chuẩn hóa và lưu".
+
+### 3. Số đo đầu tiên của bất biến §1.7 theo `DR-D4-15` — trên dữ liệu TỔNG HỢP
+
+Fixture `test_td0187` (1 lệnh khớp đủ 3 tranche): trung vị `D_fill / D_ke` = **0,966** — fill lệch kế hoạch 3,4%, trong
+mốc 5%. Đây là dữ liệu tổng hợp, KHÔNG nói gì về rổ thật; chỉ cho biết phép đo chạy và phần lệch fill cùng bậc với mốc.
+Nếu trên dữ liệu thật con số rơi sát 0,95, xem lại cơ chế khớp tranche 2/3 ở giá mở nến (DR-015) trước.
+
+### 4. Hai lỗi thao tác, cả hai bắt được bằng đối chiếu với đĩa
+
+- **`git checkout --` để trả phép "phá thật" trên file còn sửa chưa commit** ⇒ mất trọn phần nối `close_d4_gate()`; lượt
+  phá kế tiếp chạy trên code cũ và báo "7 failed" trông hợp lý. Cứu bằng script vá còn trong scratchpad. Từ nay: trả bằng
+  bản sao lưu (memory `pha-that-khong-tra-bang-git-checkout`).
+- **Gõ mã commit từ trí nhớ** vào ô ✅ của TD-0338/0339 (`4e7a1a0` — không tồn tại). Sửa ở `5daa6b1`. Cùng họ với N12
+  mục 3: một mã commit trong `TASKS.md` là lời khai cho tới khi `git cat-file` xác nhận.
