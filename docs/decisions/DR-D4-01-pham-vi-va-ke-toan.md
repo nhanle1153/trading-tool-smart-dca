@@ -71,6 +71,15 @@ Không đạt đủ ba → Short vẫn hoãn, và **`tier_a.enable_short` giữ 
 thi hành điều kiện 2; điều kiện 1 và 3 chưa có máy canh — ghi ra đây để không ai coi việc
 `L-Z56` xanh là đủ.
 
+> 📌 **Bổ sung 19/09/2026 (TD-0276, thi hành `DR-D6D8-01` §1.1 / D8.3), giữ nguyên chữ trên.**
+> Ngoài ba điều kiện trên, hướng Short còn một hệ quả của quyết định *Long-only tới live* (17/09/2026):
+> **cần lockbox MỚI.** `DR-011` (`spec:3335-3337`) đặt *một lần chạm = một phiên chạy duy nhất, sinh cả
+> bộ metric Long lẫn Short*; mang cấu hình Long-only ra lockbox `[T2,T3]` thì lần chạm đó đã tiêu luôn
+> cho Short. Short về sau là chu trình riêng (D3.5-Short → D4-Short → D5-Short → WFO), phải chờ dữ liệu
+> mới rồi niêm phong đoạn `[T3_cũ … T3_mới]`, cùng cơ chế với nhánh INCONCLUSIVE của `DR-011`.
+> Bổ sung này **cộng thêm** vào ba điều kiện, không thay điều kiện nào. Chi tiết và căn cứ ở
+> `DR-D6D8-01` §1.1 — không chép sang đây; **không có DR Short thứ hai** (N12 mục 6).
+
 ---
 
 ## 3. Chín cấu hình, và trạng thái mã nguồn THẬT của từng cái
@@ -186,3 +195,5 @@ mất dữ liệu).
 
 - **08/09/2026** — tạo, chốt (a) Long trước 9 trial, (b) xác nhận tiêu B2, cùng hai việc đi
   kèm ở §6. Chủ dự án quyết qua bốn câu hỏi trực tiếp.
+- **19/09/2026** — bổ sung một đoạn vào §2b (Short cần lockbox MỚI), thi hành `DR-D6D8-01` D8.3 / TD-0276.
+  Chữ cũ giữ nguyên.
