@@ -895,6 +895,28 @@
 
 ---
 
+## Khối 30 — Dựng D4, KHOÁ khâu đo (mở 19/09/2026, thi hành `DR-D4-14`)
+
+> **Chủ dự án chốt 19/09/2026 (phiên mã `69768527`):** *"bắt đầu code triển khai tiếp tục D4"* hiểu là **chỉ DỰNG**
+> (trả lời câu hỏi phạm vi) — cùng khuôn `DR-SHORT-01`/Khối 28. Toàn khối **0 suất trial**, chỉ dữ liệu tổng hợp,
+> không chạm CALIB/WFO/LOCKBOX/EXPLORE thật. Khoá đo = hằng số ghim trong code + test khoá (khuôn TD-0171).
+>
+> 🔴 **Không gỡ ⏸ nào.** `TD-0184`/`TD-0185`/`TD-0186` giữ ⏸ và từ nay mang nghĩa phần **ĐO** của D4; điều kiện
+> nối lại là `DR-IQ-01` §1 nguyên chữ. `TD-0227` không đụng (chờ cổng D4 + `MT-35`). 11 dòng căn ở `13cd37e` không đụng.
+
+| Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
+|---|---|---|---|---|
+| TD-0332 | 🚪 **`DR-D4-14`** — tách D4-dựng (0 trial) khỏi D4-đo (⏸); khoá `D4_DO_TAM_DUNG`; điều kiện lật khoá; danh sách KHÔNG làm | 🔒 | — | Commit **RIÊNG và TRƯỚC** mọi dòng mã (tiền lệ `DR-SHORT-01`). Khai thẳng: quyết SAU khi thấy EXPLORE ≈ 0 |
+| TD-0333 | **Trích lệnh Freqtrade → `LenhWFO`** (`wfo/lenh.py`), chuyển logic `_r_trien_khai` của `do_td0291` vào `src/` | 🔓 | TD-0332 | Test trên dict tay + một lượt fixture tổng hợp; `planned_risk_usdt` đọc từ nguồn THẬT hoặc dừng báo — không bịa (N6) |
+| TD-0334 | **Tầng thuần ablation** `src/tool_d/ablation/` — `khoa_do.py` (khoá), `ban_ghi.py` (4 arm `DR-D4-12` §4, lệnh → bản ghi qua `build_arm_record`) | 🔓 | TD-0333 | Test đơn vị; số chưa tính được ⇒ `pending`/`unreadable`, không `0.0` |
+| TD-0335 | **Bộ chạy E3** `run_ablation.py` — thay `NotImplementedError`; `--chay` + khoá bật ⇒ từ chối TRƯỚC `reserve()` | 🔓 | TD-0334 | Test khoá: ghim khoá nêu `DR-IQ-01`/`DR-D4-14`; khoá bật ⇒ sổ 0 dòng mới; khoá tắt trên repo giả ⇒ 4 arm B2 đi đủ RESERVE→SEAL→CONSUME; `L-Z52`/`L-Z53` trên đường E3 thật |
+| TD-0336 | **Gate D0.9 §10.2 + `L-Z57`** — phần dựng của TD-0185 (`gates/d0_9.py`, thuần) | 🔓 | TD-0334 | `L-Z57`: bộ kết quả giả "Z0 vượt trội" ⇒ "chọn Z0, TIẾP TỤC", và có đường tới DỪNG khi Nhánh 1 FAIL |
+| TD-0337 | **`close_d4_gate()`** — phần dựng của TD-0186 (`--close-d4-gate` trên E6, khuôn `close_d3_5_gate`) | 🔓 | TD-0335, TD-0336 | Test trên `runtime_state` tạm; trên trạng thái THẬT hôm nay nó **từ chối** (0 bản ghi arm); chạy lại ⇒ 94 |
+
+**Đặt chỗ mã (N12 mục 7c):** `TD-0332`…`TD-0337` + `DR-D4-14`, commit này, `Phien: 69768527`.
+
+---
+
 ## Việc đã biết là sẽ có, chưa mở
 
 | Giai đoạn | Nội dung | Chặn bởi |
