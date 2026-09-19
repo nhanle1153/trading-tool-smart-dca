@@ -26,6 +26,7 @@ from tool_d.ablation.chi_so_export import (
     bat_bien_1_7_lech,
     chi_so_tu_export,
     lenh_moi_nam,
+    liq_buffer_ratio_mean,
     max_lo_don_lenh_tren_ngan_sach,
     skewness,
     spearman,
@@ -150,6 +151,18 @@ class TestBatBien17:
         assert not bat_bien_1_7_lech(Measured.ok(0.96))
 
 
+class TestLiqBuffer:
+    def test_cong_thuc_spec_1866(self) -> None:
+        # p_avg = 98, sl = 94 ⇒ mẫu số 4; liq 66 ⇒ (98 − 66) / 4 = 8,0 ; liq 58 ⇒ 10,0 ; trung bình 9,0
+        lenh = [{"enter_tag": _tag(), "liquidation_price": 66.0}, {"enter_tag": _tag(), "liquidation_price": 58.0}]
+        assert liq_buffer_ratio_mean(lenh).value == pytest.approx(9.0)
+
+    def test_thieu_mot_lenh_thi_unreadable_khong_bo_lenh(self) -> None:
+        lenh = [{"enter_tag": _tag(), "liquidation_price": 66.0}, {"enter_tag": _tag(), "liquidation_price": None}]
+        m = liq_buffer_ratio_mean(lenh)
+        assert m.status is Status.UNREADABLE and "1/2" in m.note
+
+
 class TestTongHop:
     def test_short_bi_tu_choi(self) -> None:
         with pytest.raises(ChiSoExportError, match="SHORT"):
@@ -186,6 +199,11 @@ class TestExportThat:
         for k in ("time_stop_ratio", "max_single_trade_loss_over_risk_budget", "trades_per_year",
                   "ti_trong_tranche_dat", "bat_bien_1_7_ty_so_trung_vi"):
             assert cs[k].status is Status.OK, (k, cs[k])
+        # TD-0342 — đo 19/09/2026: backtest fixture TỔNG HỢP cho `liquidation_price = None` (Freqtrade cần bảng bậc
+        # đòn bẩy của cặp, `get_maintenance_ratio_and_amt`). Chỉ số phải NÓI RA điều đó, không bịa số (N6).
+        # Export trên rổ thật có giá thanh lý hay không: CHƯA đo (khâu đo khoá) — xem TD-0343.
+        assert cs["liq_buffer_ratio_mean"].status is Status.UNREADABLE
+        assert "liquidation_price" in cs["liq_buffer_ratio_mean"].note
         assert cs["ti_trong_tranche_dat"].value is True
         assert math.isfinite(cs["bat_bien_1_7_ty_so_trung_vi"].value)
         assert resolve(cfg, "tier_a.L_exchange") > 0

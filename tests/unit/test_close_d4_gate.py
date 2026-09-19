@@ -106,6 +106,7 @@ CHI_SO_THEM_DAT = {
     "ti_trong_tranche_dat": Measured.ok(True),
     "stake_theo_r_eff_rho": Measured.ok(0.8),
     "bat_bien_1_7_ty_so_trung_vi": Measured.ok(0.98),
+    "liq_buffer_ratio_mean": Measured.ok(20.0),
 }
 
 
@@ -244,10 +245,10 @@ class TestDuongThanhCong:
         for muc in ("(1)", "(2)", "(3)", "(4)", "(5)", "(6)", "(7)", "(8)"):
             assert muc in han_che, muc
         assert {t for t, _ in BANG_CHUNG_DR_D4_04} <= set(s["d4_evidence"])
-        # Bản ghi mẫu 6 lệnh ⇒ DSR INCONCLUSIVE; liq_buffer còn pending (TD-0342, chờ duyệt nghĩa cột) ⇒ Nhánh 1
-        # KHÔNG thể PASS — và cổng VẪN đóng, vì D4 đóng bằng hiện vật phán quyết (DR-D4-11), không đòi PASS.
-        assert "Nhánh 1 = INCONCLUSIVE" in s["d4_evidence"]["gate_d09"]["noi_dung"]
-        assert "liq_buffer_ratio_mean" in s["d4_evidence"]["gate_d09"]["noi_dung"]
+        # Bản ghi mẫu 6 lệnh ⇒ DSR INCONCLUSIVE ⇒ Nhánh 1 KHÔNG thể PASS — và cổng VẪN đóng, vì D4 đóng bằng hiện vật
+        # phán quyết (DR-D4-11), không đòi PASS. Mọi tiêu chí số khác nay đều có nguồn (TD-0342 lấp liq_buffer).
+        gate_txt = s["d4_evidence"]["gate_d09"]["noi_dung"]
+        assert "Nhánh 1 = INCONCLUSIVE" in gate_txt and "chưa đủ ['dsr_adjusted_expectancy']" in gate_txt
         assert "skewness_diff_vs_z1" in s["d4_evidence"]["gate_d09"]["noi_dung"]  # liệt kê "không áp dụng"
         assert _goi(sp, hv)[0] == EXIT_GATE_ALREADY_CLOSED
 

@@ -15,6 +15,7 @@ và/hoặc `LenhWFO` đã trích. Không đọc `custom_data` — export KHÔNG 
 | `ti_trong_tranche_dat` | `orders[].cost` của lệnh đủ 3 tranche | tiền lệ `test_td0187::TestTiTrongTrancheThat` (±1%) |
 | `stake_theo_r_eff_rho` | Spearman(notional tranche 1, `1/R_eff`) | mốc 0 tự nhiên — hằng số thì ρ không định nghĩa |
 | `bat_bien_1_7_ty_so_trung_vi` | fill vs công thức ĐÚNG theo giá kế hoạch | `DR-D4-15` §2.1 |
+| `liq_buffer_ratio_mean` | `(p_avg_plan − liquidation_price) / (p_avg_plan − sl)`, trung bình | spec `:1866`; TD-0342, nghĩa cột duyệt 19/09/2026 |
 
 🔴 Không số nào ở đây được bịa: không đo được ⇒ `unreadable` kèm lý do (N6). Tag TP1 lạ ⇒ raise (một tag mới mà
 bộ đếm không biết là một TP1 bị đếm sót — đúng hình PASS RỖNG).
@@ -191,6 +192,34 @@ def bat_bien_1_7(lenh: Sequence[Mapping[str, Any]], *, cfg: ToolDConfig) -> Meas
     return Measured.ok(median(ty_so))
 
 
+def liq_buffer_ratio_mean(lenh: Sequence[Mapping[str, Any]]) -> Measured[float]:
+    """Spec `:1866` — `liq_buffer_ratio = (p_avg_plan − liq_price) / (p_avg_plan − sl)`, trung bình trên mọi lệnh.
+
+    `liquidation_price` của export là giá thanh lý ƯỚC TÍNH ĐÃ DỊCH về phía giá vào một đoạn `liquidation_buffer`
+    (nghĩa cột duyệt 19/09/2026) ⇒ tỉ số ở đây THẬN TRỌNG hơn tỉ số với giá thanh lý thô. Một lệnh thiếu giá thanh lý
+    ⇒ cả chỉ số `unreadable` kèm số lệnh thiếu — không bỏ lệnh đó cho đẹp trung bình.
+    """
+    if not lenh:
+        return Measured.unreadable("0 lệnh")
+    ty_so: list[float] = []
+    thieu = 0
+    for t in lenh:
+        liq = t.get("liquidation_price")
+        if liq is None:
+            thieu += 1
+            continue
+        try:
+            sl, _ = doc_tag_long(t.get("enter_tag"))
+        except TrichLenhError as exc:
+            raise ChiSoExportError(f"{t.get('pair')}: {exc}") from exc
+        tag = json.loads(t["enter_tag"])
+        p_avg = (float(tag["p1"]) + float(tag["p2"]) + float(tag["p3"])) / 3
+        ty_so.append((p_avg - float(liq)) / (p_avg - sl))
+    if thieu:
+        return Measured.unreadable(f"{thieu}/{len(lenh)} lệnh không có liquidation_price trong export")
+    return Measured.ok(math.fsum(ty_so) / len(ty_so))
+
+
 def bat_bien_1_7_lech(m: Measured[float]) -> bool:
     """`DR-D4-15`: DỪNG ⇔ `|trung_vi − 1| > dung sai`. `unreadable` ⇒ KHÔNG dừng (không có gì để kết luận)."""
     return m.is_ok() and abs(float(m.value) - 1.0) > BAT_BIEN_1_7_DUNG_SAI
@@ -212,6 +241,7 @@ def chi_so_tu_export(
         "ti_trong_tranche_dat": ti_trong_tranche(lenh),
         "stake_theo_r_eff_rho": stake_theo_r_eff(lenh),
         "bat_bien_1_7_ty_so_trung_vi": bat_bien_1_7(lenh, cfg=cfg),
+        "liq_buffer_ratio_mean": liq_buffer_ratio_mean(lenh),
     }
 
 
@@ -221,6 +251,7 @@ __all__ = [
     "bat_bien_1_7_lech",
     "chi_so_tu_export",
     "lenh_moi_nam",
+    "liq_buffer_ratio_mean",
     "max_lo_don_lenh_tren_ngan_sach",
     "skewness",
     "spearman",

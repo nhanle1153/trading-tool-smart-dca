@@ -48,6 +48,8 @@ TRUONG_LENH = (
     "stake_amount",
     "max_stake_amount",
     "orders",
+    # TD-0342 — nghĩa cột duyệt 19/09/2026 (`y_nghia_cot.py`): giá thanh lý ƯỚC TÍNH, đã dịch về phía giá vào.
+    "liquidation_price",
 )
 
 #: Khoảng năm hợp lệ cho một mốc đọc ra. Hẹp có chủ đích: mọi mốc của dự án nằm trong
