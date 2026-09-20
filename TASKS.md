@@ -980,7 +980,35 @@ bộ chạy D10 (`DR-D10-02`): chờ chủ dự án làm xong phần tài khoả
 | TD-0357 | **Hiện vật của mỗi suất** — `ablation/chay_lo.py` ghi `runs/<trial_id>/` (sổ khai `seal_path` nhưng không dòng mã nào sinh file ⇒ `D-0015` tiêu mà không còn gì đọc lại) | ✅ `d63b50c` | — | Chạy lô giả ⇒ có file; khuôn giống E1 (`run_backtest.py`) |
 | TD-0358 | **Đo lại 0 trial trên EXPLORE, trước/sau vá** (script `do_td0184_kep_gia_explore.py` của phiên `58cebb70`, commit cùng DR): số lệnh bị LD-13 cắt · **phân bố tranche** · lệnh/năm so sàn 150 | ✅ `8905a8c` | TD-0355, TD-0356 | CHỈ số đếm (`DR-D4-16` §3), không PnL; `n_used` không đổi; artifact + mục research-log |
 
+**Đặt chỗ mã (N12 mục 7c) — Khối 33:** `TD-0362`…`TD-0365` + `DR-LOCKBOX-03`, commit riêng, `Phien: 69768527`. `TD-0359`/`TD-0360` đã commit, `TD-0361` phiên `dd855fee` đang dùng ⇒ lấy từ `TD-0362`. Đã nhắn phiên `dd855fee` (tên hiện tại `-57`): tôi không đụng cổng D4, nhưng `TD-0362` sửa một khẳng định ở `tests/lock/test_td0335_*` và `TD-0364` sửa `ZoneAbsorption.py` — cả hai file phiên đó cũng đụng, nên chỉ bắt đầu khi họ xác nhận đã rời.
+
 **Đặt chỗ mã (N12 mục 7c):** `TD-0354`…`TD-0358` + `DR-D4-20`, commit này, `Phien: dd855fee`. Đã nhắn `trading-tool-smart-dca-f3` (mã `69768527`) và `-8d` (mã `69e2254e`); cả hai xác nhận không giữ `DR-D4-20` và không sửa các file trên.
+
+---
+
+## Khối 33 — Đóng hai nợ `MT` của tầng vào lệnh + khoá lại cửa tiêu suất + điều kiện chạm lockbox (mở 20/09/2026)
+
+> **Vì sao khối này tồn tại:** lô `DR-D4-20` đã cho số thật (`Z0-T1` n 231, mean **+0,0035 R**, `dsr_adj` **−0,2216**,
+> 365,25 lệnh/năm, `liq_buffer_ratio_mean` **18,31**). Ba hệ quả **không** thuộc cổng D4 (việc của phiên `dd855fee`):
+>
+> 1. 🔴 **Khoá đo `D4_DO_TAM_DUNG` vẫn `False`** dù `DR-D4-19` §4 và `DR-TRIEN-KHAI-01` đều giữ vế *"lật về `True` sau
+>    lô"*. Thứ chặn tiêu thêm suất hiện chỉ là một **test chạy sau**, không phải cổng lúc chạy.
+> 2. 🔴 **`MT-69`** — cổng §6.4 `L-Z3` lúc **vào lệnh** vẫn 0 dòng mã, trong khi `DR-TRIEN-KHAI-01` §3 điều kiện 4 đòi
+>    **0 mục `MT` 🟡/🔴 còn mở** mới vào D12. Nối SAU khi D5 tiêu suất `B1` thì tập lệnh đổi ⇒ hỏng chính những suất đó.
+> 3. **`MT-70`** — phép đo của lô **bác ước lượng** trong chính mục đó (viết ~10,7, lề hẹp; đo thật **16,6–20,3** so
+>    ngưỡng 8) ⇒ câu *"đệm hay thô"* không lật được tiêu chí nào.
+>
+> **Chủ dự án chốt 20/09/2026 (phiên mã `69768527`, bốn câu hỏi):** lật khoá về `True` ngay · giữ giá **đã dịch** cho
+> `MT-70` · nối `L-Z3` · viết **DR chốt điều kiện TRƯỚC khi chạm lockbox**. Cả khối **0 suất**.
+
+| Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
+|---|---|---|---|---|
+| TD-0362 | **Lật `khoa_do.D4_DO_TAM_DUNG` về `True`** (`DR-D4-19` §4, `DR-TRIEN-KHAI-01` giữ vế này) — đóng cửa tiêu suất ngoài ý muốn. Lý do khoá trỏ đích danh hai DR đó | 🔓 | — | ⚠️ Buộc sửa khẳng định đang ghim `is False` ở `tests/lock/test_td0335_*:68` ⇒ đúng điều kiện dừng `DR-D4-20` §5 (1): **đã báo chủ dự án và được duyệt trước**, và phiên `dd855fee` xác nhận không cần E3 nữa. E3 `--chay` phải thoát `EXIT_D4_DO_TAM_DUNG` (110); sổ trial không đổi một dòng |
+| TD-0363 | **Đo phân bố per-trade `liq_buffer` trên EXPLORE, 0 suất** — trung bình 18,31 **không** chặn được đuôi, nên phải đếm số lệnh rơi dưới 8 ở cả 4 arm trước khi nối cổng (đo rẻ hơn đoán) | 🔓 | — | Script + artifact trong `docs/du-lieu-do/`; EXPLORE (`DR-D4-13` §1.2), không `reserve()`; ghi cả phân vị và số lệnh dưới ngưỡng theo arm; nêu rõ đây là **cận** cho tác động của `L-Z3`, chưa phải số trên rổ T1 |
+| TD-0364 | **`MT-69` — nối cổng §6.4 `L-Z3` vào đường VÀO LỆNH**: từ chối mở khi `liq_buffer_ratio` < 8, tính trên **kế hoạch đủ 3 tranche** (spec `:1875`), ghi đủ tử/mẫu vào Decision Log (spec `:1885`) | 🔓 | TD-0363 · `DR-D4-17` | Dùng lại `ablation/thanh_ly.liq_buffer_ke_hoach` — **một nguồn** (N1/`MT-03`), không viết công thức thứ hai. Đặt ở `custom_entry_price`/`adjust_trade_position`, **KHÔNG** `confirm_trade_entry` (không được gọi cho tranche 2/3, và `rate` ở đó đã bị kẹp — `DR-D4-20` §2 chốt 4; phiên `dd855fee` xác nhận `proposed_rate` dùng được cho cả hai chế độ). Test khoá + phá thật + Docker (N7) |
+| TD-0365 | 🚪 **`DR-LOCKBOX-03` — điều kiện được chạm lockbox, viết TRƯỚC khi thấy số D9.** Lockbox có **3 đoạn** (1 gốc + 2 gia hạn, `access_log.py:5,27`), gia hạn **chỉ cho kết cục INCONCLUSIVE** (`DR-011`) | 🔓 | — | Commit **RIÊNG và TRƯỚC** mọi dòng mã D9.5. **Nối thêm** cho `DR-TRIEN-KHAI-01` §3, **không sửa chữ cũ** của nó. Nêu con số D9 tối thiểu để được chạm; không đạt ⇒ **DỪNG trước D9.5**, giữ đoạn 1 cho ứng viên sau. Lý do phải ghi thẳng: lockbox sinh ra để xác nhận thứ **trông có lợi thế**; xác nhận thứ đã đo ≈ 0 là tiêu một tài nguyên không tái tạo. 0 suất |
+
+**Đặt chỗ mã (N12 mục 7c):** `TD-0362`…`TD-0365` + `DR-LOCKBOX-03`, commit riêng, `Phien: 69768527`.
 
 ---
 
