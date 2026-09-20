@@ -155,6 +155,7 @@ from tool_d.dg6_early_invalidation import (
 from tool_d.funding_stop import funding_paid_cumulative, is_funding_stop_triggered
 from tool_d.gap_ms import LenhSl, sinh_ban_ghi_doi_sl
 from tool_d.ledger.decision_log import DEFAULT_DECISION_LOG_PATH, ghi_neu_chua_co
+from tool_d.post_only import bi_san_tu_choi, ly_do_tu_choi
 from tool_d.vao_ra_lenh import sinh_ban_ghi_vao_lenh
 from tool_d.sizing import (
     HeSoMult,
@@ -349,6 +350,11 @@ class ZoneAbsorption(IStrategy):
         # một thứ là cách `Z0-T1` chạy dưới nhãn `Z0` mà không ai thấy.
         self._da_loc_adx = co_loc_adx_1d(self._tang_loc_trend)
         self._cho: dict[str, dict] = {}   # pair → kế hoạch cỡ lệnh chờ order_filled
+        # TD-0355 (DR-D4-20) — `custom_entry_price()` cất lại (giá thị trường lúc đặt, giá lệnh) của
+        # tranche 1 để `confirm_trade_entry()` áp luật post-only LD-13. Cất CẢ HAI số Freqtrade vừa
+        # dùng, thay vì đọc lại `p1` từ kế hoạch: hai đường đọc cho cùng một con số là cách chúng
+        # lệch nhau mà không ai thấy (LD-09).
+        self._gia_luc_dat: dict[str, tuple[float, float]] = {}
         self._halt: set[str] = set()      # pair đang bị HALT tại lúc định cỡ
         self._dinh_equity: float | None = None
         # TD-0238 (MT-40) — nạp lại đỉnh equity bền vững ở bot_start(), KHÔNG
@@ -1137,6 +1143,27 @@ class ZoneAbsorption(IStrategy):
         if cho is None:
             return False  # không có kế hoạch cỡ lệnh → không mở (fail-closed)
 
+        # TD-0355 (DR-D4-20) — LUẬT POST-ONLY LD-13, đứng TRƯỚC mọi phép kiểm tốn công khác: một lệnh
+        # sàn thật từ chối thì không có gì để xét tiếp. Nguồn hai giá: `custom_entry_price()` vừa chạy
+        # (Freqtrade gọi nó TRƯỚC hàm này — `backtesting.py:1147-1192`).
+        gia = self._gia_luc_dat.pop(pair, None)
+        if gia is None:
+            # Fail-closed: không có số để so thì không biết sàn có nhận lệnh không. Chỉ xảy ra khi
+            # `custom_entry_price()` không chạy (không phải lệnh limit) — spec §3.5 đòi entry LUÔN limit.
+            logger.info("POST_ONLY_THIEU_GIA %s — từ chối (LD-13, DR-D4-20)", pair)
+            return False
+        gia_thi_truong, gia_lenh = gia
+        if bi_san_tu_choi(gia_lenh, gia_thi_truong, la_short=side == "short"):
+            logger.info(
+                "%s",
+                ly_do_tu_choi(
+                    pair, gia_lenh=gia_lenh, gia_thi_truong=gia_thi_truong,
+                    la_short=side == "short", tranche=1,
+                ),
+            )
+            self._cho.pop(pair, None)
+            return False
+
         ke_hoach = KeHoachCoLenh.from_dict(cho["co_lenh"])
 
         # DR-D4-05 §2.1 — sàn Tool D (`max` mọi đường chạy), TỪ CHỐI TƯỜNG
@@ -1361,7 +1388,12 @@ class ZoneAbsorption(IStrategy):
         tệ hơn kế hoạch) — bản nháp đầu của file này đã quên nó."""
         if trade is None:
             giai = _giai_ma(entry_tag, atr_1h_tai_tranche1=0.0)
-            return proposed_rate if giai is None else giai[0].p1
+            gia_lenh = proposed_rate if giai is None else giai[0].p1
+            # TD-0355 — `proposed_rate` là GIÁ THỊ TRƯỜNG lúc đặt ở CẢ HAI chế độ (backtest: giá mở
+            # nến, `backtesting.py:1151`; live: giá hiện hành). Cất lại cho `confirm_trade_entry()`,
+            # nơi `rate` đã bị Freqtrade KẸP (`:1056`) nên không còn đọc ra được thị trường ở đâu.
+            self._gia_luc_dat[pair] = (float(proposed_rate), float(gia_lenh))
+            return gia_lenh
         kh, _, _ = self._doc_ke_hoach(trade)
         return kh.p2 if trade.nr_of_successful_entries == 1 else kh.p3
 
@@ -1403,9 +1435,25 @@ class ZoneAbsorption(IStrategy):
         kh, cl, tag = self._doc_ke_hoach(trade)
         i = trade.nr_of_successful_entries + 1  # tranche sắp xét: 2 hoặc 3
         muc = kh.p2 if i == 2 else kh.p3
-        # TD-0321 — LONG bơm khi giá XUỐNG tới mức (DCA-xuống: bỏ qua nếu giá
-        # còn trên mức); SHORT gương: bơm khi giá LÊN tới mức (DCA-lên).
-        if (current_rate < muc) if _la_short(trade) else (current_rate > muc):
+        # TD-0356 (DR-D4-20) — ĐẶT LỆNH CHỜ TRƯỚC, không chờ giá tới rồi mới đặt.
+        #
+        # Bản cũ bỏ qua khi giá còn TRÊN mức (LONG) và chỉ bơm khi giá ĐÃ XUỐNG tới `muc`. Lúc đó lệnh
+        # mua limit tại `muc` nằm TRÊN giá thị trường ⇒ sàn thật từ chối (post-only, LD-13) ⇒ tranche
+        # 2/3 gần như không bao giờ khớp được trên tiền thật, trong khi backtest vẫn khớp vì nó kẹp giá.
+        # Spec `:1180` viết tranche 2/3 là *"lệnh chờ sống trong cửa sổ DG4"* — tức ĐẶT TRƯỚC rồi nằm chờ.
+        # Backtest giữ được lệnh chờ qua nến (`manage_open_orders`/`check_order_cancel`), nên một đường mã
+        # chạy đúng ở cả hai chế độ.
+        #
+        # ⚠️ Nợ đã biết, KHÔNG vá ở đây (`DR-D4-20` §5.5): `unfilledtimeout.entry = 180` phút (3 nến) huỷ
+        # lệnh chờ sớm hơn cửa sổ DG4 (8 nến); vòng sau các cổng DG còn mở thì lệnh được đặt lại.
+        if bi_san_tu_choi(muc, current_rate, la_short=_la_short(trade)):
+            logger.info(
+                "%s",
+                ly_do_tu_choi(
+                    trade.pair, gia_lenh=muc, gia_thi_truong=current_rate,
+                    la_short=_la_short(trade), tranche=i,
+                ),
+            )
             return None
 
         # 🔴 "KHÔNG ĐO ĐƯỢC" phải TƯỜNG MINH, không đi qua DG5.

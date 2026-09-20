@@ -287,21 +287,32 @@ class TestCongTrancheVaTp1TheoHuong:
         assert not goi or goi[0] == ("dinh" if la_short else "day"), goi
         return bool(goi)
 
-    def test_short_chan_khi_gia_CHUA_len_toi_p2(self) -> None:
-        assert self._gate_qua_hay_chan(la_short=True, current_rate=94.0) is False
+    # 🔴 ĐẢO CHIỀU 20/09/2026 (`DR-D4-20` §2 chốt 3, chủ dự án duyệt sửa khẳng định — điều kiện dừng
+    # `DR-D4-20` §5.1). Chiều CŨ ghim ở bốn ca dưới đây là *"chỉ bơm khi giá ĐÃ XUỐNG tới p2"*; lúc đó
+    # lệnh mua limit tại p2 nằm TRÊN giá thị trường ⇒ sàn thật từ chối (post-only, LD-13) ⇒ tranche 2/3
+    # không khớp được trên tiền thật. Luật mới: ĐẶT LỆNH CHỜ TRƯỚC, khi giá còn ở phía maker của p2.
+    # Câu hỏi của test KHÔNG đổi (cổng có cho đặt lệnh không; DG5 đọc đúng loại zone theo hướng) —
+    # chỉ kỳ vọng đảo. Ca biên (giá bằng đúng p2) giữ nguyên: bằng nhau thì vẫn cho đặt.
 
-    def test_short_di_qua_khi_gia_da_len_toi_p2(self) -> None:
-        assert self._gate_qua_hay_chan(la_short=True, current_rate=95.5) is True
+    def test_short_dat_truoc_khi_gia_CON_DUOI_p2(self) -> None:
+        """SHORT bán tại p2: giá thị trường còn DƯỚI p2 ⇒ lệnh nằm phía maker ⇒ ĐƯỢC đặt."""
+        assert self._gate_qua_hay_chan(la_short=True, current_rate=94.0) is True
+
+    def test_short_bi_chan_khi_gia_DA_VUOT_p2(self) -> None:
+        """Giá đã vượt p2 ⇒ lệnh bán tại p2 nằm dưới thị trường ⇒ sàn từ chối ⇒ KHÔNG đặt."""
+        assert self._gate_qua_hay_chan(la_short=True, current_rate=95.5) is False
 
     def test_short_di_qua_dung_tai_bien_p2(self) -> None:
-        """Gương của Long (`> muc` ⇒ chặn; bằng thì qua)."""
+        """Bằng đúng p2 thì vẫn cho đặt (lề nghiêng về phía CHO ĐẶT — `post_only.bi_san_tu_choi`)."""
         assert self._gate_qua_hay_chan(la_short=True, current_rate=95.0) is True
 
-    def test_long_chan_khi_gia_CHUA_xuong_toi_p2_hoi_quy(self) -> None:
-        assert self._gate_qua_hay_chan(la_short=False, current_rate=96.0) is False
+    def test_long_dat_truoc_khi_gia_CON_TREN_p2(self) -> None:
+        """LONG mua tại p2: giá còn TRÊN p2 ⇒ lệnh nằm phía maker ⇒ ĐƯỢC đặt (đây là lệnh chờ)."""
+        assert self._gate_qua_hay_chan(la_short=False, current_rate=96.0) is True
 
-    def test_long_di_qua_khi_gia_da_xuong_toi_p2_hoi_quy(self) -> None:
-        assert self._gate_qua_hay_chan(la_short=False, current_rate=94.5) is True
+    def test_long_bi_chan_khi_gia_DA_TUT_DUOI_p2(self) -> None:
+        """Giá đã tụt dưới p2 ⇒ lệnh mua tại p2 nằm trên thị trường ⇒ sàn từ chối ⇒ KHÔNG đặt."""
+        assert self._gate_qua_hay_chan(la_short=False, current_rate=94.5) is False
 
     # ── TP1 ───────────────────────────────────────────────────────────────
     @staticmethod
