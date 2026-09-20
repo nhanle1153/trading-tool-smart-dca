@@ -149,7 +149,9 @@ tool-d-smart-dca/                  ← git root = E:\Trading Tool_Smart DCA
 │  ├─ ledger/       registry · budget · audit_checks · idea_queue · param_proposals ·
 │  │                idea_events (sổ ý tưởng là NHẬT KÝ SỰ KIỆN: dựng trạng thái, dùng chung cửa ghi + audit — DR-IQ-02) ·
 │  │                backlog_check (báo cáo `--kiem-backlog` của E6 — khoá 🔒 quên đóng,
-│  │                trạng thái lệch; CHỈ ĐỌC `TASKS.md` + `git log`, không nối `run_audit()` — TD-0331)
+│  │                trạng thái lệch; CHỈ ĐỌC `TASKS.md` + `git log`, không nối `run_audit()` — TD-0331) ·
+│  │                timerange (L-Z55: biên tập từ config + `cua_so_tap` — cửa sổ chạy NỬA MỞ
+│  │                [start, end) dùng chung E1/E3/kịch bản đo, DR-D9-01 — TD-0347)
 │  ├─ lockbox/      seal · access_log · h17 (cổng H17 ở service CHE lockbox: cách ly còn
 │  │                hiệu lực + seal không bị sửa — TD-0316) · ro_seal (verify_lockbox = băm +
 │  │                xét rổ, MT-60 — TD-0309)
@@ -162,7 +164,10 @@ tool-d-smart-dca/                  ← git root = E:\Trading Tool_Smart DCA
 │  │                trich_lenh (lệnh export → LenhWFO; planned_risk SUY NGƯỢC — DR-D4-14 §10)
 │  ├─ ablation/     khoa_do (D4_DO_TAM_DUNG — chỗ DUY NHẤT) · ban_ghi (lô 4 arm DR-D4-12 §4) ·
 │  │                chay_lo (vòng lô E3: đặt chỗ đủ lô trước arm đầu) · chi_so_export (chỉ số
-│  │                Nhánh 1 + bằng chứng DR-D4-04 §7 + bất biến §1.7 DR-D4-15, đọc THẲNG từ export)
+│  │                Nhánh 1 + bằng chứng DR-D4-04 §7 + bất biến §1.7 DR-D4-15, đọc THẲNG từ export) ·
+│  │                thanh_ly (liq_buffer_ratio theo KẾ HOẠCH đủ 3 tranche, hàm giá thanh lý được
+│  │                TIÊM vào — DR-D4-17) · dem_mo_ta (đếm số lệnh, CTRL dạng thứ ba MT-19,
+│  │                đầu ra chỉ tên trong danh sách cho phép — DR-D4-16)
 │  ├─ wfo/          folds · orchestrator · equity · fold_record · cache (H3-D, D3)
 │  │                · lenh (TD-0283 — lệnh từng dòng + cắt lát fold/khối; D9 KHÔNG
 │  │                đi qua orchestrator.chay_wfo, DR-D9-01 §5.1)
@@ -416,3 +421,4 @@ mô tả cả ba sổ JSONL này thì phải **sinh/kiểm tự động từ sch
 | 19/09/2026 | Công cụ phá-thật trong bộ nhớ (`TD-0329`) + báo cáo backlog (`TD-0331`): cây thêm `tests/tools/` (`mutate_in_memory.py` · `specs/*.json`) và `src/tool_d/ledger/backlog_check`; E6 thêm cờ `--kiem-backlog` — **KHÔNG phải entrypoint thứ 9**, `entrypoints/` vẫn đúng 8 file | Cây không có `tests/tools/`; `ledger/` = `registry · budget · audit_checks · idea_queue · param_proposals`; E6 không có cờ báo cáo backlog | Thêm `tests/tools/` + `backlog_check`. Cờ `--kiem-backlog` chỉ ĐỌC (`TASKS.md` + `git log`), không ghi file, không nối `run_audit()` hay cổng đóng; công cụ phá-thật đọc mã nguồn, đổi bản sao trong bộ nhớ, nạp vào `sys.modules`, đĩa không đổi byte | Kỷ luật "kiểm có răng" làm bằng tay không tái lập được (`OQ-14`) và khoá 🔒 quên đóng không lớp canh nào thấy (`OQ-15`); chủ dự án chọn làm và đặt ở `tests/tools/` 19/09/2026. Lệnh *"chuẩn hóa và lưu"* 19/09/2026, phiên `e80a877c` |
 | 19/09/2026 | Sổ ý tưởng thành **nhật ký sự kiện** (`DR-IQ-02`, TD-0326): cây `ledger/` thêm `idea_events`; bảng schema hiện hành, dòng `idea_queue.jsonl` thêm `TD-0326`; schema thêm `VOIDED` · `voided_at` · `void_reason`; E6 thêm cờ `--chon-y-tuong` · `--huy-chon` — **KHÔNG phải entrypoint thứ 9**, `entrypoints/` vẫn đúng 8 file | Sổ ý tưởng coi mỗi dòng là một đơn; không có luật chuyển trạng thái, không có công cụ ghi `SELECTED`; `TD-0126`/`TD-0124` so/đếm mọi dòng | Mỗi dòng một sự kiện trên `idea_id`, trạng thái dựng lại bằng `duyet_so()` dùng chung cho cửa ghi và audit (cùng khuôn N8 của sổ trial); đơn = dòng đầu của mã | `MT-65` (chọn `IQ-0002` trước hiệu lực làm `TD-0120` đỏ vĩnh viễn, chặn mọi cổng và E1) lộ ra ba lỗ gốc; chủ dự án chọn phương án (b) 19/09/2026. Lệnh *"chuẩn hóa và lưu"* 19/09/2026, phiên `2febd25e` |
 | 19/09/2026 | D4 dựng, khoá đo (`DR-D4-14`, Khối 30): cây thêm `bo_chay/` (thiếu từ Khối 27) + `ablation/`; dòng `gates/` thêm `arm_record · ket_cuc · d4_gate · d0_9` | E3 dừng ở `NotImplementedError`; cây không có `bo_chay/`; D4/D9 có thể mỗi bên một bộ đánh giá Nhánh 1 | E3 → `ablation/chay_lo` → `bo_chay/chay_mot_luot`, khoá `D4_DO_TAM_DUNG` chặn TRƯỚC đặt chỗ; số cho gate đọc từ export (`ablation/chi_so_export`); gate D4 (`d0_9`) và D9 (`d9_gate`) dùng CHUNG `thresholds.evaluate_branch1(..., arm)` + `TIEU_CHI_KHAI` | Chủ dự án chốt `DR-D4-14`/`DR-D4-15`; N1/MT-03 cấm hai nguồn ngưỡng. ⚠️ Dòng `gates/` vẫn thiếu `cache_policy` · `d0_pre` — ngoài phạm vi (quy tắc 4) |
+| 20/09/2026 | Lô 4 sau `DR-D4-14` (`TD-0346`…`TD-0348`, `TD-0261`): cây `ablation/` thêm `thanh_ly` · `dem_mo_ta`; cây `ledger/` thêm `timerange` (có từ `TD-0094` nhưng chưa từng được liệt kê) kèm `cua_so_tap` | Cây `ablation/` chỉ có `khoa_do` · `ban_ghi` · `chay_lo` · `chi_so_export`; cây `ledger/` không có `timerange` | `ablation/thanh_ly` (giá thanh lý TIÊM vào, `liq_buffer` theo kế hoạch) · `ablation/dem_mo_ta` (đếm số lệnh, CTRL dạng thứ ba) · `ledger/timerange` (biên tập + cửa sổ nửa mở) | Lệnh *"chuẩn hóa và lưu"* 20/09/2026 (phiên mã `69768527`). Chỉ nối vào cây; không đổi sơ đồ luồng. ⚠️ Cây chưa phản ánh phần phiên `58cebb70` (lô `DR-D4-19`) và Khối 31 (`DR-TRIEN-KHAI-01`) — thuộc phiên đó, không ghi hộ |
