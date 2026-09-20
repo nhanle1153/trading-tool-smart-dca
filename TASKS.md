@@ -1012,6 +1012,29 @@ bộ chạy D10 (`DR-D10-02`): chờ chủ dự án làm xong phần tài khoả
 
 ---
 
+## Khối 34 — `L-Z12` so nhầm đơn vị: cấu hình KHÔNG định danh mã (mở 20/09/2026, thi hành `DR-LZ12-01`)
+
+> **Vì sao khối này tồn tại:** sau lô `DR-D4-20`, `L-Z12` (🔴 CRITICAL) đỏ và **chặn mọi entrypoint**
+> (`run_audit` exit 92 ⇒ E1/E3 và cả suite đều dừng). Nó báo 4 cặp: `D-0007`…`D-0010` (dòng `CTRL` đếm mô tả của
+> `TD-0345`, chạy trên mã TRƯỚC bản vá LD-13) so với `D-0019`…`D-0022` (lô B2 hôm nay, mã SAU bản vá).
+>
+> **Gốc:** `audit_checks.py:127-157` gom theo `config_hash` **một mình**. `config_hash` định danh CẤU HÌNH, không
+> định danh MÃ — mà kết quả phụ thuộc cả hai (`n_trades` 255 → 231 sau vá, `config_hash` không đổi một bit).
+>
+> 🔑 **Phát hiện + chẩn đoán cơ chế + đính chính vế "loại CTRL" là của phiên `69768527`.** Đo trên sổ thật:
+> nhóm `e417…` có BA trial (`D-0007` CTRL 255 · `D-0015` B2 255 · `D-0019` B2 231) ⇒ **chỉ** loại `CTRL` thì vẫn
+> đỏ (255 vs 231), và loại `CTRL` còn làm câm đúng lớp canh mà `CTRL` dạng *tái lập* (`MT-08`/`TD-0130`) sinh ra
+> để giữ. Chủ dự án chốt 20/09/2026: **chỉ đổi đơn vị so sánh**, giữ `CTRL` trong phép so; phiên `dd855fee` vá.
+
+| Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
+|---|---|---|---|---|
+| TD-0366 | 🚪 **`DR-LZ12-01`** + vá `L-Z12`: đơn vị so sánh thành `(config_hash, code_commit)`, GIỮ dòng `CTRL`; mục `MT` theo quy tắc 11 (hai điều đã chốt va nhau) | 🔓 | — | DR commit **RIÊNG và TRƯỚC** mã; kiểm-có-răng: cùng mã + cùng cấu hình + khác kết quả ⇒ **vẫn đỏ**; E6 trên sổ thật hết đỏ; full suite 0 đỏ |
+
+**Đặt chỗ mã (N12 mục 7c):** `TD-0366` + `DR-LZ12-01`, commit này, `Phien: dd855fee`. Đã báo `69768527` (giữ
+`TD-0362`…`TD-0365` + `DR-LOCKBOX-03`) rằng tôi nhận `audit_checks.py`.
+
+---
+
 ## Việc đã biết là sẽ có, chưa mở
 
 | Giai đoạn | Nội dung | Chặn bởi |
