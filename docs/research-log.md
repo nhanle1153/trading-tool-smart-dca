@@ -3888,3 +3888,76 @@ một lệnh mà live không bao giờ có. `confirm_trade_entry` (`ZoneAbsorpti
 
 `chay_lo.py:220` ghi `seal_path="runs/{tid}/metrics.seal"` vào sổ nhưng không dòng mã nào ghi file đó; export backtest nằm trong
 thư mục tạm của container `--rm`. ⇒ `D-0015` đã tiêu mà **không còn hiện vật nào để đọc lại**. Chưa sửa — chờ chủ dự án.
+
+## 20/09/2026 — `DR-D4-20`: vá luật vào lệnh LD-13 + tranche 2/3 đặt lệnh chờ trước (TD-0354…TD-0358)
+
+Phiên mã `dd855fee`. Nối tiếp lô `DR-D4-19` của phiên `58cebb70` (chết khi máy khởi động lại; ba khoá
+`TD-0184`/`TD-0185`/`TD-0186` giao lại theo N12 mục 7f, `69c5095`).
+
+### Hai chỗ lệch spec, độc lập nhau — cả hai đều đọc từ mã nguồn Freqtrade 2026.8 trong image
+
+1. **Tranche 1.** `backtesting.py:1056` kẹp lệnh limit LONG về `min(giá_lệnh, đỉnh nến)` rồi `:1240` khớp
+   nếu `low ≤ giá ≤ high`. Sàn thật từ chối lệnh post-only mua đặt trên giá thị trường (spec `:1175`).
+2. **Tranche 2/3.** `ZoneAbsorption.py:1408` chỉ bơm khi giá **đã xuống tới** mức, và `backtesting.py:721`
+   truyền `current_rate = row[OPEN_IDX]` ⇒ lệnh mua tại `p2` nằm TRÊN thị trường ⇒ live từ chối. Spec
+   `:1180` viết tranche 2/3 là *"lệnh chờ sống trong cửa sổ DG4"* — ĐẶT TRƯỚC rồi nằm chờ.
+
+🔑 **Vì sao loại mức hẹp** (*"cả nến dưới p1"*, phương án còn lại chủ dự án cân nhắc): nó chỉ bắt ca khớp ở
+đỉnh nến. Ca **nến mở dưới `p1` rồi bật lên trên** cho backtest khớp ĐÚNG `p1` — trông hoàn toàn bình thường
+trong mọi bảng kết quả, trong khi live đã từ chối lệnh ngay lúc đặt.
+
+🔑 **Chỗ đặt chốt quyết định tính parity.** `confirm_trade_entry` nhận `rate` **đã bị kẹp**, nên một chốt dựa
+vào `rate` hành xử khác nhau giữa backtest và live. Nguồn đúng là `proposed_rate` của `custom_entry_price`
+(Freqtrade gọi nó TRƯỚC `confirm_trade_entry`, `:1147-1192`): backtest truyền giá MỞ nến, live truyền giá hiện
+hành ⇒ **một đường mã cho cả hai chế độ**, không rẽ nhánh theo runmode (bài học `DR-D4-05`).
+Và `confirm_trade_entry` **không** được gọi cho tranche 2/3 (`:1190`, `if not pos_adjust`) — chốt của tranche
+2/3 bắt buộc nằm trong `adjust_trade_position`.
+
+### Số đo sau vá — `TD-0358`, EXPLORE CALIB `[T0,T1)`, 65 mã, 1H, 0 trial
+
+`docs/du-lieu-do/td0184-kep-gia-explore.json` (`cay_sach: true`, sha `b3b766d`; ba lượt chạy ra số TRÙNG KHÍT).
+
+| arm | lệnh sau vá | lệnh trước vá (cùng tập) | lệch |
+|---|---|---|---|
+| `Z0-T1` | **137** | 162 (`TD-0291`) | **−25 (−15,4%)** |
+| `Z0-T0` | **502** | 631 (`TD-0291`) | **−129 (−20,4%)** |
+| `Z0` | 32 | — | chưa có số cũ cùng tập |
+| `Z3` | 32 | — | chưa có số cũ cùng tập |
+
+- **`t1_hep` = `t1_dung_spec` = `t1_duoi_sl` = 0 ở CẢ BỐN arm.** Lớp lệnh mà sàn thật từ chối đã biến mất
+  hoàn toàn — đúng *"hành vi mong đợi"* viết trước ở `DR-D4-20` §6.
+- **`Z3`: 23/32 lệnh (72%) bơm nhiều hơn một tranche.** Cỗ máy DCA thật sự chạy được sau khi chuyển sang lệnh
+  chờ đặt trước. ⚠️ **KHÔNG so với số cũ:** bảng tranche của `TD-0345` đo trên rổ T1 / cửa sổ WFO, khác tập.
+- 🔴 **Chưa giải thích, ghi để không quên:** `Z3` có **8 tranche khớp dưới mức kế hoạch** quá lề `1e-6`. Giả
+  thuyết đầu là làm tròn theo bước giá của sàn (`price_to_precision`), **chưa đo**. Không dùng số này để kết
+  luận gì thêm.
+- Ba arm còn lại có `so_lenh_nhieu_tranche = 0` **theo thiết kế** (`Z0-T1`/`Z0`/`Z0-T0` thuộc `ARM_DON_TRANCHE`),
+  không phải triệu chứng.
+
+🔴 **Mọi số đo trước 20/09/2026 mất hiệu lực SO SÁNH** (`DR-D4-20` §4): `TD-0345` (rổ T1), Δ_R của D3.5, mọi
+phễu EXPLORE cũ. Artifact niêm phong D3.5 **không sửa** — nó là bằng chứng của hệ thống lúc đó.
+
+### Hai lần sửa khẳng định test khoá, cả hai chủ dự án duyệt trước
+
+1. **Bốn ca `TD-0321`** ghim chiều CŨ của cổng bơm tranche (*"chỉ bơm khi giá đã xuống tới p2"*). Đảo kỳ vọng,
+   giữ nguyên câu hỏi của test; ca biên (giá bằng đúng `p2`) không đổi, vẫn xanh.
+2. **`TD-0245` cấm mọi `*.sqlite` trong repo** va với `config/freqtrade/config.json` ghim DB dry-run vào
+   `user_data/` (`TD-0201`/`TD-0202`) — hai quyết định đã chốt va nhau, và bot dry-run chạy thật sẽ làm suite đỏ
+   mỗi lần. Thu hẹp về đúng ý định gốc (*"phép ĐO không để lại DB"*), đường DB hợp lệ đọc THẲNG từ config.
+
+### Bài học vận hành: đừng để mã đang làm dở trong thư mục tạm
+
+Máy khởi động lại (Windows 22631 → 26200) xoá sạch thư mục nháp ⇒ mất toàn bộ `TD-0350`/`TD-0255`/`TD-0353` đã
+viết và đã xanh ở phiên trước, phải viết lại từ đầu. Cũng lần đó: phiên `58cebb70` chết giữa lô D4, và phép đo
+kẹp giá của nó mất luôn (chỉ còn script chưa commit). **Từ nay mã đang làm dở commit thẳng vào repo**, không giữ
+trong `scratchpad`.
+
+### Còn treo — chờ chủ dự án
+
+- **Chạy lại lô D4 tốn thêm 4 suất `B2`** (`n_used` 5 → 9). `DR-D4-19` §5 (*"sổ tăng khác đúng 4 suất B2 ⇒
+  dừng"*) ⇒ đây là mở lại ngân sách của DR đó, không tự chạy (`DR-D4-20` §4.2).
+- `D-0015` đã tiêu, thuộc **hệ thống CŨ**, không dùng làm kết quả của arm nào.
+- `OQ-16` lấy `σ` từ bản ghi arm của lô `DR-D4-19` — lô đó thuộc hệ thống cũ; khi `OQ-16` được chốt phải trỏ
+  sang nguồn `σ` của lô đo lại.
+- `MT-69` (cổng `L-Z3` lúc vào lệnh) và `MT-70` (giá thanh lý dịch đệm hay thô) **vẫn chưa có mã** — cùng nằm ở
+  `confirm_trade_entry` nhưng là quyết định riêng, `DR-D4-20` §3 cố ý không đụng.

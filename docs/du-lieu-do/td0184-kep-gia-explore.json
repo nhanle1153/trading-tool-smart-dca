@@ -1,0 +1,123 @@
+{
+  "nguon": "TD-0184 — đếm lệnh bị kẹp giá (DR-D4-19, sau lượt 2 708a268), EXPLORE CALIB [T0,T1), 0 trial",
+  "chay_luc_utc": "2026-09-20T14:29:31Z",
+  "git_sha": "b3b766d3987b11d9ae76ea5b982e52f72fc5a5cc",
+  "cay_sach": true,
+  "so_ma_explore": 65,
+  "cua_so": [
+    "2024-04-09",
+    "2025-06-12"
+  ],
+  "timeframe_detail": null,
+  "doc_dung": "t1_hep ở 1H là CẬN DƯỚI của mức HẸP khi chạy 5m; t1_dung_spec không phụ thuộc detail. Bậc một: không tính lệnh khác lấp chỗ lệnh bị bỏ.",
+  "arm": {
+    "Z0-T1": {
+      "arm": "Z0-T1",
+      "so_lenh": 137,
+      "so_lenh_nhieu_tranche": 0,
+      "tranche1": {
+        "t1_hep": {
+          "so_lenh": 0,
+          "ty_le": 0.0,
+          "vi_du": []
+        },
+        "t1_dung_spec": {
+          "so_lenh": 0,
+          "ty_le": 0.0,
+          "vi_du": []
+        },
+        "t1_duoi_sl": {
+          "so_lenh": 0,
+          "ty_le": 0.0,
+          "vi_du": []
+        }
+      },
+      "tranche23": {
+        "so_tranche_khop_duoi_muc": 0,
+        "so_tranche_duoi_sl": 0
+      },
+      "giay": 36.7
+    },
+    "Z0": {
+      "arm": "Z0",
+      "so_lenh": 32,
+      "so_lenh_nhieu_tranche": 0,
+      "tranche1": {
+        "t1_hep": {
+          "so_lenh": 0,
+          "ty_le": 0.0,
+          "vi_du": []
+        },
+        "t1_dung_spec": {
+          "so_lenh": 0,
+          "ty_le": 0.0,
+          "vi_du": []
+        },
+        "t1_duoi_sl": {
+          "so_lenh": 0,
+          "ty_le": 0.0,
+          "vi_du": []
+        }
+      },
+      "tranche23": {
+        "so_tranche_khop_duoi_muc": 0,
+        "so_tranche_duoi_sl": 0
+      },
+      "giay": 28.1
+    },
+    "Z0-T0": {
+      "arm": "Z0-T0",
+      "so_lenh": 502,
+      "so_lenh_nhieu_tranche": 0,
+      "tranche1": {
+        "t1_hep": {
+          "so_lenh": 0,
+          "ty_le": 0.0,
+          "vi_du": []
+        },
+        "t1_dung_spec": {
+          "so_lenh": 0,
+          "ty_le": 0.0,
+          "vi_du": []
+        },
+        "t1_duoi_sl": {
+          "so_lenh": 0,
+          "ty_le": 0.0,
+          "vi_du": []
+        }
+      },
+      "tranche23": {
+        "so_tranche_khop_duoi_muc": 0,
+        "so_tranche_duoi_sl": 0
+      },
+      "giay": 73.6
+    },
+    "Z3": {
+      "arm": "Z3",
+      "so_lenh": 32,
+      "so_lenh_nhieu_tranche": 23,
+      "tranche1": {
+        "t1_hep": {
+          "so_lenh": 0,
+          "ty_le": 0.0,
+          "vi_du": []
+        },
+        "t1_dung_spec": {
+          "so_lenh": 0,
+          "ty_le": 0.0,
+          "vi_du": []
+        },
+        "t1_duoi_sl": {
+          "so_lenh": 0,
+          "ty_le": 0.0,
+          "vi_du": []
+        }
+      },
+      "tranche23": {
+        "so_tranche_khop_duoi_muc": 8,
+        "so_tranche_duoi_sl": 0
+      },
+      "giay": 28.7
+    }
+  }
+}
