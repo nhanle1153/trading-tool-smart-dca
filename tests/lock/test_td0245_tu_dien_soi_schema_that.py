@@ -93,18 +93,34 @@ class TestArtifactLaBangChung:
         assert artifact["runtime_image_digest"].startswith("sha256:")
         assert artifact["trial"] == 0
 
-    def test_khong_sinh_file_sqlite_trong_repo(self) -> None:
+    def test_khong_sinh_file_sqlite_LA_trong_repo(self) -> None:
         """Phép đo dùng DB tạm trong `/tmp` của container, không rơi vào repo.
 
-        Một `*.sqlite` nằm trong repo sẽ bị `.gitignore` nuốt im lặng, rồi sau
-        này có người tưởng đó là DB thật của một lần chạy thật.
+        Một `*.sqlite` LẠ nằm trong repo sẽ bị `.gitignore` nuốt im lặng, rồi sau này có người tưởng đó
+        là DB thật của một lần chạy thật.
+
+        🔴 **THU HẸP 20/09/2026 (TD-0350, chủ dự án duyệt sửa khẳng định).** Bản cũ cấm MỌI `*.sqlite`
+        trong repo. Từ khi có service dry-run (`DR-TRIEN-KHAI-01` §4), bot vận hành LUÔN sinh đúng file
+        DB mà `config/freqtrade/config.json` đã ghim có chủ đích (`TD-0201`/`TD-0202`) — hai quyết định
+        đã chốt va nhau, và bản cũ làm suite đỏ mỗi khi dry-run chạy. Ý định gốc của ca này là *"phép ĐO
+        không được để lại DB"*, không phải *"bot vận hành không được có DB"*: nay cấm đúng file LẠ, và
+        đường DB hợp lệ đọc THẲNG từ config — không chép tay thành hằng số thứ hai (LD-09).
         """
+        hop_le = set()
+        for khoa in ("db_url",):
+            url = json.loads(
+                (REPO_ROOT / "config/freqtrade/config.json").read_text(encoding="utf-8")
+            ).get(khoa, "")
+            if url.startswith("sqlite:///"):
+                hop_le.add(Path(url.replace("sqlite:////", "/").replace("sqlite:///", "")).name)
+        assert hop_le, "config không khai db_url sqlite nào — đường DB hợp lệ phải đọc được từ config"
+
         thay = [
             p.relative_to(REPO_ROOT).as_posix()
             for p in REPO_ROOT.rglob("*.sqlite*")
-            if ".git" not in p.parts
+            if ".git" not in p.parts and not p.name.startswith(tuple(hop_le))
         ]
-        assert thay == [], f"có file sqlite lọt vào repo: {thay}"
+        assert thay == [], f"có file sqlite LẠ lọt vào repo: {thay}"
 
 
 class TestATuDienSoiSchemaThat:

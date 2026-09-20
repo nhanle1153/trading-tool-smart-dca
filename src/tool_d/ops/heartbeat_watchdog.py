@@ -33,7 +33,13 @@ from pathlib import Path
 from typing import Callable
 
 from tool_d.ops import telegram_client
-from tool_d.ops.heartbeat import KetQuaDocHeartbeat, doc_heartbeat, tuoi_giay, tuoi_trang_thai_giay
+from tool_d.ops.heartbeat import (
+    KetQuaDocHeartbeat,
+    doc_heartbeat,
+    duong_dan_heartbeat,
+    tuoi_giay,
+    tuoi_trang_thai_giay,
+)
 from tool_d.ops.telegram_client import KetQuaGuiTelegram
 
 # ═══════════════════════════════════════════════════════════════════
@@ -182,14 +188,29 @@ def chay_mot_vong(
     return TrangThaiWatchdog(bat_thuong_da_bao=danh_gia.bat_thuong), ket_qua_gui
 
 
-def main() -> None:  # pragma: no cover — khung CLI, chưa phải bằng chứng đã triển khai thật
+def phan_tich_tham_so(argv: list[str] | None = None) -> tuple[Path, str]:
+    """`--runmode dry_run|live` (BẮT BUỘC, không mặc định) → `(đường heartbeat, tên tiến trình)`.
+
+    TD-0350: không có mặc định vì dry-run và live có thể chạy cùng lúc — một watchdog lặng lẽ canh nhầm tiến
+    trình kia sẽ báo "còn sống" cho một bot đã chết."""
+    import argparse
+
+    p = argparse.ArgumentParser(description="Watchdog heartbeat Tool D (TD-0209)")
+    p.add_argument("--runmode", required=True, choices=("dry_run", "live"))
+    ns = p.parse_args(argv)
+    return duong_dan_heartbeat(ns.runmode), f"tool_d_{ns.runmode}"
+
+
+def main(argv: list[str] | None = None) -> None:  # pragma: no cover — vòng lặp vô hạn + mạng thật
     logging.basicConfig(level=logging.INFO)
+    duong_dan_hb, ten_tien_trinh = phan_tich_tham_so(argv)
     telegram_client.doc_thong_tin_bot()  # fail-fast nếu thiếu credential, trước khi vào vòng lặp
 
-    duong_dan_heartbeat = Path("user_data/heartbeat.json")
     trang_thai = TrangThaiWatchdog()
     while True:
-        trang_thai, ket_qua_gui = chay_mot_vong(duong_dan_heartbeat, trang_thai, now=datetime.now(timezone.utc))
+        trang_thai, ket_qua_gui = chay_mot_vong(
+            duong_dan_hb, trang_thai, now=datetime.now(timezone.utc), ten_tien_trinh=ten_tien_trinh
+        )
         if ket_qua_gui is not None and not ket_qua_gui.thanh_cong:
             _LOG.error("gửi Telegram thất bại (%s): %s", ket_qua_gui.loai_loi, ket_qua_gui.chi_tiet)
         time.sleep(CHU_KY_KIEM_S)
@@ -207,3 +228,7 @@ def main() -> None:  # pragma: no cover — khung CLI, chưa phải bằng chứ
 #      trạng thái RUNNING và STOPPED hay chỉ RUNNING — chưa đọc mã nguồn
 #      Freqtrade cho câu này (rule 6, chưa đoán).
 # ════════════════════════════════════════════════════════════════════
+
+
+if __name__ == "__main__":  # pragma: no cover
+    main()

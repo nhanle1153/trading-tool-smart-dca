@@ -42,11 +42,22 @@ import math
 from dataclasses import dataclass
 from pathlib import Path
 
-DUONG_DAN_MAC_DINH = Path("runs/zone_absorption/equity_peak_state.json")
+#: TD-0353 (`DR-TRIEN-KHAI-01`) — thay hằng `DUONG_DAN_MAC_DINH` dùng CHUNG mọi runmode. Dry-run D11 và lệnh live
+#: tối thiểu D10 chạy song song; chung một file thì mỗi bên ghi đè đỉnh của bên kia ⇒ `mult_dd` của live tính trên
+#: đỉnh của ví giấy (N11: dry-run TÁCH hẳn live).
+THU_MUC_GOC = Path("runs/zone_absorption")
+TEN_FILE = "equity_peak_state.json"
 
 
 class DinhEquityError(ValueError):
     """Lỗi đọc/ghi/cập nhật đỉnh equity bền vững — fail-closed, không đoán (N6)."""
+
+
+def duong_dan_theo_runmode(runmode: str) -> Path:
+    """`runs/zone_absorption/<runmode>/equity_peak_state.json`. Chỉ live/dry_run có đỉnh bền vững."""
+    if runmode not in ("live", "dry_run"):
+        raise DinhEquityError(f"runmode {runmode!r} không có đỉnh equity bền vững — chỉ live/dry_run")
+    return THU_MUC_GOC / runmode / TEN_FILE
 
 
 @dataclass(frozen=True)
@@ -129,10 +140,11 @@ def doc_dinh_equity(duong_dan: Path) -> DinhEquityBenVung | None:
 
 
 __all__ = [
-    "DUONG_DAN_MAC_DINH",
+    "THU_MUC_GOC",
     "DinhEquityBenVung",
     "DinhEquityError",
     "dinh_equity_moi",
     "doc_dinh_equity",
+    "duong_dan_theo_runmode",
     "luu_dinh_equity",
 ]

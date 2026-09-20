@@ -30,8 +30,23 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
+#: TD-0350 (`DR-TRIEN-KHAI-01`) — gốc thư mục trạng thái vận hành, dưới `runs/` (đã `.gitignore`). MỖI runmode
+#: một thư mục con (N11: dry-run TÁCH hẳn live): dry-run D11 và lệnh live tối thiểu D10 có thể chạy cùng lúc, và
+#: hai tiến trình ghi chung MỘT file heartbeat thì watchdog của bên này thấy bên kia "còn sống".
+THU_MUC_VAN_HANH_GOC = Path("runs/van_hanh")
+TEN_FILE_HEARTBEAT = "heartbeat.json"
+
+
 class HeartbeatError(ValueError):
     """Lỗi đầu vào của tầng ghi/đọc heartbeat — fail-closed, không đoán."""
+
+
+def duong_dan_heartbeat(runmode: str) -> Path:
+    """`runs/van_hanh/<runmode>/heartbeat.json`. Chỉ nhận `live`/`dry_run`: runmode khác không có tiến trình dài
+    nào để giám sát, và gọi nhầm ở đó là rò trạng thái giữa các lượt chạy."""
+    if runmode not in ("live", "dry_run"):
+        raise HeartbeatError(f"runmode {runmode!r} không có heartbeat — chỉ live/dry_run")
+    return THU_MUC_VAN_HANH_GOC / runmode / TEN_FILE_HEARTBEAT
 
 
 @dataclass(frozen=True)
@@ -70,7 +85,9 @@ def tinh_trang_thai_tu_luc(
     return now
 
 
-def ghi_heartbeat(duong_dan: Path, *, trang_thai: str, now: datetime, heartbeat_cu: Heartbeat | None = None) -> None:
+def ghi_heartbeat(
+    duong_dan: Path, *, trang_thai: str, now: datetime, heartbeat_cu: Heartbeat | None = None
+) -> Heartbeat:
     """Ghi ATOMIC (tmp file + `os.replace`) — watchdog đọc file này từ một
     tiến trình KHÁC, đang chạy song song; ghi trực tiếp không tmp có thể
     để watchdog đọc trúng một file JSON dở dang giữa lúc ghi.
@@ -91,6 +108,8 @@ def ghi_heartbeat(duong_dan: Path, *, trang_thai: str, now: datetime, heartbeat_
     tmp = duong_dan.with_suffix(duong_dan.suffix + ".tmp")
     tmp.write_text(json.dumps(payload), encoding="utf-8")
     os.replace(tmp, duong_dan)
+    # Trả bản vừa ghi để tầng gọi giữ trong RAM làm `heartbeat_cu` lần sau (không đọc lại đĩa mỗi vòng).
+    return Heartbeat(thoi_diem=now, trang_thai=trang_thai, trang_thai_tu_luc=tu_luc)
 
 
 def _parse_iso(gia_tri: object) -> datetime:

@@ -137,11 +137,11 @@ from tool_d.config.loader import load_tool_d_config, resolve
 from tool_d.dg1_dg5_tranche_gates import danh_gia_tat_ca
 from tool_d.entry_confirmation import bat_dieu_kien_c_cua_arm, quet_xac_nhan_zone
 from tool_d.equity_peak import (
-    DUONG_DAN_MAC_DINH,
     DinhEquityBenVung,
     DinhEquityError,
     dinh_equity_moi,
     doc_dinh_equity,
+    duong_dan_theo_runmode,
     luu_dinh_equity,
 )
 from tool_d.notional import bo_loc_tu_market, kiem_san_tool_d
@@ -155,6 +155,8 @@ from tool_d.dg6_early_invalidation import (
 from tool_d.funding_stop import funding_paid_cumulative, is_funding_stop_triggered
 from tool_d.gap_ms import LenhSl, sinh_ban_ghi_doi_sl
 from tool_d.ledger.decision_log import DEFAULT_DECISION_LOG_PATH, ghi_neu_chua_co
+from tool_d.ops.heartbeat import Heartbeat, duong_dan_heartbeat, ghi_heartbeat
+from tool_d.ops.heartbeat_watchdog import TRANG_THAI_BINH_THUONG
 from tool_d.post_only import bi_san_tu_choi, ly_do_tu_choi
 from tool_d.vao_ra_lenh import sinh_ban_ghi_vao_lenh
 from tool_d.sizing import (
@@ -359,8 +361,13 @@ class ZoneAbsorption(IStrategy):
         self._dinh_equity: float | None = None
         # TD-0238 (MT-40) — nạp lại đỉnh equity bền vững ở bot_start(), KHÔNG
         # ở đây: `self.dp`/`self.wallets` chưa sẵn sàng lúc __init__ chạy.
-        self._duong_dan_dinh_equity = DUONG_DAN_MAC_DINH
+        # TD-0353 — `None` = chọn theo runmode ở `bot_start()` (dry-run và live TÁCH file, N11). Test gán
+        # đường dẫn tường minh TRƯỚC `bot_start()` thì giữ nguyên đường đó.
+        self._duong_dan_dinh_equity: Path | None = None
         self._ben_vung_hoa_equity = False  # bot_start() đặt lại đúng theo runmode
+        # TD-0350 — heartbeat cho watchdog (TD-0209). Giữ bản ghi lần trước trong RAM để
+        # `trang_thai_tu_luc` không bị đặt lại mỗi vòng (không đọc lại đĩa mỗi 5 giây).
+        self._heartbeat_cu: Heartbeat | None = None
 
     # ── vòng đời ─────────────────────────────────────────────────────
 
@@ -384,6 +391,8 @@ class ZoneAbsorption(IStrategy):
         self._ben_vung_hoa_equity = self.dp.runmode.value in ("live", "dry_run")
         if not self._ben_vung_hoa_equity:
             return
+        if self._duong_dan_dinh_equity is None:  # TD-0353
+            self._duong_dan_dinh_equity = duong_dan_theo_runmode(self.dp.runmode.value)
         da_luu = doc_dinh_equity(self._duong_dan_dinh_equity)
         if da_luu is None:
             return
@@ -393,6 +402,29 @@ class ZoneAbsorption(IStrategy):
                 f"tại là {self.config['stake_currency']!r} — không âm thầm trộn đơn vị"
             )
         self._dinh_equity = da_luu.dinh
+
+    def bot_loop_start(self, current_time: datetime, **kwargs) -> None:
+        """TD-0350 — ghi heartbeat mỗi vòng lặp chính (TD-0209, TODO (2) của `heartbeat_watchdog.py`).
+
+        🔴 Đã đọc mã nguồn Freqtrade trong image (N7/quy tắc 6): `freqtradebot.py:280` gọi hàm này qua
+        `strategy_safe_wrapper(..., supress_error=True)` TRONG `process()`, và `worker.py` chỉ gọi
+        `process()` khi trạng thái RUNNING/PAUSED (≈5 giây một lần — `process_throttle_secs`); ở STOPPED
+        KHÔNG có lời gọi nào. Ba hệ quả, đều theo hướng an toàn:
+        - bot STOPPED hoặc tiến trình chết/treo ⇒ thôi ghi ⇒ watchdog báo "heartbeat cũ" sau 300 giây;
+        - lỗi ghi file bị Freqtrade NUỐT (MT-16 vii) ⇒ cũng là thôi ghi ⇒ cũng bị bắt: thứ canh nó là
+          TUỔI của file, không phải exception;
+        - hạn chế đã biết: PAUSED cũng ghi `RUNNING` (chiến lược không đọc được trạng thái worker).
+
+        Chỉ live/dry_run (cờ do `bot_start()` đặt theo runmode) — backtest không có tiến trình dài nào để
+        giám sát và không được rò trạng thái ra đĩa giữa các lượt chạy.
+        """
+        if not self._ben_vung_hoa_equity:
+            return
+        duong = duong_dan_heartbeat(self.dp.runmode.value)
+        duong.parent.mkdir(parents=True, exist_ok=True)
+        self._heartbeat_cu = ghi_heartbeat(
+            duong, trang_thai=TRANG_THAI_BINH_THUONG, now=current_time, heartbeat_cu=self._heartbeat_cu
+        )
 
     # ── dữ liệu ──────────────────────────────────────────────────────
 
