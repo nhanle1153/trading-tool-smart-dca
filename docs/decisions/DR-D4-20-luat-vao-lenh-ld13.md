@@ -91,3 +91,25 @@ Nếu số đo cho `n < 30` hoặc lệnh/năm dưới sàn 150 (§10.2) ⇒ khu
 - Số lệnh **giảm** ở mọi arm (bỏ lệnh live không có). Giảm bao nhiêu: `TD-0358` đo, không đoán.
 - Tranche 2/3 **có thể tăng** số lần khớp (trước đây gần như không đặt được lệnh hợp lệ). Chiều và độ lớn: đo.
 - Lệnh khớp **dưới `sl`** phải biến mất hoàn toàn — nếu còn, bản vá chưa đúng chỗ.
+
+## 7. BỔ SUNG 20/09/2026 — chủ dự án duyệt 4 suất `B2` cho lô ĐO LẠI
+
+§4.2 để ngỏ ngân sách và ghi *"trình chủ dự án"*. Sau khi đọc số đo `TD-0358` (`Z0-T1` 162 → 137 lệnh trên cùng
+tập EXPLORE; lớp lệnh sàn thật từ chối về 0; `Z3` 23/32 lệnh bơm nhiều tranche), chủ dự án chốt: **chạy lô**.
+
+| Mục | Chốt |
+|---|---|
+| Ngân sách | **4 suất `B2`** cho 4 arm (`DR-D4-12` §4). `n_used` 5 → **9**/114. `N = 114` và rào `3,0777` KHÔNG đổi |
+| `hypothesis_slot` | **`DR-D4-20`** — lô này chạy trên hệ thống ĐÃ VÁ. Slot khác `DR-D4-19` để sổ tự phân biệt hai hệ thống, không cần ai nhớ |
+| `D-0015` | Giữ nguyên trong sổ, **thuộc lô cũ** (`DR-D4-19`, hệ thống chưa vá). KHÔNG dùng làm kết quả của arm nào, KHÔNG viết lại sổ |
+| Trần suất không hoàn | `B2` không REFUND tối đa **5** = 1 (`D-0015`, lô cũ) + 4 (lô này). Suất thứ 6 ⇒ cần DR mới |
+
+🔴 **Chốt máy phải đổi theo** (`tests/unit/test_registry_schemas.py`): bản cũ ghim *"mọi `B2` mang slot
+`DR-D4-19`"* và *"≤ 4 suất không hoàn"* — đúng chữ `DR-D4-19` §5 lúc đó. Nay ghim: slot thuộc
+`{DR-D4-19, DR-D4-20}`, `DR-D4-19` giữ **đúng 1** suất không hoàn (`D-0015`), `DR-D4-20` tối đa **4**. Sửa khẳng
+định của một test khoá — chủ dự án duyệt cùng quyết định này, và chốt mới CHẶT HƠN bản cũ ở chỗ nó tách trần
+theo từng lô thay vì một con số gộp.
+
+**Điều kiện dừng của lô, kế thừa `DR-D4-19` §5 nguyên văn:** lỗi/từ chối giữa lô ⇒ không chạy lại tuỳ tiện; cổng
+D4 từ chối ⇒ đọc lý do thật, không nới chốt nào; sổ tăng khác đúng 4 suất `B2` ⇒ dừng; log cho thấy nến ngoài
+`[2025-06-12, 2026-01-29)` ⇒ dừng.

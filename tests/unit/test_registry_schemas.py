@@ -47,10 +47,19 @@ def _kiem_so_that(events: list[dict]) -> None:
     b0 = [e for e in that if e["budget_line"] == "B0"]
     assert len(b0) == 4, f"{len(b0)} trial B0 — tiêu suất mới là quyết định cần DR"
     b2 = [e for e in that if e["budget_line"] == "B2"]
-    assert all(e["hypothesis_slot"] == "DR-D4-19" for e in b2), [(e["trial_id"], e["hypothesis_slot"]) for e in b2]
+    SLOT_B2 = {"DR-D4-19", "DR-D4-20"}  # lô cũ (hệ thống chưa vá LD-13) và lô đo lại (đã vá)
+    assert all(e["hypothesis_slot"] in SLOT_B2 for e in b2), [(e["trial_id"], e["hypothesis_slot"]) for e in b2]
     hoan = {e["trial_id"] for e in events if e["event"] == "REFUND"}
     b2_khong_hoan = [e["trial_id"] for e in b2 if e["trial_id"] not in hoan]
-    assert len(b2_khong_hoan) <= 4, f"{b2_khong_hoan}: quá một lô 4 arm DR-D4-19 — cần DR mới"
+    # 🔄 20/09/2026 (`DR-D4-20` §7, chủ dự án duyệt sửa khẳng định): trần tách THEO LÔ thay vì một con số
+    # gộp — chặt hơn bản cũ. Lô `DR-D4-19` đã đóng ở đúng 1 suất không hoàn (`D-0015`, chạy trên hệ thống
+    # CHƯA vá LD-13, không dùng làm kết quả arm nào); lô đo lại `DR-D4-20` được 4 suất cho 4 arm.
+    TRAN_THEO_LO = {"DR-D4-19": 1, "DR-D4-20": 4}
+    slot_cua_trial = {e["trial_id"]: e["hypothesis_slot"] for e in b2}
+    for slot, tran in TRAN_THEO_LO.items():
+        cua_lo = [t for t in b2_khong_hoan if slot_cua_trial[t] == slot]
+        assert len(cua_lo) <= tran, f"{cua_lo}: lô {slot} vượt trần {tran} suất B2 — cần DR mới"
+    assert len(b2_khong_hoan) <= sum(TRAN_THEO_LO.values()), b2_khong_hoan
     for e in reserve:
         if e["budget_line"] == "CTRL":
             dang = [k for k in _KHOA_DANG_CTRL if k in e]
