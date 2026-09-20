@@ -953,6 +953,37 @@ bộ chạy D10 (`DR-D10-02`): chờ chủ dự án làm xong phần tài khoả
 
 ---
 
+## Khối 32 — Vá luật vào lệnh theo spec LD-13 + tranche 2/3 đặt lệnh chờ trước (mở 20/09/2026, thi hành `DR-D4-20`)
+
+> **Vì sao khối này tồn tại:** lô `DR-D4-19` lượt 2 (`708a268`, `1a4d084`) bắt được lệnh vào ở giá mà sàn thật sẽ từ
+> chối — backtest Freqtrade kẹp lệnh limit về `min(p1, đỉnh nến)` rồi khớp, trong khi spec `:1175` viết lệnh post-only
+> đặt trên giá thị trường bị **sàn từ chối**. Rà tiếp lộ ra chỗ lệch THỨ HAI, độc lập: `ZoneAbsorption.py:1408` chỉ bơm
+> tranche 2/3 khi giá **đã xuống tới** p2/p3 ⇒ lệnh mua nằm trên thị trường ⇒ live cũng từ chối; spec `:1180` viết
+> tranche 2/3 là **lệnh chờ sống trong cửa sổ DG4**, tức đặt TRƯỚC rồi nằm chờ.
+>
+> **Chủ dự án chốt 20/09/2026 (phiên mã `dd855fee`):** (a) luật **ĐÚNG SPEC LD-13**, không dùng mức hẹp *"cả nến dưới
+> p1"* — mức hẹp để lại lệnh mà live không có nhưng bảng kết quả trông bình thường; (b) tranche 2/3 **đặt lệnh chờ
+> trước**; (c) giao lại ba khoá mồ côi `TD-0184`/`TD-0185`/`TD-0186` (phiên `58cebb70` chết khi máy khởi động lại).
+>
+> 🔴 **Hạng `DR-012` Hạng 1** (mã không khớp spec) ⇒ **0 trial** cho bản vá. Nhưng nó đổi hành vi vào lệnh của **mọi
+> arm**, nên vẫn có DR viết trước, và mọi số đo trước 20/09 (`TD-0345`, Δ_R D3.5, phễu EXPLORE) **không so trực tiếp**
+> được với số sau (cảnh báo N10 của phiên `69768527`).
+>
+> 🔑 **KHÔNG thuộc khối này:** cổng `L-Z3` lúc vào lệnh (`MT-69`) và câu giá thanh lý dịch đệm hay thô (`MT-70`) — cùng
+> nằm ở `confirm_trade_entry` nhưng là quyết định riêng, chờ chủ dự án.
+
+| Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
+|---|---|---|---|---|
+| TD-0354 | 🚪 **`DR-D4-20`** — luật LD-13 cho mọi tranche; tranche 2/3 đặt lệnh chờ trước; xử `D-0015` (suất của hệ thống CŨ) và ngân sách lô đo lại so `DR-D4-19` §5; điều kiện dừng viết trước | 🔓 | — | Commit **RIÊNG và TRƯỚC** mọi dòng mã; khai thẳng số cũ mất hiệu lực so sánh; nêu `OQ-16` phải trỏ nguồn `σ` mới nếu phạm vi lô đổi |
+| TD-0355 | **Tranche 1 — chốt LD-13** trong `confirm_trade_entry`: giá thị trường lúc đặt (`custom_entry_price(proposed_rate)`, đã đọc mã nguồn: backtest = giá MỞ nến, live = giá hiện hành) dưới `p1` ⇒ TỪ CHỐI, không đặt lệnh | 🔓 | TD-0354 | Một nguồn giá cho mọi runmode (không rẽ nhánh theo chế độ); test khoá + backtest thật trên fixture; phá thật ⇒ đúng ca đỏ |
+| TD-0356 | **Tranche 2/3 — đặt lệnh chờ TRƯỚC** (`adjust_trade_position`): bỏ điều kiện *"chỉ bơm khi giá đã xuống tới mức"* (`:1408`), đặt khi giá còn TRÊN mức, trong cửa sổ DG4; giữ nguyên DG1–DG5, chốt không-DCA-sau-TP1, chốt NaN của `_zss_hien_tai` | 🔓 | TD-0354 | Backtest thật: tranche 2/3 khớp từ lệnh chờ; ghi nợ nếu `unfilledtimeout.entry = 180` cắt ngắn cửa sổ DG4 8 nến (đọc mã nguồn, không đoán) |
+| TD-0357 | **Hiện vật của mỗi suất** — `ablation/chay_lo.py` ghi `runs/<trial_id>/` (sổ khai `seal_path` nhưng không dòng mã nào sinh file ⇒ `D-0015` tiêu mà không còn gì đọc lại) | 🔓 | — | Chạy lô giả ⇒ có file; khuôn giống E1 (`run_backtest.py`) |
+| TD-0358 | **Đo lại 0 trial trên EXPLORE, trước/sau vá** (script `do_td0184_kep_gia_explore.py` của phiên `58cebb70`, commit cùng DR): số lệnh bị LD-13 cắt · **phân bố tranche** · lệnh/năm so sàn 150 | 🔓 | TD-0355, TD-0356 | CHỈ số đếm (`DR-D4-16` §3), không PnL; `n_used` không đổi; artifact + mục research-log |
+
+**Đặt chỗ mã (N12 mục 7c):** `TD-0354`…`TD-0358` + `DR-D4-20`, commit này, `Phien: dd855fee`. Đã nhắn `trading-tool-smart-dca-f3` (mã `69768527`) và `-8d` (mã `69e2254e`); cả hai xác nhận không giữ `DR-D4-20` và không sửa các file trên.
+
+---
+
 ## Việc đã biết là sẽ có, chưa mở
 
 | Giai đoạn | Nội dung | Chặn bởi |
