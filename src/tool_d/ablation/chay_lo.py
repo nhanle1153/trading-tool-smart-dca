@@ -49,6 +49,7 @@ from tool_d.bo_chay.trich_lenh import lenh_tu_freqtrade
 from tool_d.bo_chay.yeu_cau import BoChayError, GiayPhepChay, YeuCauChay, kiem_ma_thuoc_ro
 from tool_d.config.loader import resolve
 from tool_d.gates.dsr import N_DANG_KY
+from tool_d.ledger.con_dau import duong_khai_so, ghi_con_dau
 from tool_d.ledger.registry import TrialLedger
 from tool_d.measurement.gitinfo import GitInfo
 from tool_d.measurement.hashing import hash_many
@@ -217,7 +218,14 @@ def chay_lo(
             raise LoDungError(f"arm {arm}: {exc}") from exc
 
         # Con dấu NGAY khi kết quả tồn tại, TRƯỚC khi tính hay in bất cứ gì (L-Z53).
-        ledger.seal(tid, seal_path=f"runs/{tid}/metrics.seal")
+        # TD-0357 — HIỆN VẬT trước, LỜI KHAI sau: sổ không được khai một `seal_path` chưa tồn tại
+        # (ca `D-0015`: suất tiêu mà không còn gì đọc lại). Ghi hỏng ⇒ chưa niêm phong ⇒ còn hoàn được.
+        try:
+            ghi_con_dau(thu_muc_ra, tid, kq, them={"arm": arm})
+        except Exception as exc:
+            _hoan_tra(ledger, [tid, *con_lai], f"khong_ghi_duoc_con_dau:{type(exc).__name__}")
+            raise LoDungError(f"arm {arm}: không ghi được hiện vật con dấu: {exc}") from exc
+        ledger.seal(tid, seal_path=duong_khai_so(tid))
 
         try:
             lenhs = [lenh_tu_freqtrade(t, cfg=mt.cfg_phu, arm=arm) for t in kq.lenh]

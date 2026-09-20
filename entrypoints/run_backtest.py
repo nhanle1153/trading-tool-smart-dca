@@ -45,6 +45,7 @@ from tool_d.config.loader import load_tool_d_config, resolve
 from tool_d.gates.cache_policy import assert_cache_none
 from tool_d.gates.d0_pre import require_d0_pre_complete
 from tool_d.gates.dsr import N_DANG_KY
+from tool_d.ledger.con_dau import duong_khai_so, ghi_con_dau
 from tool_d.ledger.registry import TrialLedger
 from tool_d.ledger.timerange import (
     TimerangeViolationError,
@@ -294,9 +295,16 @@ def main(argv: list[str] | None = None) -> int:
 
     # `seal()` NGAY khi chỉ số đầu tiên tồn tại, TRƯỚC khi in/ghi kết quả
     # (`registry.py:558-561`) — đó là thứ làm `L-Z53` có nghĩa.
-    ledger.seal(trial_id, seal_path=f"runs/{trial_id}/metrics.seal")
-
+    # TD-0357 — hiện vật con dấu ghi TRƯỚC lời khai trong sổ; hỏng ⇒ chưa niêm phong ⇒ còn hoàn được.
     thu_muc_ra = Path("runs") / trial_id
+    try:
+        ghi_con_dau(Path("runs"), trial_id, kq)
+    except Exception as exc:
+        ledger.refund(trial_id, cause_machine=f"khong_ghi_duoc_con_dau:{type(exc).__name__}")
+        print(f"🛑 không ghi được hiện vật con dấu: {exc}")
+        return EXIT_BO_CHAY_TU_CHOI
+    ledger.seal(trial_id, seal_path=duong_khai_so(trial_id))
+
     thu_muc_ra.mkdir(parents=True, exist_ok=True)
     (thu_muc_ra / "ket_qua.json").write_text(
         json.dumps(
