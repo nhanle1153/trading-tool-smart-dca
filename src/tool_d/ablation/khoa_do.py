@@ -23,7 +23,11 @@ from __future__ import annotations
 #: `DR-IQ-01` §1 + `DR-D4-14` §2.2. Lật giá trị này = nối lại D4-đo — cần DR nối lại.
 #: 19/09/2026: `False` theo `DR-D4-19` (chủ dự án GHI ĐÈ điều kiện 1 của `DR-D4-14` §6, không thoả nó) —
 #: đúng MỘT lô 4 arm, xong thì lật lại `True` (`DR-D4-19` §4).
-D4_DO_TAM_DUNG: bool = False
+#: 🔄 20/09/2026 (`TD-0362`, chủ dự án chốt): **lật lại `True`** — lô `DR-D4-20` đã chạy xong đúng 4 suất
+#: (`D-0019`…`D-0022` CONSUMED, cả bốn INCONCLUSIVE) nên vế *"lật lại"* của `DR-D4-19` §4 tới hạn;
+#: `DR-TRIEN-KHAI-01` §1 bỏ vế *"ZA về ⏸"* nhưng **giữ** vế này. Cửa duy nhất tiêu suất `B2` đóng lại:
+#: trước đó thứ chặn chỉ là một test chạy SAU, không phải cổng lúc chạy.
+D4_DO_TAM_DUNG: bool = True
 
 LY_DO_KHOA = (
     "D4-đo đang TẠM DỪNG — `DR-IQ-01` §1, khoá `D4_DO_TAM_DUNG` (`DR-D4-14` §2.2). "

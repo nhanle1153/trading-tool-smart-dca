@@ -63,11 +63,12 @@ FOLDS = (
 
 class TestKhoaGhim:
     def test_khoa_do_dang_BAT(self) -> None:
-        # 19/09/2026 — ghim `False` theo DR-D4-19 (nối lại đo, GHI ĐÈ DR-IQ-01 §1, một lô 4 arm).
-        # DR-D4-19 §4: lô xong thì lật lại `True` và dòng này trả về `is True`.
-        assert khoa_do.D4_DO_TAM_DUNG is False, (
-            "DR-D4-19 mở khoá đo cho ĐÚNG một lô D4 (ghi đè DR-IQ-01 §1; khoá ghim theo DR-D4-14 §2.2). "
-            "Lô xong ⇒ lật lại True (DR-D4-19 §4)."
+        # 19/09/2026 — từng ghim `False` theo DR-D4-19 (mở đúng MỘT lô 4 arm, ghi đè DR-IQ-01 §1).
+        # 🔄 20/09/2026 (TD-0362, chủ dự án chốt): lô đã chạy xong (D-0019…D-0022 CONSUMED) ⇒ đúng ca mà
+        # dòng chú thích cũ hẹn trước — khẳng định trả về `is True`. Đây KHÔNG phải nới chốt: nó siết lại.
+        assert khoa_do.D4_DO_TAM_DUNG is True, (
+            "Lô DR-D4-20 đã tiêu đủ 4 suất B2 ⇒ khoá đo phải đóng lại (DR-D4-19 §4, vế mà "
+            "DR-TRIEN-KHAI-01 §1 GIỮ). Mở lại cần một DR nối lại — DR-D4-14 §2.2/§6."
         )
 
 
