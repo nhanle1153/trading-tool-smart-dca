@@ -1,0 +1,97 @@
+{
+  "nguon": "TD-0359 — tỉ trọng tranche trên EXPLORE CALIB, 0 trial, CHỈ đếm/đo tỉ lệ (DR-D4-20 §7)",
+  "chay_luc_utc": "2026-09-20T15:00:54Z",
+  "git_sha": "f7341391c6209a057c829124963e43cfa68a4b7a",
+  "cay_sach": true,
+  "arm": "Z3",
+  "so_ma_explore": 88,
+  "so_lenh_du_ba_tranche": 16,
+  "so_lenh_qua_dung_sai": 5,
+  "dung_sai": 0.01,
+  "lech_lon_nhat": 0.059055849320456266,
+  "lech_trung_vi": 0.003661996205428064,
+  "khoang_cach_toi_ty_le_GIA_lon_nhat": 0.07060372328803055,
+  "doc_dung": "`ty_le_cost` gần 1 và lệch nhỏ ⇒ làm tròn bước hợp đồng. `ty_le_cost` bám `ty_le_gia` (khoảng cách ≈ 0) ⇒ cỡ lệnh tính sai theo giá, KHÔNG phải làm tròn.",
+  "vi_du": [
+    {
+      "pair": "SUPER/USDT:USDT",
+      "open_date": "2024-10-17 06:00:00+00:00",
+      "ty_le_cost": [
+        1.0,
+        1.0590558493204563,
+        1.0466831272123411
+      ],
+      "ty_le_gia": [
+        1.0,
+        0.9884521260324257,
+        0.9769042520648517
+      ],
+      "notional_tranche1": 18.3064,
+      "amount_tranche1": 14.0
+    },
+    {
+      "pair": "SUPER/USDT:USDT",
+      "open_date": "2024-09-30 01:00:00+00:00",
+      "ty_le_cost": [
+        1.0,
+        0.9895205415932486,
+        1.0366317351386443
+      ],
+      "ty_le_gia": [
+        1.0,
+        0.9895205415932485,
+        0.9790410831864973
+      ],
+      "notional_tranche1": 18.3311,
+      "amount_tranche1": 17.0
+    },
+    {
+      "pair": "MTL/USDT:USDT",
+      "open_date": "2024-11-17 17:00:00+00:00",
+      "ty_le_cost": [
+        1.0,
+        0.9908560480710613,
+        0.9757032134459636
+      ],
+      "ty_le_gia": [
+        1.0,
+        0.9908560480710614,
+        0.9757032134459636
+      ],
+      "notional_tranche1": 12.631300000000001,
+      "amount_tranche1": 11.0
+    },
+    {
+      "pair": "ETH/USDT:USDT",
+      "open_date": "2025-07-23 11:00:00+00:00",
+      "ty_le_cost": [
+        1.0,
+        0.9932793188684429,
+        0.9865586377368855
+      ],
+      "ty_le_gia": [
+        1.0,
+        0.9932793188684428,
+        0.9865586377368855
+      ],
+      "notional_tranche1": 29.128,
+      "amount_tranche1": 0.008
+    },
+    {
+      "pair": "BRETT/USDT:USDT",
+      "open_date": "2024-12-03 08:00:00+00:00",
+      "ty_le_cost": [
+        1.0,
+        1.0113657585351765,
+        1.0081866468623644
+      ],
+      "ty_le_gia": [
+        1.0,
+        0.9836571076164045,
+        0.9673142152328091
+      ],
+      "notional_tranche1": 13.81518,
+      "amount_tranche1": 71.0
+    }
+  ]
+}

@@ -3961,3 +3961,37 @@ trong `scratchpad`.
   sang nguồn `σ` của lô đo lại.
 - `MT-69` (cổng `L-Z3` lúc vào lệnh) và `MT-70` (giá thanh lý dịch đệm hay thô) **vẫn chưa có mã** — cùng nằm ở
   `confirm_trade_entry` nhưng là quyết định riêng, `DR-D4-20` §3 cố ý không đụng.
+
+### Bổ sung cùng ngày — cổng D4 TỪ CHỐI lô `DR-D4-20`, hai lý do, cả hai là phát hiện thật
+
+`trial_ledger_audit.py --close-d4-gate` trên trạng thái thật (`f734139`):
+
+1. **Kế toán lệch:** sổ có **5** dòng `B2` CONSUMED nhưng chỉ **4** bản ghi arm. Dòng thứ năm là `D-0015` — suất
+   chết của lô `DR-D4-19` (lỗi sau con dấu, hệ thống CHƯA vá). Cổng so QUAN HỆ *"số suất tiêu = số bản ghi"*
+   (`DR-D4-11` §3) và **không có khái niệm "suất thuộc lô cũ"**. Đây là cổng làm đúng việc nó được giao.
+2. **`ti_trong_tranche_dat = False` ở arm `Z3`** (`DR-D4-04` §7 (ii)): có lệnh đủ ba tranche mà
+   `cost_j / cost_1` ra ngoài `[0,99; 1,01]`.
+
+### `TD-0359` — lệch tỉ trọng tranche là DO ĐÂU: đo trước khi đụng chiến lược (N10)
+
+EXPLORE, arm `Z3`, 88 mã, **0 trial**, cây sạch (`docs/du-lieu-do/td0359-ti-trong-tranche-explore.json`):
+
+| Đại lượng | Giá trị |
+|---|---|
+| Lệnh đủ ba tranche | 16 |
+| Lệnh vượt dung sai 1% | **5** |
+| Lệch lớn nhất · trung vị | **5,91%** · 0,37% |
+
+🔑 **Cơ chế đọc được từ năm ca lệch nhất, và nó KHÁC giả thuyết đầu của tôi.** Ở `MTL` (`amount = 11`) và `ETH`
+(`amount = 0,008`), tỉ lệ `cost` **trùng ĐÚNG** tỉ lệ `giá` — nghĩa là **số lượng hợp đồng của ba tranche BẰNG
+NHAU**. Không phải cỡ lệnh tính sai theo giá: cỡ lệnh thiết kế bằng nhau về *notional*, nên `amount_j` chỉ chênh
+nhau một chút, và **bước hợp đồng của sàn nuốt trọn phần chênh đó** ở cỡ lệnh 12–30 USDT. `SUPER` (giá ≈ 1,3, bước
+1 đơn vị ⇒ một bước ≈ 7% của lệnh 18 USDT) cho lệch lớn nhất.
+
+⇒ **Tỉ trọng 1:1:1 đúng ở tầng thiết kế; sai lệch đến từ độ mịn bước hợp đồng tại cỡ lệnh hiện tại.** Dung sai
+±1% của `DR-D4-04` §7 chặt hơn thứ sàn cho phép biểu diễn ở `E_D = 750`. **Không sửa chiến lược, không nới cổng
+— trình chủ dự án** (cùng khuôn `DR-D4-05`: phát hiện một chốt không thoả được là phát hiện, không phải cớ để gỡ chốt).
+
+⚠️ Heuristic trong script (*"bám tỉ lệ giá ⇒ cỡ lệnh sai"*) **không đủ phân biệt**: làm tròn ở cỡ lệnh nhỏ cũng
+tạo ra đúng dấu hiệu đó. Phân biệt thật nằm ở chỗ `amount` ba tranche có bằng nhau không — đọc từ ví dụ, không
+từ chỉ số tổng hợp.
