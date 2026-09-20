@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import sys
 from datetime import date
 from pathlib import Path
@@ -40,7 +41,11 @@ from typing import Any
 
 from tool_d.bo_chay.chay import BacktestHongError, chay_mot_luot
 from tool_d.bo_chay.moi_truong import dung_moi_truong
+from tool_d.bo_chay.trich_lenh import lenh_tu_freqtrade
 from tool_d.bo_chay.yeu_cau import BoChayError, GiayPhepChay, YeuCauChay
+from tool_d.calibration.bang_r import ghi_bang_r
+from tool_d.calibration.ghi_de_b1 import KHOA_ARM, ghi_de_cho_b1
+from tool_d.calibration.ung_vien import BUDGET_LINE_B1, UngVienError, doc_bang_ung_vien
 from tool_d.config.loader import load_tool_d_config, resolve
 from tool_d.gates.cache_policy import assert_cache_none
 from tool_d.gates.d0_pre import require_d0_pre_complete
@@ -129,6 +134,34 @@ def _cua_so(args, bien) -> tuple[date, date]:
     )
 
 
+def _doc_param_value(chuoi: str | None):
+    if chuoi is None:
+        return None
+    try:
+        return json.loads(chuoi)
+    except json.JSONDecodeError:
+        return chuoi
+
+
+def _ghi_de_cua_luot(args) -> dict[str, Any]:
+    """TD-0255 — B1: phần phủ SUY từ `--param-under-test`/`--param-value` (thứ vào SỔ), và TỪ CHỐI
+    `--ghi-de`. Sổ và lượt chạy phải là MỘT cấu hình (bài học `MT-23`: sổ ghi CẤU HÌNH, không ghi TẬP
+    LỆNH). Dòng ngân sách khác giữ `--ghi-de` như cũ."""
+    if args.budget_line != BUDGET_LINE_B1:
+        return _doc_ghi_de(args.ghi_de)
+    if args.ghi_de:
+        raise BoChayError(
+            "B1 KHÔNG nhận --ghi-de: phần phủ suy từ --param-under-test/--param-value để sổ và lượt "
+            "chạy là MỘT cấu hình (TD-0255)"
+        )
+    if not args.param_under_test:
+        raise BoChayError("B1 cần --param-under-test (D5_MOC / D5_XAC_NHAN / tên tham số DR-D5-01 §2.1)")
+    try:
+        return ghi_de_cho_b1(args.param_under_test, _doc_param_value(args.param_value), doc_bang_ung_vien())
+    except UngVienError as exc:
+        raise BoChayError(str(exc)) from exc
+
+
 def _thieu_co(args) -> list[str]:
     """Cờ BẮT BUỘC khi `--chay`. Không cái nào có mặc định — xem docstring module."""
     return [
@@ -185,7 +218,7 @@ def main(argv: list[str] | None = None) -> int:
         ro = ro_cho_tap(args.tap)  # đọc YAML rổ; CHƯA chạm dữ liệu thị trường
         bien = dataset_boundaries_from_config(cfg)[args.tap]
         tu, den = _cua_so(args, bien)
-        ghi_de = _doc_ghi_de(args.ghi_de)
+        ghi_de = _ghi_de_cua_luot(args)
         # Kiểm KẾ HOẠCH trước khi tốn một suất: một cửa sổ đã sai so với biên tập
         # thì không đáng tiêu trial để phát hiện. `den` là cận KHÔNG BAO GỒM nên
         # ngày cuối THỰC SỰ được đọc là `den - 1`.
@@ -219,10 +252,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"🛑 `--chay` nhưng thiếu {', '.join(thieu)} — không có mặc định (DR-BC-01 §4).")
         return EXIT_BO_CHAY_TU_CHOI
 
-    try:
-        param_value = json.loads(args.param_value)
-    except json.JSONDecodeError:
-        param_value = args.param_value
+    param_value = _doc_param_value(args.param_value)
 
     # Dựng cấu hình phủ TRƯỚC khi đặt chỗ: dòng RESERVE phải mang `config_hash` và
     # `params_effective` CỦA BẢN SẼ CHẠY, không phải của file trong repo. `chay_mot_luot`
@@ -330,17 +360,36 @@ def main(argv: list[str] | None = None) -> int:
         encoding="utf-8",
     )
 
+    # TD-0255 — R THEO TỪNG LỆNH cho tầng chọn giá trị D5 (`calibration/bang_r.py`). SAU con dấu: lỗi ở
+    # đây KHÔNG hoàn lại được (`L-Z53`) ⇒ vẫn `consume`, kèm lý do; ĐÚNG MỘT lời gọi `consume` (TD-0313).
+    loi_sau_dau: str | None = None
+    expectancy: float | None = None
+    so_lenh = kq.so_lenh
+    try:
+        arm = str(resolve(mt.cfg_phu, KHOA_ARM))
+        lenhs = [lenh_tu_freqtrade(t, cfg=mt.cfg_phu, arm=arm) for t in kq.lenh]
+        ghi_bang_r(thu_muc_ra, lenhs, trial_id=trial_id)
+        so_lenh = len(lenhs)
+        # mean R THEO RỦI RO ĐÃ TRIỂN KHAI (`DR-D5-01` §5, `DR-D4-12` §1). 0 lệnh ⇒ None, không 0.0 (N6).
+        expectancy = math.fsum(l.r_trien_khai for l in lenhs) / len(lenhs) if lenhs else None
+    except Exception as exc:
+        loi_sau_dau = f"loi_sau_niem_phong:{type(exc).__name__}: {exc}"[:500]
+
     ledger.consume(
         trial_id,
         outcome={
-            "expectancy": None,
+            "expectancy": expectancy,
             "sharpe": None,
-            "n_trades": kq.so_lenh,
+            "n_trades": so_lenh,
             "max_single_loss_ratio": None,
         },
         verdict="INCONCLUSIVE",
+        rejection_reason=loi_sau_dau,
     )
-    print(f"✅ {kq.so_lenh} lệnh · đọc được [{kq.observed_start}, {kq.observed_end}] · {thu_muc_ra}")
+    if loi_sau_dau is not None:
+        print(f"🛑 lỗi SAU con dấu (suất đã tiêu, L-Z53): {loi_sau_dau}")
+        return EXIT_BO_CHAY_TU_CHOI
+    print(f"✅ {so_lenh} lệnh · đọc được [{kq.observed_start}, {kq.observed_end}] · {thu_muc_ra}")
     return 0
 
 
