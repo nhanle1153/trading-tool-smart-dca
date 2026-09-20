@@ -121,6 +121,54 @@ class TestLZ12NoDuplicateConfigHash:
         assert r.is_fail
         assert "SAME" in r.evidence
 
+    # ── TD-0366 (`DR-LZ12-01`) — đơn vị so sánh là CẶP (config_hash, code_commit) ────────────────
+    # 🔴 Hai ca trên KHÔNG phân biệt được luật cũ với luật mới: cả hai dựng trial cùng `code_commit`
+    # nên xanh/đỏ y như cũ. Ba ca dưới mới là chỗ luật đổi (phiên `69768527` chỉ ra khoảng hở này).
+
+    @staticmethod
+    def _mot_trial(ledger: TrialLedger, *, config_hash: str, code_commit: str, expectancy: float) -> None:
+        tid = _reserve(ledger, config_hash=config_hash, code_commit=code_commit)
+        ledger.seal(tid, seal_path=f"runs/{tid}/metrics.seal")
+        ledger.consume(
+            tid,
+            outcome={"expectancy": expectancy, "sharpe": 0.5, "n_trades": 100, "max_single_loss_ratio": 1.0},
+            verdict="REJECTED",
+        )
+
+    def test_cung_config_hash_KHAC_code_commit_thi_khong_con_fail(self, tmp_path: Path) -> None:
+        """Ca THẬT của lô `DR-D4-20`: cùng cấu hình, mã đổi (vá LD-13) ⇒ `n_trades` đổi. Không phải
+        'chạy lại không ghi sổ' — đó là hai hệ thống khác nhau."""
+        ledger = TrialLedger(tmp_path / "reg.jsonl")
+        self._mot_trial(ledger, config_hash="SAME", code_commit="MA_CU", expectancy=0.02)
+        self._mot_trial(ledger, config_hash="SAME", code_commit="MA_MOI", expectancy=0.09)
+        r = check_lz12_no_duplicate_config_hash_different_outcome(tmp_path / "reg.jsonl")
+        assert not r.is_fail, r.evidence
+
+    def test_linh_canh_n_a_dung_ngoai_phep_gom(self, tmp_path: Path) -> None:
+        """Bốn suất B0 chốt pool của E7 ghi `config_hash = 'n/a'` — không phải một cấu hình."""
+        ledger = TrialLedger(tmp_path / "reg.jsonl")
+        self._mot_trial(ledger, config_hash="n/a", code_commit="MA", expectancy=0.02)
+        self._mot_trial(ledger, config_hash="n/a", code_commit="MA", expectancy=0.09)
+        r = check_lz12_no_duplicate_config_hash_different_outcome(tmp_path / "reg.jsonl")
+        assert not r.is_fail
+        assert r.measured.status.value == "pending", r.measured.render()
+
+    def test_khong_con_cap_so_duoc_thi_PENDING_khong_phai_dat(self, tmp_path: Path) -> None:
+        """🔴 Chốt chống PASS RỖNG: 0 cặp lặp lại ⇒ không có gì được canh ⇒ `pending`, không phải ✅."""
+        ledger = TrialLedger(tmp_path / "reg.jsonl")
+        self._mot_trial(ledger, config_hash="A", code_commit="MA", expectancy=0.02)
+        self._mot_trial(ledger, config_hash="B", code_commit="MA", expectancy=0.09)
+        r = check_lz12_no_duplicate_config_hash_different_outcome(tmp_path / "reg.jsonl")
+        assert r.measured.status.value == "pending", r.measured.render()
+
+    def test_bang_chung_neu_ten_ca_hai_dinh_danh(self, tmp_path: Path) -> None:
+        ledger = TrialLedger(tmp_path / "reg.jsonl")
+        self._mot_trial(ledger, config_hash="SAME", code_commit="MA", expectancy=0.02)
+        self._mot_trial(ledger, config_hash="SAME", code_commit="MA", expectancy=0.09)
+        r = check_lz12_no_duplicate_config_hash_different_outcome(tmp_path / "reg.jsonl")
+        assert r.is_fail
+        assert "config_hash=SAME" in r.evidence and "code_commit=MA" in r.evidence
+
 
 class TestLZ15CalibrateParamsHaveStatus:
     def test_tren_FILE_THAT_du_12_muc_va_khai_ro_12_cho_giu(self) -> None:

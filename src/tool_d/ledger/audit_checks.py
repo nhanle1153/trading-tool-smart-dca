@@ -124,38 +124,68 @@ def check_lz11_n_used_le_n_dang_ky(
 
 
 # ── L-Z12 ─────────────────────────────────────────────────────────────
+#: `DR-LZ12-01` §3 chốt 4 — `config_hash` lính canh của các dòng KHÔNG mang cấu hình chiến lược (bốn suất B0 chốt
+#: pool của E7 ghi `"n/a"`). Gom chúng lại là gom những thứ không phải một cấu hình.
+CONFIG_HASH_LINH_CANH: frozenset[str] = frozenset({"n/a", ""})
+
+
 def check_lz12_no_duplicate_config_hash_different_outcome(
     registry_path: Path = DEFAULT_REGISTRY_PATH,
 ) -> CheckResult:
-    """Không config_hash nào xuất hiện ở 2 trial với outcome khác nhau
-    (spec dòng 3874-3875: "nếu có → có chạy lại không ghi sổ, registry
-    mất hiệu lực")."""
+    """Không CẶP `(config_hash, code_commit)` nào xuất hiện ở 2 trial với outcome khác nhau.
+
+    Spec dòng 3874-3875 nhắm ca *"chạy lại mà không ghi sổ ⇒ registry mất hiệu lực"* — ca đó theo định nghĩa là
+    **cùng mã**. Bản trước gom theo `config_hash` MỘT MÌNH và vì thế hỏi sai câu: sau bản vá LD-13
+    (`DR-D4-20`), cùng một `config_hash` cho `n_trades` 255 → 231 vì **mã đổi**, và chốt báo đỏ 4 cặp, chặn mọi
+    entrypoint (`run_audit` → 92). `config_hash` định danh CẤU HÌNH, không định danh MÃ; kết quả phụ thuộc cả hai.
+
+    Ba điều `DR-LZ12-01` chốt, mỗi điều chặn một cách hỏng khác nhau:
+    - **GIỮ dòng `CTRL`** trong phép so: `CTRL` dạng *tái lập* (`MT-08`/`TD-0130`) tồn tại đúng để chứng minh cùng
+      cấu hình cho cùng kết quả — bỏ nó là tự làm câm lớp canh duy nhất kiểm được điều đó.
+    - **Loại `config_hash` lính canh**: xem `CONFIG_HASH_LINH_CANH`.
+    - **Không còn cặp nào so được ⇒ `pending`, không phải `ok`** (N6). Đo 20/09/2026 trên sổ thật: sau khi đổi đơn
+      vị, nhóm duy nhất còn ≥ 2 trial là nhóm lính canh ⇒ trả `ok` ở đây sẽ là một dấu ✅ cho một phép kiểm **không
+      canh cấu hình thật nào** — đúng bẫy PASS RỖNG.
+    """
     events = _read_jsonl(registry_path)
-    config_hash_by_trial: dict[str, str] = {
-        e["trial_id"]: e["config_hash"] for e in events if e["event"] == "RESERVE"
-    }
+    reserve_by_trial: dict[str, dict] = {e["trial_id"]: e for e in events if e["event"] == "RESERVE"}
     outcome_by_trial: dict[str, dict] = {
         e["trial_id"]: e["outcome"] for e in events if e["event"] == "CONSUME"
     }
     if not events:
         return CheckResult("L-Z12", Measured.pending("registry rỗng"))
 
-    by_hash: dict[str, list[tuple[str, dict]]] = defaultdict(list)
+    by_key: dict[tuple[str, str], list[tuple[str, dict]]] = defaultdict(list)
     for tid, outcome in outcome_by_trial.items():
-        ch = config_hash_by_trial.get(tid)
-        if ch is not None:
-            by_hash[ch].append((tid, outcome))
+        r = reserve_by_trial.get(tid)
+        if r is None:
+            continue
+        ch = r.get("config_hash")
+        if ch is None or ch in CONFIG_HASH_LINH_CANH:
+            continue
+        # `code_commit` thiếu ⇒ chuỗi rỗng, VẪN gom (fail-closed: thiếu xuất xứ thì so chặt hơn).
+        by_key[(ch, str(r.get("code_commit") or ""))].append((tid, outcome))
 
     violations: list[str] = []
-    for ch, entries in by_hash.items():
+    so_cap_so_duoc = 0
+    for (ch, code), entries in by_key.items():
         if len(entries) < 2:
             continue
+        so_cap_so_duoc += 1
         first_tid, first_outcome = entries[0]
         for tid, outcome in entries[1:]:
             if outcome != first_outcome:
                 violations.append(
-                    f"config_hash={ch}: {first_tid} và {tid} có outcome khác nhau"
+                    f"config_hash={ch} code_commit={code}: {first_tid} và {tid} có outcome khác nhau"
                 )
+    if so_cap_so_duoc == 0:
+        return CheckResult(
+            "L-Z12",
+            Measured.pending(
+                "chưa có cặp (config_hash, code_commit) nào lặp lại — không có gì để so. "
+                "Dòng lính canh (config_hash 'n/a') đứng ngoài phép gom (DR-LZ12-01 §3)"
+            ),
+        )
     return CheckResult("L-Z12", Measured.ok(len(violations) == 0), evidence="; ".join(violations))
 
 

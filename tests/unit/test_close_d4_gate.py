@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import sys
 from datetime import date, datetime
+import ast
 from pathlib import Path
 
 import pytest
@@ -144,20 +145,47 @@ def _goi(sp: Path, hv: dict, bo_test=D4_PASS):
 
 
 class TestTrangThaiThatHomNay:
-    def test_tu_choi_va_khong_ghi_byte_nao(self) -> None:
-        sp = REPO_ROOT / "registry" / "runtime_state.json"
-        truoc = sp.read_bytes()
+    """🔴 SỰ CỐ THẬT 20/09/2026 — ca này TỪNG trỏ thẳng vào `registry/runtime_state.json` THẬT và gọi
+    `close_d4_gate()`. Vô hại suốt thời gian cổng còn từ chối, nên không ai thấy. Đúng lúc lô `DR-D4-20`
+    chạy xong và `L-Z12` được vá (`DR-LZ12-01`), điều kiện đủ ⇒ nó **ĐÓNG CỔNG D4 THẬT** ngay trong một
+    lượt chạy suite, ghi `d4_complete` với bằng chứng do chính fixture bịa: `git_sha = 'c'*40` và một lệnh
+    pytest giả luôn báo xanh. Đã trả `runtime_state.json` về nguyên trạng (thay đổi chưa commit).
+
+    Bài học: một test ĐỌC dữ liệu thật thì vô hại; một test GỌI HÀM GHI với đường dẫn thật là một lần chạy
+    sản xuất núp dưới tên test. Chủ dự án chốt 20/09/2026: chạy trên BẢN SAO, và thêm một ca canh vĩnh viễn.
+    """
+
+    def test_hanh_vi_tren_ban_sao_cua_trang_thai_that(self, tmp_path) -> None:
+        """Vẫn kiểm hành vi trên DỮ LIỆU THẬT (sổ trial thật, bản ghi arm thật), nhưng ghi vào bản sao."""
+        that = REPO_ROOT / "registry" / "runtime_state.json"
+        truoc = that.read_bytes()
+        ban_sao = tmp_path / "runtime_state.json"
+        ban_sao.write_bytes(truoc)
+
         ma, text = close_d4_gate(
-            runtime_state_path=sp, repo_dir=REPO_ROOT, runs_dir=REPO_ROOT / "runs",
+            runtime_state_path=ban_sao, repo_dir=REPO_ROOT, runs_dir=REPO_ROOT / "runs",
             registry_path=REPO_ROOT / "registry" / "trial_registry.jsonl",
             pytest_cmd=PASS_CMD, pytest_d4_cmd=D4_PASS,
         )
-        assert ma == EXIT_GATE_AUDIT_DIRTY
-        # 🔄 20/09/2026: lô `DR-D4-20` đã chạy ⇒ lý do từ chối đổi theo trạng thái THẬT. Ca này ghim
-        # đúng hai tính chất bất biến: cổng TỪ CHỐI, và nó KHÔNG ghi byte nào khi từ chối. Nội dung lý do
-        # là thứ sẽ đổi mỗi khi trạng thái đổi — ghim nó là ghim một ảnh chụp, không phải một luật.
-        assert text.startswith("🛑 TỪ CHỐI đóng cổng D4")
-        assert sp.read_bytes() == truoc
+        assert ma in (0, EXIT_GATE_AUDIT_DIRTY), text
+        assert that.read_bytes() == truoc, "ca này KHÔNG được chạm file trạng thái thật"
+
+    def test_khong_ca_nao_truyen_duong_dan_that_vao_ham_dong_cong(self) -> None:
+        """Canh vĩnh viễn cho chính sự cố trên: `close_d4_gate()` GHI file, nên không ca nào được truyền
+        `REPO_ROOT / "registry" / "runtime_state.json"` làm `runtime_state_path`."""
+        nguon = Path(__file__).read_text(encoding="utf-8")
+        cay = ast.parse(nguon)
+        vi_pham: list[int] = []
+        for n in ast.walk(cay):
+            if not (isinstance(n, ast.Call) and getattr(n.func, "id", None) == "close_d4_gate"):
+                continue
+            for kw in n.keywords:
+                if kw.arg != "runtime_state_path":
+                    continue
+                doan = ast.get_source_segment(nguon, kw.value) or ""
+                if "REPO_ROOT" in doan and "runtime_state" in doan:
+                    vi_pham.append(n.lineno)
+        assert vi_pham == [], f"dòng {vi_pham}: truyền đường dẫn trạng thái THẬT vào hàm ghi"
 
 
 class TestThuTuCong:
