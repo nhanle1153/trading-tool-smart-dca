@@ -1,0 +1,19 @@
+{
+  "nguon": "TD-0361 (DR-D4-20 §9) — bản sao BỀN VỮNG của hiện vật lô D4 `DR-D4-20`",
+  "vi_sao": "runs/** nằm trong .gitignore:16 ⇒ bản ghi arm chỉ tồn tại trên đĩa một máy. runs/D-0015 biến mất sau khi máy khởi động lại đã chứng minh rủi ro là thật, và đó là một suất trong 114 không đọc lại được. Bản sao này là thứ mọi tài liệu sau (OQ-17, DR nối lại) nên trỏ tới, thay vì runs/.",
+  "chup_luc_utc": "2026-09-20T15:22:17Z",
+  "file": {
+    "D-0019-arm_result.json": "48733c2a266423dd87724c2481bcbc64ffcb1be9e0bb314d9d4b97f50a30cd5a",
+    "D-0019-metrics.seal": "9b25ace54c6a7e78b2684559980a7aac3a0b477ad0237d3e334fd9aeaf43c00d",
+    "D-0019-ket_qua_chay.json": "c41c7a310dffe2fa36320b76a5e7a4280f7be8de1615cac6df35dd57c86bd1b6",
+    "D-0020-arm_result.json": "67ae325b4bec2021f2f30d7120d86cc050ebbb198e5a97cc6ed05ca00e0f116f",
+    "D-0020-metrics.seal": "cea860ba8117fefcc7b9f3b067cfd21ecf1f73a8391a80cb90dbc631546c1543",
+    "D-0020-ket_qua_chay.json": "176b66762ee22bd151fea2a05fd2c9cafcbb3913bce30233cb35a476af83551e",
+    "D-0021-arm_result.json": "5dc20cc4bcd0efac304be0ea4b1bb8ef861b4d3485510a13caa1aa506b87e012",
+    "D-0021-metrics.seal": "9d7f2e3c07f1c1582a8107b18a06c3da2a6d7a820cc3734d0d2000822a13933e",
+    "D-0021-ket_qua_chay.json": "e7b2b56567bef5490841d679a79b509107b1fdb9242000f919cc4c9b7a5ed847",
+    "D-0022-arm_result.json": "9ecea2fc3a041b6b13b757ee412c3381d18598e197511fb062f024d8dd30ca9c",
+    "D-0022-metrics.seal": "6a263181561a9f307853e0e08a0586f6471888be2eced248f369285c8a6a90fb",
+    "D-0022-ket_qua_chay.json": "a1cd6f9916499aa54c7feff795073e5930e0e13da07390d3dbd4bc4249f354c9"
+  }
+}

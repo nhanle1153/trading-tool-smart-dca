@@ -994,8 +994,9 @@ def _chi_so(bg: dict | None, khoa: str):
     return Measured(status=Status(o["status"]), value=o.get("value"), note=o.get("note"))
 
 
-def _d4_han_che(ban_ghi: list[dict]) -> str:
-    """`DR-D4-12` §10(f) — SÁU điều, cộng nguồn `planned_risk_usdt` (`DR-D4-14` §10) và §1.7 (`DR-D4-15`)."""
+def _d4_han_che(ban_ghi: list[dict], *, slot: str | None = None) -> str:
+    """`DR-D4-12` §10(f) — SÁU điều, cộng nguồn `planned_risk_usdt` (`DR-D4-14` §10), §1.7 (`DR-D4-15`) và — khi
+    lô được miễn trừ (`DR-D4-20` §9) — điều (9) nói thẳng bằng chứng (ii) đọc theo dung sai CŨ."""
     theo = _theo_arm(ban_ghi)
     kc = (theo.get("Z0-T1") or {}).get("ket_cuc", {}).get("value")
     b17 = _chi_so(theo.get("Z3"), "bat_bien_1_7_ty_so_trung_vi")
@@ -1019,6 +1020,15 @@ def _d4_han_che(ban_ghi: list[dict]) -> str:
         + muc_6
         + "(7) planned_risk_usdt SUY NGƯỢC từ fill tranche 1 (DR-D4-14 §10). "
         + f"(8) Bất biến §1.7 (DR-D4-15): {muc_17}."
+        + (
+            " (9) Bằng chứng (ii) tỉ trọng tranche của lô này đọc theo dung sai CŨ (1% cứng): bản ghi arm Z3 ghi "
+            "`ti_trong_tranche_dat = False` LÚC CHẠY, và hiện vật không viết lại được (L-Z53). Cơ chế đã đo "
+            "(TD-0359, EXPLORE, 0 trial): lệch do BƯỚC HỢP ĐỒNG của sàn ở cỡ lệnh 12–30 USDT, không phải cỡ lệnh "
+            "sai; dung sai sửa thành max(1%, một bước) từ TD-0360 và chỉ áp cho lô SAU. Miễn trừ đích danh lô này "
+            "theo DR-D4-20 §9 — KHÔNG phải 'đã đạt'."
+            if slot in MIEN_TRU_TI_TRONG
+            else ""
+        )
     )
 
 
@@ -1064,7 +1074,22 @@ def _doc_ban_ghi_arm(runs_dir: Path) -> tuple[list[dict], list[str]]:
     return ban_ghi, loi
 
 
-def _bang_chung_dr_d4_04(ban_ghi: list[dict], runs_dir: Path) -> tuple[dict, list[str]]:
+#: TD-0361 (`DR-D4-20` §9, chủ dự án chốt 20/09/2026) — miễn trừ ĐÍCH DANH bằng chứng (ii) cho ĐÚNG MỘT lô.
+#:
+#: Vì sao: bản ghi arm của lô `DR-D4-20` đóng băng `ti_trong_tranche_dat = False` theo dung sai CŨ (1% cứng), còn
+#: `TD-0359` đã đo được cơ chế thật — bước hợp đồng của sàn nuốt phần chênh giữa các tranche ở cỡ lệnh 12–30 USDT —
+#: và `TD-0360` đã sửa dung sai thành `max(1%, một bước)`. Hiện vật thì không viết lại được (`L-Z53`).
+#:
+#: Miễn trừ hẹp bằng BA điều kiện cùng lúc, không phải một cờ: đúng slot lô, đúng chỉ số, và artifact giải thích
+#: PHẢI tồn tại trên đĩa. Lô sau chạy bằng dung sai mới nên không đi qua đây — không có cửa nào mở sẵn.
+MIEN_TRU_TI_TRONG: dict[str, str] = {
+    "DR-D4-20": "docs/du-lieu-do/td0359-ti-trong-tranche-explore.json",
+}
+
+
+def _bang_chung_dr_d4_04(
+    ban_ghi: list[dict], runs_dir: Path, *, slot: str | None = None, repo_dir: Path | None = None
+) -> tuple[dict, list[str]]:
     """Bốn bằng chứng `DR-D4-04` §7 (TD-0339), đọc từ hiện vật của E3 — không nhận lời khai (MT-10).
 
     (i) `ket_qua_chay.json` của MỌI bản ghi: `chien_luoc` = `ZoneAbsorption` (khoá báo cáo thật, `doc_ket_qua`).
@@ -1103,7 +1128,14 @@ def _bang_chung_dr_d4_04(ban_ghi: list[dict], runs_dir: Path) -> tuple[dict, lis
         if not m.is_ok():
             van_de.append(f"{ten}: {arm}.{khoa} không đo được — {m.note}")
         elif not dat(m.value):
-            van_de.append(f"{ten}: {arm}.{khoa} = {m.value!r} — ĐO ĐƯỢC mà không đạt")
+            art = MIEN_TRU_TI_TRONG.get(slot or "") if ten == "ti_trong_tranche_fill" else None
+            if art and repo_dir is not None and (repo_dir / art).is_file():
+                bc[ten] = (
+                    f"{arm}.{khoa} = {m.value!r} — MIỄN TRỪ đích danh lô {slot} (DR-D4-20 §9): lệch do BƯỚC HỢP "
+                    f"ĐỒNG của sàn, đo ở {art}; dung sai đã sửa từ TD-0360 nên lô sau không đi qua đây"
+                )
+            else:
+                van_de.append(f"{ten}: {arm}.{khoa} = {m.value!r} — ĐO ĐƯỢC mà không đạt")
         else:
             bc[ten] = f"{arm}.{khoa} = {m.value!r}"
     return bc, van_de
@@ -1189,14 +1221,16 @@ def close_d4_gate(
     from tool_d.gates.d4_gate import kiem_tieu_chi_dong_d4
 
     ban_ghi, loi_doc = _doc_ban_ghi_arm(runs_dir)
+    # Slot của lô đang chấm — tính MỘT lần, dùng cho cả phép đếm suất lẫn bằng chứng (DR-D4-20 §8/§9).
+    slot_lo = _slot_cua_lo(ban_ghi, registry_path)
     ly_do = list(loi_doc)
     ly_do += kiem_tieu_chi_dong_d4(
         ban_ghi_arm=ban_ghi,
-        so_dong_b2_consumed=_dem_b2_da_tieu(registry_path, slot=_slot_cua_lo(ban_ghi, registry_path)),
+        so_dong_b2_consumed=_dem_b2_da_tieu(registry_path, slot=slot_lo),
         d4_huong="LONG",
-        d4_han_che=_d4_han_che(ban_ghi),
+        d4_han_che=_d4_han_che(ban_ghi, slot=slot_lo),
     )
-    bang_chung_he_thong, van_de_bang_chung = _bang_chung_dr_d4_04(ban_ghi, runs_dir)
+    bang_chung_he_thong, van_de_bang_chung = _bang_chung_dr_d4_04(ban_ghi, runs_dir, slot=slot_lo, repo_dir=repo_dir)
     if van_de_bang_chung:
         ly_do.append(f"bằng chứng DR-D4-04 §7 chưa đạt: {van_de_bang_chung}")
     from tool_d.ablation.chi_so_export import bat_bien_1_7_lech
@@ -1282,7 +1316,7 @@ def close_d4_gate(
         },
         "trial_ledger_audit": {"nguon": "do-duoc", "noi_dung": audit_text.splitlines()[0]},
     }
-    state["d4_han_che"] = {"nguon": "nguoi-khai", "noi_dung": _d4_han_che(ban_ghi)}
+    state["d4_han_che"] = {"nguon": "nguoi-khai", "noi_dung": _d4_han_che(ban_ghi, slot=slot_lo)}
     runtime_state_path.parent.mkdir(parents=True, exist_ok=True)
     runtime_state_path.write_text(
         json.dumps(state, ensure_ascii=False, indent=2, sort_keys=False) + "\n",

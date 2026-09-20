@@ -113,3 +113,23 @@ theo từng lô thay vì một con số gộp.
 **Điều kiện dừng của lô, kế thừa `DR-D4-19` §5 nguyên văn:** lỗi/từ chối giữa lô ⇒ không chạy lại tuỳ tiện; cổng
 D4 từ chối ⇒ đọc lý do thật, không nới chốt nào; sổ tăng khác đúng 4 suất `B2` ⇒ dừng; log cho thấy nến ngoài
 `[2025-06-12, 2026-01-29)` ⇒ dừng.
+
+## 9. BỔ SUNG 20/09/2026 (lượt 2) — miễn trừ ĐÍCH DANH bằng chứng (ii) cho lô này, kèm hạn chế
+
+Cổng D4 từ chối lô `DR-D4-20` vì `ti_trong_tranche_dat = False` ở `Z3`. `TD-0359` (EXPLORE, 0 trial) đo được cơ
+chế: **bước hợp đồng của sàn** nuốt phần chênh giữa các tranche ở cỡ lệnh 12–30 USDT (`MTL`/`ETH`: ba tranche cùng
+một số lượng hợp đồng), không phải cỡ lệnh tính sai. `TD-0360` đã sửa dung sai thành `max(1%, một bước)`.
+
+**Nhưng hiện vật không viết lại được** (`L-Z53`): bản ghi arm `Z3` đóng băng `False` theo dung sai CŨ lúc chạy.
+Chủ dự án chốt: **ghi hạn chế, cho cổng chấp nhận** — thay vì tiêu thêm suất để mua lại một con số đã biết cơ chế.
+
+| Mục | Chốt |
+|---|---|
+| Phạm vi miễn trừ | **Đúng MỘT lô**: `hypothesis_slot = "DR-D4-20"`, đúng chỉ số `ti_trong_tranche_dat`, và artifact `td0359-ti-trong-tranche-explore.json` **phải tồn tại** trên đĩa. Ba điều kiện cùng lúc, không phải một cờ |
+| Lô sau | Chạy bằng dung sai mới (`TD-0360`) ⇒ **không đi qua** nhánh miễn trừ. Không có cửa nào mở sẵn |
+| `d4_han_che` | Thêm điều **(9)** nói thẳng: bằng chứng (ii) của lô này đọc theo dung sai CŨ, miễn trừ theo mục này, **KHÔNG phải "đã đạt"** |
+| Hiện vật | 🔴 `runs/**` nằm trong `.gitignore:16` ⇒ bản ghi arm chỉ sống trên đĩa MỘT máy (phiên `69e2254e` chỉ ra; `runs/D-0015` biến mất sau khi máy khởi động lại đã chứng minh). Bản sao bền vững + băm sha256: `docs/du-lieu-do/d4-lo-dr-d4-20/`. Mọi tài liệu sau (`OQ-17`, DR nối lại) trỏ vào đó, không trỏ `runs/` |
+
+🔴 **Đây là MIỄN TRỪ, không phải nới chốt.** Khác nhau ở chỗ: chốt vẫn nguyên cho mọi lô sau, phạm vi miễn trừ hẹp
+bằng ba điều kiện máy kiểm được, và cái giá của nó được ghi vào chính lời khai hạn chế của cổng — ai đọc kết quả
+D4 sau này đều thấy.

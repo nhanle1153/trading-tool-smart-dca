@@ -1,0 +1,9 @@
+{
+  "trial_id": "D-0022",
+  "arm": "Z3",
+  "chien_luoc": "ZoneAbsorption",
+  "config_sha256": "6364053acd83243844529d8d2e4e15460d92a3e92648434e73b2bc6bc4856c7c",
+  "so_lenh": 45,
+  "observed_start": "2025-06-12",
+  "observed_end": "2026-01-28"
+}

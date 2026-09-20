@@ -1,0 +1,15 @@
+{
+  "trial_id": "D-0020",
+  "niem_phong_luc_utc": "2026-09-20T14:43:21Z",
+  "tap": "WFO",
+  "moc_ro": "t1",
+  "file_ro": "config/pool_t1.yaml",
+  "chien_luoc": "ZoneAbsorption",
+  "config_sha256": "f6b0cff5681ffb74d1e444465e5a9e373487da7167c93b24a57007d6533ede1d",
+  "timerange_yeu_cau": "1749686400-1769644799",
+  "observed_start": "2025-06-12",
+  "observed_end": "2026-01-28",
+  "so_ma_da_chay": 107,
+  "so_lenh": 46,
+  "arm": "Z0"
+}
