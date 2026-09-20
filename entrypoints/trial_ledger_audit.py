@@ -1022,13 +1022,34 @@ def _d4_han_che(ban_ghi: list[dict]) -> str:
     )
 
 
-def _dem_b2_da_tieu(registry_path: Path) -> int:
+def _slot_cua_lo(ban_ghi: list[dict], registry_path: Path) -> str | None:
+    """`hypothesis_slot` của lô ĐANG CHẤM, suy từ chính các suất có bản ghi arm.
+
+    🔄 20/09/2026 (`DR-D4-20` §8, chủ dự án chốt): cổng phải đếm suất `B2` của ĐÚNG lô đang chấm. Sổ hiện
+    mang cả `D-0015` — suất chết của lô `DR-D4-19` trên hệ thống CHƯA vá LD-13 (`DR-D4-20` §4.1: không dùng
+    làm kết quả arm nào) — nên phép đếm gộp mọi `B2` báo lệch 5 ≠ 4 mãi mãi. Nhiều hơn một slot ⇒ `None` ⇒
+    quay về đếm gộp, để phép so vẫn LỆCH và cổng vẫn từ chối (không âm thầm cho qua).
+    """
+    from tool_d.ledger.registry import TrialLedger
+
+    proj = TrialLedger(path=registry_path).projections()
+    slots = {
+        proj[tid].hypothesis_slot
+        for bg in ban_ghi
+        if (tid := str(bg.get("trial_id"))) in proj
+    }
+    return slots.pop() if len(slots) == 1 else None
+
+
+def _dem_b2_da_tieu(registry_path: Path, *, slot: str | None = None) -> int:
     from tool_d.ledger.registry import TrialLedger, TrialState
 
     return sum(
         1
         for p in TrialLedger(path=registry_path).projections().values()
-        if p.budget_line == "B2" and p.state is TrialState.CONSUMED
+        if p.budget_line == "B2"
+        and p.state is TrialState.CONSUMED
+        and (slot is None or p.hypothesis_slot == slot)
     )
 
 
@@ -1171,7 +1192,7 @@ def close_d4_gate(
     ly_do = list(loi_doc)
     ly_do += kiem_tieu_chi_dong_d4(
         ban_ghi_arm=ban_ghi,
-        so_dong_b2_consumed=_dem_b2_da_tieu(registry_path),
+        so_dong_b2_consumed=_dem_b2_da_tieu(registry_path, slot=_slot_cua_lo(ban_ghi, registry_path)),
         d4_huong="LONG",
         d4_han_che=_d4_han_che(ban_ghi),
     )

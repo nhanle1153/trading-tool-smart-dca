@@ -30,6 +30,7 @@ from datetime import date
 from statistics import median
 from typing import Any
 
+from tool_d.ablation.buoc_san import BuocAmount
 from tool_d.ablation.thanh_ly import DemThanhLy, HamThanhLy, ThanhLyError, liq_buffer_ke_hoach
 from tool_d.bo_chay.trich_lenh import TrichLenhError, doc_tag_long
 from tool_d.config.loader import ToolDConfig, resolve
@@ -111,15 +112,33 @@ def skewness(xs: Sequence[float]) -> Measured[float]:
     return Measured.ok(math.fsum((x - m) ** 3 for x in xs) / n / m2**1.5)
 
 
-def ti_trong_tranche(lenh: Sequence[Mapping[str, Any]]) -> Measured[bool]:
-    """`DR-D4-04` §7 (ii): ở MỌI lệnh đủ ba tranche, `cost_j / cost_1` ∈ [1 − 1%, 1 + 1%]."""
+def ti_trong_tranche(
+    lenh: Sequence[Mapping[str, Any]], *, buoc_amount: "BuocAmount | None" = None
+) -> Measured[bool]:
+    """`DR-D4-04` §7 (ii): ở MỌI lệnh đủ ba tranche, `cost_j / cost_1` nằm trong dung sai.
+
+    🔄 **Dung sai đổi 20/09/2026** (`DR-D4-20` §8, chủ dự án chốt sau phép đo `TD-0359`):
+    `max(1%, một bước hợp đồng tại giá tranche đó)` thay cho 1% cứng. Lý do là SỐ ĐO, không phải sự tiện:
+    cỡ lệnh thiết kế bằng nhau về notional, nhưng ở lệnh 12–30 USDT bước hợp đồng của sàn nuốt trọn phần
+    chênh giữa các tranche (`MTL` amount 11, `ETH` amount 0,008 — ba tranche cùng một số lượng) ⇒ 1% là đòi
+    sàn biểu diễn thứ nó không biểu diễn được. Phần LỆCH THẬT của cỡ lệnh vẫn bị bắt: nó lớn hơn một bước.
+
+    `buoc_amount=None` (hoặc trả `None` cho cặp đó) ⇒ giữ nguyên 1% — fail-closed theo hướng CHẶT hơn.
+    """
     du = [t for t in lenh if len(_vao_da_khop(t)) == SO_TRANCHE_DU]
     if not du:
         return Measured.unreadable("0 lệnh khớp đủ ba tranche")
     for t in du:
-        cost = [float(o["amount"]) * float(o["safe_price"]) for o in _vao_da_khop(t)]
-        if any(abs(c / cost[0] - 1.0) > DUNG_SAI_TI_TRONG for c in cost):
-            return Measured.ok(False)
+        vao = _vao_da_khop(t)
+        gia = [float(o["safe_price"]) for o in vao]
+        cost = [float(o["amount"]) * g for o, g in zip(vao, gia)]
+        buoc = buoc_amount(str(t.get("pair"))) if buoc_amount is not None else None
+        for j, c in enumerate(cost):
+            dung_sai = DUNG_SAI_TI_TRONG
+            if buoc:
+                dung_sai = max(dung_sai, buoc * gia[j] / cost[0])
+            if abs(c / cost[0] - 1.0) > dung_sai:
+                return Measured.ok(False)
     return Measured.ok(True)
 
 
@@ -252,6 +271,7 @@ def bat_bien_1_7_lech(m: Measured[float]) -> bool:
 def chi_so_tu_export(
     *, lenh: Sequence[Mapping[str, Any]], lenhs: Sequence[LenhWFO], cfg: ToolDConfig,
     observed_start: date, observed_end: date, ham_thanh_ly: HamThanhLy,
+    buoc_amount: "BuocAmount | None" = None,
 ) -> dict[str, Measured[Any]]:
     """Toàn bộ khoá thêm cho `chi_so` của bản ghi arm. Tên bốn khoá đầu TRÙNG `d9_gate.TIEU_CHI_KHAI`."""
     if any(t.get("is_short") is True for t in lenh):
@@ -262,7 +282,7 @@ def chi_so_tu_export(
         "max_single_trade_loss_over_risk_budget": max_lo_don_lenh_tren_ngan_sach(lenhs),
         "trades_per_year": lenh_moi_nam(len(lenh), observed_start, observed_end),
         "skewness_r_trien_khai": skewness([l.r_trien_khai for l in lenhs]),
-        "ti_trong_tranche_dat": ti_trong_tranche(lenh),
+        "ti_trong_tranche_dat": ti_trong_tranche(lenh, buoc_amount=buoc_amount),
         "stake_theo_r_eff_rho": stake_theo_r_eff(lenh),
         "bat_bien_1_7_ty_so_trung_vi": bat_bien_1_7(lenh, cfg=cfg),
         "liq_buffer_ratio_mean": liq_buffer_ratio_mean(lenh, cfg=cfg, ham=ham_thanh_ly),

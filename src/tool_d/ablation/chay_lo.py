@@ -41,6 +41,7 @@ from typing import Any
 
 from tool_d.ablation import khoa_do
 from tool_d.ablation.ban_ghi import LO_ARM_D4, co_do_nhom_c, dung_ban_ghi_arm
+from tool_d.ablation.buoc_san import BuocAmount, buoc_amount_freqtrade
 from tool_d.ablation.chi_so_export import bat_bien_1_7_lech, chi_so_tu_export
 from tool_d.ablation.thanh_ly import HamThanhLy, tinh_liq_freqtrade
 from tool_d.bo_chay.chay import BacktestHongError, chay_mot_luot
@@ -115,6 +116,7 @@ def chay_lo(
     runtime_image_digest: str,
     chay: Callable[..., Any] = chay_mot_luot,
     ham_thanh_ly: HamThanhLy | None = None,
+    buoc_amount: BuocAmount | None = None,
 ) -> list[KetQuaArm]:
     """Chạy cả lô. Xem thứ tự ở docstring module.
 
@@ -157,6 +159,13 @@ def chay_lo(
             ham_thanh_ly = tinh_liq_freqtrade(moi_truong[ke_hoach.arms[0]].config_freqtrade)
         except Exception as exc:
             raise BoChayError(f"không dựng được sàn ảo tính giá thanh lý (DR-D4-17): {exc}") from exc
+    # TD-0360 (`DR-D4-20` §8) — bước hợp đồng cho dung sai tỉ trọng tranche, cùng sàn ảo, cùng chỗ:
+    # hỏng ở đây cũng phải hỏng TRƯỚC khi đặt chỗ suất nào.
+    if buoc_amount is None:
+        try:
+            buoc_amount = buoc_amount_freqtrade(moi_truong[ke_hoach.arms[0]].config_freqtrade)
+        except Exception as exc:
+            raise BoChayError(f"không dựng được sàn ảo đọc bước hợp đồng (DR-D4-20 §8): {exc}") from exc
 
     # 4 — ĐẶT CHỖ ĐỦ CẢ LÔ trước khi chạy arm đầu (DR-D4-10 §2.3).
     trial_theo_arm: dict[str, str] = {}
@@ -233,6 +242,7 @@ def chay_lo(
             chi_so_them = chi_so_tu_export(
                 lenh=kq.lenh, lenhs=lenhs, cfg=mt.cfg_phu,
                 observed_start=kq.observed_start, observed_end=kq.observed_end, ham_thanh_ly=ham_thanh_ly,
+                buoc_amount=buoc_amount,
             )
             ban_ghi = dung_ban_ghi_arm(
                 arm=arm,

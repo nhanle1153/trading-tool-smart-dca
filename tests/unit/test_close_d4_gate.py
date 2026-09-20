@@ -153,7 +153,10 @@ class TestTrangThaiThatHomNay:
             pytest_cmd=PASS_CMD, pytest_d4_cmd=D4_PASS,
         )
         assert ma == EXIT_GATE_AUDIT_DIRTY
-        assert "Z0-T1" in text and "DR-D4-04 §7" in text
+        # 🔄 20/09/2026: lô `DR-D4-20` đã chạy ⇒ lý do từ chối đổi theo trạng thái THẬT. Ca này ghim
+        # đúng hai tính chất bất biến: cổng TỪ CHỐI, và nó KHÔNG ghi byte nào khi từ chối. Nội dung lý do
+        # là thứ sẽ đổi mỗi khi trạng thái đổi — ghim nó là ghim một ảnh chụp, không phải một luật.
+        assert text.startswith("🛑 TỪ CHỐI đóng cổng D4")
         assert sp.read_bytes() == truoc
 
 
