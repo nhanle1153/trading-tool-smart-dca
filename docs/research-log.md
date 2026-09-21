@@ -4082,3 +4082,71 @@ nhưng lệnh Python cập nhật bản nháp **thất bại im lặng trong cù
 `/c/...` không dùng được cho Python trên Windows — bài học đã ghi trong bộ nhớ phiên). Kết quả: bản CŨ được nối
 vào, thiếu đúng phần bằng chứng mạnh nhất. Bắt được vì đọc lại `git diff` trước khi commit. Nối hai lệnh có thể
 hỏng độc lập vào một dòng thì một nửa hỏng vẫn cho ra một kết cục trông bình thường.
+
+## 21/09/2026 — TD-0367: hệ thống ĐANG CHẠY khác hệ thống ĐÃ ĐƯỢC CHỨNG NHẬN, và đo xem khác bao nhiêu
+
+Phiên mã `69e2254e`. **0 suất trial** — EXPLORE, không `reserve()`, sổ trial không tăng một dòng,
+`D4_DO_TAM_DUNG` giữ `True`.
+
+### 1. Vì sao phải đo: cổng D4 chứng nhận một cây mã chưa từng được đo
+
+| | |
+|---|---|
+| Cây đã ĐO (4 bản ghi arm, `provenance.git_sha`) | **`29f9f52`** |
+| Cây được CHỨNG NHẬN (`runtime_state.d4_git_sha`) | **`7c8c8f8`** |
+
+Cách nhau **9 commit**, gồm `TD-0360` (đổi dung sai tỉ trọng), `TD-0362` (khoá đo) và `TD-0364` (**nối cổng
+`L-Z3` — đổi hành vi VÀO LỆNH**). Cơ chế: `trial_ledger_audit.py:1298` ghi `git_info.sha` = **HEAD lúc chạy
+cổng**, không phải sha của lô. Cả 9 điều trong `d4_han_che` **không điều nào** nói ra khoảng lệch này.
+⇒ Mọi số của D4 mô tả hệ thống **TRƯỚC** `L-Z3`. Bằng chứng vẫn trên đĩa, nhưng ai đọc `runtime_state.json`
+sẽ tin `7c8c8f8` là cây đã đo — đúng họ lỗi *"lời khai trông như bằng chứng"*.
+
+🔧 **Không sửa `runtime_state.json`** (hiện vật cổng đã ghi) và **không chạy lại lô** (tốn 4–5 suất mua lại một
+kết cục FAIL đã biết). Máy canh — cổng đọc `provenance.git_sha` của chính bản ghi arm nó chứng nhận và BÁO khi
+lệch HEAD — do phiên `dd855fee` nhận, vì `trial_ledger_audit.py` là vùng họ vừa sửa.
+
+### 2. Đo 1 — `L-Z3` cắt bao nhiêu lệnh (cùng kịch bản, cùng tập, cùng cửa sổ)
+
+`do_td0184_kep_gia_explore.py`, EXPLORE 65 mã, CALIB `[T0,T1)`; so với `td0184-kep-gia-explore.json` (bản trước
+`L-Z3`). Artifact: `docs/du-lieu-do/td0367-sau-lz3-kep-gia-explore.json`.
+
+| arm | trước `L-Z3` | sau `L-Z3` | Δ |
+|---|---|---|---|
+| `Z0-T1` | 137 | **127** | −10 (−7,3%) |
+| `Z0` | 32 | **30** | −2 (−6,2%) |
+| `Z0-T0` | 502 | **459** | −43 (−8,6%) |
+| `Z3` | 32 | **30** | −2 (−6,2%) |
+
+⇒ Khớp gần như chính xác dự báo **7–9%** của `TD-0363`. 🔑 Và khác `LD-13`: ở đó `-57` đo được `Z0-T0` **TĂNG**
+892 → 912 trên rổ T1 vì chỗ trống được lấp qua cổng kết nạp §6.8f. Ở đây trên EXPLORE **không có hiện tượng lấp
+chỗ** — số giảm thẳng. Hai tập khác nhau nên đây là *quan sát*, chưa phải kết luận về rổ T1.
+
+### 3. Đo 2 — lệnh/năm và `exit_reason` của hệ thống hiện tại
+
+`do_td0193_lenh_nam_explore.py --arms Z0-T1`, EXPLORE 88 mã, 99,4 mã-năm, `[T0,T2]`.
+Artifact: `docs/du-lieu-do/td0367-sau-lz3-lenh-nam-explore.json`.
+
+- **246 lệnh** · `lenh_quy_doi_pool_102_moi_nam` = **252,4** ⇒ **vẫn trên sàn 150** của Nhánh 1.
+- `exit_reason`: `trailing_stop_loss` **110** · `TP2_TRAIL` **92** · `FUNDING_STOP` **43** · `TIME_STOP` **1**.
+- ⇒ `time_stop_ratio` = 1/246 = **0,41%**, so dải `[5%; 25%]`. Số của D4 là **0,43%** (1/231, rổ T1).
+
+🔑 **Kết luận đáng giá nhất: `L-Z3` KHÔNG đổi kết cục FAIL.** Tiêu chí đang trượt là `time_stop_ratio`, và nó
+giữ nguyên độ lớn trên hệ thống mới. Cộng với `TD-0246` (`Z0-T1`: trailing SL 75 · TP2 54 · FUNDING_STOP 31 ·
+**TIME_STOP 0**) thì DG8 là **cửa chết** trên arm này: ba cửa thoát kia luôn đóng lệnh trước 96 giờ. Đây là
+chuyện **cấu trúc**, không phải cỡ mẫu — muốn chạm sàn 5% cần gấp ~12 lần số lệnh TIME_STOP, mà `max_hold_bars_4h`
+chỉ hạ được 24 → 20 (sàn spec), tức 17% chân trời. ⇒ **16 suất B1 của D5 không gỡ được tiêu chí đang trượt**,
+dù chính tham số đó nằm trong danh sách calibrate.
+
+### 4. Hạn chế, viết ra để không ai đọc quá tay
+
+- EXPLORE **khác rổ T1** và khác cửa sổ ⇒ `252,4` **không** thay `365,25` của D4 (spec `:4338`). Hai số là hai
+  *cận* trên hai tập, không phải một số trước/sau.
+- Đo 1 chỉ so được vì **cùng kịch bản, cùng tập, cùng cửa sổ** — đó là phần duy nhất trong bản ghi này có tư
+  cách một phép so trực tiếp.
+- Không đo tác động lên rổ T1 (cần suất trial). Chiều lệch ở rổ T1 **chưa biết**.
+
+📌 **Một chỗ suýt để lọt lời khai sai vào hiện vật:** lượt chạy đầu của Đo 2 dùng `ranh_gioi` MẶC ĐỊNH, mà chuỗi
+đó mang trích dẫn *"(DR-D0PRE-05 §4)"* đã được `MT-24` xác định là **SAI** (giữ nguyên trong mã chỉ để artifact
+gốc `TD-0193` tái lập đúng từng byte). Kịch bản có **cảnh báo, không chặn** — và cảnh báo đó làm đúng việc của
+nó. Đã chạy lại với `--nguon`/`--ranh-gioi` viết đúng; hai lượt cho **cùng một bộ số** (246 lệnh, cùng
+`exit_reason`), nên chênh lệch duy nhất là phần chữ xuất xứ.

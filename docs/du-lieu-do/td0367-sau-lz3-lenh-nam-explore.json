@@ -1,0 +1,121 @@
+{
+  "nguon": "TD-0367, 21/09/2026 (phien 69e2254e) — do he thong DANG CHAY sau khi noi cong L-Z3 (TD-0364), tap EXPLORE, 0 trial",
+  "ranh_gioi": "CHI dem zone/xac nhan/tin hieu/lenh, phan bo tranche va exit_reason. KHONG expectancy, KHONG PnL theo arm — ky luat tu dat cho phep do nay; KHONG phai dieu khoan cua DR-D0PRE-05 §4 (trich dan do SAI, xem MT-24).",
+  "timerange": "20240409-20260129",
+  "san_nhanh_1": 150,
+  "pheu_tin_hieu": {
+    "Z0-T1": {
+      "so_ma": 88,
+      "ma_nam": 99.4,
+      "zone": 4918,
+      "A_xac_nhan": 2083,
+      "B_phan_thuc": 3318,
+      "tin_hieu_sau_trend": 471,
+      "ty_le_A_tren_zone": 0.4235,
+      "ty_le_B_tren_zone": 0.6747,
+      "tin_hieu_moi_ma_nam": 4.738,
+      "tin_hieu_quy_doi_pool_102_moi_nam": 483.3,
+      "phan_bo_wait_bars": {
+        "0": 1140,
+        "1": 594,
+        "2": 349
+      },
+      "phan_bo_nhanh_xac_nhan": {
+        "b": 971,
+        "ac": 1112
+      },
+      "phan_bo_luot_cham_phan_thuc_B": {
+        "1": 2083
+      },
+      "pheu_trend_tai_C": {
+        "C": 2083,
+        "nan_1d_hoac_adx": 126,
+        "tuoi_None_NaN": 593,
+        "1_huong_1d_UP": 396,
+        "2_4h_dong_huong": 159,
+        "3_adx_ge_20": 136,
+        "4_tuoi_ge_5": 96,
+        "chi_truot_tuoi": 40,
+        "huong_1d_FLAT": 360,
+        "huong_1d_DOWN": 1327,
+        "tuoi_ge_5_bat_ke_dk_khac": 1349
+      },
+      "tin_hieu_moi_ma_nam_theo_ma": {
+        "n": 88,
+        "min": 0.0,
+        "P25": 2.659,
+        "median": 4.095,
+        "P75": 5.562,
+        "max": 13.003,
+        "mean": 4.351
+      },
+      "giay": 21.2
+    }
+  },
+  "huong_lech_quy_doi": {
+    "explore_trong_pool": {
+      "so_ma": 0,
+      "tin_hieu": 0,
+      "ma_nam": 0,
+      "tin_hieu_moi_ma_nam": null
+    },
+    "explore_ngoai_pool": {
+      "so_ma": 88,
+      "tin_hieu": 471,
+      "ma_nam": 99.4,
+      "tin_hieu_moi_ma_nam": 4.738
+    }
+  },
+  "lenh_that": {
+    "Z0-T1": {
+      "so_ma": 88,
+      "ma_nam": 99.4,
+      "so_lenh": 246,
+      "lenh_moi_ma_nam": 2.475,
+      "lenh_quy_doi_pool_102_moi_nam": 252.4,
+      "phan_bo_tranche": {
+        "1": 246
+      },
+      "exit_reason": {
+        "FUNDING_STOP": 43,
+        "trailing_stop_loss": 110,
+        "TP2_TRAIL": 92,
+        "TIME_STOP": 1
+      },
+      "tp1_theo_nguon": {
+        "TP1_zone_doi_dien": 101,
+        "TP1_fallback_r_multiple": 6
+      },
+      "cong_ket_nap": {
+        "ket_nap": 330
+      },
+      "lenh_theo_thang": {
+        "2024-05": 5,
+        "2024-06": 1,
+        "2024-07": 11,
+        "2024-08": 9,
+        "2024-09": 18,
+        "2024-10": 10,
+        "2024-11": 23,
+        "2024-12": 11,
+        "2025-01": 7,
+        "2025-02": 4,
+        "2025-03": 8,
+        "2025-04": 10,
+        "2025-05": 10,
+        "2025-06": 4,
+        "2025-07": 31,
+        "2025-08": 14,
+        "2025-09": 11,
+        "2025-10": 10,
+        "2025-11": 9,
+        "2025-12": 15,
+        "2026-01": 25
+      },
+      "exception_bi_nuot": 0,
+      "giay": 75.0,
+      "ghi_chu": "KHÔNG --timeframe-detail (EXPLORE không có 5m); chỉ đếm, không PnL"
+    }
+  },
+  "so_tap_lenh": {}
+}
