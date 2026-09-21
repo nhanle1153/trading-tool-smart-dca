@@ -92,5 +92,52 @@
   "d3_5_han_che": {
     "nguon": "nguoi-khai",
     "noi_dung": "(1) Bước 2 đo GIÁN TIẾP: suy tỷ lệ không khớp từ dữ liệu khớp lệnh thật, KHÔNG đặt lệnh thật (DR-D35-01 — testnet bị loại vì sổ lệnh riêng, con số ở đó nói về một thị trường khác). Ba thứ KHÔNG quan sát được: post-only bị sàn từ chối, khớp MỘT PHẦN, vị trí hàng đợi — cả ba tính về phía p_nf_cao, không cái nào làm kết luận lạc quan hơn thực tế. (2) Chỉ hướng LONG (ZoneAbsorptionMinimal LONG-only, TD-0114); Δ_R(SHORT) là `unreadable`, KHÔNG phải 0. Bật Short thì L-Z56 sẽ TỪ CHỐI chạy ablation cho tới khi có Δ_R(SHORT) thật. (3) 🔴 Bước 3 kết luận hai nhánh lệch TƯƠNG ĐƯƠNG (Δ_R Z0/DCA = 1,04) — phần lớn Δ_R là sai số CHUNG cho cả hai nhánh và tự triệt tiêu khi so sánh, nên hiệu chỉnh của §4 RỘNG HƠN bất lợi thực của riêng DCA. Đọc kết quả §4 mà thiếu câu này là để một phép phạt bất đối xứng chạy sau khi đã mất phần lớn căn cứ. (4) p_nf = 0 đo trên tập backtest ĐÃ CẤP khớp — đúng tập §3 cần (phép hiệu chỉnh trừ đi tranche 'backtest đã cho'), KHÔNG trả lời câu rộng hơn 'mô hình khớp của backtest có rộng tay nói chung không'."
+  },
+  "d4_complete": true,
+  "d4_closed_at": "2026-09-21T00:35:30.490588Z",
+  "d4_git_sha": "7c8c8f8c01f365f1e844dcc5988cde02cdf5b597",
+  "d4_cay_sach": true,
+  "d4_huong": "LONG",
+  "d4_evidence": {
+    "full_suite": {
+      "nguon": "do-duoc",
+      "noi_dung": "3060 passed, 2 warnings in 585.32s (0:09:45)"
+    },
+    "test_khoa_d4": {
+      "nguon": "do-duoc",
+      "noi_dung": "tests/lock/test_td0236_tieu_chi_dong_cong_d4.py: 26 passed in 1.11s | tests/lock/test_td0232_ban_ghi_arm.py: 48 passed in 1.42s | tests/lock/test_td0333_trich_lenh.py: 21 passed in 9.06s | tests/lock/test_td0334_ban_ghi_arm_d4.py: 17 passed in 1.33s | tests/lock/test_td0335_e3_bo_chay_ablation.py: 13 passed, 1 warning in 26.59s | tests/lock/test_lz57_gate_d09.py: 22 passed in 2.02s | tests/lock/test_lz56_chan_ablation_thieu_delta_r.py: 14 passed in 1.50s"
+    },
+    "tieu_chi_dr_d4_11": {
+      "nguon": "do-duoc",
+      "noi_dung": "kiem_tieu_chi_dong_d4() PASS — 4 bản ghi arm, 4 suất B2 CONSUMED"
+    },
+    "chien_luoc_da_chay": {
+      "nguon": "do-duoc",
+      "noi_dung": "4/4 lượt = ZoneAbsorption (khoá báo cáo thật)"
+    },
+    "ti_trong_tranche_fill": {
+      "nguon": "do-duoc",
+      "noi_dung": "Z3.ti_trong_tranche_dat = False — MIỄN TRỪ đích danh lô DR-D4-20 (DR-D4-20 §9): lệch do BƯỚC HỢP ĐỒNG của sàn, đo ở docs/du-lieu-do/td0359-ti-trong-tranche-explore.json; dung sai đã sửa từ TD-0360 nên lô sau không đi qua đây"
+    },
+    "stake_theo_r_eff": {
+      "nguon": "do-duoc",
+      "noi_dung": "Z0-T1.stake_theo_r_eff_rho = 0.8048246702862889"
+    },
+    "h4_tp_fallback": {
+      "nguon": "do-duoc",
+      "noi_dung": "Z0-T1.tp_fallback_ratio = 0.0603448275862069"
+    },
+    "gate_d09": {
+      "nguon": "do-duoc",
+      "noi_dung": "Nhánh 1 = FAIL · trượt ['time_stop_ratio'] · chưa đủ ['dsr_adjusted_expectancy'] · không áp dụng ['skewness_diff_vs_z1'] · Nhánh 1 = FAIL (trượt ['time_stop_ratio']) ⇒ KHÔNG VÀO LIVE; xử lý theo DR-011 (ba kết cục). 'Không vào live' KHÔNG đồng nghĩa 'dừng dự án' (spec §10.2). Nhánh 2 không chạy."
+    },
+    "trial_ledger_audit": {
+      "nguon": "do-duoc",
+      "noi_dung": "đã audit 10/16 (10 đạt, 0 chưa đạt, 6 chưa đo được)"
+    }
+  },
+  "d4_han_che": {
+    "nguon": "nguoi-khai",
+    "noi_dung": "(1) Chỉ hướng LONG (DR-D4-01); Short HOÃN — cần DG7 riêng + Δ_R(SHORT) + lockbox mới; 'đã đóng cho Long' KHÔNG có nghĩa 'đã phủ cả hai hướng'. (2) D4 KHÔNG phán quyết câu DCA (DR-D4-10 §2.4): mặc định Z0 single-entry, DCA vào Idea Queue với nhãn 'chưa từng được đo, không phải đã thất bại'; arm Z3 chỉ mua con số MÔ TẢ. (3) Rổ: K = 52,6% (DR-D4-12 §3) — chiều lệch tần suất CHƯA ĐO. (4) Chỉ chạy 4/9 arm (DR-D4-12 §4): Z0-T1 phán quyết; Z0/Z0-T0/Z3 mô tả; 5 arm bị cắt 'chưa từng được đo'; N giữ 114. (5) Skewness-so-Z1: KHÔNG ÁP DỤNG cho Z0-T1 (arm entry đơn, DR-D9-02 b′) — không phải 'đạt', không phải 'chưa đo'. (6) Kết cục Z0-T1 = INCONCLUSIVE — khai thẳng: ở cỡ mẫu này D4 KHÔNG phân biệt được lợi thế với may mắn (DR-D4-12 §2). (7) planned_risk_usdt SUY NGƯỢC từ fill tranche 1 (DR-D4-14 §10). (8) Bất biến §1.7 (DR-D4-15): trung vị 0.9999. (9) Bằng chứng (ii) tỉ trọng tranche của lô này đọc theo dung sai CŨ (1% cứng): bản ghi arm Z3 ghi `ti_trong_tranche_dat = False` LÚC CHẠY, và hiện vật không viết lại được (L-Z53). Cơ chế đã đo (TD-0359, EXPLORE, 0 trial): lệch do BƯỚC HỢP ĐỒNG của sàn ở cỡ lệnh 12–30 USDT, không phải cỡ lệnh sai; dung sai sửa thành max(1%, một bước) từ TD-0360 và chỉ áp cho lô SAU. Miễn trừ đích danh lô này theo DR-D4-20 §9 — KHÔNG phải 'đã đạt'."
   }
 }
