@@ -3995,3 +3995,90 @@ nhau một chút, và **bước hợp đồng của sàn nuốt trọn phần ch
 ⚠️ Heuristic trong script (*"bám tỉ lệ giá ⇒ cỡ lệnh sai"*) **không đủ phân biệt**: làm tròn ở cỡ lệnh nhỏ cũng
 tạo ra đúng dấu hiệu đó. Phân biệt thật nằm ở chỗ `amount` ba tranche có bằng nhau không — đọc từ ví dụ, không
 từ chỉ số tổng hợp.
+
+## 21/09/2026 — TD-0364: cổng `L-Z3` vào đường vào lệnh, và cái bẫy phạm vi nằm trong DR chứ không nằm trong chữ ký hàm
+
+Phiên mã `69e2254e`. Commit `7c8c8f8`, 0 suất trial (không chạm CALIB/WFO/LOCKBOX; số duy nhất được dùng là
+`TD-0363`, đo trên EXPLORE).
+
+**Việc:** `MT-69` — `liq_buffer_ratio` trước đó **chỉ tồn tại ở tầng ĐO** (`ablation/`, `gates/thresholds.py`).
+Nhánh 1 báo được *"đệm trung bình"* mà **không có dòng mã nào chặn** một lệnh đệm mỏng lúc mở. Cổng §6.4 nay
+tính ở `custom_stake_amount` (khi kế hoạch vừa đủ số), từ chối tranche 1 ở `confirm_trade_entry`, chặn tranche
+2/3 ở `adjust_trade_position`.
+
+### 1. Dòng `TASKS.md` chốt một chỗ đặt KHÔNG THI HÀNH ĐƯỢC
+
+Dòng `TD-0364` ghi *"đặt ở `custom_entry_price`, KHÔNG `confirm_trade_entry`"*. Nhưng `custom_entry_price` bắt
+buộc trả một GIÁ — nó không có đường trả *"từ chối"*; `raise` thì `strategy_safe_wrapper` nuốt (`MT-16` vii),
+trả giá bịa thì trái N6. Lý do trong ngoặc của dòng đó (*"`rate` đã bị kẹp"*) là về **nguồn giá thị trường** của
+LD-13, mà `L-Z3` **không đọc giá thị trường**: nó tính trên kế hoạch đủ ba tranche.
+⇒ Chủ dự án duyệt đổi chỗ thi hành; phiên `-f3` (người soạn dòng) xác nhận viết quá tay. Đính chính nối cuối
+dòng, giữ nguyên chữ cũ.
+
+🔑 Bài học: **một lý do đúng cho luật A được chép sang luật B mà không ai kiểm nó còn áp không.** Ở đây nó không
+gây hại vì bị bắt lúc đọc; nếu bị chép tiếp một vòng nữa thì nó thành "đã chốt".
+
+### 2. 🔴 Phát hiện chính: nối cổng nguyên trạng CHẶN SẠCH đường SHORT
+
+Lượt chạy đầu: `test_td0321` đỏ **14 ca**, trong đó **11 ca là *"0 lệnh Short"*** trên backtest thật.
+
+Nguyên nhân: `liq_buffer_ke_hoach()` (`TD-0348`) là **LONG-ONLY theo thiết kế** — `sl >= p_avg` ⇒ `ThanhLyError`,
+và `is_short=False` ghi cứng khi gọi Freqtrade. Phạm vi đó có thật và có lý do (`DR-D4-17` sinh ra cho lô D4
+Long-only), nhưng **nó nằm trong DR, không nằm trong chữ ký hàm**. Người tái dùng hàm ở một tầng khác không có
+cách nào biết, và hậu quả ở tầng QUYẾT ĐỊNH không phải một con số sai — là **mọi lệnh Short bị từ chối im lặng**.
+
+Đã thi hành chữ spec `:1856` (*"case LONG (SHORT đảo dấu)"*): thêm `la_short` mặc định `False`, đảo cả tử lẫn
+mẫu, truyền `is_short` cho `get_liquidation_price`. Đại số của đệm đọc từ mã Freqtrade 2026.8 (`buffer_amount =
+|open − liq| × buffer`, dịch về phía giá vào ở CẢ HAI chiều) ⇒ phép tính ngược ra giá thô không đổi.
+
+### 3. Cửa hở thứ hai, do chính bản vá sinh ra — `-f3` tái lập
+
+Giao ước `TinhLiq` vẫn khai **5 đối số** trong khi chiều Short gọi **6**. Hàm giả đúng giao ước cũ đi đường Short
+⇒ `TypeError`; và nếu ai bắt `Exception` quanh lời gọi thì nó thành **từ chối im lặng mọi lệnh Short** — đúng
+căn bệnh vừa chữa, chỉ đổi cơ chế. Vá hai lớp: `Callable` → `Protocol` có `la_short` (bắt lúc soạn thảo) và
+`TypeError` → `ThanhLyError` nêu rõ lý do (bắt lúc chạy).
+
+⚠️ Khai thẳng một chỗ xấu còn lại: lời gọi **bất đối xứng** (Long 5 đối số, Short 6). Lý do: thêm đối số cho mọi
+lời gọi sẽ buộc sửa KHẲNG ĐỊNH của `test_td0338` (ghim đúng bộ 5 đối số đã nhận) — mà đó là điều kiện DỪNG của
+`DR-D4-14` §7.
+
+### 4. Bằng chứng (Docker, N7)
+
+- File khoá mới `test_td0364_cong_lz3_vao_lenh.py`: **22 ca**.
+- Bốn file backtest thật (`td0187` · `td0321` · `lz49_lz50` · `td0355`): **74 passed**.
+- Full suite: **3058 passed, 0 failed** (582,97 s) — chạy TRƯỚC phần vá giao ước `TinhLiq`; sau phần vá, ba file
+  liên quan **83 passed**.
+- ✅ **Bằng chứng full suite cho chính commit này do một đường ĐỘC LẬP cấp:** lượt `close-d4-gate` của phiên
+  `dd855fee` (`d5ef262`) chứng nhận đúng mốc `7c8c8f8` — `runtime_state.d4_git_sha = 7c8c8f8c01f3`, full suite
+  **3060 passed, 0 failed** (585,32 s), bảy file khoá D4 chạy RIÊNG đều xanh. Tôi không tự khai con số này: nó
+  nằm trong `runtime_state.json` do cổng ghi, đọc lại được.
+- Phá thật hai lượt, trả bằng **bản sao lưu** (không `git checkout` — bài học đã ghi): cổng luôn cho qua ⇒ **12
+  đỏ**; gỡ chốt ở `confirm_trade_entry` ⇒ **đúng 2 đỏ**, đúng hai ca canh chỗ nối.
+- Ba ca đỏ đầu tiên của chính file test mới đều là **chuỗi cần kiểm nằm trong dòng chú thích giải thích nó**
+  (cùng họ `L-Z25`/`L-Z46`). Đã đổi sang AST, không nới khẳng định.
+
+### 5. Nợ đã khai, chưa làm
+
+- Một mục `MT` cho bài học ở §2 (`-f3` đề nghị): *một hàm mang giả định phạm vi mà không mang nó trong chữ ký*.
+- `test_td0338` chưa có ca ghim đúng bộ đối số của chiều Long ⇒ ai thêm đối số thứ sáu cho chiều Long thì giao
+  ước vỡ im lặng (`-f3` nêu).
+- Tác động ròng của cổng lên **lệnh/năm** (đại lượng phải vượt sàn 150) **chưa đo** — `TD-0363` cho tỉ lệ lệnh bị
+  từ chối, không cho tập lệnh co lại bao nhiêu: `-57` đo được `Z0-T0` TĂNG 892 → 912 sau LD-13 vì chỗ trống được
+  lấp qua cổng kết nạp §6.8f.
+
+### 6. Ghi cạnh, KHÔNG thuộc TD-0364: cổng D4 đóng cùng ngày và Nhánh 1 = FAIL
+
+Cổng D4 (`d5ef262`, tag `d4-complete`, phiên `dd855fee`) đóng trên chính mốc `7c8c8f8`. **Nhánh 1 = FAIL**, hai
+tiêu chí trượt: `time_stop_ratio` đo **0,43%** so dải 5–25%, và `dsr_adjusted_expectancy` **−0,2216** so ngưỡng
+`0,10`.
+
+🔑 Điều đáng ghi cho hồ sơ phương pháp: hệ quả này **đã được viết TRƯỚC** ở `thresholds.py:96-100`
+(`TD-0277`/`MT-46`): *"Z0-T1 đo được 0% ⇒ FAIL tiêu chí này. Không nới chiều < 5% sau khi đã thấy con số đó"*.
+`MT-46` vì thế hôm nay **thôi là một câu hỏi treo và thành một tiêu chí TRƯỢT THẬT** — đúng việc mà một ngưỡng
+viết trước sinh ra để làm. *"Không vào live"* KHÔNG đồng nghĩa *"dừng dự án"* (DR-011).
+
+📌 Một ghi chú về thao tác, vì nó suýt làm bản ghi này sai: bản nháp được soạn ngoài repo rồi nối vào bằng `cat`,
+nhưng lệnh Python cập nhật bản nháp **thất bại im lặng trong cùng một dòng lệnh** (đường dẫn kiểu Git Bash
+`/c/...` không dùng được cho Python trên Windows — bài học đã ghi trong bộ nhớ phiên). Kết quả: bản CŨ được nối
+vào, thiếu đúng phần bằng chứng mạnh nhất. Bắt được vì đọc lại `git diff` trước khi commit. Nối hai lệnh có thể
+hỏng độc lập vào một dòng thì một nửa hỏng vẫn cho ra một kết cục trông bình thường.
