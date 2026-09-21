@@ -1036,6 +1036,32 @@ bộ chạy D10 (`DR-D10-02`): chờ chủ dự án làm xong phần tài khoả
 
 ---
 
+## Khối 35 — Đóng chu trình Zone Absorption LONG + máy canh xuất xứ cổng (mở 21/09/2026, thi hành `DR-ZA-01`)
+
+> **Vì sao khối này tồn tại:** cổng D4 đóng (`d5ef262`, tag `d4-complete`) với **Nhánh 1 = FAIL** — trượt
+> `time_stop_ratio` (0,43% so dải 5–25%) và chưa đủ `dsr_adjusted_expectancy` (−0,2216 so ngưỡng 0,10).
+> `Z0-T1` mean R = **+0,0035**, KTC95 **[−0,140; +0,147]**, `n = 231`; ba arm còn lại đều âm.
+>
+> **Hai con số quyết định hướng:** để PASS ở `n = 231` cần mean ≈ **0,325 R** (gấp 92 lần); và ngay cả với dữ liệu
+> **vô hạn** (thuế nhiễu → 0) vẫn cần ≥ 0,10 R — gấp **28 lần** ước lượng điểm. *"Chờ thêm dữ liệu"* không cứu được
+> ứng viên này.
+>
+> **Chủ dự án chốt 21/09/2026 (phiên mã `dd855fee`), bốn điều:** (1) đọc FAIL theo `DR-011` — ZA LONG **bị bác bỏ ở
+> cấu hình này**, ghi `retest_forbidden`, dự án KHÔNG dừng; (2) **không tiêu thêm suất nào** cho ZA LONG; (3) hai–ba
+> tuần tới **dựng máy D5→D9.5 ở mức 0 suất** (khuôn `DR-D4-14`); (4) *"không chờ 01/10"* = làm ngay mọi việc không
+> cần suất, chỉ riêng thao tác ghi dòng CHỌN đợi ngày hiệu lực (`MT-65` đã cắn một lần vì chọn sớm).
+
+| Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
+|---|---|---|---|---|
+| TD-0368 | 🚪 **`DR-ZA-01`** — khai kết cục ZA LONG theo `DR-011` FAIL; **KHÔNG** tuyên bố L3 (KTC chứa giá trị dương); ba mục `MT` (H-3 bất khả thi · phạm vi ba kết cục · lỗ hổng xuất xứ cổng) | 🔓 | — | Commit **RIÊNG và TRƯỚC** mọi dòng mã; ghi `retest_forbidden`; nêu rõ 0 suất tiêu thêm |
+| TD-0369 | **Máy canh xuất xứ cổng** — mọi `close_*_gate()` đọc `provenance.git_sha` của chính bản ghi arm nó chứng nhận, ghi vào `evidence`, và BÁO khi lệch HEAD. Đo được ở lô `DR-D4-20`: `d4_git_sha = 7c8c8f8` vs `provenance.git_sha = 29f9f52`, **cách 9 commit** (gồm `TD-0364` đổi hành vi vào lệnh) | 🔓 | TD-0368 | Phá thật: cho lệch sha ⇒ cổng BÁO; dùng lại `_slot_cua_lo()`; **không** sửa `runtime_state.json` đã ghi. Phát hiện của phiên `69e2254e` |
+| TD-0370 | **Sửa ô lỗi thời + lật nhãn**: dòng `TD-0255` còn ghi 🔓 và *"hiện `NotImplementedError`"* (đã xong ở `c7fd648`); `TD-0351` lật ⏸ → 🔓 các dòng D5–D9/lockbox theo `DR-TRIEN-KHAI-01` | 🔓 | — | `--kiem-backlog` exit 0; mỗi dòng sửa đúng một ô, commit riêng |
+
+**Đặt chỗ mã (N12 mục 7c):** `TD-0368`…`TD-0370` + `DR-ZA-01`, commit này, `Phien: dd855fee`. Mã `TD-0367` +
+`DR-LOCKBOX-03` do phiên `69e2254e`/`69768527` giữ.
+
+---
+
 ## Việc đã biết là sẽ có, chưa mở
 
 | Giai đoạn | Nội dung | Chặn bởi |
