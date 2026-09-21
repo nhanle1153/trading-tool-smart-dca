@@ -152,6 +152,7 @@ from tool_d.dg6_early_invalidation import (
     dieu_kien_d,
     ty_le_hoi_ve_p1,
 )
+from tool_d.cong_thanh_ly import de_ghi_so, xet_cong_l_z3
 from tool_d.funding_stop import funding_paid_cumulative, is_funding_stop_triggered
 from tool_d.gap_ms import LenhSl, sinh_ban_ghi_doi_sl
 from tool_d.ledger.decision_log import DEFAULT_DECISION_LOG_PATH, ghi_neu_chua_co
@@ -340,6 +341,13 @@ class ZoneAbsorption(IStrategy):
         self._wick_frac = float(resolve(self._cfg, "tier_b.wick_close_upper_frac"))
         self._bat_dieu_kien_c = bat_dieu_kien_c_cua_arm(self._arm)  # Z0-V1 = False
         self._l_exchange = float(resolve(self._cfg, "tier_a.L_exchange"))
+        # TD-0364 (MT-69) — ngưỡng cổng §6.4 `L-Z3`. `tier_c` = KHOÁ, không tune, không vào N.
+        self._liq_buffer_min = float(resolve(self._cfg, "tier_c.liq_buffer_min"))
+        # Dựng LƯỜI ở `_ham_thanh_ly()`: `self.dp` chưa sẵn sàng lúc `__init__` chạy (xem chú thích bên dưới).
+        # Hai biến, không một biến "lính canh": `None` ở đây nghĩa là "đã thử và KHÔNG dựng được" — một trạng
+        # thái khác hẳn "chưa thử", và cổng phải phân biệt được hai thứ đó (N6).
+        self._ham_tl = None
+        self._ham_tl_da_thu = False
         # TD-0321 — hai công tắc hướng (N4: đọc YAML qua `resolve`, một chỗ).
         self._enable_long = bool(resolve(self._cfg, "tier_a.enable_long"))
         self._enable_short = bool(resolve(self._cfg, "tier_a.enable_short"))
@@ -1099,6 +1107,43 @@ class ZoneAbsorption(IStrategy):
             raise SizingError(f"L_exchange={self._l_exchange} > max_leverage sàn cho {pair} = {max_leverage}")
         return self._l_exchange
 
+    def _ham_thanh_ly(self):
+        """Hàm giá thanh lý của CHÍNH sàn mà bộ chạy đang dùng (`self.dp._exchange`), dựng một lần.
+
+        🔴 KHÔNG dựng `Exchange` thứ hai bằng `tinh_liq_freqtrade()`: hai sàn là hai nguồn cho cùng một con số,
+        và `DR-D4-05` đã ghi lại đúng lớp lỗi đó (backtest và live lệch nhau mà không ai thấy). Bảng bậc đòn bẩy
+        đóng gói trong image nên không cần mạng.
+
+        Trả `None` khi không lấy được sàn (đơn vị test dựng chiến lược trần, `self.dp` chưa có). Cổng đọc `None`
+        là TỪ CHỐI — không có giá thanh lý thì không có cơ sở nói đệm dày mỏng.
+        """
+        if not self._ham_tl_da_thu:
+            self._ham_tl_da_thu = True
+            try:
+                from tool_d.ablation.thanh_ly import ham_tu_exchange
+
+                self._ham_tl = ham_tu_exchange(self.dp._exchange)
+            except Exception as e:  # noqa: BLE001 — mọi lỗi đều về một kết cục: cổng từ chối, có log
+                logger.warning("LIQ_BUFFER_KHONG_DUNG_DUOC_HAM — %s (L-Z3, TD-0364)", e)
+                self._ham_tl = None
+        return self._ham_tl
+
+    def _xet_cong_thanh_ly(self, pair: str, kh: KeHoachTranche, cl: KeHoachCoLenh, tranche: int, la_short: bool):
+        """Cổng §6.4 `L-Z3` trên KẾ HOẠCH đủ ba tranche (spec `:1857`) — không đọc giá thị trường, nên gọi được
+        ở cả tranche 1 (lúc định cỡ) lẫn tranche 2/3 (lúc xét bơm thêm)."""
+        return xet_cong_l_z3(
+            pair=pair,
+            p=(kh.p1, kh.p2, kh.p3),
+            sl=kh.sl,
+            w=cl.w_tranche,
+            n_full=cl.n_full_usdt,
+            don_bay=cl.l_exchange,
+            ham=self._ham_thanh_ly(),
+            nguong=self._liq_buffer_min,
+            tranche=tranche,
+            la_short=la_short,
+        )
+
     def custom_stake_amount(self, pair, current_time, current_rate, proposed_stake, min_stake, max_stake, leverage, entry_tag, side, **kwargs) -> float:
         hang = self._hang_hien_tai(pair)
         giai = _giai_ma(entry_tag, atr_1h_tai_tranche1=0.0)
@@ -1148,7 +1193,18 @@ class ZoneAbsorption(IStrategy):
         # chạy, không phải sàn Tool D (`max` mọi đường, §2.1). Phép kiểm nay
         # ở `confirm_trade_entry`, nơi trả `False` là cửa từ chối ĐƯỢC HỖ TRỢ
         # nên không bị nuốt, và có dòng log để phép từ chối ĐẾM ĐƯỢC.
-        self._cho[pair] = {"co_lenh": plan.to_dict(), "ke_hoach": kh.to_dict(), "tag": d}
+        # TD-0364 (MT-69) — cổng §6.4 `L-Z3`, tính NGAY KHI kế hoạch vừa đủ số: tới đây đã có cả ba giá tranche,
+        # `sl`, trọng số và `N_full`. Chỉ TÍNH ở đây, **không** từ chối ở đây: `custom_stake_amount` trả một CỠ,
+        # và "trả cỡ 0 để từ chối là cách một lệnh bị chặn trông giống một lệnh nhỏ" (chính docstring
+        # `confirm_trade_entry` bên dưới). Từ chối nằm ở `confirm_trade_entry`, nơi `False` là cửa được framework
+        # hỗ trợ nên không bị `strategy_safe_wrapper` nuốt (MT-16 vii).
+        kq_liq = self._xet_cong_thanh_ly(pair, kh, plan, tranche=1, la_short=side == "short")
+        self._cho[pair] = {
+            "co_lenh": plan.to_dict(),
+            "ke_hoach": kh.to_dict(),
+            "tag": d,
+            "liq": {"qua": kq_liq.qua, "ly_do": kq_liq.ly_do, "so": de_ghi_so(kq_liq.dem)},
+        }
         return stake1
 
     def confirm_trade_entry(self, pair, order_type, amount, rate, time_in_force, current_time, entry_tag, side, **kwargs) -> bool:
@@ -1204,6 +1260,19 @@ class ZoneAbsorption(IStrategy):
         # được gì. So bằng NOTIONAL, không phải ký quỹ: đòn bẩy chia cả hai
         # vế của phép so nên nó triệt tiêu (test khoá TD-0171).
         if not self._qua_san_tool_d(pair, ke_hoach, rate):
+            self._cho.pop(pair, None)
+            return False
+
+        # TD-0364 (MT-69) — CỔNG §6.4 `L-Z3`: *"liq_buffer_ratio ≥ 8 tại thời điểm xét tranche 1, không thoả →
+        # TỪ CHỐI mở, bất kể ZSS cao thế nào"* (spec `:1866`). Đứng TRƯỚC `kiem_ket_nap`: đây là câu hỏi về an
+        # toàn của CHÍNH lệnh này (có thể bị thanh lý trước khi chạm SL), còn kết nạp là câu hỏi về danh mục —
+        # một lệnh không an toàn thì không cần hỏi nó có vừa danh mục không.
+        #
+        # Số đã tính ở `custom_stake_amount` (cùng một kế hoạch, không tính lại để khỏi có hai đường ra số).
+        # Thiếu khoá `liq` ⇒ TỪ CHỐI: kế hoạch không đi qua đường định cỡ hiện tại thì cổng chưa từng được xét.
+        liq = cho.get("liq")
+        if liq is None or not liq.get("qua"):
+            logger.info("%s", (liq or {}).get("ly_do") or f"LIQ_BUFFER_CHUA_XET {pair} tranche=1 (L-Z3, TD-0364)")
             self._cho.pop(pair, None)
             return False
 
@@ -1263,6 +1332,10 @@ class ZoneAbsorption(IStrategy):
             trade.set_custom_data("co_lenh", cho["co_lenh"])
             trade.set_custom_data("ke_hoach", kh)
             trade.set_custom_data("tag", cho["tag"])
+            # TD-0364 (MT-69) — ba số của spec `:1880-1888` (tỉ số + tử + mẫu) đi theo lệnh, để bộ chạy
+            # (TD-0184) ghi Decision Log `GATE_CHECK` từ nguồn THẬT thay vì tính lại ở một đường khác.
+            # `None` khi chưa đo được thì giữ nguyên `None` — không điền `0.0` (N6).
+            trade.set_custom_data("liq", (cho.get("liq") or {}).get("so"))
             # 🔒 `DR-D4-06` §2 ràng buộc 5 — ĐÓNG BĂNG danh sách ỨNG VIÊN zone
             # đỉnh tại lúc VÀO LỆNH (tranche 1). Đây là danh sách CANDIDATE,
             # khác với mục tiêu TP1 tự nó (`_cap_nhat_chot_loi` bên dưới, gọi
@@ -1486,6 +1559,16 @@ class ZoneAbsorption(IStrategy):
                     la_short=_la_short(trade), tranche=i,
                 ),
             )
+            return None
+
+        # TD-0364 (MT-69) — CỔNG §6.4 `L-Z3` cho tranche 2/3. Tính LẠI trên chính kế hoạch đã đóng băng
+        # (`kh`, `cl` đọc từ `custom_data`), không đọc lại số đã lưu: nếu một đường nào đó mở được lệnh mà
+        # không đi qua cổng ở tranche 1 (phục hồi sau restart — MT-41), thì đây là chỗ bắt được.
+        # Tỉ số tính trên KẾ HOẠCH nên không đổi theo phần đã khớp — cổng ở đây vì thế im lặng trong mọi ca
+        # bình thường, và chỉ lên tiếng đúng lúc kế hoạch không còn an toàn.
+        kq_liq = self._xet_cong_thanh_ly(trade.pair, kh, cl, tranche=i, la_short=_la_short(trade))
+        if not kq_liq.qua:
+            logger.info("%s", kq_liq.ly_do)
             return None
 
         # 🔴 "KHÔNG ĐO ĐƯỢC" phải TƯỜNG MINH, không đi qua DG5.

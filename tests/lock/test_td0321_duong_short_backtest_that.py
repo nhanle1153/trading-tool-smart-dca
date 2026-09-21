@@ -47,6 +47,9 @@ import pandas as pd
 import pytest
 import talib
 
+from tool_d.ablation.thanh_ly import HamThanhLy  # TD-0364 — vật dựng cho cổng L-Z3
+from tool_d.sizing import KeHoachCoLenh
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
@@ -271,7 +274,18 @@ class TestCongTrancheVaTp1TheoHuong:
                                 sl=94.2, r_eff_plan=0.0085, atr_1h_tai_tranche1=0.3)
         goi: list = []
         s._xet_tp1 = lambda trade, rate: None
-        s._doc_ke_hoach = lambda trade: (kh, None, {"t4": "DOWN" if la_short else "UP", "zs": 0.6})
+        # TD-0364 — cổng `L-Z3` (đứng NGAY TRƯỚC bước ZSS) đọc kế hoạch cỡ lệnh, nên vật dựng phải có thật
+        # thay vì `None`. Chỉ đổi VẬT DỰNG: câu hỏi và kỳ vọng của mọi ca dưới đây giữ nguyên từng chữ.
+        cl = KeHoachCoLenh(
+            arm="Z0", n_full_usdt=300.0, w_tranche=(1 / 3, 1 / 3, 1 / 3), l_exchange=3.0, rho_pct=0.375,
+            rho_eff_pct=0.375, mult={}, r_eff=0.0085, planned_risk_usdt=2.55, planned_margin_usdt=100.0,
+        )
+        # Giá thanh lý giả, đặt XA để cổng `L-Z3` cho qua (tỉ số ≈ 18,75 ở cả hai chiều): ca này hỏi về cổng
+        # GIÁ của tranche 2/3, không hỏi về đệm thanh lý.
+        s._ham_tl = HamThanhLy(tinh=lambda *a, la_short=False, **k: 110.0 if la_short else 80.0,
+                               liquidation_buffer=0.05)
+        s._ham_tl_da_thu = True
+        s._doc_ke_hoach = lambda trade: (kh, cl, {"t4": "DOWN" if la_short else "UP", "zs": 0.6})
 
         def _zss(pair, tag, current_time, loai="day"):
             goi.append(loai)
