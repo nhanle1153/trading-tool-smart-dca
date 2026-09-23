@@ -122,6 +122,18 @@ DUONG_DAN_TEST_D4 = (
     "tests/lock/test_lz57_gate_d09.py",
     "tests/lock/test_lz56_chan_ablation_thieu_delta_r.py",
 )
+# TD-0257 — file test khoá CỐT LÕI của D5, mỗi file chạy RIÊNG một lượt (PASS ≥ 1): máy kế toán B1 · luật chọn
+# giá trị · E1 chạy B1 · trạng thái tham số có bằng chứng · 5m CALIB · khoá đo D5 · kết quả B1 tính lại · tiêu chí cổng.
+DUONG_DAN_TEST_D5 = (
+    "tests/lock/test_td0252_5m_calib_t0.py",
+    "tests/lock/test_td0253_may_ke_toan_b1.py",
+    "tests/unit/test_td0254_chon_gia_tri.py",
+    "tests/unit/test_td0255_e1_calibration.py",
+    "tests/lock/test_td0256_trang_thai_tham_so_co_bang_chung.py",
+    "tests/lock/test_td0373_khoa_do_d5.py",
+    "tests/unit/test_td0257_ket_qua_b1_va_tieu_chi_d5.py",
+)
+DEFAULT_PARAM_STATUS_PATH = Path("config/param_status.yaml")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -192,6 +204,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--close-d4-gate",
         action="store_true",
         help="TD-0337 — đóng cổng D4 (DR-D4-11 §3), ghi runtime_state.json.d4_complete. Chạy được đúng một lần.",
+    )
+    parser.add_argument(
+        "--close-d5-gate",
+        action="store_true",
+        help="TD-0257 — đóng cổng D5 (DR-D5-01), ghi runtime_state.json.d5_complete. Chạy được đúng một lần.",
     )
     return parser
 
@@ -1389,6 +1406,165 @@ def close_d4_gate(
     )
 
 
+def _xuat_xu_suat(registry_path: Path, trial_ids: list[str]) -> dict[str, str | None]:
+    """TD-0257 — `{trial_id: provenance.git_sha trên dòng RESERVE}` cho các suất cổng chứng nhận. Cùng ba trạng
+    thái của `TD-0369` (`_sanh_xuat_xu`): dòng thiếu/hỏng sha ⇒ `None` ⇒ KHÔNG ĐỌC ĐƯỢC, không bao giờ là khớp."""
+    ra: dict[str, str | None] = {t: None for t in trial_ids}
+    try:
+        dong = registry_path.read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return ra
+    for d in dong:
+        try:
+            e = json.loads(d)
+        except json.JSONDecodeError:
+            continue
+        if e.get("event") == "RESERVE" and e.get("trial_id") in ra:
+            gs = (e.get("provenance") or {}).get("git_sha")
+            ra[e["trial_id"]] = gs if isinstance(gs, str) and gs else None
+    return ra
+
+
+def close_d5_gate(
+    *,
+    runtime_state_path: Path = DEFAULT_RUNTIME_STATE_PATH,
+    repo_dir: Path = Path("."),
+    runs_dir: Path = Path("runs"),
+    registry_path: Path = DEFAULT_REGISTRY_PATH,
+    param_status_path: Path = DEFAULT_PARAM_STATUS_PATH,
+    dr_d5_path: Path | None = None,
+    pytest_cmd: list[str] | None = None,
+    pytest_d5_cmd: list[str] | None = None,
+    **run_audit_kwargs,
+) -> tuple[int, str]:
+    """TD-0257 — ghi `d5_complete: true` (điều kiện vào D6/D9). Khuôn `close_d4_gate()`.
+
+    Tiêu chí là `DR-D5-01`; hàm này GỌI `kiem_tieu_chi_dong_d5()` trên kết quả TÍNH LẠI từ sổ + `lenh_r.json`
+    (`tinh_quyet_dinh_b1()`), không nhận lời khai nào về tham số nào đổi. Phép kiểm RẺ đứng trước suite pytest.
+
+    🔴 Hành vi mong đợi hôm nay (`DR-ZA-01` §5, viết TRƯỚC): TỪ CHỐI — 0 suất `D5_MOC`, vì D5 của Zone Absorption
+    LONG không tiêu suất nào (`DR-ZA-01` §2; khoá `D5_DO_TAM_DUNG`, `TD-0373`). Cổng làm đúng việc, không hỏng.
+    """
+    if not is_d0_pre_complete():
+        return EXIT_GATE_AUDIT_DIRTY, "🛑 TỪ CHỐI đóng cổng D5 — D0-PRE chưa đóng (§N2)."
+
+    state: dict = {}
+    if runtime_state_path.exists():
+        try:
+            state = json.loads(runtime_state_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            state = {}
+    for khoa in ("d1_complete", "d2_complete", "d3_complete", "d3_5_complete", "d4_complete"):
+        if state.get(khoa) is not True:
+            return EXIT_GATE_AUDIT_DIRTY, f"🛑 TỪ CHỐI đóng cổng D5 — chưa có {khoa}=true."
+    if state.get("d5_complete") is True:
+        return (
+            EXIT_GATE_ALREADY_CLOSED,
+            f"🛑 {runtime_state_path} đã có d5_complete=true — cổng đã đóng, không ghi lại.",
+        )
+
+    git_info = get_git_info(repo_dir)
+    ban = _thay_doi_anh_huong_phep_do(repo_dir)
+    if ban:
+        return (
+            EXIT_GATE_AUDIT_DIRTY,
+            "🛑 TỪ CHỐI đóng cổng D5 — cây làm việc có thay đổi ẢNH HƯỞNG PHÉP ĐO nhưng chưa "
+            f"commit. d5_git_sha = {git_info.sha[:12]} sẽ KHÔNG khớp thứ vừa được kiểm.\n"
+            + "\n".join(f"  {d}" for d in ban),
+        )
+
+    from tool_d.calibration.ket_qua_b1 import KetQuaB1Error, tinh_quyet_dinh_b1
+    from tool_d.calibration.ung_vien import DEFAULT_DR_D5_01_PATH, UngVienError, doc_bang_ung_vien
+    from tool_d.gates.d5_gate import d5_han_che, kiem_tieu_chi_dong_d5
+    from tool_d.ledger.registry import TrialLedger
+
+    try:
+        bang = doc_bang_ung_vien(dr_d5_path or repo_dir / DEFAULT_DR_D5_01_PATH)
+        proj = list(TrialLedger(path=registry_path).projections().values())
+        kq = tinh_quyet_dinh_b1(proj, runs_dir=runs_dir, bang=bang)
+        ps = (yaml.safe_load(param_status_path.read_text(encoding="utf-8")) or {}).get("params") or {}
+    except (UngVienError, KetQuaB1Error, OSError, yaml.YAMLError) as exc:
+        return EXIT_GATE_AUDIT_DIRTY, f"🛑 TỪ CHỐI đóng cổng D5 — không đọc được đầu vào: {type(exc).__name__}: {exc}"
+
+    from tool_d.calibration.ung_vien import _la_calib
+    from tool_d.ledger.registry import TrialState
+
+    suat_b1 = [
+        p.trial_id for p in proj
+        if p.budget_line == "B1" and _la_calib(p) and p.state is TrialState.CONSUMED
+    ]
+    # TD-0251 chưa có hiện vật ⇒ None: trần của bảng, và hạn chế nói ra điều đó.
+    co_lenh_giu_du = None
+    ly_do = kiem_tieu_chi_dong_d5(
+        ket_qua=kq, bang=bang, so_b1_calib_consumed=len(suat_b1), param_status=ps,
+        co_lenh_moc_giu_du=co_lenh_giu_du,
+    )
+    if ly_do:
+        return (
+            EXIT_GATE_AUDIT_DIRTY,
+            "🛑 TỪ CHỐI đóng cổng D5 (DR-D5-01):\n" + "\n".join(f"  - {x}" for x in ly_do),
+        )
+
+    suite = subprocess.run(
+        pytest_cmd or [sys.executable, "-m", "pytest", "-q"],
+        cwd=repo_dir,
+        capture_output=True,
+        text=True,
+    )
+    suite_summary = suite.stdout.strip().splitlines()[-1] if suite.stdout.strip() else "(không có output)"
+    if suite.returncode != 0:
+        return (
+            EXIT_GATE_AUDIT_DIRTY,
+            f"🛑 TỪ CHỐI đóng cổng D5 — suite pytest CHƯA sạch:\n{suite_summary}\n{suite.stdout[-2000:]}",
+        )
+
+    ly_do_test, d5_bang_chung = _chay_rieng_tung_file(
+        DUONG_DAN_TEST_D5, ten_cong="D5", repo_dir=repo_dir, pytest_cmd=pytest_d5_cmd
+    )
+    if ly_do_test:
+        return EXIT_GATE_AUDIT_DIRTY, ly_do_test
+
+    # Cùng MỘT sổ cho phép tính lại và cho audit — hai sổ khác nhau là hai sự thật.
+    audit_exit, audit_text = run_audit(registry_path=registry_path, **run_audit_kwargs)
+    if audit_exit != 0:
+        return EXIT_GATE_AUDIT_DIRTY, f"🛑 TỪ CHỐI đóng cổng D5 — audit sổ trial chưa sạch:\n{audit_text}"
+
+    quyet_dinh = {k: q.dien_giai() for k, q in sorted(kq.quyet_dinh.items())}
+    xn = kq.xac_nhan.dien_giai() if kq.xac_nhan is not None else "không chạy (không tham số nào đổi)"
+
+    state["d5_complete"] = True
+    state["d5_closed_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+    state["d5_git_sha"] = git_info.sha
+    state["d5_cay_sach"] = True
+    state["d5_huong"] = "LONG"
+    state["d5_evidence"] = {
+        "full_suite": {"nguon": "do-duoc", "noi_dung": suite_summary},
+        "test_khoa_d5": {"nguon": "do-duoc", "noi_dung": " | ".join(d5_bang_chung)},
+        "tieu_chi_dr_d5_01": {
+            "nguon": "do-duoc",
+            "noi_dung": f"kiem_tieu_chi_dong_d5() PASS — {len(suat_b1)} suất B1 CALIB CONSUMED, mốc {kq.moc_trial} "
+            f"({kq.so_lenh_moc} lệnh)",
+        },
+        "quyet_dinh_tinh_lai": {"nguon": "do-duoc", "noi_dung": quyet_dinh},
+        "xac_nhan_ghep": {"nguon": "do-duoc", "noi_dung": xn},
+        "gia_tri_cuoi": {"nguon": "do-duoc", "noi_dung": kq.gia_tri_cuoi(bang)},
+        "trial_ledger_audit": {"nguon": "do-duoc", "noi_dung": audit_text.splitlines()[0]},
+        # TD-0369 — sha của từng suất B1 (dòng RESERVE) so với sha cổng đang chứng nhận. Không chặn, chỉ báo.
+        "xuat_xu_ban_ghi": {
+            "nguon": "do-duoc",
+            "noi_dung": _bao_cao_xuat_xu(_xuat_xu_suat(registry_path, suat_b1), sha_chung_nhan=git_info.sha),
+        },
+    }
+    state["d5_han_che"] = {"nguon": "nguoi-khai", "noi_dung": d5_han_che(kq, co_lenh_moc_giu_du=co_lenh_giu_du)}
+    runtime_state_path.parent.mkdir(parents=True, exist_ok=True)
+    runtime_state_path.write_text(json.dumps(state, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    return (
+        0,
+        f"✅ Đã đóng cổng D5 — ghi {runtime_state_path}.\n{suite_summary}\n"
+        + "\n".join(f"  {d}" for d in d5_bang_chung)
+        + f"\n{audit_text}",
+    )
+
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else list(argv)
     args, _ = build_parser().parse_known_args(argv)
@@ -1449,6 +1625,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.close_d4_gate:
         exit_code, text = close_d4_gate()
+        print(text)
+        return exit_code
+
+    if args.close_d5_gate:
+        exit_code, text = close_d5_gate()
         print(text)
         return exit_code
 
