@@ -1054,7 +1054,7 @@ bộ chạy D10 (`DR-D10-02`): chờ chủ dự án làm xong phần tài khoả
 | Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
 |---|---|---|---|---|
 | TD-0368 | 🚪 **`DR-ZA-01`** — khai kết cục ZA LONG theo `DR-011` FAIL; **KHÔNG** tuyên bố L3 (KTC chứa giá trị dương); ba mục `MT` (H-3 bất khả thi · phạm vi ba kết cục · lỗ hổng xuất xứ cổng) | ✅ `76be529` | — | Commit **RIÊNG và TRƯỚC** mọi dòng mã; ghi `retest_forbidden`; nêu rõ 0 suất tiêu thêm |
-| TD-0369 | **Máy canh xuất xứ cổng** — mọi `close_*_gate()` đọc `provenance.git_sha` của chính bản ghi arm nó chứng nhận, ghi vào `evidence`, và BÁO khi lệch HEAD. Đo được ở lô `DR-D4-20`: `d4_git_sha = 7c8c8f8` vs `provenance.git_sha = 29f9f52`, **cách 9 commit** (gồm `TD-0364` đổi hành vi vào lệnh) | 🔓 | TD-0368 | Phá thật: cho lệch sha ⇒ cổng BÁO; dùng lại `_slot_cua_lo()`; **không** sửa `runtime_state.json` đã ghi. Phát hiện của phiên `69e2254e` |
+| TD-0369 | **Máy canh xuất xứ cổng** — mọi `close_*_gate()` đọc `provenance.git_sha` của chính bản ghi arm nó chứng nhận, ghi vào `evidence`, và BÁO khi lệch HEAD. Đo được ở lô `DR-D4-20`: `d4_git_sha = 7c8c8f8` vs `provenance.git_sha = 29f9f52`, **cách 9 commit** (gồm `TD-0364` đổi hành vi vào lệnh) | ✅ `20c3772` | TD-0368 | Phá thật: cho lệch sha ⇒ cổng BÁO; dùng lại `_slot_cua_lo()`; **không** sửa `runtime_state.json` đã ghi. Phát hiện của phiên `69e2254e` |
 | TD-0370 | **Sửa ô lỗi thời + lật nhãn**: dòng `TD-0255` còn ghi 🔓 và *"hiện `NotImplementedError`"* (đã xong ở `c7fd648`); `TD-0351` lật ⏸ → 🔓 các dòng D5–D9/lockbox theo `DR-TRIEN-KHAI-01` | 🔓 | — | `--kiem-backlog` exit 0; mỗi dòng sửa đúng một ô, commit riêng |
 
 **Đặt chỗ mã (N12 mục 7c):** `TD-0368`…`TD-0370` + `DR-ZA-01`, commit này, `Phien: dd855fee`. Mã `TD-0367` +
