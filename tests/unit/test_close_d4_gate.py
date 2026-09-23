@@ -156,7 +156,11 @@ class TestTrangThaiThatHomNay:
     """
 
     def test_hanh_vi_tren_ban_sao_cua_trang_thai_that(self, tmp_path) -> None:
-        """Vẫn kiểm hành vi trên DỮ LIỆU THẬT (sổ trial thật, bản ghi arm thật), nhưng ghi vào bản sao."""
+        """Vẫn kiểm hành vi trên DỮ LIỆU THẬT (sổ trial thật, bản ghi arm thật), nhưng ghi vào bản sao.
+
+        🔄 21/09/2026: cổng D4 đã ĐÓNG THẬT (`d5ef262`, tag `d4-complete`) — `EXIT_GATE_ALREADY_CLOSED`
+        (94) nay cũng là một kết quả hợp lệ trên bản sao của trạng thái thật, không phải lỗi. Ba mã đều
+        chấp nhận được vì cả ba đều KHÔNG đụng file thật (khẳng định thứ hai bên dưới mới là chốt chính)."""
         that = REPO_ROOT / "registry" / "runtime_state.json"
         truoc = that.read_bytes()
         ban_sao = tmp_path / "runtime_state.json"
@@ -167,7 +171,7 @@ class TestTrangThaiThatHomNay:
             registry_path=REPO_ROOT / "registry" / "trial_registry.jsonl",
             pytest_cmd=PASS_CMD, pytest_d4_cmd=D4_PASS,
         )
-        assert ma in (0, EXIT_GATE_AUDIT_DIRTY), text
+        assert ma in (0, EXIT_GATE_AUDIT_DIRTY, EXIT_GATE_ALREADY_CLOSED), text
         assert that.read_bytes() == truoc, "ca này KHÔNG được chạm file trạng thái thật"
 
     def test_khong_ca_nao_truyen_duong_dan_that_vao_ham_dong_cong(self) -> None:
@@ -291,6 +295,45 @@ class TestDuongThanhCong:
         assert ma == 0, text
         gate = json.loads(sp.read_text(encoding="utf-8"))["d4_evidence"]["gate_d09"]["noi_dung"]
         assert "Nhánh 1 = FAIL" in gate and "h4d" in gate
+
+
+class TestXuatXuBanGhiCongTD0369:
+    """TD-0369 (`DR-ZA-01` §4.3) — cổng tự báo khoảng lệch giữa sha ĐANG CHỨNG NHẬN (`get_git_info` được
+    ghim `"c"*40` bởi `_moi_truong_sach`) và sha bản ghi arm ĐÃ ĐO (`_prov()` ghim `"deadbeef"`). KHÔNG
+    chặn đóng cổng — chỉ ghi vào `evidence`."""
+
+    def test_mac_dinh_la_LECH_va_khong_chan_cong(self, tmp_path) -> None:
+        """`_prov()` = "deadbeef" ≠ sha chứng nhận "c"*40 — đúng hình dạng sự cố thật (`DR-ZA-01` §4.3)."""
+        sp = _state(tmp_path)
+        ma, text = _goi(sp, _hien_vat(tmp_path))
+        assert ma == 0, text
+        bao_cao = json.loads(sp.read_text(encoding="utf-8"))["d4_evidence"]["xuat_xu_ban_ghi"]
+        assert bao_cao["nguon"] == "do-duoc"
+        assert "LỆCH" in bao_cao["noi_dung"] and "deadbeef" in bao_cao["noi_dung"]
+
+    def test_khop_khi_sha_do_bang_sha_chung_nhan(self, tmp_path) -> None:
+        def _sua(bg):
+            bg["provenance"]["git_sha"] = "c" * 40
+
+        sp = _state(tmp_path)
+        ma, text = _goi(sp, _hien_vat(tmp_path, sua=_sua))
+        assert ma == 0, text
+        bao_cao = json.loads(sp.read_text(encoding="utf-8"))["d4_evidence"]["xuat_xu_ban_ghi"]["noi_dung"]
+        assert "KHỚP" in bao_cao and "LỆCH" not in bao_cao
+
+    def test_thieu_git_sha_bi_CHAN_SOM_HON_boi_schema_khong_lot_qua_may_canh_lang_le(self, tmp_path) -> None:
+        """`arm_result.schema.json` đòi `git_sha` không rỗng (`minLength: 1`) — một bản ghi thiếu nó
+        KHÔNG BAO GIỜ hợp lệ nên bị `kiem_tieu_chi_dong_d4()` chặn TRƯỚC khi tới máy canh xuất xứ. Ca
+        "không đọc được" của `_sanh_xuat_xu()` vì thế là phòng xa cho những nguồn bản ghi KHÁC (D5+
+        tương lai) — khoá riêng ở mức hàm thuần (`test_td0369_xuat_xu_ban_ghi_cong.py`), còn ở đây chỉ
+        cần xác nhận: thiếu `git_sha` KHÔNG BAO GIỜ lọt qua thành "đóng cổng thành công" một cách im lặng."""
+        def _sua(bg):
+            del bg["provenance"]["git_sha"]
+
+        sp = _state(tmp_path)
+        ma, text = _goi(sp, _hien_vat(tmp_path, sua=_sua))
+        assert ma == EXIT_GATE_AUDIT_DIRTY
+        assert "git_sha" in text
 
 
 class TestNoiVaoE6:

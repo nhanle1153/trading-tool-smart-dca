@@ -1063,6 +1063,58 @@ def _dem_b2_da_tieu(registry_path: Path, *, slot: str | None = None) -> int:
     )
 
 
+#: TD-0369 (`DR-ZA-01` §4.3) — ba trạng thái, KHÔNG hai. Phát hiện thật: cổng D4 chứng nhận
+#: `d4_git_sha = 7c8c8f8` nhưng bốn bản ghi arm mang `provenance.git_sha = 29f9f52` — cách nhau 9
+#: commit (`TD-0360`, `TD-0362`, `TD-0364` đổi hành vi vào lệnh). `d4_han_che` không nói ra khoảng
+#: lệch, nên người đọc `runtime_state.json` tin nhầm mốc chứng nhận là mốc đã đo.
+#:
+#: 🔴 "không đọc được sha" KHÔNG được gộp vào "khớp" (N6, bài học `MT-71`: thiếu dữ liệu không phải
+#: một sự thật tốt lành). Ba trạng thái tách bạch: mọi arm có sha VÀ đều khớp ⇒ `"khop"`; mọi arm có
+#: sha nhưng có arm khác sha đang chứng nhận ⇒ `"lech"`; bất kỳ arm nào THIẾU/hỏng sha ⇒
+#: `"khong_doc_duoc"` — kiểm nhánh này TRƯỚC nhánh lệch, để một bản ghi hỏng không bị đọc nhầm thành
+#: "khớp vì tình cờ bằng nhau".
+XUAT_XU_KHOP = "khop"
+XUAT_XU_LECH = "lech"
+XUAT_XU_KHONG_DOC_DUOC = "khong_doc_duoc"
+
+
+def _xuat_xu_ban_ghi_arm(ban_ghi: list[dict]) -> dict[str, str | None]:
+    """`{arm: git_sha đo được}` — `None` khi bản ghi thiếu/hỏng `provenance.git_sha`. Hàm THUẦN,
+    tách khỏi việc so sánh để test được từng phần độc lập."""
+    ra: dict[str, str | None] = {}
+    for bg in ban_ghi:
+        arm = str(bg.get("arm"))
+        gs = (bg.get("provenance") or {}).get("git_sha")
+        ra[arm] = gs if isinstance(gs, str) and gs else None
+    return ra
+
+
+def _sanh_xuat_xu(theo_arm: dict[str, str | None], *, sha_chung_nhan: str) -> str:
+    """`XUAT_XU_KHOP` / `XUAT_XU_LECH` / `XUAT_XU_KHONG_DOC_DUOC`. `sha_chung_nhan` = sha cổng đang
+    ghi vào `runtime_state.json` (`git_info.sha` lúc gọi cổng), KHÔNG phải sha lúc đo."""
+    if not theo_arm or any(v is None for v in theo_arm.values()):
+        return XUAT_XU_KHONG_DOC_DUOC
+    if any(v != sha_chung_nhan for v in theo_arm.values()):
+        return XUAT_XU_LECH
+    return XUAT_XU_KHOP
+
+
+def _bao_cao_xuat_xu(theo_arm: dict[str, str | None], *, sha_chung_nhan: str) -> str:
+    """Chuỗi ghi vào `evidence` — LUÔN ghi, dù khớp hay lệch (TD-0369: cổng tự báo, không im lặng)."""
+    trang_thai = _sanh_xuat_xu(theo_arm, sha_chung_nhan=sha_chung_nhan)
+    ngan = lambda s: s[:12] if s else s  # noqa: E731 — rút gọn hiển thị, không dùng để so sánh
+    if trang_thai == XUAT_XU_KHOP:
+        return f"KHỚP — mọi bản ghi arm đo trên {ngan(sha_chung_nhan)}, đúng sha cổng đang chứng nhận"
+    if trang_thai == XUAT_XU_LECH:
+        lech = {a: ngan(g) for a, g in theo_arm.items() if g != sha_chung_nhan}
+        return (
+            f"🔴 LỆCH — cổng chứng nhận {ngan(sha_chung_nhan)} nhưng bản ghi arm đo trên mã KHÁC: {lech} "
+            "(DR-ZA-01 §4.3: số liệu có thể mô tả một hệ thống khác hệ thống đang được chứng nhận)"
+        )
+    thieu = [a for a, g in theo_arm.items() if g is None]
+    return f"🔴 KHÔNG ĐỌC ĐƯỢC provenance.git_sha ở arm: {thieu} — KHÔNG coi là khớp (N6)"
+
+
 def _doc_ban_ghi_arm(runs_dir: Path) -> tuple[list[dict], list[str]]:
     ban_ghi: list[dict] = []
     loi: list[str] = []
@@ -1315,6 +1367,13 @@ def close_d4_gate(
             ),
         },
         "trial_ledger_audit": {"nguon": "do-duoc", "noi_dung": audit_text.splitlines()[0]},
+        # TD-0369 (`DR-ZA-01` §4.3) — cổng tự báo khi mốc mã đang chứng nhận (HEAD lúc gọi cổng) khác
+        # mốc mã đã ĐO (provenance của chính các bản ghi arm). KHÔNG chặn đóng cổng — đây là máy CANH,
+        # không phải máy SỬA; phát hiện lệch không tự động vô hiệu hoá số đã đo.
+        "xuat_xu_ban_ghi": {
+            "nguon": "do-duoc",
+            "noi_dung": _bao_cao_xuat_xu(_xuat_xu_ban_ghi_arm(ban_ghi), sha_chung_nhan=git_info.sha),
+        },
     }
     state["d4_han_che"] = {"nguon": "nguoi-khai", "noi_dung": _d4_han_che(ban_ghi, slot=slot_lo)}
     runtime_state_path.parent.mkdir(parents=True, exist_ok=True)
