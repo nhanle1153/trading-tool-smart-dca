@@ -1032,10 +1032,12 @@ bộ chạy D10 (`DR-D10-02`): chờ chủ dự án làm xong phần tài khoả
 
 | Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
 |---|---|---|---|---|
-| TD-0366 | 🚪 **`DR-LZ12-01`** + vá `L-Z12`: đơn vị so sánh thành `(config_hash, code_commit)`, GIỮ dòng `CTRL`; mục `MT` theo quy tắc 11 (hai điều đã chốt va nhau) | 🔓 | — | DR commit **RIÊNG và TRƯỚC** mã; kiểm-có-răng: cùng mã + cùng cấu hình + khác kết quả ⇒ **vẫn đỏ**; E6 trên sổ thật hết đỏ; full suite 0 đỏ |
+| TD-0366 | 🚪 **`DR-LZ12-01`** + vá `L-Z12`: đơn vị so sánh thành `(config_hash, code_commit)`, GIỮ dòng `CTRL`; mục `MT` theo quy tắc 11 (hai điều đã chốt va nhau) | 🔒 | — | DR commit **RIÊNG và TRƯỚC** mã; kiểm-có-răng: cùng mã + cùng cấu hình + khác kết quả ⇒ **vẫn đỏ**; E6 trên sổ thật hết đỏ; full suite 0 đỏ |
 
 **Đặt chỗ mã (N12 mục 7c):** `TD-0366` + `DR-LZ12-01`, commit này, `Phien: dd855fee`. Đã báo `69768527` (giữ
-`TD-0362`…`TD-0365` + `DR-LOCKBOX-03`) rằng tôi nhận `audit_checks.py`.
+`TD-0362`…`TD-0365` + `DR-LOCKBOX-03`) rằng tôi nhận `audit_checks.py`. **Thêm 24/09/2026:** chủ dự án giao lại
+`TD-0366` (DR `6b4c9dd` + mã `2521a81` đã có, dòng chưa từng khoá) cho phiên `30c2eea5`; đặt chỗ `MT-75`, `MT-76` (nợ
+`DR-LZ12-01` §5/§5.1), commit khoá này, `Phien: dd855fee → 30c2eea5`.
 
 ---
 
