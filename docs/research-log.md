@@ -4150,3 +4150,45 @@ dù chính tham số đó nằm trong danh sách calibrate.
 gốc `TD-0193` tái lập đúng từng byte). Kịch bản có **cảnh báo, không chặn** — và cảnh báo đó làm đúng việc của
 nó. Đã chạy lại với `--nguon`/`--ranh-gioi` viết đúng; hai lượt cho **cùng một bộ số** (246 lệnh, cùng
 `exit_reason`), nên chênh lệch duy nhất là phần chữ xuất xứ.
+
+## 24/09/2026 — TD-0373 + TD-0257: khoá đo D5 và cổng D5 thật, 0 suất (phiên mã `dd855fee`)
+
+**Việc:** thi hành Bước 1 của kế hoạch 21/09 (`DR-ZA-01` §2: dựng máy D5→D9.5 ở mức 0 suất). Hai commit mã:
+`482864d` (khoá `D5_DO_TAM_DUNG`) và `89c8260` (`close_d5_gate()`). Sổ trial không thêm dòng nào; 0 dòng B1.
+
+### 1. Chốt "0 suất B1" trước hôm nay chỉ là chữ
+
+`d4_complete = true` từ 21/09 ⇒ `registry.reserve(budget_line="B1")` nhận một suất hợp lệ theo `DR-D5-01` ngay khi
+ai chạy E1. Khoá mới chặn ở `TrialLedger._kiem_cua_b1()` (lệnh đầu, trước khi đọc DR/sổ) và ở E1 (mã thoát 113).
+Bật khoá làm **42 ca** của ba file test luật cửa B1 đỏ — đo được khoá có răng, và cũng đo được chúng cần đặt suất
+thật trong sổ tạm. Xử bằng fixture tắt khoá **trong chính file**, không sửa khẳng định nào.
+
+### 2. Hai chỗ lệch văn bản, làm theo nguồn cao hơn (N1)
+
+- Dòng `TD-0257` trong `TASKS.md` ghi *"bốn tham số không calibrate"*; `DR-D5-01` §2.2/§7 ghi **năm** (4 bất khả +
+  `mult_corr_thresholds`). Cổng theo DR. Không sửa dòng TASKS (ngoài ô trạng thái).
+- Docstring `chon_gia_tri.py` gọi đầu vào là *"R_realized"*; `DR-D5-01` §5 chốt đơn vị *"theo rủi ro đã triển
+  khai"* ⇒ `ket_qua_b1.py` đọc cột `r_trien_khai`. Chưa sửa docstring cũ (ngoài phạm vi) — ghi ở đây để người sau
+  không đọc nhầm.
+
+### 3. Cổng tính lại, không đọc file kết quả
+
+Không có hiện vật nào ghi *"tham số nào đổi, tham số nào giữ mốc"*. Thay vì thêm một file kết quả (thêm một thứ
+có thể trôi khỏi dữ liệu nó mô tả), cổng gọi `tinh_quyet_dinh_b1()` trên sổ + `lenh_r.json` mỗi lần chạy — đi
+qua **đúng** `chon_ket_cuc` / `chon_loc_lenh` / `xac_nhan_ghep` đã có test (bài học `TD-0168`).
+
+### 4. Phá thật bắt được một khẳng định lỏng
+
+Bỏ nhánh *"có tham số đổi mà chưa có suất xác nhận"* ⇒ ca canh vẫn XANH: nhánh `else` sinh một lý do khác cũng
+chứa chữ `D5_XAC_NHAN`, và khẳng định chỉ hỏi *"có chữ đó không"*. Siết lại thành *"đúng lý do chưa có suất"*;
+phá lại ⇒ đúng một ca đỏ. Hai phép phá khác (gỡ dây xuất xứ; coi thiếu suất là giữ mốc) bị bắt ngay lượt đầu.
+
+### 5. Chạy thật
+
+`--close-d5-gate` trên trạng thái + sổ thật (cây sạch, `89c8260`): **exit 95**, lý do duy nhất *"cần đúng 1 suất
+D5_MOC CONSUMED, thấy 0"* — đúng hành vi viết trước ở `DR-ZA-01` §5. `runtime_state.json` và `trial_registry.jsonl`
+khớp sha256 trước/sau. Full suite Docker **3134 passed, 0 failed**.
+
+**Hạn chế:** chưa có hiện vật `TD-0251` ⇒ cổng dùng trần 16 của bảng và ghi điều (9) vào `d5_han_che`. Đường
+thành công của cổng mới chỉ được nuôi bằng suất B1 dựng trong sổ TẠM với bảng thước giả — chưa từng chạy trên suất
+thật (không thể, theo `DR-ZA-01` §2).
