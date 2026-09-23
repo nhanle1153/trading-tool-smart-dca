@@ -36,7 +36,7 @@ from tool_d.ablation.chi_so_export import (
     time_stop_ratio,
     tp_fallback_ratio,
 )
-from tool_d.ablation.thanh_ly import HamThanhLy, tinh_liq_freqtrade
+from tool_d.ablation.thanh_ly import HamThanhLy, liq_buffer_ke_hoach, tinh_liq_freqtrade
 from tool_d.config.loader import load_tool_d_config, resolve
 from tool_d.measurement.tri_state import Measured, Status
 from tool_d.sizing import doc_trong_so_tranche
@@ -166,6 +166,71 @@ class _SanGia:
 
 def _ham(gia: dict[str, float | None], buffer: float = 0.05) -> HamThanhLy:
     return HamThanhLy(tinh=_SanGia(gia), liquidation_buffer=buffer)
+
+
+class _SanGiaGhiHet:
+    """Hàm thanh lý GIẢ nhận MỌI đối số — để **quan sát** giao ước thật thay vì chết vì `TypeError`.
+
+    Khác `_SanGia` ở trên có chủ ý: `_SanGia` khai đúng 5 đối số nên nó *thi hành* giao ước của chiều LONG
+    (thêm đối số thứ sáu ⇒ nổ). Hàm này không thi hành gì cả, nó chỉ ghi lại — nhờ vậy ca kiểm nói được
+    **giao ước LÀ GÌ**, chứ không chỉ *"có ai đó vừa phá nó"*.
+    """
+
+    def __init__(self, gia: dict[str, float | None]) -> None:
+        self.gia, self.goi = gia, []
+
+    def __call__(self, *a, **kw):
+        self.goi.append((a, kw))
+        return self.gia[a[0]]
+
+
+class TestGiaoUocTinhLiq:
+    """🔒 TD-0371 (`MT-71`) — giao ước của `TinhLiq` là **BẤT ĐỐI XỨNG THEO CHIỀU**, và điều đó phải được
+    KHAI bằng một ca kiểm, không phải chỉ nằm trong chú thích.
+
+    Vì sao cần: trước ca này, chiều LONG chỉ được bảo vệ **gián tiếp** — `_SanGia` nhận đúng 5 đối số, nên ai
+    thêm đối số thứ sáu cho chiều Long sẽ làm nó nổ `TypeError` ở `test_doi_so_dua_cho_san_la_vi_the_KE_HOACH`.
+    Giao ước vỡ ở chỗ **trông như lỗi test**, không như lỗi giao ước. `MT-71` gọi tên đúng lớp lỗi đó: *một hàm
+    mang giả định mà giả định ấy không nằm trong chữ ký thì người tái dùng không có cách nào biết*.
+
+    Ca cũ GIỮ NGUYÊN (nó ghim giá trị từng đối số); ca ở đây ghim **hình dạng lời gọi** của cả hai chiều.
+    """
+
+    def test_chieu_LONG_goi_dung_5_doi_so_va_KHONG_co_la_short(self) -> None:
+        """`DR-D4-14` §7: thêm đối số cho MỌI lời gọi sẽ buộc sửa khẳng định của ca cũ ⇒ điều kiện DỪNG.
+        Nên chiều Long phải giữ đúng 5 đối số vị trí, không kèm khoá nào."""
+        f = _SanGiaGhiHet({"LTC/USDT:USDT": 66.0})
+        liq_buffer_ratio_mean(
+            [_lenh_ba_tranche_dung_gia()], cfg=CFG, ham=HamThanhLy(tinh=f, liquidation_buffer=0.05)
+        )
+        (doi_so, khoa), = f.goi
+        assert len(doi_so) == 5, f"chiều LONG phải gọi đúng 5 đối số vị trí, nhận {len(doi_so)}"
+        assert khoa == {}, f"chiều LONG không được truyền đối số khoá nào, nhận {khoa}"
+
+    def test_chieu_SHORT_goi_kem_la_short(self) -> None:
+        """Chiều SHORT truyền THÊM `la_short=True` (`thanh_ly.py`, TD-0364). Bất đối xứng này là CÓ CHỦ Ý —
+        ghim nó ra để lần sau ai đọc còn biết, và để đổi nó thì phải sửa một ca có nhắc tới lý do."""
+        f = _SanGiaGhiHet({"LTC/USDT:USDT": 130.0})
+        liq_buffer_ke_hoach(
+            pair="LTC/USDT:USDT", p=P, sl=110.0, w=W, n_full=300.0,
+            don_bay=float(resolve(CFG, "tier_a.L_exchange")),
+            liquidation_buffer=0.05, tinh_liq=f, la_short=True,
+        )
+        (doi_so, khoa), = f.goi
+        assert len(doi_so) == 5 and khoa == {"la_short": True}
+
+    def test_hai_chieu_dung_CHUNG_mot_ham_thanh_ly(self) -> None:
+        """Một `TinhLiq` phục vụ cả hai chiều ⇒ hàm nào chỉ nhận 5 đối số là **khai thiếu**, không phải
+        *"đủ cho chiều của tôi"*. Đây là câu mà `MT-71` để mở ở mức LUẬT CHUNG."""
+        f = _SanGiaGhiHet({"LTC/USDT:USDT": 66.0})
+        ham = HamThanhLy(tinh=f, liquidation_buffer=0.05)
+        liq_buffer_ratio_mean([_lenh_ba_tranche_dung_gia()], cfg=CFG, ham=ham)
+        liq_buffer_ke_hoach(
+            pair="LTC/USDT:USDT", p=P, sl=110.0, w=W, n_full=300.0,
+            don_bay=float(resolve(CFG, "tier_a.L_exchange")),
+            liquidation_buffer=0.05, tinh_liq=f, la_short=True,
+        )
+        assert [kw for _, kw in f.goi] == [{}, {"la_short": True}]
 
 
 class TestLiqBufferKeHoach:
