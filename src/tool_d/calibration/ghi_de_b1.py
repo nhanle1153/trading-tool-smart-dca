@@ -6,8 +6,8 @@ trị khác là một suất trial mua phép đo KHÁC thứ đã ghi, và khôn
 (*"sổ ghi CẤU HÌNH, không ghi TẬP LỆNH"*). Nên với B1, E1 TỪ CHỐI `--ghi-de` và gọi hàm này.
 
 Arm lấy từ bảng ứng viên của chính `DR-D5-01` (`Z0-T1`), KHÔNG từ `tool_d_config.yaml`: khoá
-`tier_c.arm_ablation.arm` của file còn là `"Z3"` cho tới `TD-0227`, mà D5 chạy `Z0-T1` bất kể file ghi gì
-(`DR-D5-01` §1).
+`tier_c.arm_ablation.arm` của file giữ `"Z3"` là arm NẠP/dry-run, không phải arm sản xuất (`TD-0227` đóng không
+đổi arm theo `MT-35` + `DR-ZA-01`, `ca40f96`), mà D5 chạy `Z0-T1` bất kể file ghi gì (`DR-D5-01` §1).
 
 Hàm này chỉ ÁNH XẠ. Giá trị có thuộc danh sách thử không, có trùng suất chưa hoàn không — việc của
 `kiem_dat_cho_b1()` ở cửa ghi sổ (một luật, một chỗ).

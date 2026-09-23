@@ -1680,10 +1680,11 @@ class ZoneAbsorption(IStrategy):
         (và TP1 cũng không sinh sự kiện trên Binance Futures — xác nhận
         bằng đọc mã nguồn `cancel_stoploss_on_exchange`) ⇒ hàm này trả
         về đúng `[]`, không phải lỗi — N6 cấm bịa số, `pending`/`[]` là
-        ĐÚNG khi sự kiện chưa từng xảy ra. `TD-0227` sẽ đổi arm sản xuất
-        sang `Z0` (thuộc tập trên) sau khi cổng D4 đóng — tới lúc đó D2c
-        mới thật sự N/A; HÔM NAY arm vẫn `Z3` (có DCA), D2c vẫn là điều
-        kiện SỐNG. `test_td0244_stoploss_on_exchange.py` giữ một test cố
+        ĐÚNG khi sự kiện chưa từng xảy ra. `TD-0227` đã đóng KHÔNG đổi
+        arm (24/09/2026, `ca40f96`: `Z0-T1` FAIL ở D4 ⇒ không có arm sản
+        xuất theo `MT-35`); arm trong config vẫn `Z3` (có DCA) nên D2c vẫn
+        là điều kiện SỐNG — chỉ thành N/A khi một DR mới đưa một arm thuộc
+        tập trên lên sản xuất. `test_td0244_stoploss_on_exchange.py` giữ một test cố
         ý đỏ đúng lúc arm đổi, để không ai đọc N/A thành vĩnh viễn mà
         quên tự kiểm lại."""
         lenh_sl = [
