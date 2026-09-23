@@ -147,6 +147,11 @@ tier_c: # 🔒 KHOÁ — KHÔNG có ô nhập, ghi ở đây
     # Giá trị ở đây chỉ để chiến lược NẠP ĐƯỢC ngoài ablation; bộ chạy E3 (TD-0184)
     # ghi đè theo từng arm khi chạy và ghi arm vào bản ghi kết quả — không tin
     # giá trị này khi đọc kết quả, tin `arm` trong bản ghi.
+    # 🔴 TD-0227 (24/09/2026): "Z3" là arm NẠP + dry-run VẬN HÀNH, KHÔNG phải arm
+    # được duyệt cho tiền thật. Luật MT-35: arm sản xuất = arm PASS Nhánh 1;
+    # `Z0-T1` FAIL ở cổng D4 (DR-ZA-01) ⇒ hiện KHÔNG có arm sản xuất, và `Z0`
+    # không phải phương án dự phòng. Đổi giá trị này cho D12 cần một DR MỚI sau
+    # khi có arm PASS Nhánh 1 — test khoá `test_td0227_*` ghim điều đó.
     arm: "Z3"
     # Z0-S1 định cỡ theo VỐN. ✅ DR-D4-07 — khai bằng THAM CHIẾU, không phải con
     # số USDT cứng: notional = rho_pct/100 × E_D / notional_ref_r_eff, tức dùng
