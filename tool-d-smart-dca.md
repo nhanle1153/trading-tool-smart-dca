@@ -3871,7 +3871,7 @@ Thay thế bằng cơ chế KHẢ THI: ĐĂNG KÝ QUY TẮC QUYẾT ĐỊNH TRƯ
 ```
 L-Z10 🆕 Mọi bản ghi trial_registry có registered_at < executed_at    🔴 CRITICAL
 L-Z11 🆕 Tổng số trial ĐÃ DÙNG ≤ N_ĐĂNG_KÝ tại mọi thời điểm
-L-Z12 🆕 Không có config_hash nào xuất hiện 2 lần với outcome khác nhau
+L-Z12 🆕 Không có config_hash nào xuất hiện 2 lần với outcome khác nhau   🔧 đính chính 24/09/2026 (DR-LZ12-01): đơn vị so là CẶP (config_hash, code_commit) — cùng cấu hình khác mã thì hợp lệ khác kết quả; GIỮ dòng CTRL; loại lính canh "n/a"; không còn cặp so được ⇒ pending, không phải ✅
       (nếu có → có chạy lại không ghi sổ, registry mất hiệu lực)
 L-Z13 🆕 lockbox_access.log có ĐÚNG 0 bản ghi cho tới sau D9;
       🔴 v7 sửa: sau đó ĐÚNG 1 bản ghi CHO MỖI ĐOẠN NIÊM PHONG, tối đa
