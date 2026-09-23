@@ -169,6 +169,32 @@ class TestLZ12NoDuplicateConfigHash:
         assert r.is_fail
         assert "config_hash=SAME" in r.evidence and "code_commit=MA" in r.evidence
 
+    def test_ctrl_tai_lap_van_nam_trong_phep_so(self, tmp_path: Path) -> None:
+        """`DR-LZ12-01` §3 chốt 2 — GIỮ dòng `CTRL`. `CTRL` dạng *tái lập* (`MT-08`/`TD-0130`) tồn tại đúng để
+        chứng minh cùng cấu hình + cùng mã cho cùng kết quả; tái lập ra kết quả KHÁC mà `L-Z12` vẫn xanh là lớp
+        canh duy nhất cho điều đó bị câm. Bốn ca trên đều dựng trial B3, nên thêm `if CTRL: continue` vào phép
+        gom thì chúng vẫn xanh — ca này là ca duy nhất đỏ khi đó (phá thật 24/09/2026, TD-0366)."""
+        ledger = TrialLedger(tmp_path / "reg.jsonl")
+        goc = _reserve(ledger, config_hash="SAME", code_commit="MA")
+        ledger.seal(goc, seal_path=f"runs/{goc}/metrics.seal")
+        ledger.consume(
+            goc,
+            outcome={"expectancy": 0.02, "sharpe": 0.5, "n_trades": 100, "max_single_loss_ratio": 1.0},
+            verdict="REJECTED",
+        )
+        ctrl = _reserve(
+            ledger, budget_line="CTRL", reproduces_trial_id=goc, config_hash="SAME", code_commit="MA"
+        )
+        ledger.seal(ctrl, seal_path=f"runs/{ctrl}/metrics.seal")
+        ledger.consume(
+            ctrl,
+            outcome={"expectancy": 0.09, "sharpe": 0.5, "n_trades": 100, "max_single_loss_ratio": 1.0},
+            verdict="REJECTED",
+        )
+        r = check_lz12_no_duplicate_config_hash_different_outcome(tmp_path / "reg.jsonl")
+        assert r.is_fail, r.measured.render()
+        assert goc in r.evidence and ctrl in r.evidence
+
 
 class TestLZ15CalibrateParamsHaveStatus:
     def test_tren_FILE_THAT_du_12_muc_va_khai_ro_12_cho_giu(self) -> None:
