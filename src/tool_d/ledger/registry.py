@@ -495,7 +495,14 @@ class TrialLedger:
         self, *, dataset: str, direction: str, param_under_test: str, param_value: Any
     ) -> None:
         """TD-0253 — cửa B1. Mọi lỗi (DR đọc không được, băm lệch, runtime_state
-        hỏng, suất không hợp lệ) đều thành `B1Error`: fail-closed."""
+        hỏng, suất không hợp lệ) đều thành `B1Error`: fail-closed.
+
+        TD-0373: khoá `D5_DO_TAM_DUNG` đứng ĐẦU cửa — trước cả khi đọc DR hay sổ. Đọc thuộc tính mô-đun lúc
+        gọi (không `from … import` giá trị) để lật khoá là sửa ĐÚNG một dòng ở `khoa_do.py`."""
+        from tool_d.ablation import khoa_do
+
+        if khoa_do.D5_DO_TAM_DUNG:
+            raise B1Error(f"TỪ CHỐI đặt chỗ B1 — {khoa_do.LY_DO_KHOA_D5}")
         try:
             bang = doc_bang_ung_vien(self._dr_d5_path)
             kiem_dat_cho_b1(

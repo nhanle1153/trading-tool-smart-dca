@@ -34,6 +34,16 @@ DR_THAT = REPO_ROOT / "docs" / "decisions" / "DR-D5-01-pham-vi-ung-vien-luat-cho
 # ════ (ii) L-Z29 — tập tên ════
 
 
+@pytest.fixture(autouse=True)
+def _mo_khoa_d5(monkeypatch):
+    """TD-0373: file này kiểm LUẬT của cửa B1 (`DR-D5-01`), nên cần đặt được suất trong sổ TẠM. Khoá
+    `D5_DO_TAM_DUNG` chặn TRƯỚC luật đó; tắt nó chỉ trong tiến trình test này — khoá có test riêng
+    (`tests/lock/test_td0373_khoa_do_d5.py`), khẳng định ở đây giữ nguyên."""
+    from tool_d.ablation import khoa_do
+
+    monkeypatch.setattr(khoa_do, "D5_DO_TAM_DUNG", False)
+
+
 def _cfg_trao(tmp_path: Path, cu: str, moi_dong: str) -> Path:
     """Bản sao config thật, thay ĐÚNG dòng khoá `cu` trong khối tier_b."""
     text = CFG_THAT.read_text(encoding="utf-8")

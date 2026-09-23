@@ -33,3 +33,22 @@ LY_DO_KHOA = (
     "D4-đo đang TẠM DỪNG — `DR-IQ-01` §1, khoá `D4_DO_TAM_DUNG` (`DR-D4-14` §2.2). "
     "Điều kiện lật khoá: `DR-D4-14` §6. Không đặt chỗ, không chạm dữ liệu, 0 suất."
 )
+
+
+#: TD-0373 (`DR-ZA-01` §2, chủ dự án chốt 21/09/2026) — khoá khâu ĐO của D5: **0 suất `B1`** cho Zone Absorption
+#: LONG. Trước khoá này, chốt đó chỉ là chữ: `d4_complete = true` nên `registry.reserve()` nhận một suất `B1` hợp lệ
+#: theo `DR-D5-01` ngay khi ai đó chạy E1. Cùng lý do là hằng số chứ không phải cờ/biến môi trường như khoá D4 ở trên.
+#:
+#: Chặn ở HAI tầng: `TrialLedger._kiem_cua_b1()` (cửa mọi đường ghi sổ đều đi qua) và E1 trước khi đọc dữ liệu.
+#: Dòng `B0`/`B2`/`B3`/`CTRL` không đi qua khoá này.
+#:
+#: Điều kiện lật về `False` — đủ CẢ HAI, viết TRƯỚC: (1) có ứng viên được CHỌN qua Idea Queue (dòng CHỌN trên sổ ý
+#: tưởng, `DR-Q4-2026`); (2) một DR mở khoá viết TRƯỚC khi đặt suất đầu tiên, nêu đích danh ứng viên và bảng ứng
+#: viên D5 của nó. KHÔNG phải điều kiện: *"cổng D5 đã dựng xong"*; thời gian trôi; ZA LONG muốn thử lại
+#: (`retest_forbidden`, `DR-ZA-01`).
+D5_DO_TAM_DUNG: bool = True
+
+LY_DO_KHOA_D5 = (
+    "D5-đo đang KHOÁ — `DR-ZA-01` §2 (0 suất B1 cho Zone Absorption LONG), khoá `D5_DO_TAM_DUNG` (TD-0373). "
+    "Mở khi có ứng viên được CHỌN qua Idea Queue và một DR mở khoá viết trước. Không đặt chỗ, 0 suất."
+)

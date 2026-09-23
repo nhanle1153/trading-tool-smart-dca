@@ -39,6 +39,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+from tool_d.ablation import khoa_do
 from tool_d.bo_chay.chay import BacktestHongError, chay_mot_luot
 from tool_d.bo_chay.moi_truong import dung_moi_truong
 from tool_d.bo_chay.trich_lenh import lenh_tu_freqtrade
@@ -76,6 +77,10 @@ EXIT_CHUA_XAC_NHAN_CHAY = 105
 EXIT_BACKTEST_HONG = 106
 #: Lõi bộ chạy từ chối trước khi chạy (rổ sai, thiếu 5m, timerange sai…).
 EXIT_BO_CHAY_TU_CHOI = 107
+
+#: TD-0373 — `--budget-line B1` khi khoá `D5_DO_TAM_DUNG` đang bật (`DR-ZA-01` §2). Mã MỚI, không tái dùng
+#: `110` của E3: hai khoá, hai quyết định, hai mã.
+EXIT_D5_DO_TAM_DUNG = 113
 
 DONG_NGAN_SACH = ("B1", "B2", "B3", "CTRL")
 TAP_HOP_LE = ("CALIB", "WFO")
@@ -207,6 +212,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     if ma_h17 is not None:
         return ma_h17
+
+    # TD-0373 — khoá đo D5: dòng B1 bị từ chối TRƯỚC khi đọc rổ, cấu hình hay dữ liệu, và trước `reserve()`.
+    # Cửa `TrialLedger._kiem_cua_b1()` chặn lần nữa — đây là lớp sớm để không ai tốn công chuẩn bị một lượt.
+    if args.budget_line == BUDGET_LINE_B1 and khoa_do.D5_DO_TAM_DUNG:
+        print(f"🛑 {khoa_do.LY_DO_KHOA_D5}")
+        return EXIT_D5_DO_TAM_DUNG
 
     # ── Từ đây là TD-0313. Năm cổng trên KHÔNG bị đụng. ──────────────────────
     if not args.tap:
