@@ -6,10 +6,13 @@ idea_queue tiêu biểu (QUEUED/SELECTED/REJECTED-vì-TOOL_D_RESULTS).
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import jsonschema
 import pytest
+
+from tool_d.ledger.registry import BUDGET_LINE_XAC, TAP_XAC_NHAN, THAM_SO_CUA_SO_XAC
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TRIAL_EVENT_SCHEMA = json.loads(
@@ -29,6 +32,34 @@ def _load_jsonl(path: Path) -> list[dict]:
 _KHOA_DANG_CTRL = ("reproduces_trial_id", "ctrl_output_whitelist", "ctrl_mo_ta_whitelist")
 
 
+def _kiem_dong_xac_nhan(events: list[dict]) -> None:
+    """TD-0392 (`DR-XAC-NHAN-01` §8) — luật cho dòng lớp xác nhận trên sổ thật. Hằng số lấy từ `registry.py`."""
+    reserve = [e for e in events if e["event"] == "RESERVE"]
+    hoan = {e["trial_id"] for e in events if e["event"] == "REFUND"}
+    xac = [e for e in reserve if e["budget_line"] == BUDGET_LINE_XAC]
+    for e in xac:
+        pv = e.get("param_value")
+        assert e["dataset"] == TAP_XAC_NHAN, f"{e['trial_id']}: XAC trên {e['dataset']!r}"
+        assert isinstance(e["hypothesis_slot"], str) and re.fullmatch(r"IQ-\d{4}", e["hypothesis_slot"]), (
+            f"{e['trial_id']}: XAC slot {e['hypothesis_slot']!r} không phải IQ-xxxx"
+        )
+        assert e["param_under_test"] == THAM_SO_CUA_SO_XAC, f"{e['trial_id']}: {e['param_under_test']!r}"
+        assert isinstance(pv, dict) and pv.get("che_do") == "TINH", f"{e['trial_id']}: XAC không ở chế độ TINH ({pv!r})"
+    khong_hoan: dict[str, list[str]] = {}
+    for e in xac:
+        if e["trial_id"] not in hoan:
+            khong_hoan.setdefault(e["hypothesis_slot"], []).append(e["trial_id"])
+    for slot, ds in khong_hoan.items():
+        assert len(ds) <= 1, f"{ds}: slot {slot} có quá 1 dòng XAC không REFUND — đo lại cần DR mới"
+    for e in reserve:
+        if e["budget_line"] == "CTRL" and e.get("dataset") == TAP_XAC_NHAN:
+            pv = e.get("param_value")
+            assert e.get("ctrl_mo_ta_whitelist") == ["so_lenh"], (
+                f"{e['trial_id']}: CTRL trên {TAP_XAC_NHAN} khai {e.get('ctrl_mo_ta_whitelist')!r}, chỉ được ['so_lenh']"
+            )
+            assert isinstance(pv, dict) and pv.get("che_do") == "DEM", f"{e['trial_id']}: CTRL XAC_NHAN không ĐẾM ({pv!r})"
+
+
 def _kiem_so_that(events: list[dict]) -> None:
     """TD-0346 — quan hệ của sổ trial thật, thay cho số đếm ghim cứng.
 
@@ -40,9 +71,15 @@ def _kiem_so_that(events: list[dict]) -> None:
     `DR-D4-19` tiêu suất `B2`. B0 vẫn ghim đủ 4; B2 chỉ hợp lệ khi mang `hypothesis_slot = DR-D4-19` và số suất B2
     KHÔNG bị REFUND ≤ 4 (một lô 4 arm, `DR-D4-12` §4). B1/B3 vẫn cấm. RESERVE B2 đã REFUND (lượt 1, `a2f4c60`)
     không tiêu suất nên không vào trần.
+
+    🔄 24/09/2026 (chủ dự án duyệt TRƯỚC, `DR-XAC-NHAN-01` §8, TD-0392): dòng `XAC` (lớp xác nhận, ngoài `N`) được
+    miễn khỏi phần ghim B0/B2 — dây báo động chạy SAU khi dòng đã ghi nên không ngăn được gì — nhưng phải đúng LUẬT:
+    chỉ trên `XAC_NHAN`, slot `IQ-xxxx`, `xac_nhan_cua_so` + `TINH`, ≤ 1 dòng không REFUND mỗi slot. CTRL trên
+    `XAC_NHAN` chỉ được là dòng ĐẾM khai đúng `["so_lenh"]`. Phần ghim B0/B2/B1/B3 bên dưới không đổi chữ nào.
     """
     reserve = [e for e in events if e["event"] == "RESERVE"]
-    that = [e for e in reserve if e["budget_line"] != "CTRL"]
+    _kiem_dong_xac_nhan(events)
+    that = [e for e in reserve if e["budget_line"] not in ("CTRL", BUDGET_LINE_XAC)]
     assert all(e["budget_line"] in ("B0", "B2") for e in that), [(e["trial_id"], e["budget_line"]) for e in that]
     b0 = [e for e in that if e["budget_line"] == "B0"]
     assert len(b0) == 4, f"{len(b0)} trial B0 — tiêu suất mới là quyết định cần DR"
@@ -225,3 +262,77 @@ class TestFileRegistryThatHopLe:
         gia.update(trial_id="D-9998", reproduces_trial_id="D-0001", ctrl_output_whitelist=["price_delta"])
         with pytest.raises(AssertionError):
             _kiem_so_that([*events, gia])
+
+
+class TestLuatDongXacNhanCoRang:
+    """TD-0392 (`DR-XAC-NHAN-01` §8) — sổ GIẢ = sổ thật + dòng dựng tay. Ca hợp lệ phải QUA (không thì luật chặn
+    nhầm đúng lần đo thật), ba ca sai phải ĐỎ, dòng XAC đã REFUND không tính vào trần 1/slot."""
+
+    @staticmethod
+    def _so() -> list[dict]:
+        return _load_jsonl(REPO_ROOT / "registry/trial_registry.jsonl")
+
+    @staticmethod
+    def _xac(so: list[dict], trial_id: str, **doi: object) -> dict:
+        mau = dict(next(e for e in so if e["event"] == "RESERVE" and e["budget_line"] == "B0"))
+        mau.update(
+            trial_id=trial_id,
+            budget_line=BUDGET_LINE_XAC,
+            dataset=TAP_XAC_NHAN,
+            hypothesis_slot="IQ-0099",
+            param_under_test=THAM_SO_CUA_SO_XAC,
+            param_value={"che_do": "TINH", "tu": "2026-10-01", "den": "2027-01-15"},
+        )
+        mau.update(doi)
+        return mau
+
+    @staticmethod
+    def _ctrl_dem(so: list[dict], trial_id: str, **doi: object) -> dict:
+        mau = dict(next(e for e in so if e["event"] == "RESERVE" and e["budget_line"] == "CTRL"))
+        for k in _KHOA_DANG_CTRL:
+            mau.pop(k, None)
+        mau.update(
+            trial_id=trial_id,
+            dataset=TAP_XAC_NHAN,
+            hypothesis_slot="IQ-0099",
+            param_under_test=THAM_SO_CUA_SO_XAC,
+            param_value={"che_do": "DEM", "tu": "2026-10-01", "den": "2027-01-15"},
+            ctrl_mo_ta_whitelist=["so_lenh"],
+        )
+        mau.update(doi)
+        return mau
+
+    def test_dong_xac_va_ctrl_dem_hop_le_thi_qua(self) -> None:
+        so = self._so()
+        _kiem_so_that([*so, self._ctrl_dem(so, "D-9990"), self._xac(so, "D-9991")])
+
+    def test_xac_tren_calib_la_do(self) -> None:
+        so = self._so()
+        with pytest.raises(AssertionError):
+            _kiem_so_that([*so, self._xac(so, "D-9991", dataset="CALIB")])
+
+    def test_hai_xac_khong_hoan_cung_slot_la_do(self) -> None:
+        so = self._so()
+        with pytest.raises(AssertionError):
+            _kiem_so_that([*so, self._xac(so, "D-9991"), self._xac(so, "D-9992")])
+
+    def test_ctrl_xac_nhan_khai_them_chi_so_la_do(self) -> None:
+        so = self._so()
+        with pytest.raises(AssertionError):
+            _kiem_so_that([*so, self._ctrl_dem(so, "D-9990", ctrl_mo_ta_whitelist=["so_lenh", "lenh_moi_nam"])])
+
+    def test_xac_da_refund_khong_tinh_vao_tran(self) -> None:
+        so = self._so()
+        hoan = {"event": "REFUND", "trial_id": "D-9991"}
+        _kiem_so_that([*so, self._xac(so, "D-9991"), hoan, self._xac(so, "D-9992")])
+
+    def test_xac_slot_khong_phai_iq_la_do(self) -> None:
+        so = self._so()
+        with pytest.raises(AssertionError):
+            _kiem_so_that([*so, self._xac(so, "D-9991", hypothesis_slot="DR-D4-20")])
+
+    def test_xac_che_do_dem_la_do(self) -> None:
+        so = self._so()
+        pv = {"che_do": "DEM", "tu": "2026-10-01", "den": "2027-01-15"}
+        with pytest.raises(AssertionError):
+            _kiem_so_that([*so, self._xac(so, "D-9991", param_value=pv)])
