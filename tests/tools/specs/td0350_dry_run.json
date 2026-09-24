@@ -1,0 +1,19 @@
+{
+  "mo_ta": "TD-0350: ba chot fail-closed cua dung_cau_hinh_dry_run(). M1 = bo chot dry_run khac true (duong lot sang tien that); M2 = bo chot file goc co api_key/secret; M3 = bo chot ro rong (bot 0 ma = pass rong o tang van hanh). Moi bien the phai ra DUNG 1 ca do.",
+  "module": "tool_d.ops.dry_run",
+  "file": "src/tool_d/ops/dry_run.py",
+  "khoi_dong": ["if ft.get(\"dry_run\") is not True:"],
+  "bien_the": {
+    "M0": null,
+    "M1": "if False:",
+    "M2": {"khoi_dong": ["if san.get(\"key\") or san.get(\"api_key\") or san.get(\"secret\"):"], "thay": "if False:"},
+    "M3": {"khoi_dong": ["if not trading:"], "thay": "if False:"}
+  },
+  "tests": ["tests/unit/test_trien_khai_dry_run.py"],
+  "ky_vong": {"M0": "xanh", "M1": "do", "M2": "do", "M3": "do"},
+  "ky_vong_do_gom": {
+    "M1": ["tests/unit/test_trien_khai_dry_run.py::TestCauHinhDryRun::test_tu_choi_cau_hinh_goc_khong_phai_dry_run"],
+    "M2": ["tests/unit/test_trien_khai_dry_run.py::TestCauHinhDryRun::test_tu_choi_khi_file_goc_co_key"],
+    "M3": ["tests/unit/test_trien_khai_dry_run.py::TestCauHinhDryRun::test_tu_choi_ro_rong"]
+  }
+}

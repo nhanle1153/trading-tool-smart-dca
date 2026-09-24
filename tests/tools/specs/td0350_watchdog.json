@@ -1,0 +1,12 @@
+{
+  "mo_ta": "TD-0350: watchdog --runmode BAT BUOC. M1 = cho mac dinh dry_run (watchdog lang le canh nham tien trinh). Phai ra DUNG 1 ca do.",
+  "module": "tool_d.ops.heartbeat_watchdog",
+  "file": "src/tool_d/ops/heartbeat_watchdog.py",
+  "khoi_dong": ["p.add_argument(\"--runmode\", required=True, choices=(\"dry_run\", \"live\"))"],
+  "bien_the": {"M0": null, "M1": "p.add_argument(\"--runmode\", default=\"dry_run\", choices=(\"dry_run\", \"live\"))"},
+  "tests": ["tests/unit/test_trien_khai_dry_run.py"],
+  "ky_vong": {"M0": "xanh", "M1": "do"},
+  "ky_vong_do_gom": {
+    "M1": ["tests/unit/test_trien_khai_dry_run.py::TestHeartbeatTheoRunmode::test_watchdog_bat_buoc_khai_runmode"]
+  }
+}

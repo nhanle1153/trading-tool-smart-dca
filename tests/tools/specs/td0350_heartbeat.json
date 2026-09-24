@@ -1,0 +1,12 @@
+{
+  "mo_ta": "TD-0350: heartbeat tach theo runmode. M1 = duong_dan_heartbeat() nhan ca runmode backtest (ro trang thai giua cac luot chay). Phai ra DUNG 1 ca do.",
+  "module": "tool_d.ops.heartbeat",
+  "file": "src/tool_d/ops/heartbeat.py",
+  "khoi_dong": ["if runmode not in (\"live\", \"dry_run\"):"],
+  "bien_the": {"M0": null, "M1": "if False:"},
+  "tests": ["tests/unit/test_trien_khai_dry_run.py"],
+  "ky_vong": {"M0": "xanh", "M1": "do"},
+  "ky_vong_do_gom": {
+    "M1": ["tests/unit/test_trien_khai_dry_run.py::TestHeartbeatTheoRunmode::test_backtest_khong_co_heartbeat"]
+  }
+}

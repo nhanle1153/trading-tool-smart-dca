@@ -1,0 +1,16 @@
+{
+  "mo_ta": "TD-0353: dinh equity tach theo runmode. M1 = dry-run va live ghi CHUNG mot file (hinh dang loi truoc TD-0353). Phai ra DUNG 1 ca do; test TD-0238 va test_equity_peak giu xanh, khong sua khang dinh.",
+  "module": "tool_d.equity_peak",
+  "file": "src/tool_d/equity_peak.py",
+  "khoi_dong": ["return THU_MUC_GOC / runmode / TEN_FILE"],
+  "bien_the": {"M0": null, "M1": "return THU_MUC_GOC / TEN_FILE"},
+  "tests": [
+    "tests/unit/test_trien_khai_dry_run.py",
+    "tests/lock/test_td0238_dinh_equity_ben_vung_qua_restart.py",
+    "tests/unit/test_equity_peak.py"
+  ],
+  "ky_vong": {"M0": "xanh", "M1": "do"},
+  "ky_vong_do_gom": {
+    "M1": ["tests/unit/test_trien_khai_dry_run.py::TestDinhEquityTachTheoRunmode::test_dry_run_va_live_hai_file_khac_nhau"]
+  }
+}
