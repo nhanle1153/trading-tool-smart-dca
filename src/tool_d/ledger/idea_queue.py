@@ -40,7 +40,8 @@ from tool_d.ledger.audit_checks import (
     TC_CODE_RE,
     _quarter_of,
     _read_jsonl,
-    _tieu_chi_path,
+    TieuChiError,
+    tieu_chi_cho_ngay,
 )
 from tool_d.ledger.idea_events import SO_LAN_HUY_TOI_DA, TRUONG_NOP, dr_co_that, duyet_so
 from tool_d.ledger.registry import DEFAULT_REGISTRY_PATH, TrialLedger
@@ -170,6 +171,10 @@ def next_idea_id(path: Path = DEFAULT_IDEA_QUEUE_PATH) -> str:
         if isinstance(e.get("idea_id"), str) and e["idea_id"].startswith("IQ-")
     ]
     return f"IQ-{(max(so) + 1) if so else 1:04d}"
+
+
+def _ngay_iso(ts: str) -> date:
+    return datetime.strptime(ts, "%Y-%m-%dT%H:%M:%SZ").date()
 
 
 def _quarter_of_iso(ts: str) -> tuple[int, int]:
@@ -399,8 +404,11 @@ def chon_y_tuong(
     if thieu:
         raise IdeaQueueError(f"Thiếu trường cửa CHỌN {thieu} (MT-12, TD-0119a).")
 
-    nam, quy = _quarter_of_iso(e["selected_at"])
-    file_tc = _tieu_chi_path(tieu_chi_dir, nam, quy)
+    # TD-0376: file tiêu chí + quý tính hạn ngạch qua CÙNG hàm audit TD-0120 dùng (`DR-IQ-03` mở sớm).
+    try:
+        file_tc, nam, quy = tieu_chi_cho_ngay(tieu_chi_dir, _ngay_iso(e["selected_at"]))
+    except TieuChiError as exc:
+        raise IdeaQueueError(f"Không xác định được tiêu chí cho ngày chọn — TỪ CHỐI: {exc}") from exc
     if not file_tc.exists():
         raise IdeaQueueError(f"Quý {quy}/{nam} CHƯA có file tiêu chí ({file_tc}) — TỪ CHỐI chọn.")
     noi_dung = file_tc.read_text(encoding="utf-8")
@@ -408,10 +416,11 @@ def chon_y_tuong(
     if m is None:
         raise IdeaQueueError(f"{file_tc} không khai HAN_NGACH_CHON — TỪ CHỐI chọn (fail-closed).")
     han_ngach = int(m.group(1))
+    # Đếm theo quý TÍNH HẠN NGẠCH (không theo quý lịch): lần chọn sớm của `DR-IQ-03` ăn vào quỹ quý 4.
     da_chon = sum(
         1
         for x in duyet.chon_hieu_luc
-        if x.get("selected_at") and _quarter_of_iso(x["selected_at"]) == (nam, quy)
+        if x.get("selected_at") and tieu_chi_cho_ngay(tieu_chi_dir, _ngay_iso(x["selected_at"]))[1:] == (nam, quy)
     )
     if da_chon >= han_ngach:
         raise IdeaQueueError(

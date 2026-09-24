@@ -682,6 +682,55 @@ def _tieu_chi_path(tieu_chi_dir: Path, nam: int, quy: int) -> Path:
     return tieu_chi_dir / f"DR-Q{quy}-{nam}-tieu-chi-chon-y-tuong.md"
 
 
+# ── TD-0376 (`DR-IQ-03`) — mở sớm cửa CHỌN ────────────────────────────
+#: Khối máy đọc trong một DR: `{"tieu_chi": "<file tiêu chí quý>", "tu_ngay": "YYYY-MM-DD"}`.
+MO_SOM_RE = re.compile(
+    r"<!-- (?P<dr>DR-[A-Z0-9-]+):MO_SOM:BEGIN -->\s*```json\s*\n(?P<json>.*?)\n```\s*<!-- (?P=dr):MO_SOM:END -->",
+    re.DOTALL,
+)
+_TEN_FILE_TIEU_CHI_RE = re.compile(r"^DR-Q([1-4])-(\d{4})-tieu-chi-chon-y-tuong\.md$")
+
+
+class TieuChiError(ValueError):
+    """Khối `MO_SOM` hỏng / trỏ file không có / hai khối cùng phủ một ngày — fail-closed, không quay về mặc định."""
+
+
+def tieu_chi_cho_ngay(tieu_chi_dir: Path, d: date) -> tuple[Path, int, int]:
+    """File tiêu chí áp cho một lần CHỌN ghi ngày `d`, và **quý tính hạn ngạch** `(năm, quý)` của lần chọn đó.
+
+    Mặc định: file của quý chứa `d`. `DR-IQ-03` (chủ dự án chốt 24/09/2026) cho phép một DR khai khối `MO_SOM` để
+    file tiêu chí của một quý có hiệu lực SỚM từ `tu_ngay`: lần chọn trong `[tu_ngay, ngày đầu quý đó)` dùng file đó
+    **và được đếm vào quỹ hạn ngạch của quý đó** — mở sớm không bao giờ thành thêm một suất.
+
+    Cửa CHỌN (`idea_queue.chon_y_tuong`) và audit `TD-0120` cùng gọi hàm này: một luật, hai nơi dùng.
+    """
+    nam, quy = _quarter_of(d)
+    khop: list[tuple[Path, int, int, str]] = []
+    for f in sorted(tieu_chi_dir.glob("DR-IQ-*.md")):
+        for m in MO_SOM_RE.finditer(f.read_text(encoding="utf-8")):
+            try:
+                obj = json.loads(m.group("json"))
+                ten, tu = obj["tieu_chi"], date.fromisoformat(obj["tu_ngay"])
+            except (ValueError, KeyError, TypeError) as exc:
+                raise TieuChiError(f"{f.name}: khối MO_SOM hỏng — {exc!r}") from exc
+            mt = _TEN_FILE_TIEU_CHI_RE.match(ten)
+            if mt is None:
+                raise TieuChiError(f"{f.name}: MO_SOM trỏ {ten!r} — không phải tên file tiêu chí quý")
+            q, n = int(mt.group(1)), int(mt.group(2))
+            dau_quy = date(n, 3 * (q - 1) + 1, 1)
+            if not tu < dau_quy:
+                raise TieuChiError(f"{f.name}: tu_ngay {tu} không đứng TRƯỚC đầu quý {q}/{n} — không phải mở sớm")
+            if not (tieu_chi_dir / ten).is_file():
+                raise TieuChiError(f"{f.name}: MO_SOM trỏ {ten} nhưng file không tồn tại")
+            if tu <= d < dau_quy:
+                khop.append((tieu_chi_dir / ten, n, q, f.name))
+    if len(khop) > 1:
+        raise TieuChiError(f"ngày {d}: nhiều khối MO_SOM cùng phủ — {[k[3] for k in khop]}")
+    if khop:
+        return khop[0][0], khop[0][1], khop[0][2]
+    return _tieu_chi_path(tieu_chi_dir, nam, quy), nam, quy
+
+
 def check_td0120_selection_reason_trich_ma_tieu_chi(
     idea_queue_path: Path = DEFAULT_IDEA_QUEUE_PATH,
     tieu_chi_dir: Path = DEFAULT_TIEU_CHI_DIR,
@@ -722,9 +771,13 @@ def check_td0120_selection_reason_trich_ma_tieu_chi(
     for e in selected:
         idea_id = e["idea_id"]
         d = datetime.strptime(e["selected_at"], "%Y-%m-%dT%H:%M:%SZ").date()
-        nam, quy = _quarter_of(d)
+        # TD-0376: file tiêu chí + quý tính hạn ngạch đi qua CÙNG hàm cửa CHỌN dùng (`DR-IQ-03` mở sớm).
+        try:
+            path, nam, quy = tieu_chi_cho_ngay(tieu_chi_dir, d)
+        except TieuChiError as exc:
+            violations.append(f"{idea_id}: {exc}")
+            continue
         so_chon_theo_quy[(nam, quy)] += 1
-        path = _tieu_chi_path(tieu_chi_dir, nam, quy)
         if not path.exists():
             violations.append(f"{idea_id}: quý {quy}/{nam} CHƯA có file tiêu chí ({path})")
             continue
