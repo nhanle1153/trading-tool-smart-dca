@@ -115,3 +115,18 @@ phương án được gắn *"(Recommended)"* (khai theo khuôn `DR-LOCKBOX-01` 
 - `param_under_test = "xac_nhan_cua_so"`, `param_value = {"che_do", "tu", "den"}` — để hai lần chạy khác chế độ/khác cửa sổ không
   mang cùng dấu vân tay lần chạy (`L-Z12`).
 - `TD-0119b` (đếm biến thể đã dùng của slot) chỉ đếm dòng vào `N` — dòng `CTRL`/`XAC` không phải biến thể.
+
+---
+
+## 8. ✅ NGOẠI LỆ Q8 — test sổ thật, duyệt TRƯỚC (24/09/2026, phiên mã `143375ad`, `TD-0392`)
+
+`tests/unit/test_registry_schemas.py::_kiem_so_that` ghim mọi dòng RESERVE thật không phải CTRL là B0/B2 ⇒ dòng `XAC` thật đầu
+tiên sẽ làm nó đỏ. Chủ dự án chọn phương án được gắn *"(Recommended)"*: **duyệt đổi khẳng định NGAY, đổi dây báo động thành luật**.
+
+**Vì sao không chờ tới lúc đó:** test chạy SAU khi dòng đã ghi — nó chỉ phát hiện, không ngăn; và quyết lúc đó là quyết sau khi
+đã biết kết quả đo. Quyết bây giờ là quyết trước khi có ứng viên, trước lần chạm lockbox nào.
+
+**Luật thay cho dây báo động** (trên sổ thật; B0/B2/B1/B3 giữ nguyên chữ cũ):
+- Dòng `XAC`: `dataset = XAC_NHAN`; `hypothesis_slot` dạng `IQ-xxxx`; `param_under_test = xac_nhan_cua_so`, `che_do = TINH`;
+  ≤ 1 dòng `XAC` không bị REFUND mỗi slot.
+- Dòng `CTRL` trên `XAC_NHAN`: khai đúng `ctrl_mo_ta_whitelist = ["so_lenh"]`, `che_do = DEM`.
