@@ -34,6 +34,8 @@ from tool_d.calibration.ung_vien import (
 from tool_d.gates.d0_pre import DEFAULT_RUNTIME_STATE_PATH
 from tool_d.ledger.budget import REFUND_CAP_PER_HYPOTHESIS, HypothesisKey
 from tool_d.ledger import budget as _budget
+from tool_d.measurement.gitinfo import bam_thay_doi_chua_commit
+from tool_d.measurement.provenance import van_tay_lan_chay
 
 DEFAULT_REGISTRY_PATH = Path("registry/trial_registry.jsonl")
 
@@ -63,6 +65,9 @@ def _doc_khoa_cong_vao_d9(runtime_state_path: Path) -> dict[str, bool]:
 CTRL_BUDGET_LINE = "CTRL"
 #: `B0` = tiêu chí pool (§0.3), quyết định hạ tầng — không phải đánh giá cấu hình của một ứng viên (TD-0375).
 BUDGET_LINE_B0 = "B0"
+#: `DR-LZ12-01` §3 chốt 4 / `DR-DINH-DANH-01` — `config_hash` lính canh của dòng KHÔNG mang cấu hình chiến lược (bốn
+#: suất B0 chốt pool của E7 ghi `"n/a"`). Một nguồn: `audit_checks.CONFIG_HASH_LINH_CANH` trỏ về đây.
+CONFIG_HASH_LINH_CANH: frozenset[str] = frozenset({"n/a", ""})
 
 CTRL_OUTPUT_ALLOWED = frozenset({"price_delta", "tranche_index", "direction"})
 """Đầu ra cho phép của CTRL dạng *đo thước* — spec dòng 3605-3607 liệt kê
@@ -603,6 +608,22 @@ class TrialLedger:
                 raise BudgetExhaustedError(
                     f"Khả dụng ({khadung}) < contribution ({contribution}) — TỪ CHỐI khởi động"
                 )
+        # TD-0380 (`DR-DINH-DANH-01` §4.1) — định danh LẦN CHẠY, tính TẠI CỬA GHI (điểm nghẽn duy nhất, cùng lý do
+        # TD-0150): ba đường đặt suất (E1, E3, DR-015 bước 1) không phải nhớ gì, và đường thứ tư sau này cũng không.
+        # Tính TRƯỚC khi cấp mã: git lỗi ⇒ `GitInfoError` ⇒ từ chối, sổ không đổi dòng nào. Dòng lính canh (E7 chốt
+        # pool, `config_hash = "n/a"`) không phải một lần chạy cấu hình ⇒ không mang vân tay.
+        van_tay: dict[str, Any] = {}
+        if config_hash not in CONFIG_HASH_LINH_CANH:
+            van_tay["run_fingerprint"] = van_tay_lan_chay(
+                provenance=provenance,
+                config_hash=config_hash,
+                code_commit=code_commit,
+                bam_thay_doi_chua_commit=bam_thay_doi_chua_commit(self._repo_dir),
+                dataset=dataset,
+                direction=direction,
+                param_under_test=param_under_test,
+                param_value=param_value,
+            )
         trial_id = self._next_trial_id()
         # Lời khai CTRL phải nằm TRONG sổ, không chỉ sống trong lần gọi này:
         # audit sau đó (và người đọc sổ) phải tự đối chiếu lại được vì sao
@@ -633,6 +654,7 @@ class TrialLedger:
                 "provenance": dict(provenance),
                 "contribution": contribution,
                 **khai_ctrl,
+                **van_tay,
             }
         )
         return trial_id

@@ -19,7 +19,7 @@ import hashlib
 import json
 import re
 from collections.abc import Mapping
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
 from typing import Any, Literal
 
@@ -232,5 +232,44 @@ def cache_key(prov: Provenance) -> str:
         },
         sort_keys=True,
         ensure_ascii=False,
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def van_tay_lan_chay(
+    *,
+    provenance: Mapping[str, Any],
+    config_hash: str,
+    code_commit: str,
+    bam_thay_doi_chua_commit: str,
+    dataset: str,
+    direction: str,
+    param_under_test: str,
+    param_value: Any,
+) -> str:
+    """TD-0380 (`DR-DINH-DANH-01` §4.1) — định danh LẦN CHẠY, khác định danh CẤU HÌNH (`config_hash`).
+
+    Gộp đủ năm yếu tố quyết định một kết quả: tham số (`config_hash` — toàn bộ yaml, vì `params_effective` của E1 chỉ
+    chứa khoá bị ghi đè) · mã (`code_commit` + băm thay đổi chưa commit) · dữ liệu · phạm vi (`dataset`, `direction`,
+    `param_under_test`/`param_value` — với E3 đó chính là arm) · môi trường. Phần `params_effective + git_sha +
+    data_hashes + runtime_image_digest` đi qua `cache_key()` (DR §4.1: dùng lại, KHÔNG sửa — đổi nó là làm lạnh cache
+    WFO). `runtime_image_digest` là `None` ở dòng E1/E3; digest ghim nằm ở `docker/Dockerfile`, tức đã được mã phủ.
+    """
+    payload = json.dumps(
+        {
+            # Chỉ lấy đúng các trường của `Provenance`: khối xuất xứ sai hình dạng phải để schema ở cửa ghi
+            # (`TrialLedger._append`, TD-0150) báo lỗi, không để một `TypeError` ở đây giành báo trước.
+            "cache_key": cache_key(Provenance(**{f.name: provenance.get(f.name) for f in fields(Provenance)})),
+            "config_hash": config_hash,
+            "code_commit": code_commit,
+            "bam_thay_doi_chua_commit": bam_thay_doi_chua_commit,
+            "dataset": dataset,
+            "direction": direction,
+            "param_under_test": param_under_test,
+            "param_value": param_value,
+        },
+        sort_keys=True,
+        ensure_ascii=False,
+        default=str,
     )
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()

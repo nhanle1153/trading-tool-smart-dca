@@ -22,6 +22,7 @@ from tool_d.calibration.ung_vien import PARAM_XAC_NHAN, cung_gia_tri
 from tool_d.config.loader import DEFAULT_CONFIG_PATH, load_tool_d_config
 from tool_d.ledger import budget as _budget
 from tool_d.ledger.idea_events import duyet_so
+from tool_d.ledger.registry import CONFIG_HASH_LINH_CANH as _CONFIG_HASH_LINH_CANH
 from tool_d.ledger.registry import DEFAULT_REGISTRY_PATH, TrialLedger, TrialState
 from tool_d.measurement.tri_state import Measured
 
@@ -125,8 +126,9 @@ def check_lz11_n_used_le_n_dang_ky(
 
 # ── L-Z12 ─────────────────────────────────────────────────────────────
 #: `DR-LZ12-01` §3 chốt 4 — `config_hash` lính canh của các dòng KHÔNG mang cấu hình chiến lược (bốn suất B0 chốt
-#: pool của E7 ghi `"n/a"`). Gom chúng lại là gom những thứ không phải một cấu hình.
-CONFIG_HASH_LINH_CANH: frozenset[str] = frozenset({"n/a", ""})
+#: pool của E7 ghi `"n/a"`). Gom chúng lại là gom những thứ không phải một cấu hình. Từ TD-0380 định nghĩa nằm ở
+#: `registry` (cửa ghi cũng cần nó để miễn vân tay cho dòng lính canh) — một nguồn, không chép.
+CONFIG_HASH_LINH_CANH = _CONFIG_HASH_LINH_CANH
 
 
 def check_lz12_no_duplicate_config_hash_different_outcome(
@@ -155,7 +157,10 @@ def check_lz12_no_duplicate_config_hash_different_outcome(
     if not events:
         return CheckResult("L-Z12", Measured.pending("registry rỗng"))
 
-    by_key: dict[tuple[str, str], list[tuple[str, dict]]] = defaultdict(list)
+    # TD-0380 (`DR-DINH-DANH-01` §4.1): khoá gom = vân tay LẦN CHẠY khi dòng có; dòng ghi trước 24/09/2026 (append-only,
+    # không viết bù) về cặp `(config_hash, code_commit)` của `DR-LZ12-01`. Hai loại khoá không bao giờ trùng nhau.
+    by_key: dict[tuple[str, ...], list[tuple[str, dict]]] = defaultdict(list)
+    nhan: dict[tuple[str, ...], str] = {}
     for tid, outcome in outcome_by_trial.items():
         r = reserve_by_trial.get(tid)
         if r is None:
@@ -164,25 +169,27 @@ def check_lz12_no_duplicate_config_hash_different_outcome(
         if ch is None or ch in CONFIG_HASH_LINH_CANH:
             continue
         # `code_commit` thiếu ⇒ chuỗi rỗng, VẪN gom (fail-closed: thiếu xuất xứ thì so chặt hơn).
-        by_key[(ch, str(r.get("code_commit") or ""))].append((tid, outcome))
+        code = str(r.get("code_commit") or "")
+        vt = r.get("run_fingerprint")
+        key = ("run_fingerprint", vt) if vt else ("cap", ch, code)
+        by_key[key].append((tid, outcome))
+        nhan[key] = f"config_hash={ch} code_commit={code}" + (f" run_fingerprint={vt}" if vt else "")
 
     violations: list[str] = []
     so_cap_so_duoc = 0
-    for (ch, code), entries in by_key.items():
+    for key, entries in by_key.items():
         if len(entries) < 2:
             continue
         so_cap_so_duoc += 1
         first_tid, first_outcome = entries[0]
         for tid, outcome in entries[1:]:
             if outcome != first_outcome:
-                violations.append(
-                    f"config_hash={ch} code_commit={code}: {first_tid} và {tid} có outcome khác nhau"
-                )
+                violations.append(f"{nhan[key]}: {first_tid} và {tid} có outcome khác nhau")
     if so_cap_so_duoc == 0:
         return CheckResult(
             "L-Z12",
             Measured.pending(
-                "chưa có cặp (config_hash, code_commit) nào lặp lại — không có gì để so. "
+                "chưa có lần chạy nào lặp lại (vân tay, hoặc cặp config_hash + code_commit với dòng cũ) — không có gì để so. "
                 "Dòng lính canh (config_hash 'n/a') đứng ngoài phép gom (DR-LZ12-01 §3)"
             ),
         )
