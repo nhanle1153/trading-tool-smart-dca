@@ -113,3 +113,25 @@ file phiên CHỌN đọc; không sửa nó để khỏi lộ lockbox là đoạ
 | TD-0381 | DR này + đính chính nối cuối `DR-IQ-01`, `DR-HUONG-01` và `DR-TRIEN-KHAI-01` (giữ nguyên chữ cũ) |
 | TD-0382 | Máy canh lớp xác nhận (§2 dòng 3, §3) — cần lệnh *"bắt đầu code"* |
 | (MT) | Ghi một mục `MT` vào `back-end-note.md` mục 7 — chờ *"chuẩn hóa và lưu"* (N9) |
+
+---
+
+> ✅ **Ô KÝ §3 ĐÃ ĐIỀN — 24/09/2026, chủ dự án chọn qua công cụ hỏi-chọn (phiên mã `143375ad`, `TD-0386`). Nối cuối,
+> bảng §3 giữ nguyên chữ.** Tại thời điểm điền: chưa có ứng viên nào được CHỌN còn hiệu lực, chưa có lần chạm lockbox nào,
+> chưa có lệnh nào sau `T3` được đo cho bất kỳ cấu hình nào ⇒ ngưỡng được chốt **trước khi thấy số**.
+>
+> | Ô | Giá trị |
+> |---|---|
+> | Chỉ số phán quyết thứ hai | **`mean_r`** — trung bình `r_trien_khai` mỗi lệnh (`LenhWFO.r_trien_khai`, khoá `mean_r` của `ablation/ban_ghi.py:thong_ke_arm`), **không** trừ thuế DSR |
+> | Ngưỡng | **≥ 0,10 R** — đúng ngưỡng kinh tế đang có của Nhánh 1 (`gates/thresholds.py` `DSR_ADJ_EXPECTANCY_MIN`), không đặt số mới |
+> | Dữ liệu | backtest cấu hình đã chạm lockbox, trên dữ liệu **từ ngày CHỌN** của ứng viên (không phải từ `T3`), đo **đúng một lần** — máy thi hành ở `TD-0387`, bộ đo ở `DR-XAC-NHAN-01` |
+>
+> **Vì sao không dùng `dsr_adjusted_expectancy`:** lớp xác nhận là **một** phép thử đăng ký trước, không phải chọn cái tốt nhất
+> trong `N` phép thử — khoản phạt đa phép thử đã trả ở lần chạm lockbox. Với độ lệch chuẩn minh hoạ ~1,1 R/lệnh (giả định,
+> chưa đo trên ứng viên nào), ở n = 30 thuế DSR ≈ 3,08 × 1,1 / √30 ≈ 0,62 R ⇒ `dsr_adj ≥ 0` đòi mean ≈ 0,62 R, gần như
+> không bao giờ đạt, tức vốn khoá vĩnh viễn.
+>
+> **Đánh đổi đã trình (cùng giả định):** không có lợi thế vẫn lọt ~31% (P(mean ≥ 0,10 | 0) ở n = 30); lợi thế thật 0,3 R qua
+> ~84%. Các phương án bị loại: `mean_r ≥ 0` (lọt ~50%), cận dưới KTC95 ≥ 0 (lợi thế 0,3 R chỉ qua ~31%, vốn đứng yên lâu),
+> `dsr_adj ≥ 0` (như trên). Hướng sai của ngưỡng đã chọn là **cho tăng vốn nhầm ~31% khi không có lợi thế** — chấp nhận vì
+> đây là lớp THỨ HAI sau lockbox PASS, không phải lớp duy nhất.
