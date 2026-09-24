@@ -29,6 +29,7 @@ from tool_d.ops.dry_run import (
     CAU_HINH_FREQTRADE_GOC,
     TEN_CHIEN_LUOC,
     DryRunError,
+    bien_moi_truong_telegram,
     dung_cau_hinh_dry_run,
     lenh_freqtrade,
 )
@@ -211,6 +212,53 @@ class TestDecisionLogTachTheoRunmode:
         so = tmp_path / duong_dan_decision_log("dry_run")
         assert [json.loads(d)["nguon"] for d in so.read_text(encoding="utf-8").splitlines()] == ["dry_run"]
         assert not (tmp_path / DEFAULT_DECISION_LOG_PATH).exists()
+
+
+class TestTelegramTichHopFreqtrade:
+    """TD-0393 — Telegram tích hợp của Freqtrade bật bằng env, chỉ khi có ĐỦ cả hai biến; bí mật không vào `cfg.json`.
+
+    Mọi giá trị dưới đây là GIẢ — không đọc `.env.telegram` thật."""
+
+    TOKEN_GIA, CHAT_GIA = "111111111:TOKEN-GIA-CHI-DE-TEST", "222222222"
+
+    def test_du_hai_bien_thi_bat(self) -> None:
+        kq = bien_moi_truong_telegram({"TELEGRAM_BOT_TOKEN": self.TOKEN_GIA, "TELEGRAM_CHAT_ID": self.CHAT_GIA})
+        assert kq == {
+            "FREQTRADE__TELEGRAM__ENABLED": "true",
+            "FREQTRADE__TELEGRAM__TOKEN": self.TOKEN_GIA,
+            "FREQTRADE__TELEGRAM__CHAT_ID": self.CHAT_GIA,
+        }
+
+    @pytest.mark.parametrize(
+        "env",
+        [
+            {},
+            {"TELEGRAM_BOT_TOKEN": "111111111:TOKEN-GIA"},
+            {"TELEGRAM_CHAT_ID": "222222222"},
+            {"TELEGRAM_BOT_TOKEN": "", "TELEGRAM_CHAT_ID": "222222222"},
+            {"TELEGRAM_BOT_TOKEN": "111111111:TOKEN-GIA", "TELEGRAM_CHAT_ID": ""},
+        ],
+        ids=["trong", "thieu-chat_id", "thieu-token", "token-rong", "chat_id-rong"],
+    )
+    def test_thieu_mot_trong_hai_thi_khong_bat(self, env) -> None:
+        """Bật nửa chừng làm schema freqtrade 2026.8 từ chối khởi động — phải là `{}`, không phải một nửa."""
+        assert bien_moi_truong_telegram(env) == {}
+
+    def test_cfg_json_khong_chua_bi_mat(self, tmp_path) -> None:
+        kq = dung_cau_hinh_dry_run(repo_dir=REPO_ROOT, thu_muc_ra=tmp_path)
+        noi_dung = kq.duong_dan.read_text(encoding="utf-8")
+        # Kiểm MỤC `telegram` (khoá), không kiểm chữ "telegram" trong cả file: `cfg.json` sao nguyên khoá chú thích
+        # `_comment_telegram_api_server` của `config.json`, nên tìm chuỗi thô luôn thấy.
+        assert "telegram" not in json.loads(noi_dung)
+        assert self.TOKEN_GIA not in noi_dung and self.CHAT_GIA not in noi_dung
+
+    def test_compose_hai_service_nap_env_file_khong_bat_buoc(self) -> None:
+        sv = TestComposeCachLyLockbox._services()
+        for ten in ("dryrun", "dryrun-watchdog"):
+            assert sv[ten]["env_file"] == [{"path": "../.env.telegram", "required": False}], ten
+        # Tên biến không còn truyền trần qua `environment` (đó là chỗ phải nhớ `--env-file`).
+        moi_truong = sv["dryrun-watchdog"].get("environment") or []
+        assert not any(str(d).startswith("TELEGRAM_") for d in moi_truong), moi_truong
 
 
 class TestComposeCachLyLockbox:

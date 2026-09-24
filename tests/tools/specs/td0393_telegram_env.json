@@ -1,0 +1,22 @@
+{
+  "mo_ta": "TD-0393: Telegram tich hop Freqtrade chi bat khi co DU ca token va chat_id. M1 = bo chot 'thieu mot trong hai' (bat nua chung: schema freqtrade 2026.8 lam bot khong khoi dong) -> 4 ca thieu/rong cung do. M2 = luon tra {} (khong bao gio bat) -> ca 'du hai bien thi bat' do. Du doan viet TRUOC khi chay.",
+  "module": "tool_d.ops.dry_run",
+  "file": "src/tool_d/ops/dry_run.py",
+  "khoi_dong": ["if not token or not chat_id:"],
+  "bien_the": {
+    "M0": null,
+    "M1": "if not token and not chat_id:",
+    "M2": "if True:"
+  },
+  "tests": ["tests/unit/test_trien_khai_dry_run.py"],
+  "ky_vong": {"M0": "xanh", "M1": "do", "M2": "do"},
+  "ky_vong_do_gom": {
+    "M1": [
+      "tests/unit/test_trien_khai_dry_run.py::TestTelegramTichHopFreqtrade::test_thieu_mot_trong_hai_thi_khong_bat[thieu-chat_id]",
+      "tests/unit/test_trien_khai_dry_run.py::TestTelegramTichHopFreqtrade::test_thieu_mot_trong_hai_thi_khong_bat[thieu-token]",
+      "tests/unit/test_trien_khai_dry_run.py::TestTelegramTichHopFreqtrade::test_thieu_mot_trong_hai_thi_khong_bat[token-rong]",
+      "tests/unit/test_trien_khai_dry_run.py::TestTelegramTichHopFreqtrade::test_thieu_mot_trong_hai_thi_khong_bat[chat_id-rong]"
+    ],
+    "M2": ["tests/unit/test_trien_khai_dry_run.py::TestTelegramTichHopFreqtrade::test_du_hai_bien_thi_bat"]
+  }
+}

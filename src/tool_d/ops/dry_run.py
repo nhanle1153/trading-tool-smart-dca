@@ -26,12 +26,14 @@ from __future__ import annotations
 import json
 import os
 import sys
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 
 import yaml
 
 from tool_d.bo_chay.yeu_cau import ten_cap_freqtrade
+from tool_d.ops.telegram_client import ENV_TELEGRAM_BOT_TOKEN, ENV_TELEGRAM_CHAT_ID
 from tool_d.pool_giai_doan import POOL_HOM_NAY
 
 TEN_CHIEN_LUOC = "ZoneAbsorption"
@@ -102,6 +104,29 @@ def dung_cau_hinh_dry_run(
     return CauHinhDryRun(duong_dan=duong, so_cap=len(trading))
 
 
+def bien_moi_truong_telegram(env: Mapping[str, str]) -> dict[str, str]:
+    """TD-0393 — biến môi trường bật Telegram TÍCH HỢP của Freqtrade (tin khởi động, lệnh mới, nút `/status`…).
+
+    Chỉ bật khi có ĐỦ cả hai biến vận hành (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, cùng cặp watchdog dùng —
+    `ops/telegram_client.py`) và cả hai không rỗng. Thiếu một trong hai ⇒ `{}`: schema freqtrade 2026.8 đòi
+    `token` + `chat_id` ngay khi mục `telegram` tồn tại, nên bật nửa chừng làm bot KHÔNG khởi động — tệ hơn nhiều so
+    với chạy không Telegram. Bí mật đi qua `FREQTRADE__TELEGRAM__*` (cơ chế gộp env chuẩn của chính Freqtrade), không
+    bao giờ vào `cfg.json`; `config.json` gốc vẫn KHÔNG khai mục `telegram` (chú thích dòng 116 của nó).
+
+    ⚠️ Freqtrade chỉ nhận lệnh từ đúng `chat_id` này (`rpc/telegram.py`), nhưng `/stop`, `/forceexit` vẫn bấm được
+    (`force_entry_enable: false` chỉ chặn `/forcebuy`). Chấp nhận ở dry-run; LIVE phải quyết riêng và dùng bot RIÊNG
+    (hai Freqtrade chung một token tranh `getUpdates`)."""
+    token = env.get(ENV_TELEGRAM_BOT_TOKEN, "")
+    chat_id = env.get(ENV_TELEGRAM_CHAT_ID, "")
+    if not token or not chat_id:
+        return {}
+    return {
+        "FREQTRADE__TELEGRAM__ENABLED": "true",
+        "FREQTRADE__TELEGRAM__TOKEN": token,
+        "FREQTRADE__TELEGRAM__CHAT_ID": chat_id,
+    }
+
+
 def lenh_freqtrade(cau_hinh: CauHinhDryRun) -> list[str]:
     """Dòng lệnh `freqtrade trade` — tách ra để test đọc được mà không phải `exec`."""
     return [
@@ -117,7 +142,13 @@ def lenh_freqtrade(cau_hinh: CauHinhDryRun) -> list[str]:
 def main() -> None:  # pragma: no cover — exec tiến trình thật; phần thuần đã khoá bằng test
     cau_hinh = dung_cau_hinh_dry_run()
     lenh = lenh_freqtrade(cau_hinh)
-    print(f"dry-run: {cau_hinh.so_cap} cặp, cấu hình {cau_hinh.duong_dan}", file=sys.stderr, flush=True)
+    telegram = bien_moi_truong_telegram(os.environ)
+    os.environ.update(telegram)  # `execvp` bên dưới cho tiến trình con thừa hưởng
+    print(
+        f"dry-run: {cau_hinh.so_cap} cặp, cấu hình {cau_hinh.duong_dan}, "
+        f"Telegram Freqtrade {'BẬT' if telegram else 'TẮT (thiếu TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID)'}",
+        file=sys.stderr, flush=True,
+    )
     os.execvp(lenh[0], lenh)
 
 

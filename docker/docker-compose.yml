@@ -60,6 +60,11 @@ services:
     profiles: ["van_hanh"]
     entrypoint: ["python", "-m", "tool_d.ops.dry_run"]
     restart: unless-stopped
+    # TD-0393 — bí mật Telegram nạp từ `.env.telegram` ở gốc repo (đã `.gitignore`, không commit). `required: false`:
+    # thiếu file thì bot dry-run vẫn chạy, chỉ không có Telegram tích hợp (`dry_run.bien_moi_truong_telegram`).
+    env_file:
+      - path: ../.env.telegram
+        required: false
     volumes:
       - ..:/workspace
       - /workspace/lockbox/data
@@ -69,14 +74,12 @@ services:
     profiles: ["van_hanh"]
     entrypoint: ["python", "-m", "tool_d.ops.heartbeat_watchdog", "--runmode", "dry_run"]
     restart: unless-stopped
-    # Bí mật Telegram CHỈ truyền qua biến môi trường của máy chủ (không file, không commit).
-    # Thiếu ⇒ watchdog dừng ngay ở `doc_thong_tin_bot()` (fail-fast), không chạy câm.
-    environment:
-      - TZ=UTC
-      - PYTHONHASHSEED=0
-      - PYTHONPATH=/workspace/src
-      - TELEGRAM_BOT_TOKEN
-      - TELEGRAM_CHAT_ID
+    # Bí mật Telegram nạp từ `.env.telegram` (đã `.gitignore`, không commit) — TD-0393 thay cho việc truyền tên biến
+    # qua `--env-file` mỗi lần tạo lại container (thiếu cờ đó thì container mới không có token).
+    # File thiếu ⇒ watchdog dừng ngay ở `doc_thong_tin_bot()` (fail-fast), không chạy câm.
+    env_file:
+      - path: ../.env.telegram
+        required: false
     volumes:
       - ..:/workspace
       - /workspace/lockbox/data
