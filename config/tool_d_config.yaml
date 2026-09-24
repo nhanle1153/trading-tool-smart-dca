@@ -184,8 +184,8 @@ tier_c: # 🔒 KHOÁ — KHÔNG có ô nhập, ghi ở đây
     # Trần = đúng giá trị tier_a lúc chốt (chủ dự án chọn 24/09/2026). Hằng KIỂM SOÁT: không tính DOF, không đổi N.
     tran_d12: { E_D: 750, rho_pct: 0.375, L_exchange: 3 }
     n_lenh_toi_thieu: 30 # sàn DR-011 (spec :3302)
-    chi_so: null # ⏳ chủ dự án điền (DR-LOCKBOX-04 §3), TRƯỚC lần chạm D9.5 của ứng viên
-    nguong: null # ⏳ null ⇒ +inf (L-Z35) ⇒ không thể vô tình đạt
+    chi_so: mean_r # ✅ TD-0386 — ô ký DR-LOCKBOX-04 §3 (fe1da36): trung bình r_trien_khai (thong_ke_arm), KHÔNG trừ thuế DSR
+    nguong: 0.10 # ✅ TD-0386 — ≥ 0,10 R, đúng ngưỡng kinh tế Nhánh 1; chốt 24/09/2026 trước mọi ứng viên / lần chạm lockbox
     hien_vat: docs/du-lieu-do/xac-nhan-sau-t3.json # bộ đo sinh file là việc riêng, chưa có
   # 🔴 v7 (spec): KHÔNG dùng *Parameter của Freqtrade cho BẤT KỲ khoá nào
   #        ở file này (§0d.2, L-Z37). Đọc YAML → dict → truyền vào hàm.

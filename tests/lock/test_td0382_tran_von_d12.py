@@ -24,7 +24,7 @@ from tool_d.config.tran_von import KHOA_KHOI, KHOA_VON, cac_khoa_vuot_tran, ly_d
 REPO = Path(__file__).resolve().parents[2]
 CONFIG_THAT = REPO / "config" / "tool_d_config.yaml"
 HIEN_VAT = "docs/du-lieu-do/xac-nhan-sau-t3.json"
-CHI_SO = "mean_r_trien_khai"
+CHI_SO = "mean_r"
 
 
 def _git(repo: Path, *args: str) -> None:
@@ -86,15 +86,20 @@ class TestConfigThat:
         assert {k: cfg["tier_a"][k] for k in KHOA_VON} == cfg["tier_c"][KHOA_KHOI]["tran_d12"]
 
     def test_config_that_chua_the_xac_nhan(self) -> None:
-        """Ô ngưỡng còn ⏳ ⇒ lớp xác nhận KHÔNG đạt được hôm nay (N6: chưa đo không phải đạt)."""
+        """TD-0386: ô ký đã điền nhưng CHƯA có hiện vật đo ⇒ lớp xác nhận KHÔNG đạt được hôm nay (N6: chưa đo không
+        phải đạt). Lý do chưa đạt phải là thiếu hiện vật, không còn là ô trống."""
         cfg = _cfg_that()
         ly_do = ly_do_chua_xac_nhan(cfg["tier_c"], REPO)
-        assert any("chi_so chưa điền" in x for x in ly_do)
-        assert any("+inf" in x for x in ly_do)
+        assert ly_do, "không có hiện vật mà lớp xác nhận lại đạt"
+        assert any("KHÔNG TỒN TẠI" in x for x in ly_do)
+        assert not any("chưa điền" in x or "+inf" in x for x in ly_do)
 
-    def test_hai_o_cho_chu_du_an_dang_trong(self) -> None:
+    def test_o_ky_dung_quyet_dinh_chu_du_an(self) -> None:
+        """🔴 Ghim QUYẾT ĐỊNH (TD-0386, ô ký DR-LOCKBOX-04 §3 `fe1da36`, 24/09/2026): `mean_r` ≥ 0,10 R, n ≥ 30.
+        Trước TD-0386 test này ghim trạng thái ⏳ (`null`); đổi thành ghim quyết định khi ô được điền."""
         khoi = _cfg_that()["tier_c"][KHOA_KHOI]
-        assert khoi["chi_so"] is None and khoi["nguong"] is None
+        assert khoi["chi_so"] == "mean_r"
+        assert khoi["nguong"] == 0.10
         assert khoi["n_lenh_toi_thieu"] == 30
 
 
