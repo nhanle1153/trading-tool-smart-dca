@@ -4248,3 +4248,25 @@ cửa mới từ chối, đúng thiết kế. Vá bằng repo git nhỏ có hi�
   `restart` làm nó khởi động lại liên tục ⇒ đã `stop`. Tới khi có env, bot chết/treo **không ai được báo** — đúng
   thứ TD-0209 sinh ra để chặn.
 - D10: đặt chỗ `TD-0383…0385` + `DR-D10-02` (`4c43b0f`); DR còn NHÁP, 6 câu chờ chủ dự án. 0 lệnh thật.
+
+## 24/09/2026 — TD-0393: Telegram tích hợp của Freqtrade cho dry-run, và một sự cố bí mật (phiên mã `dd89043d`)
+
+- **Bật bằng env, không sửa `config.json`:** `ops/dry_run.py:bien_moi_truong_telegram()` gộp `FREQTRADE__TELEGRAM__*`
+  vào môi trường chỉ khi có ĐỦ `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` (bật nửa chừng làm schema freqtrade 2026.8 từ
+  chối khởi động). `docker-compose.yml` nạp `.env.telegram` bằng `env_file` (`required: false`) cho cả `dryrun` lẫn
+  `dryrun-watchdog` ⇒ hết bẫy phải nhớ `--env-file` mỗi lần tạo lại container. Chạy thật: log `Enabling rpc.telegram`,
+  `listening for following commands`; điện thoại nhận tin khởi động + bàn phím nút.
+- ⚠️ **Spec:443 (Telegram chỉ theo dõi) chỉ được giữ ở mức một nửa:** `force_entry_enable: false` chặn `/forcebuy`, còn
+  `/stop`, `/forceexit`, `/reload_config` bấm được từ đúng `chat_id`. Chấp nhận ở dry-run (lệnh giấy). **Live D10 phải
+  quyết riêng** (`DR-D10-02`) và dùng bot Telegram RIÊNG — hai Freqtrade chung một token tranh `getUpdates` (409).
+- 🔴 **Sự cố bí mật, lỗi của phiên này:** `docker compose config` in ra giá trị đã giải quyết của mọi biến, kể cả token
+  nạp từ `.env.telegram`; nó lọt vào kết quả lệnh và vào cuộc trò chuyện. Xử lý: chủ dự án `/revoke` ở BotFather, thay
+  token; kiểm bằng **mã băm** (token trong file ≠ token trong container cũ, chat id giữ nguyên) và `getMe` (chỉ in tên
+  bot), không in giá trị. Quy tắc từ nay: khi có file bí mật, không chạy lệnh có thể in giá trị đã giải quyết
+  (`compose config`, `env`, `printenv`); chỉ kiểm tồn tại/độ dài/mã băm.
+- 🔑 **Bài học nhỏ về test:** ca đầu của tôi tìm chữ `telegram` trong cả `cfg.json` — luôn thấy, vì `cfg.json` sao nguyên
+  khoá chú thích `_comment_telegram_api_server`. Phá thật bắt được (đối chứng M0 đỏ ⇒ nghi test trước, không nghi mã);
+  đổi thành kiểm MỤC `telegram` trong JSON đã phân tích.
+- Notepad lưu `.env.telegram` thành `.env.telegram.txt` (thêm đuôi). `.gitignore` (`.env.*`) vẫn che, nhưng đường dẫn
+  compose không tìm thấy ⇒ đổi tên. Vẫn còn treo: lỗi `custom_stoploss` (ngày giờ lẫn kiểu, `gap_ms.py:98`) — chờ chủ dự án
+  quyết có mở việc sửa không.
