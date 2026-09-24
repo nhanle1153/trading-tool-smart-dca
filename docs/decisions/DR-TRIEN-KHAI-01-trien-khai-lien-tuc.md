@@ -65,3 +65,11 @@ Vào D12 (tiền thật ngoài ngân sách D10) cần **đủ cả bốn**:
 D5–D9/lockbox) · TD-0352 (D9.5 chạm thật + `d9_5_complete`) · TD-0353 (tách file trạng thái vận hành theo runmode trước
 D10). Các cổng `close_d5…d9_gate` dùng lại mã cũ (TD-0257/0267/0273/0279/0287). `DR-D10-02` + bộ chạy D10 chưa đặt chỗ.
 `back-end-note.md` mục 7 (MT ghi đè + đóng `OQ-16`) và `CLAUDE.md` trạng thái chờ *"chuẩn hóa và lưu"*.
+
+---
+
+> 🔄 **ĐÍNH CHÍNH 24/09/2026 (`DR-LOCKBOX-04`, chủ dự án chốt, phiên mã `143375ad`) — nối cuối, chữ ở trên giữ nguyên.**
+> Dòng §1 *"`DR-HUONG-01` §5 (dữ liệu sau `T3` thuộc ai)"* → *"ZA dùng lockbox `[T2,T3]` … ý tưởng (d) nếu có phải có
+> lockbox sau `T3`"* **bị thay**: `DR-ZA-01` (21/09) chốt 0 suất thêm cho ZA LONG nên ZA không tới D9.5; đoạn `[T2,T3]`
+> chuyển cho ứng viên (d) **đầu tiên**, dữ liệu sau `T3` thành lớp xác nhận trước khi tăng vốn quá mức D12. Các dòng
+> khác của §1 và toàn bộ §2–§6 không đổi. Chi tiết: `DR-LOCKBOX-04`.

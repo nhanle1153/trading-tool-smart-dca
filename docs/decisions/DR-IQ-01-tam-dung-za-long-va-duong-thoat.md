@@ -135,3 +135,11 @@ Phương án bị loại: *"chỉ nộp, chờ"* (cửa có thể không bao gi�
 | TD-0296 | ❌ **Huỷ** — giả thuyết sinh từ kết quả Tool D (DR-009 `TOOL_D_RESULTS`) và thuộc Z-4 (§3.2). Ý tưởng mới do phiên IDEA sạch nộp — chủ dự án sắp xếp |
 | TD-0297 | `MT-55` · `MT-57` · `MT-58` qua "chuẩn hóa và lưu" |
 | (nhãn) | Ghi ⏸ + mốc DR này trên các dòng tạm dừng trong `TASKS.md` |
+
+---
+
+> 🔄 **ĐÍNH CHÍNH 24/09/2026 (`DR-LOCKBOX-04`, chủ dự án chốt, phiên mã `143375ad`) — nối cuối, chữ ở trên giữ nguyên.**
+> Hai chỗ nói lockbox của ứng viên suất (d) phải nằm trên dữ liệu **sau `T3`** — §3 dòng *"Ý tưởng được chọn vẫn phải"*
+> và §5 gạch đầu *"Lockbox cho ứng viên mới chưa tồn tại"* — **không còn áp cho ứng viên ĐẦU TIÊN** của suất (d): ứng viên
+> đó dùng đoạn `[T2,T3]` (chưa ai chạm), còn dữ liệu sau `T3` thành **lớp xác nhận trước khi tăng vốn quá mức D12**.
+> Từ ứng viên thứ hai trở đi, lập trường cũ áp lại nguyên vẹn. Chi tiết và điều kiện: `DR-LOCKBOX-04`.

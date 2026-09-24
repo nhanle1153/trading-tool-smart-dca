@@ -152,3 +152,12 @@ dẫn dắt bởi việc ý tưởng đó trông hứa hẹn hay không.
   (n ≈ (1,96 × 1,14 / 0,1)² ≈ 500 lệnh, ở ~335 lệnh/năm quy đổi pool), không phải phép đo.
 - Suất (d) hết hạn **31/12/2026** nếu không có ứng viên. Hướng C thất bại theo cách đó thì quay về A; **không**
   quay về B, D, hay F.
+
+---
+
+> 🔄 **ĐÍNH CHÍNH 24/09/2026 (`DR-LOCKBOX-04`, chủ dự án chốt, phiên mã `143375ad`) — nối cuối, chữ ở trên giữ nguyên.**
+> §5 *"Lập trường giữ nguyên chữ `DR-IQ-01`: ứng viên chọn qua suất (d) cần lockbox trên dữ liệu **sau `T3`**"* và câu
+> *"cổng lockbox của nó sớm nhất vài quý sau"* **không còn áp cho ứng viên ĐẦU TIÊN** của suất (d): ứng viên đó chạm
+> lockbox trên đoạn `[T2,T3]` (chưa ai chạm). Quy tắc nhường dữ liệu sau `T3` trong khối *"QUYẾT ĐỊNH 18/09/2026"* của
+> §5 **giữ nguyên cơ chế**; chỉ đổi mục đích phần được nhường: từ *"lockbox của ứng viên"* sang *"lớp xác nhận trước khi
+> tăng vốn quá mức D12"*. Chi tiết: `DR-LOCKBOX-04`.
