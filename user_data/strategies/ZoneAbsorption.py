@@ -158,6 +158,7 @@ from tool_d.gap_ms import LenhSl, sinh_ban_ghi_doi_sl
 from tool_d.ledger.decision_log import duong_dan_decision_log, ghi_neu_chua_co
 from tool_d.ops.heartbeat import Heartbeat, duong_dan_heartbeat, ghi_heartbeat
 from tool_d.ops.heartbeat_watchdog import TRANG_THAI_BINH_THUONG
+from tool_d.ops.thong_bao_lenh import soan_tin_vao_lenh
 from tool_d.post_only import bi_san_tu_choi, ly_do_tu_choi
 from tool_d.vao_ra_lenh import sinh_ban_ghi_vao_lenh
 from tool_d.sizing import (
@@ -1369,6 +1370,32 @@ class ZoneAbsorption(IStrategy):
         # mất một lệnh. Đặt fail-closed ở ĐẦU hàm sẽ mất luôn phần logic
         # phía sau nó — đúng lỗi TD-0187 đã bắt được ở SizingError.
         self._ghi_vao_lenh(pair, trade, order)
+        # TD-0405 — tin Telegram lúc KHỚP (thay tin vào lệnh mặc định, tắt ở `ops/dry_run.py`). Cuối cùng và trong
+        # `try`, cùng lập luận khối trên + khuôn TD-0403: tin nhắn hỏng KHÔNG được làm hỏng kế hoạch hay sổ.
+        try:
+            self._bao_vao_lenh(trade)
+        except Exception:  # noqa: BLE001 — cố ý bắt rộng: thông báo không được cướp phần thiết yếu của lệnh
+            logger.exception("%s: gửi tin vào lệnh thất bại (TD-0405)", pair)
+
+    def _bao_vao_lenh(self, trade) -> None:
+        """TD-0405 — số là TỔNG vị thế sau lần khớp này (`trade.amount`, `trade.open_rate` = p_avg thật). SL đọc cùng
+        nguồn `custom_stoploss` dùng (`_doc_ke_hoach`). Vốn = tổng ví stake (vốn đầu + lãi đã chốt) — KHÔNG phải
+        `get_total_stake_amount()` (hàm đó nhân `tradable_balance_ratio`). `send_msg` tự bỏ qua ở backtest."""
+        kh, cl, _ = self._doc_ke_hoach(trade)
+        tin = soan_tin_vao_lenh(
+            trade_id=trade.id,
+            pair=trade.pair,
+            is_short=trade.is_short,
+            leverage=trade.leverage,
+            tranche=trade.nr_of_successful_entries,
+            so_tranche=sum(1 for w in cl.w_tranche if w > 0),
+            stake_usdt=trade.stake_amount,
+            amount=trade.amount,
+            open_rate=trade.open_rate,
+            sl=kh.sl,
+            von_usdt=self.wallets.get_total(self.config["stake_currency"]) if self.wallets else None,
+        )
+        self.dp.send_msg(tin, always_send=True)
 
     def _ghi_vao_lenh(self, pair: str, trade, order) -> None:
         """TD-0239 (§8.3) — một bản ghi `VAO_RA_LENH` cho MỖI lần entry

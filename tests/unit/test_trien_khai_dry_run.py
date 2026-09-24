@@ -227,7 +227,20 @@ class TestTelegramTichHopFreqtrade:
             "FREQTRADE__TELEGRAM__ENABLED": "true",
             "FREQTRADE__TELEGRAM__TOKEN": self.TOKEN_GIA,
             "FREQTRADE__TELEGRAM__CHAT_ID": self.CHAT_GIA,
+            # TD-0405 — tin vào lệnh mặc định tắt, chiến lược tự gửi tin lúc khớp.
+            "FREQTRADE__TELEGRAM__NOTIFICATION_SETTINGS__ENTRY": "off",
+            "FREQTRADE__TELEGRAM__NOTIFICATION_SETTINGS__ENTRY_FILL": "off",
+            "FREQTRADE__TELEGRAM__NOTIFICATION_SETTINGS__ENTRY_CANCEL": "off",
         }
+
+    def test_freqtrade_doc_env_thanh_notification_settings(self) -> None:
+        """TD-0405 — đi qua bộ gộp env THẬT của Freqtrade: khoá lồng phải ra đúng `notification_settings` mà
+        `rpc/telegram.py` đọc, và `strategy_msg` (kênh tin của chiến lược) KHÔNG bị tắt."""
+        from freqtrade.configuration.environment_vars import _flat_vars_to_nested_dict
+
+        env = bien_moi_truong_telegram({"TELEGRAM_BOT_TOKEN": self.TOKEN_GIA, "TELEGRAM_CHAT_ID": self.CHAT_GIA})
+        cfg = _flat_vars_to_nested_dict(env, "FREQTRADE__")
+        assert cfg["telegram"]["notification_settings"] == {"entry": "off", "entry_fill": "off", "entry_cancel": "off"}
 
     @pytest.mark.parametrize(
         "env",

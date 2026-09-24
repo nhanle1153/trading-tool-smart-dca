@@ -1,0 +1,32 @@
+{
+  "mo_ta": "TD-0405: ham thuan soan tin vao lenh. M1 = rui ro quen nhan khoi luong -> moi ca in so rui ro do. M2 = Short tinh khoang cat lo nhu Long -> ca Short in so do + short-sl-duoi khong con bao sai phia. M3 = bo chot von > 0 (N6) -> von 0 chia cho 0, von am in % am. Du doan viet TRUOC khi chay.",
+  "module": "tool_d.ops.thong_bao_lenh",
+  "file": "src/tool_d/ops/thong_bao_lenh.py",
+  "khoi_dong": ["rui_ro = amount * khoang"],
+  "bien_the": {
+    "M0": null,
+    "M1": "rui_ro = khoang",
+    "M2": {"khoi_dong": ["khoang = (sl - open_rate) if is_short else (open_rate - sl)"], "thay": "khoang = open_rate - sl"},
+    "M3": {"khoi_dong": ["if _co_so(von_usdt) and von_usdt > 0:"], "thay": "if _co_so(von_usdt):"}
+  },
+  "tests": ["tests/unit/test_td0405_thong_bao_lenh.py"],
+  "ky_vong": {"M0": "xanh", "M1": "do", "M2": "do", "M3": "do"},
+  "ky_vong_do_gom": {
+    "M1": [
+      "tests/unit/test_td0405_thong_bao_lenh.py::test_dung_khuon_mau_chu_du_an",
+      "tests/unit/test_td0405_thong_bao_lenh.py::test_long_khoang_cat_lo_tinh_duoi_gia_vao",
+      "tests/unit/test_td0405_thong_bao_lenh.py::test_tranche_sau_doi_dong_dau_va_dung_tong_vi_the",
+      "tests/unit/test_td0405_thong_bao_lenh.py::test_thieu_von_van_in_rui_ro_usdt_nhung_khong_bia_phan_tram[None]"
+    ],
+    "M2": [
+      "tests/unit/test_td0405_thong_bao_lenh.py::test_dung_khuon_mau_chu_du_an",
+      "tests/unit/test_td0405_thong_bao_lenh.py::test_tranche_sau_doi_dong_dau_va_dung_tong_vi_the",
+      "tests/unit/test_td0405_thong_bao_lenh.py::test_gia_rat_nho_khong_ra_dang_mu",
+      "tests/unit/test_td0405_thong_bao_lenh.py::test_sl_sai_phia_bao_bat_thuong_khong_in_so[short-sl-duoi]"
+    ],
+    "M3": [
+      "tests/unit/test_td0405_thong_bao_lenh.py::test_thieu_von_van_in_rui_ro_usdt_nhung_khong_bia_phan_tram[0.0]",
+      "tests/unit/test_td0405_thong_bao_lenh.py::test_thieu_von_van_in_rui_ro_usdt_nhung_khong_bia_phan_tram[-5.0]"
+    ]
+  }
+}

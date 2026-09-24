@@ -1,0 +1,64 @@
+{
+  "mo_ta": "TD-0405: noi tin vao lenh trong ZoneAbsorption. M1 = von lay get_total_stake_amount (da nhan tradable_balance_ratio) -> 1 ca. M2 = always_send=False (tin trung noi dung bi nuot) -> 1 ca. M3 = SL lay nham p3 thay kh.sl -> 1 ca. M4 = thu hep except thanh KeyError -> 1 ca (test hanh vi order_filled; ban AST dau doc nguon tu dia nen khong thay ban pha). Du doan viet TRUOC khi chay. Lan chay dau M1/M2 XANH vi test nap file tu dia (spec_from_file_location) di vong qua ban pha; sua test sang import theo ten module roi chay lai.",
+  "module": "ZoneAbsorption",
+  "file": "user_data/strategies/ZoneAbsorption.py",
+  "khoi_dong": [
+    "von_usdt=self.wallets.get_total(self.config[\"stake_currency\"]) if self.wallets else None,"
+  ],
+  "bien_the": {
+    "M0": null,
+    "M1": "von_usdt=self.wallets.get_total_stake_amount() if self.wallets else None,",
+    "M2": {
+      "khoi_dong": [
+        "self.dp.send_msg(tin, always_send=True)"
+      ],
+      "thay": "self.dp.send_msg(tin, always_send=False)"
+    },
+    "M3": {
+      "khoi_dong": [
+        "so_tranche=sum(1 for w in cl.w_tranche if w > 0),",
+        "stake_usdt=trade.stake_amount,",
+        "amount=trade.amount,",
+        "open_rate=trade.open_rate,",
+        "sl=kh.sl,"
+      ],
+      "thay": [
+        "            so_tranche=sum(1 for w in cl.w_tranche if w > 0),",
+        "            stake_usdt=trade.stake_amount,",
+        "            amount=trade.amount,",
+        "            open_rate=trade.open_rate,",
+        "            sl=kh.p3,"
+      ]
+    },
+    "M4": {
+      "khoi_dong": [
+        "except Exception:  # noqa: BLE001 — cố ý bắt rộng: thông báo không được cướp phần thiết yếu của lệnh"
+      ],
+      "thay": "except KeyError:"
+    }
+  },
+  "tests": [
+    "tests/unit/test_td0405_noi_chien_luoc.py"
+  ],
+  "ky_vong": {
+    "M0": "xanh",
+    "M1": "do",
+    "M2": "do",
+    "M3": "do",
+    "M4": "do"
+  },
+  "ky_vong_do_gom": {
+    "M1": [
+      "tests/unit/test_td0405_noi_chien_luoc.py::test_gui_dung_mot_tin_dung_so_mau"
+    ],
+    "M2": [
+      "tests/unit/test_td0405_noi_chien_luoc.py::test_gui_dung_mot_tin_dung_so_mau"
+    ],
+    "M3": [
+      "tests/unit/test_td0405_noi_chien_luoc.py::test_gui_dung_mot_tin_dung_so_mau"
+    ],
+    "M4": [
+      "tests/unit/test_td0405_noi_chien_luoc.py::test_order_filled_bao_sau_ghi_so_va_tin_hong_khong_lot_ra"
+    ]
+  }
+}
