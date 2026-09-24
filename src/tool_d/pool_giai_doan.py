@@ -28,7 +28,7 @@ class RoGiaiDoanError(RuntimeError):
 @dataclass(frozen=True)
 class RoGiaiDoan:
     tap: str
-    moc: str  # tên mốc trong `tier_c.data_split` ("t0" | "t1")
+    moc: str  # tên mốc trong `tier_c.data_split` ("t0" | "t1"), hoặc "xac_nhan" (ngày CHỌN, TD-0389)
     file_ro: Path
     thu_muc_du_lieu: Path
     trading: tuple[str, ...]
@@ -41,6 +41,9 @@ class RoGiaiDoan:
 RO_THEO_TAP: dict[str, tuple[str, Path, Path]] = {
     "CALIB": ("t0", Path("config/pool_t0.yaml"), Path("user_data/data/pool_t0/futures")),
     "WFO": ("t1", Path("config/pool_t1.yaml"), Path("user_data/data/pool_t1/futures")),
+    # TD-0389 (`DR-XAC-NHAN-01` §6 Q3, §7 Q5) — rổ tại ngày CHỌN của ứng viên (point-in-time). File do `TD-0391` sinh
+    # (⏸ hoãn); chưa có file ⇒ `ro_cho_tap("XAC_NHAN")` TỪ CHỐI, không rơi về rổ khác.
+    "XAC_NHAN": ("xac_nhan", Path("config/pool_xac_nhan.yaml"), Path("user_data/data/xac_nhan/futures")),
 }
 
 POOL_HOM_NAY = Path("config/pool.yaml")

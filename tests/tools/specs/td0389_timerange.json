@@ -1,0 +1,18 @@
+{
+  "mo_ta": "TD-0389: bien tap XAC_NHAN. M1 nhan ngay CHON dung bang T3, M2 bo can tren ngay do (cho tuong lai), M3 cho ngay do bang ngay CHON.",
+  "module": "tool_d.ledger.timerange",
+  "file": "src/tool_d/ledger/timerange.py",
+  "khoi_dong": [
+    "if ngay_chon <= t3:"
+  ],
+  "bien_the": {
+    "M0": null,
+    "M1": "if ngay_chon < t3:",
+    "M2": {"khoi_dong": ["if not (ngay_chon < ngay_do <= hom_nay):"], "thay": "if not (ngay_chon < ngay_do):"},
+    "M3": {"khoi_dong": ["if not (ngay_chon < ngay_do <= hom_nay):"], "thay": "if not (ngay_chon <= ngay_do <= hom_nay):"}
+  },
+  "tests": [
+    "tests/lock/test_td0389_bo_do_xac_nhan.py"
+  ],
+  "ky_vong": {"M0": "xanh", "M1": "do", "M2": "do", "M3": "do"}
+}

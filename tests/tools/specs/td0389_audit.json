@@ -1,0 +1,16 @@
+{
+  "mo_ta": "TD-0389: TD-0119b chi dem dong VAO N la bien the. M1 go _dem_vao_n - dong CTRL/XAC cua slot bi dem la bien the.",
+  "module": "tool_d.ledger.audit_checks",
+  "file": "src/tool_d/ledger/audit_checks.py",
+  "khoi_dong": [
+    "if proj.state is TrialState.CONSUMED and proj.hypothesis_slot in khai and _dem_vao_n(proj):"
+  ],
+  "bien_the": {
+    "M0": null,
+    "M1": "if proj.state is TrialState.CONSUMED and proj.hypothesis_slot in khai:"
+  },
+  "tests": [
+    "tests/lock/test_td0389_bo_do_xac_nhan.py"
+  ],
+  "ky_vong": {"M0": "xanh", "M1": "do"}
+}

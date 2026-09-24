@@ -13,7 +13,8 @@ không nhận nhãn dataset do người/code gọi tự xưng.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timezone
+from pathlib import Path
 
 from tool_d.config.loader import ToolDConfig, resolve
 
@@ -32,7 +33,7 @@ class DatasetBoundary:
     được gì (xem docstring `assert_dataset_timerange`).
     """
 
-    name: str  # "CALIB" | "WFO" | "LOCKBOX" | "EXPLORE" | "CTRL"
+    name: str  # "CALIB" | "WFO" | "LOCKBOX" | "EXPLORE" | "CTRL" | "XAC_NHAN" (TD-0389, `bien_xac_nhan`)
     start: date
     end: date
 
@@ -87,6 +88,33 @@ def dataset_boundaries_from_config(cfg: ToolDConfig) -> dict[str, DatasetBoundar
         "WFO": DatasetBoundary("WFO", t1, t2),
         "LOCKBOX": DatasetBoundary("LOCKBOX", t2, t3),
     }
+
+
+def bien_xac_nhan(
+    cfg: ToolDConfig, hypothesis_slot: str, *, ngay_do: date, repo_dir: Path, hom_nay: date | None = None
+) -> DatasetBoundary:
+    """TD-0389 (`DR-XAC-NHAN-01` §2 mục 1) — biên tập `XAC_NHAN` = `[ngày CHỌN còn hiệu lực của slot, ngày đo)`.
+
+    Biên ĐỘNG nên cố ý KHÔNG nằm trong `dataset_boundaries_from_config()` (ba tập niêm phong). Ngày CHỌN đọc từ sổ ý
+    tưởng qua đúng hàm `tran_von` dùng để kiểm hiện vật — một nguồn. Từ chối (`TimerangeViolationError`) nếu: slot không
+    có lần CHỌN còn hiệu lực; ngày CHỌN không nằm SAU `T3` (hiện vật sẽ bị `tran_von` bác); `ngay_do` ≤ ngày CHỌN; hoặc
+    `ngay_do` ở tương lai (nửa mở ⇒ `ngay_do` = hôm nay là đọc trọn tới hết hôm qua)."""
+    from tool_d.config.tran_von import _ngay_chon_hieu_luc
+
+    ngay_chon = _ngay_chon_hieu_luc(hypothesis_slot, repo_dir)
+    if isinstance(ngay_chon, str):
+        raise TimerangeViolationError(f"Không dựng được biên XAC_NHAN — {ngay_chon}")
+    t3 = datetime.strptime(resolve(cfg, "tier_c.data_split")["t3"], "%Y-%m-%d").date()
+    if ngay_chon <= t3:
+        raise TimerangeViolationError(
+            f"Ngày CHỌN {ngay_chon} của {hypothesis_slot} không nằm SAU T3 = {t3} — dữ liệu đó thuộc lockbox (TD-0389)"
+        )
+    hom_nay = hom_nay or datetime.now(timezone.utc).date()
+    if not (ngay_chon < ngay_do <= hom_nay):
+        raise TimerangeViolationError(
+            f"Ngày đo {ngay_do} phải nằm trong ({ngay_chon}, {hom_nay}] — sau ngày CHỌN và không ở tương lai (TD-0389)"
+        )
+    return DatasetBoundary("XAC_NHAN", ngay_chon, ngay_do)
 
 
 def cua_so_tap(

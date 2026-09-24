@@ -23,7 +23,7 @@ from tool_d.config.loader import DEFAULT_CONFIG_PATH, load_tool_d_config
 from tool_d.ledger import budget as _budget
 from tool_d.ledger.idea_events import duyet_so
 from tool_d.ledger.registry import CONFIG_HASH_LINH_CANH as _CONFIG_HASH_LINH_CANH
-from tool_d.ledger.registry import DEFAULT_REGISTRY_PATH, TrialLedger, TrialState
+from tool_d.ledger.registry import DEFAULT_REGISTRY_PATH, TrialLedger, TrialState, _dem_vao_n
 from tool_d.measurement.tri_state import Measured
 
 DEFAULT_IDEA_QUEUE_PATH = Path("registry/idea_queue.jsonl")
@@ -701,7 +701,9 @@ def check_td0119_so_bien_the_khong_vuot_khai(
 
     da_dung: Counter[str] = Counter()
     for proj in TrialLedger(registry_path).projections().values():
-        if proj.state is TrialState.CONSUMED and proj.hypothesis_slot in khai:
+        # TD-0389 (`DR-XAC-NHAN-01` §7): chỉ dòng VÀO `N` là một biến thể — dòng CTRL (đếm/tái lập/thước) và XAC
+        # (lần tính lớp xác nhận) mang mã slot nhưng không thử cấu hình nào mới.
+        if proj.state is TrialState.CONSUMED and proj.hypothesis_slot in khai and _dem_vao_n(proj):
             da_dung[proj.hypothesis_slot] += 1
 
     violations = [

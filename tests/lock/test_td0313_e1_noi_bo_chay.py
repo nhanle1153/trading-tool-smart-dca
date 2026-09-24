@@ -143,13 +143,17 @@ class TestKhongCoMacDinh:
 
     def test_tap_chi_nhan_CALIB_va_WFO(self) -> None:
         """LOCKBOX không có cửa chặn RIÊNG ở E1 — `ro_cho_tap()` là cửa duy nhất
-        (nó nêu `MT-60`). Nhưng `--tap` vẫn giới hạn ở tập đã dựng được rổ."""
+        (nó nêu `MT-60`). Nhưng `--tap` vẫn giới hạn ở tập đã dựng được rổ.
+
+        🔴 Ngoại lệ đã duyệt (`DR-XAC-NHAN-01` §7 Q4, chủ dự án 24/09/2026, TD-0389): thêm `XAC_NHAN` (lớp xác nhận
+        sau lockbox). LOCKBOX và mọi tập lạ vẫn KHÔNG được nhận."""
         import sys
 
         sys.path.insert(0, str(REPO / "entrypoints"))
         from run_backtest import TAP_HOP_LE
 
-        assert TAP_HOP_LE == ("CALIB", "WFO")
+        assert TAP_HOP_LE == ("CALIB", "WFO", "XAC_NHAN")
+        assert "LOCKBOX" not in TAP_HOP_LE
 
 
 class TestMacDinhKhongChay:

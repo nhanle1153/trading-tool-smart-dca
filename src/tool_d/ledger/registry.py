@@ -63,6 +63,13 @@ def _doc_khoa_cong_vao_d9(runtime_state_path: Path) -> dict[str, bool]:
     return {k: data.get(k) is True for k in KHOA_CONG_VAO_D9}
 
 CTRL_BUDGET_LINE = "CTRL"
+#: TD-0389 (`DR-XAC-NHAN-01` §6 Q1, §7) — lần TÍNH lớp xác nhận sau lockbox: đánh giá một cấu hình ĐÃ CHỌN trên dữ liệu mới,
+#: không chọn gì giữa các cấu hình ⇒ đứng NGOÀI `N`, đổi lại trần cứng 1 dòng không-REFUNDED mỗi `hypothesis_slot`.
+BUDGET_LINE_XAC = "XAC"
+TAP_XAC_NHAN = "XAC_NHAN"
+#: `param_under_test` bắt buộc của dòng ĐẾM (CTRL mô tả) và dòng TÍNH (XAC) trên tập `XAC_NHAN` — `param_value` mang
+#: `{"che_do", "tu", "den"}` để hai lần chạy khác chế độ/cửa sổ không trùng vân tay lần chạy (`L-Z12`).
+THAM_SO_CUA_SO_XAC = "xac_nhan_cua_so"
 #: `B0` = tiêu chí pool (§0.3), quyết định hạ tầng — không phải đánh giá cấu hình của một ứng viên (TD-0375).
 BUDGET_LINE_B0 = "B0"
 #: `DR-LZ12-01` §3 chốt 4 / `DR-DINH-DANH-01` — `config_hash` lính canh của dòng KHÔNG mang cấu hình chiến lược (bốn
@@ -130,6 +137,11 @@ class CtrlClaimError(LedgerError):
     đường thoát khỏi kế toán phép thử. Cửa này bắt máy kiểm lời khai, cùng
     triết lý DR-014 §3 ("máy tự ghi, người không có đường nhập liệu").
     """
+
+
+class XacClaimError(LedgerError):
+    """TD-0389 — dòng `XAC` không thoả cửa ghi (`DR-XAC-NHAN-01` §7). `XAC` đứng ngoài `N` nên cũng là một đặc quyền như
+    CTRL: máy kiểm, không nhận lời khai. Từ chối TẠI CỬA, trước khi ghi dòng nào."""
 
 
 class SchemaViolationError(LedgerError):
@@ -242,8 +254,10 @@ def _dem_vao_n(proj: TrialProjection) -> bool:
     trial trên tổng 114 bốc hơi vì kế toán sai. Nguy hơn con số là ĐỘNG CƠ
     CHẠY NGƯỢC: càng kỷ luật (càng chạy nhiều điểm kiểm soát) càng bị phạt
     ngân sách, dẫn tới bỏ điểm kiểm soát.
+
+    TD-0389: `XAC` (lần TÍNH lớp xác nhận, `DR-XAC-NHAN-01` §6 Q1) cũng đứng ngoài — không chọn gì giữa các cấu hình.
     """
-    return proj.budget_line != CTRL_BUDGET_LINE
+    return proj.budget_line not in (CTRL_BUDGET_LINE, BUDGET_LINE_XAC)
 
 
 def _utcnow_iso() -> str:
@@ -586,17 +600,124 @@ class TrialLedger:
         except UngVienError as e:
             raise B1Error(f"TỪ CHỐI đặt chỗ B1 — {e}") from e
 
+    def _kiem_tap_xac_nhan(
+        self,
+        *,
+        budget_line: str,
+        dataset: str,
+        hypothesis_slot: str,
+        param_under_test: str,
+        param_value: Any,
+        config_hash: str,
+        ctrl_mo_ta_whitelist: Sequence[str] | None,
+    ) -> None:
+        """TD-0389 (`DR-XAC-NHAN-01` §7) — cửa của tập `XAC_NHAN` và dòng `XAC`. Raise `XacClaimError`.
+
+        Tập `XAC_NHAN` chỉ nhận hai loại dòng: ĐẾM = CTRL *đo mô tả* đúng `["so_lenh"]`; TÍNH = `XAC`. Mọi dòng khác
+        trên tập đó, và dòng `XAC` trên tập khác, bị từ chối. Không đổi gì với dòng không dính `XAC_NHAN`/`XAC`."""
+        if dataset != TAP_XAC_NHAN and budget_line != BUDGET_LINE_XAC:
+            return
+        if dataset != TAP_XAC_NHAN:
+            raise XacClaimError(f"dòng XAC chỉ chạy trên tập {TAP_XAC_NHAN}, nhận {dataset!r}")
+        if budget_line not in (CTRL_BUDGET_LINE, BUDGET_LINE_XAC):
+            raise XacClaimError(
+                f"tập {TAP_XAC_NHAN} chỉ nhận dòng ĐẾM (CTRL mô tả) hoặc TÍNH (XAC), nhận {budget_line!r} — dữ liệu sau"
+                " ngày CHỌN không phải nơi calibrate hay tìm cấu hình"
+            )
+        che_do = param_value.get("che_do") if isinstance(param_value, Mapping) else None
+        if param_under_test != THAM_SO_CUA_SO_XAC or not isinstance(param_value, Mapping) or not all(
+            isinstance(param_value.get(k), str) for k in ("che_do", "tu", "den")
+        ):
+            raise XacClaimError(
+                f"dòng trên {TAP_XAC_NHAN} phải mang param_under_test={THAM_SO_CUA_SO_XAC!r} và param_value"
+                f" {{'che_do','tu','den'}} (chuỗi), nhận {param_under_test!r} / {param_value!r}"
+            )
+        if budget_line == CTRL_BUDGET_LINE:
+            if che_do != "DEM" or list(ctrl_mo_ta_whitelist or []) != ["so_lenh"]:
+                raise XacClaimError(
+                    "dòng ĐẾM trên XAC_NHAN phải là CTRL mô tả với đúng ctrl_mo_ta_whitelist=['so_lenh'] và che_do"
+                    f" 'DEM' — nhận {ctrl_mo_ta_whitelist!r} / {che_do!r} (DR-XAC-NHAN-01 §6 Q2: chế độ đếm không lộ gì"
+                    " ngoài số lệnh)"
+                )
+            return
+        self._kiem_khai_xac(hypothesis_slot=hypothesis_slot, param_value=param_value, config_hash=config_hash)
+
+    def _kiem_khai_xac(self, *, hypothesis_slot: str, param_value: Mapping[str, Any], config_hash: str) -> None:
+        """Dòng `XAC` (lần TÍNH): năm điều, máy kiểm — `DR-XAC-NHAN-01` §6 Q1/Q2 + §7 Q6/Q7."""
+        from tool_d.config.loader import load_tool_d_config, resolve
+        from tool_d.config.tran_von import _hash_da_cham_lockbox, _ngay_chon_hieu_luc
+
+        if param_value.get("che_do") != "TINH":
+            raise XacClaimError(f"dòng XAC phải mang che_do 'TINH', nhận {param_value.get('che_do')!r}")
+        ngay_chon = _ngay_chon_hieu_luc(hypothesis_slot, self._repo_dir)
+        if isinstance(ngay_chon, str):
+            raise XacClaimError(f"TỪ CHỐI dòng XAC — {ngay_chon}")
+        hash_cham = _hash_da_cham_lockbox(self._repo_dir)
+        if isinstance(hash_cham, str) or not hash_cham:
+            raise XacClaimError(
+                "TỪ CHỐI dòng XAC — chưa có lần chạm lockbox nào (DR-XAC-NHAN-01 §7 Q6: chỉ đo sau D9.5)"
+                + (f": {hash_cham}" if isinstance(hash_cham, str) else "")
+            )
+        if config_hash not in hash_cham:
+            raise XacClaimError(
+                f"TỪ CHỐI dòng XAC — config_hash {config_hash!r} không phải cấu hình đã chạm lockbox"
+            )
+        proj = self.projections()
+        da_co = [
+            p.trial_id for p in proj.values()
+            if p.budget_line == BUDGET_LINE_XAC and p.hypothesis_slot == hypothesis_slot
+            and p.state is not TrialState.REFUNDED
+        ]
+        if da_co:
+            raise XacClaimError(
+                f"TỪ CHỐI dòng XAC — {hypothesis_slot} đã có dòng XAC {da_co} (trần 1/slot, DR-XAC-NHAN-01 §6 Q1;"
+                " chỉ dòng REFUNDED trước niêm phong mới không tính)"
+            )
+        n_min = resolve(
+            load_tool_d_config(self._repo_dir / "config" / "tool_d_config.yaml"),
+            "tier_c.lop_xac_nhan_sau_t3.n_lenh_toi_thieu",
+        )
+        dau_tien: Mapping[str, Any] | None = None
+        for e in self._read_events():
+            if (
+                e.get("event") == "RESERVE" and e.get("budget_line") == CTRL_BUDGET_LINE
+                and e.get("dataset") == TAP_XAC_NHAN and e.get("hypothesis_slot") == hypothesis_slot
+            ):
+                p = proj.get(e["trial_id"])
+                n = (p.outcome or {}).get("n_trades") if p is not None else None
+                if p is not None and p.state is TrialState.CONSUMED and isinstance(n, int) and n >= n_min:
+                    dau_tien = e["param_value"]
+                    break
+        if dau_tien is None:
+            raise XacClaimError(
+                f"TỪ CHỐI dòng XAC — {hypothesis_slot} chưa có dòng ĐẾM CONSUMED nào đạt n ≥ {n_min} (DR-XAC-NHAN-01 §6"
+                " Q2: chỉ tính sau khi đếm đủ)"
+            )
+        if (param_value.get("tu"), param_value.get("den")) != (dau_tien.get("tu"), dau_tien.get("den")):
+            raise XacClaimError(
+                f"TỪ CHỐI dòng XAC — cửa sổ [{param_value.get('tu')}, {param_value.get('den')}) khác cửa sổ của lần"
+                f" ĐẾM đầu tiên đạt n ≥ {n_min} [{dau_tien.get('tu')}, {dau_tien.get('den')}) — tính đúng trên các lệnh"
+                " đã đếm, không chờ thêm (DR-XAC-NHAN-01 §6 Q2)"
+            )
+        if param_value.get("tu") < ngay_chon.isoformat():
+            raise XacClaimError(
+                f"TỪ CHỐI dòng XAC — cửa sổ bắt đầu {param_value.get('tu')} trước ngày CHỌN {ngay_chon}"
+            )
+
     def _kiem_cua_thiet_ke(self, *, budget_line: str, hypothesis_slot: str) -> None:
         """TD-0375 — `DR-PHAN-QUYET-01` §4.2 bước 3, CHẶN CỨNG (chủ dự án chốt 24/09/2026).
 
         Chỉ áp cho suất ĐẦU TIÊN của một slot ứng viên `IQ-xxxx`, dòng không phải `B0` (hạ tầng pool, không đánh giá
         cấu hình) — CTRL không tới được đây. Slot đã có dòng nào trên sổ ⇒ đã qua cửa này lúc đó, không kiểm lại.
-        ZA LONG (slot `A-xx`) không bị áp. Import trễ để không kéo `chi_so_export` vào lúc nạp sổ."""
+        ZA LONG (slot `A-xx`) không bị áp. Import trễ để không kéo `chi_so_export` vào lúc nạp sổ.
+
+        TD-0389: "đã có dòng" chỉ tính dòng VÀO `N` — một dòng CTRL/XAC mang mã slot không qua cửa này, nên không được
+        mở đường tắt cho suất B của slot đó."""
         from tool_d.gates import exit_reason_thiet_ke as tk
 
         if budget_line == BUDGET_LINE_B0 or not tk.la_slot_ung_vien(hypothesis_slot):
             return
-        if any(p.hypothesis_slot == hypothesis_slot for p in self.projections().values()):
+        if any(p.hypothesis_slot == hypothesis_slot and _dem_vao_n(p) for p in self.projections().values()):
             return
         try:
             tk.kiem_exit_reason_thiet_ke(hypothesis_slot, repo_dir=self._repo_dir)
@@ -634,7 +755,18 @@ class TrialLedger:
         """
         if contribution < 1:
             raise LedgerError("contribution phải >= 1 — không có mức 0 (fail-closed)")
-        if budget_line == CTRL_BUDGET_LINE:
+        self._kiem_tap_xac_nhan(
+            budget_line=budget_line,
+            dataset=dataset,
+            hypothesis_slot=hypothesis_slot,
+            param_under_test=param_under_test,
+            param_value=param_value,
+            config_hash=config_hash,
+            ctrl_mo_ta_whitelist=ctrl_mo_ta_whitelist,
+        )
+        if budget_line == BUDGET_LINE_XAC:
+            pass  # TD-0389 — ngoài `N`: không kiểm ngân sách, không qua cửa B1/thiết kế; đã kiểm ở `_kiem_tap_xac_nhan`
+        elif budget_line == CTRL_BUDGET_LINE:
             self._kiem_khai_ctrl(
                 reproduces_trial_id=reproduces_trial_id,
                 ctrl_output_whitelist=ctrl_output_whitelist,

@@ -1,0 +1,41 @@
+{
+  "mo_ta": "TD-0389 (DR-XAC-NHAN-01 6-7): nghiem thu rang cua test cua ghi XAC + tap XAC_NHAN trong registry.py. M1 XAC vao N, M2 bo tran 1/slot, M3 bo so cua so voi lan DEM dau, M4 lay lan DEM CUOI thay vi DAU, M5 bo kiem chua cham lockbox, M6 tinh ca dong REFUNDED vao tran, M7 duong tat TD-0375 tinh ca CTRL, M8 cho dong B tren XAC_NHAN, M9 DEM nhan danh sach mo ta khac so_lenh, M10 nguong dem 29, M11 bo kiem lan CHON con hieu luc.",
+  "module": "tool_d.ledger.registry",
+  "file": "src/tool_d/ledger/registry.py",
+  "khoi_dong": [
+    "return proj.budget_line not in (CTRL_BUDGET_LINE, BUDGET_LINE_XAC)"
+  ],
+  "bien_the": {
+    "M0": null,
+    "M1": "return proj.budget_line != CTRL_BUDGET_LINE",
+    "M2": {"khoi_dong": ["if da_co:"], "thay": "if False:"},
+    "M3": {
+      "khoi_dong": ["if (param_value.get(\"tu\"), param_value.get(\"den\")) != (dau_tien.get(\"tu\"), dau_tien.get(\"den\")):"],
+      "thay": "if False:"
+    },
+    "M4": {"khoi_dong": ["dau_tien = e[\"param_value\"]", "break"], "thay": "dau_tien = e[\"param_value\"]"},
+    "M5": {"khoi_dong": ["if isinstance(hash_cham, str) or not hash_cham:"], "thay": "if isinstance(hash_cham, str):"},
+    "M6": {"khoi_dong": ["and p.state is not TrialState.REFUNDED"], "thay": "and True"},
+    "M7": {
+      "khoi_dong": ["if any(p.hypothesis_slot == hypothesis_slot and _dem_vao_n(p) for p in self.projections().values()):"],
+      "thay": "if any(p.hypothesis_slot == hypothesis_slot for p in self.projections().values()):"
+    },
+    "M8": {"khoi_dong": ["if budget_line not in (CTRL_BUDGET_LINE, BUDGET_LINE_XAC):"], "thay": "if False:"},
+    "M9": {
+      "khoi_dong": ["if che_do != \"DEM\" or list(ctrl_mo_ta_whitelist or []) != [\"so_lenh\"]:"],
+      "thay": "if che_do != \"DEM\":"
+    },
+    "M10": {
+      "khoi_dong": ["if p is not None and p.state is TrialState.CONSUMED and isinstance(n, int) and n >= n_min:"],
+      "thay": "if p is not None and p.state is TrialState.CONSUMED and isinstance(n, int) and n >= 29:"
+    },
+    "M11": {"khoi_dong": ["if isinstance(ngay_chon, str):"], "thay": "if False:"}
+  },
+  "tests": [
+    "tests/lock/test_td0389_bo_do_xac_nhan.py"
+  ],
+  "ky_vong": {
+    "M0": "xanh", "M1": "do", "M2": "do", "M3": "do", "M4": "do", "M5": "do", "M6": "do",
+    "M7": "do", "M8": "do", "M9": "do", "M10": "do", "M11": "do"
+  }
+}
