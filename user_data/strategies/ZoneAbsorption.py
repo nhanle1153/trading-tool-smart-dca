@@ -155,7 +155,7 @@ from tool_d.dg6_early_invalidation import (
 from tool_d.cong_thanh_ly import de_ghi_so, xet_cong_l_z3
 from tool_d.funding_stop import funding_paid_cumulative, is_funding_stop_triggered
 from tool_d.gap_ms import LenhSl, sinh_ban_ghi_doi_sl
-from tool_d.ledger.decision_log import DEFAULT_DECISION_LOG_PATH, ghi_neu_chua_co
+from tool_d.ledger.decision_log import duong_dan_decision_log, ghi_neu_chua_co
 from tool_d.ops.heartbeat import Heartbeat, duong_dan_heartbeat, ghi_heartbeat
 from tool_d.ops.heartbeat_watchdog import TRANG_THAI_BINH_THUONG
 from tool_d.post_only import bi_san_tu_choi, ly_do_tu_choi
@@ -1387,7 +1387,7 @@ class ZoneAbsorption(IStrategy):
             amount=order.safe_amount_after_fee,
             nguon=self.dp.runmode.value,
         )
-        ghi_neu_chua_co(DEFAULT_DECISION_LOG_PATH, ban_ghi)
+        ghi_neu_chua_co(duong_dan_decision_log(self.dp.runmode.value), ban_ghi)  # TD-0390: sổ theo runmode
 
     def _phuc_hoi_ke_hoach_sau_restart(self, pair: str, trade) -> dict:
         """TD-0237 (MT-41) — phục hồi `cho` (hình `{"co_lenh", "ke_hoach",
@@ -1715,7 +1715,7 @@ class ZoneAbsorption(IStrategy):
             nguon=self.dp.runmode.value,
         )
         for bg in ban_ghi:
-            ghi_neu_chua_co(DEFAULT_DECISION_LOG_PATH, bg)
+            ghi_neu_chua_co(duong_dan_decision_log(self.dp.runmode.value), bg)  # TD-0390
 
     def custom_exit(self, pair, trade, current_time, current_rate, current_profit, **kwargs):
         kh, _, _ = self._doc_ke_hoach(trade)

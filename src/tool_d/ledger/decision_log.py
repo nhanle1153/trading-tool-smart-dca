@@ -59,6 +59,20 @@ from typing import Any
 # đường dẫn thứ hai cho cùng một sổ (LD-09: một nguồn sự thật).
 DEFAULT_DECISION_LOG_PATH = Path("registry/decision_log.jsonl")
 
+#: TD-0390 — sổ của TIẾN TRÌNH DÀI (dry-run D11, live D10/D12) tách theo runmode, cạnh heartbeat
+#: (`ops/heartbeat.py`, TD-0350) dưới `runs/` (đã `.gitignore`). Cùng lý do TD-0353: dry-run và lệnh live tối thiểu
+#: chạy song song, chung một file thì sổ của tiền thật lẫn sổ giấy — nhãn `nguon` phân biệt được từng dòng nhưng
+#: không ngăn một phép đếm quên lọc, và sổ vận hành không có chỗ trong git (mỗi vòng dry-run lại mọc thêm dòng).
+THU_MUC_VAN_HANH_GOC = Path("runs/van_hanh")
+
+
+def duong_dan_decision_log(runmode: str) -> Path:
+    """`live`/`dry_run` → `runs/van_hanh/<runmode>/decision_log.jsonl`; runmode khác (backtest, …) giữ
+    `DEFAULT_DECISION_LOG_PATH` — TD-0390 cố ý KHÔNG đổi đường của đường ống đo."""
+    if runmode in ("live", "dry_run"):
+        return THU_MUC_VAN_HANH_GOC / runmode / DEFAULT_DECISION_LOG_PATH.name
+    return DEFAULT_DECISION_LOG_PATH
+
 # Trường bắt buộc để dựng khoá, theo đúng bốn dòng của spec §8.3.
 TRUONG_KHOA: dict[str, tuple[str, ...]] = {
     "VAO_RA_LENH": ("exchange_order_id",),

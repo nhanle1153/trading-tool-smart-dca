@@ -1,0 +1,20 @@
+{
+  "mo_ta": "TD-0390: so Decision Log tach theo runmode. M1 = moi runmode ve so chung registry/ (hinh dang truoc TD-0390) -> do ca phep kiem duong dan lan phep kiem chien luoc THAT ghi vao dau (2 ca). M2 = bo thu muc con runmode (dry-run va live lai chung mot file duoi runs/) -> 1 ca.",
+  "module": "tool_d.ledger.decision_log",
+  "file": "src/tool_d/ledger/decision_log.py",
+  "khoi_dong": ["if runmode in (\"live\", \"dry_run\"):"],
+  "bien_the": {
+    "M0": null,
+    "M1": "if False:",
+    "M2": {"khoi_dong": ["return THU_MUC_VAN_HANH_GOC / runmode / DEFAULT_DECISION_LOG_PATH.name"], "thay": "return THU_MUC_VAN_HANH_GOC / DEFAULT_DECISION_LOG_PATH.name"}
+  },
+  "tests": ["tests/unit/test_trien_khai_dry_run.py", "tests/lock/test_lz45_dedup_key_append_only.py"],
+  "ky_vong": {"M0": "xanh", "M1": "do", "M2": "do"},
+  "ky_vong_do_gom": {
+    "M1": [
+      "tests/unit/test_trien_khai_dry_run.py::TestDecisionLogTachTheoRunmode::test_dry_run_va_live_hai_so_khac_nhau",
+      "tests/unit/test_trien_khai_dry_run.py::TestDecisionLogTachTheoRunmode::test_chien_luoc_dry_run_ghi_vao_so_runmode"
+    ],
+    "M2": ["tests/unit/test_trien_khai_dry_run.py::TestDecisionLogTachTheoRunmode::test_dry_run_va_live_hai_so_khac_nhau"]
+  }
+}

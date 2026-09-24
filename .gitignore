@@ -15,6 +15,8 @@ lockbox/data/**
 # ── Kết quả chạy: sinh lại được, không commit ───────────────────────
 runs/**
 !runs/.gitkeep
+# TD-0390: sổ Decision Log là sổ chạy (backtest ghi ở đây; live/dry-run ở runs/van_hanh/<runmode>/), không commit
+registry/decision_log.jsonl
 
 # ── Bí mật ──────────────────────────────────────────────────────────
 .env

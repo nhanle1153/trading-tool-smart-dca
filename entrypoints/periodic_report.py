@@ -30,7 +30,7 @@ import sys
 from pathlib import Path
 
 from tool_d.config.loader import DEFAULT_CONFIG_PATH, load_tool_d_config, resolve
-from tool_d.ledger.decision_log import DEFAULT_DECISION_LOG_PATH
+from tool_d.ledger.decision_log import duong_dan_decision_log
 from tool_d.ledger.registry import DEFAULT_REGISTRY_PATH, TrialLedger
 from tool_d.measurement.guard import EXIT_GUARD_BLOCKED, GuardOutcome, measurement_guard
 from tool_d.measurement.provenance import (
@@ -110,7 +110,9 @@ def render_report(
     params_source: str,
     config_path: Path = DEFAULT_CONFIG_PATH,
     freqtrade_config_path: Path = DEFAULT_FREQTRADE_CONFIG_PATH,
-    decision_log_path: Path = DEFAULT_DECISION_LOG_PATH,
+    # TD-0390 — sổ Decision Log CÙNG runmode với DB mặc định (`db_url` của config.json là DB dry-run, TD-0202):
+    # sổ vận hành nay tách theo runmode, để mặc định cũ `registry/` thì gap_ms dry-run đọc ra rỗng trong im lặng.
+    decision_log_path: Path = duong_dan_decision_log("dry_run"),
     registry_path: Path = DEFAULT_REGISTRY_PATH,
 ) -> str:
     """Dựng toàn bộ văn bản báo cáo — tách khỏi `main()` để test được mà

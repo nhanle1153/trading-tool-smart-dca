@@ -24,6 +24,7 @@ import pytest
 import yaml
 
 from tool_d.equity_peak import duong_dan_theo_runmode
+from tool_d.ledger.decision_log import DEFAULT_DECISION_LOG_PATH, duong_dan_decision_log
 from tool_d.ops.dry_run import (
     CAU_HINH_FREQTRADE_GOC,
     TEN_CHIEN_LUOC,
@@ -182,6 +183,34 @@ class TestDinhEquityTachTheoRunmode:
         monkeypatch.chdir(tmp_path)
         s.bot_start()
         assert s._duong_dan_dinh_equity == tmp_path / "rieng.json"
+
+
+class TestDecisionLogTachTheoRunmode:
+    """TD-0390 — dry-run D11 và live D10 không ghi chung MỘT sổ Decision Log; backtest giữ nguyên đường cũ."""
+
+    @staticmethod
+    def _lenh_khop(so: str):
+        trade = SimpleNamespace(id=1, nr_of_successful_entries=1)
+        order = SimpleNamespace(
+            order_id=f"oid-{so}", order_filled_date=datetime(2026, 9, 24, tzinfo=timezone.utc),
+            ft_order_side="buy", safe_price=2.0, safe_amount_after_fee=11.0,
+        )
+        return trade, order
+
+    def test_dry_run_va_live_hai_so_khac_nhau(self) -> None:
+        assert duong_dan_decision_log("dry_run") != duong_dan_decision_log("live")
+        assert duong_dan_decision_log("dry_run").parent == duong_dan_heartbeat("dry_run").parent
+
+    def test_backtest_giu_duong_cu(self) -> None:
+        assert duong_dan_decision_log("backtest") == DEFAULT_DECISION_LOG_PATH
+
+    def test_chien_luoc_dry_run_ghi_vao_so_runmode(self, tmp_path, monkeypatch) -> None:
+        s = _chien_luoc("dry_run")
+        monkeypatch.chdir(tmp_path)  # đường sổ tương đối — không đụng runs/ hay registry/ của repo
+        s._ghi_vao_lenh("TRUMP/USDT:USDT", *self._lenh_khop("1"))
+        so = tmp_path / duong_dan_decision_log("dry_run")
+        assert [json.loads(d)["nguon"] for d in so.read_text(encoding="utf-8").splitlines()] == ["dry_run"]
+        assert not (tmp_path / DEFAULT_DECISION_LOG_PATH).exists()
 
 
 class TestComposeCachLyLockbox:
