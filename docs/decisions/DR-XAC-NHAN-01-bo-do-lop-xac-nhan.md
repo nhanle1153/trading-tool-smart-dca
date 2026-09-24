@@ -1,6 +1,7 @@
 # DR-XAC-NHAN-01 — Bộ đo lớp xác nhận sau lockbox (`DR-LOCKBOX-04` §2 dòng 3, §3)
 
-> **Trạng thái:** 🟡 **NHÁP — CHƯA CHỐT.** Ba câu mở ở §3 chờ chủ dự án. Chưa có dòng mã nào theo DR này.
+> **Trạng thái:** ✅ **ĐÃ CHỐT 24/09/2026** — chủ dự án trả lời ba câu mở ở §3 (khối quyết định cuối file). Bản nháp đầu:
+> `d2f738c`. Chưa có dòng mã nào theo DR này.
 > **Ngày soạn:** 24/09/2026 · phiên mã `143375ad` · `TD-0388`. Mã đặt chỗ bằng commit `dc11974` (N12 mục 7c).
 > **Chi phí:** **0 trial**. Không chạm dữ liệu.
 
@@ -75,3 +76,18 @@ tải dữ liệu. Phương án khác: dùng lại rổ lockbox (`pool_t2.yaml`)
 |---|---|
 | TD-0387 | Siết chốt: `tu_ngay` ≥ ngày CHỌN, hiện vật một commit, `config_sha256` khớp lần chạm lockbox |
 | TD-0389 | Bộ đo: tập `XAC_NHAN`, biên + `L-Z55`, rổ, E1 `--tap XAC_NHAN`, ghi hiện vật; kế toán theo Q1 |
+
+---
+
+## 6. ✅ QUYẾT ĐỊNH — 24/09/2026, chủ dự án chọn qua công cụ hỏi-chọn (phiên mã `143375ad`)
+
+Cả ba câu, chủ dự án chọn đúng phương án được gắn *"(Recommended)"* do phiên này soạn — khai theo khuôn `DR-LOCKBOX-01` §1.
+
+| Câu | Chốt |
+|---|---|
+| Q1 kế toán | **Hạng sổ mới `XAC`, ngoài `N`.** Trần cứng **1 dòng `XAC` mỗi `hypothesis_slot`**, máy kiểm tại cửa ghi sổ (`registry.reserve()`), không nhận lời khai. Không đổi `N = 114`, không đổi rào DSR. Cần: schema sổ + luật + test cùng khuôn `CTRL` (MT-08, TD-0130) |
+| Q2 thời điểm | **Đếm số lệnh được lặp lại, không đọc R; tính `mean_r` đúng một lần** ở lần đếm đầu tiên thấy n ≥ 30, trên đúng các lệnh tới ngày đó. Cấm tính sớm "để xem" và cấm chờ thêm sau khi đã thấy số. Phép đếm và phép tính phải là **hai chế độ tách biệt** của E1 (chế độ đếm không được sinh ra bất kỳ con số hiệu năng nào) |
+| Q3 rổ | **Rổ tại ngày CHỌN** (point-in-time, `DR-D1-05`), sinh bằng E7, commit TRƯỚC khi tải dữ liệu `XAC_NHAN` |
+
+**Điều kiện dừng khi code (`TD-0389`):** một test cũ phải sửa khẳng định mới xanh ⇒ dừng, báo; hạng `XAC` làm đổi `n_used()` ⇒ dừng
+(nó phải đứng ngoài `N`); chế độ đếm lộ ra bất kỳ trường nào ngoài số lệnh và khoảng ngày ⇒ dừng.
