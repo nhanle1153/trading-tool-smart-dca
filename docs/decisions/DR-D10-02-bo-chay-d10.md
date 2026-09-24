@@ -1,8 +1,9 @@
 # DR-D10-02 — Bộ chạy D10: lệnh live tối thiểu trên tài khoản phụ
 
-> **Trạng thái: NHÁP — CHƯA CHỐT.** Soạn 24/09/2026, phiên mã `dd89043d`. **Q1–Q5 đã chốt 24/09** (Q1 CTRL trung tính, `MT-78`; Q2–Q5 chủ dự án trả lời cùng ngày); **còn Q6** và duyệt toàn văn.
-> Commit ở dạng NHÁP để khỏi mất (tiền lệ `d2f738c`). **Bản CHỐT** phải là một commit **RIÊNG, TRƯỚC** mọi dòng mã của
-> bộ chạy (kiểm bằng `git merge-base --is-ancestor`, không bằng mắt).
+> **Trạng thái: ✅ CHỐT 25/09/2026** — chủ dự án (Q1–Q5 trả lời 24/09, Q6 + trần ký quỹ 50% + duyệt chốt 25/09;
+> soạn bởi phiên mã `dd89043d`). Hai bản NHÁP trước (`b88d692`, `8074550`) giữ trong lịch sử git.
+> Commit CHỐT này là commit **RIÊNG, TRƯỚC** mọi dòng mã của bộ chạy D10 (`TD-0384`/`TD-0385`) — kiểm bằng
+> `git merge-base --is-ancestor`, không bằng mắt.
 > **Chi phí:** 0 trial. Mọi vị thế D10 là CTRL (`DR-D11-01` §4). Tiền thật: phí + trượt giá + rủi ro vị thế nhỏ.
 
 ---
@@ -33,7 +34,7 @@ Phiên sinh bản nháp đầu đã bỏ sót `DR-ZA-01`; phiên mã `12c579bc` 
 - D10 PASS là điều kiện của **D12**, không của D11 (`DR-TRIEN-KHAI-01` §1).
 - Không entrypoint thứ 9 (`L-Z36`); không đọc tham số chiến lược từ env (N3/N4).
 
-## 2. Phần kỹ thuật đề xuất (không có đánh đổi kinh doanh — chủ dự án chỉ cần phản đối nếu thấy sai)
+## 2. Phần kỹ thuật (không có đánh đổi kinh doanh; chốt cùng DR)
 
 1. **Module vận hành riêng `src/tool_d/ops/live_d10.py`**, cùng khuôn `ops/dry_run.py`: đọc
    `config/freqtrade/config.json`, PHỦ `dry_run: false`, `db_url` live RIÊNG
@@ -43,10 +44,12 @@ Phiên sinh bản nháp đầu đã bỏ sót `DR-ZA-01`; phiên mã `12c579bc` 
 2. **`validate_credentials_for_live()` gọi ở `main()`** của module đó + phép kiểm AST vị trí gọi (nợ đã khai ở dòng
    `D10–D12` của `TASKS.md`: allow-list "nằm trong `main`", không deny-list tên callback).
 3. **Service `live-d10` + `live-d10-watchdog` + `risk-supervisor`** sau profile riêng `d10` (không chung profile
-   `van_hanh` với dry-run để `up` nhầm không bật tiền thật), đều che `lockbox/data/`. Heartbeat/đỉnh equity đã tách
+   `van_hanh` với dry-run để `up` nhầm không bật tiền thật), đều che `lockbox/data/`. `live-d10` **KHÔNG** có
+   `restart: unless-stopped` (Q6) — khác hẳn dry-run. Heartbeat/đỉnh equity đã tách
    theo runmode (TD-0350/TD-0353) ⇒ chạy song song dry-run không ghi đè nhau.
 4. **Máy canh ngân sách, fail-closed, đọc từ DB live** (không đếm trong RAM — sống qua restart, bài học MT-40):
-   vị thế thứ 21 · vị thế thứ hai khi một vị thế đang mở (tuần tự) · quá hạn cửa sổ ⇒ `confirm_trade_entry` từ chối.
+   vị thế thứ 21 · vị thế thứ hai khi một vị thế đang mở (tuần tự) · quá hạn cửa sổ · **tổng ký quỹ đang mở sau lệnh
+   này > 50% số dư** (Q2) · không đọc được số dư (N6) ⇒ `confirm_trade_entry` từ chối.
 5. **Bộ đo ba ngưỡng** đọc DB live + sổ Decision Log của runmode `live` (bản ghi `DOI_SL` của TD-0244; đường theo
    runmode, việc tách sổ mở 24/09), ghi `docs/du-lieu-do/d10-*.json`. D6 trên CTRL chỉ báo trượt giá bps, không so
    với Δ_R (Q1, hạn chế).
@@ -55,7 +58,7 @@ Phiên sinh bản nháp đầu đã bỏ sót `DR-ZA-01`; phiên mã `12c579bc` 
    danh sách đầu ra CHO PHÉP riêng (`fill_price`, `p_i`, `gap_ms`, `order_status`) — theo tiền lệ `MT-19` dạng thứ
    ba: thêm tên = DR mới, và DR đó chính là DR này.
 
-## 3. Câu hỏi cần chủ dự án chốt
+## 3. Quyết định của chủ dự án
 
 ### Q1 — Vị thế D10 sinh ra từ đâu? ✅ ĐÃ CHỐT 24/09/2026 (chủ dự án, phiên mã `dd89043d`)
 
@@ -79,7 +82,8 @@ bức. Các phương án chạy `ZoneAbsorption` (A, C của bản đầu) **b�
 Cỡ lệnh **không** đi qua `E_D`/`rho` của chiến lược (Q1 là CTRL). Mỗi tranche = **sàn Tool D của cặp đó**
 (`san_tool_d()`, `DR-D4-05`) cộng một lề nhỏ, tức rẻ nhất có thể mà vẫn qua sàn (~30 USDT notional ở vài mã).
 Với đòn bẩy 3x, ký quỹ mỗi tranche ≈ notional/3 ≈ 10 USDT ⇒ 20 vị thế **tuần tự** (Q1) vừa vốn 100–300 USDT, không đòi
-vốn lớn nằm sẵn. **Đề xuất (chờ xác nhận ở bản CHỐT):** trần *tổng ký quỹ đang mở ≤ 50% số dư* làm chốt an toàn phụ.
+vốn lớn nằm sẵn. ✅ **Trần phụ (chủ dự án chốt 25/09): tổng ký quỹ đang mở ≤ 50% số dư** — với 100–300 USDT là
+50–150 USDT, giữ nửa còn lại làm đệm chống thanh lý.
 Số dư tối thiểu để mở D10: ≥ 100 USDT (đúng cận dưới câu trả lời).
 
 ### Q3 — Máy kiểm bảo mật tài khoản trước mỗi lần khởi động ✅ ĐÃ CHỐT 24/09/2026: **CÓ máy kiểm**
@@ -101,13 +105,15 @@ cả hai chạy cùng lúc: đọc log D10 đầu tiên, nếu gặp 429/418 th�
 `DR-D11-01` §5.2 đã nói: báo p99 trên N thực, ghi hạn chế. Chốt thêm: `n < 30` sau khi hết ngân sách ⇒ **D10 chưa PASS ⇒
 D12 không được mở**; muốn mở phải có **DR mới gia hạn ngân sách**, viết trước khi thấy số (tránh uốn luật).
 
-### Q6 — Ai bấm nút (CÒN MỞ, chờ chủ dự án)
+### Q6 — Ai bấm nút ✅ ĐÃ CHỐT 25/09/2026: **BẬT BẰNG TAY MỖI PHIÊN**
 
-Đề xuất: bộ chạy **không tự bật** khi `docker compose up`; chủ dự án chạy lệnh bật profile `d10` bằng tay mỗi phiên,
-và Telegram báo mỗi vị thế mở/đóng.
+Bộ chạy D10 **không tự bật**: không nằm trong `docker compose up` mặc định, không có `restart: unless-stopped`. Chủ dự án
+gõ lệnh bật profile `d10` mỗi phiên. Hệ quả chấp nhận có ý thức: máy hoặc Docker khởi động lại ⇒ D10 **dừng** và không tự
+chạy lại; lệnh đang mở vẫn có SL sống trên sàn (`stoploss_on_exchange`, `DR-D11-02`); watchdog D10 báo 🔴. Đổi lại, một
+lần khởi động lại máy không bao giờ âm thầm bật bot tiền thật. Telegram báo mỗi vị thế mở/đóng qua bot RIÊNG của D10 (Q4).
 
-## 4. Thi hành (sau khi chốt)
+## 4. Thi hành
 
-Mã việc đặt chỗ ở Khối 31 `TASKS.md`. Thứ tự: DR này (commit riêng) → `api-integration-rules.md` Mục 4 nếu Q3 = có
+Mã việc đặt chỗ ở Khối 31 `TASKS.md`. Thứ tự: DR này (commit riêng) → `api-integration-rules.md` Mục 4 (Q3 = có ⇒ bắt buộc)
 → bộ chạy + máy canh ngân sách + dạng CTRL thứ tư → bộ đo ba ngưỡng → chạy thật. Không đặt lệnh thật nào trước khi
 đủ bốn bước đầu và full suite Docker xanh.
