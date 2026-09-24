@@ -44,6 +44,9 @@ TAG_TP1_ZONE = f"TP1_{TP_SOURCE_ZONE}"
 TAG_TP1_NANG = f"TP1_{TP_SOURCE_NANG}"
 #: `ZoneAbsorption.custom_exit` trả đúng chuỗi này (`tool_d/time_stop.py` là nơi ra quyết định).
 EXIT_TIME_STOP = "TIME_STOP"
+#: `DR-CAN-RO-01` §2 điều 3 — nhãn thoát tại lần cân rổ của chiến lược cân rổ theo lịch. Nhãn RIÊNG, không mượn
+#: `TIME_STOP` (mượn là đổi nghĩa một đại lượng đang dùng khắp tầng đo).
+EXIT_CAN_RO = "CAN_RO"
 #: Tiền lệ `test_td0187_dinh_co_lenh_backtest_that.py::TestTiTrongTrancheThat` — sai số làm tròn khối lượng.
 DUNG_SAI_TI_TRONG = 0.01
 SO_TRANCHE_DU = 3
