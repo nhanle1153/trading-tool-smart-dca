@@ -196,6 +196,82 @@ def check_lz12_no_duplicate_config_hash_different_outcome(
     return CheckResult("L-Z12", Measured.ok(len(violations) == 0), evidence="; ".join(violations))
 
 
+# ── TD-0379 — điểm kiểm soát tái lập §0d.4 bước 3 ─────────────────────
+def _so_thuc(x: Any) -> float | None:
+    """Số thực hữu hạn, hoặc None. `bool` KHÔNG phải số ở đây (`float(True) == 1.0` là cửa lọt)."""
+    import math
+
+    if isinstance(x, bool) or not isinstance(x, (int, float)):
+        return None
+    return float(x) if math.isfinite(x) else None
+
+
+def check_td0379_tai_lap_ctrl_khop_goc(
+    registry_path: Path = DEFAULT_REGISTRY_PATH,
+    config_path: Path = DEFAULT_CONFIG_PATH,
+) -> CheckResult:
+    """Mọi dòng `CTRL` tái lập đã CONSUMED phải ra expectancy KHỚP trial gốc (`DR-DINH-DANH-01` §4.3).
+
+    Spec §0d.4 bước 3 (*"kết quả phải KHỚP với bản ghi registry của trial đã chấp nhận giá trị đó (sai số ≤ 0.1%
+    expectancy)"*) tới 24/09/2026 **không có một dòng mã**: cửa ghi chỉ kiểm lời khai lúc đặt chỗ, không ai so kết
+    quả. Và `L-Z12` KHÔNG canh được ca này — điểm kiểm soát chạy SAU một commit nên khác vân tay với trial gốc.
+
+    `abs(E_ctrl − E_gốc) ≤ max(sai_so_tuong_doi × abs(E_gốc), san_tuyet_doi_r)`, ngưỡng đọc từ
+    `tier_c.tai_lap_ctrl` (N4). Sàn tuyệt đối vì expectancy hệ thống này thường sát 0 — 0,1% của nó ≈ 0.
+    - 0 dòng tái lập đã CONSUMED ⇒ `pending`, không `ok` (N6: không có gì được canh).
+    - Có dòng để so mà ngưỡng thiếu/hỏng, gốc chưa CONSUMED, hay expectancy thiếu ⇒ **ĐỎ** (fail-closed: không
+      chứng minh được khớp thì §0d.4 bước 4 nói *"giá trị CHƯA được áp"*).
+    """
+    events = _read_jsonl(registry_path)
+    reserve = {e["trial_id"]: e for e in events if e["event"] == "RESERVE"}
+    consume = {e["trial_id"]: e for e in events if e["event"] == "CONSUME"}
+    tai_lap = sorted(
+        tid for tid, r in reserve.items()
+        if r.get("budget_line") == "CTRL" and r.get("reproduces_trial_id") and tid in consume
+    )
+    if not tai_lap:
+        return CheckResult(
+            "TD-0379",
+            Measured.pending("chưa có dòng CTRL tái lập nào đã CONSUMED — §0d.4 bước 3 chưa có gì để so"),
+        )
+
+    try:
+        nguong = load_tool_d_config(config_path).tier_c["tai_lap_ctrl"]
+        tuong_doi = _so_thuc(nguong["sai_so_tuong_doi"])
+        san = _so_thuc(nguong["san_tuyet_doi_r"])
+    except Exception as exc:  # thiếu khoá / YAML hỏng — cùng một hậu quả: không có thước để so
+        tuong_doi = san = None
+        loi = f"{type(exc).__name__}: {exc}"
+    else:
+        loi = "giá trị không phải số thực hữu hạn"
+    if tuong_doi is None or san is None or tuong_doi < 0 or san < 0:
+        return CheckResult(
+            "TD-0379",
+            Measured.ok(False),
+            evidence=f"ngưỡng tier_c.tai_lap_ctrl thiếu/hỏng ({loi}) — {len(tai_lap)} dòng tái lập KHÔNG chứng minh được khớp (N6)",
+        )
+
+    violations: list[str] = []
+    for tid in tai_lap:
+        goc_id = reserve[tid]["reproduces_trial_id"]
+        goc = consume.get(goc_id)
+        if goc is None:
+            violations.append(f"{tid} tái lập {goc_id} nhưng gốc chưa CONSUMED — không có số để so")
+            continue
+        e_ctrl = _so_thuc((consume[tid].get("outcome") or {}).get("expectancy"))
+        e_goc = _so_thuc((goc.get("outcome") or {}).get("expectancy"))
+        if e_ctrl is None or e_goc is None:
+            violations.append(f"{tid} tái lập {goc_id} nhưng thiếu expectancy (ctrl={e_ctrl}, gốc={e_goc})")
+            continue
+        dung_sai = max(tuong_doi * abs(e_goc), san)
+        if abs(e_ctrl - e_goc) > dung_sai:
+            violations.append(
+                f"{tid} tái lập {goc_id}: expectancy {e_ctrl} vs {e_goc}, lệch {abs(e_ctrl - e_goc):.6g} > "
+                f"dung sai {dung_sai:.6g} — giá trị CHƯA được áp (§0d.4 bước 4)"
+            )
+    return CheckResult("TD-0379", Measured.ok(len(violations) == 0), evidence="; ".join(violations))
+
+
 # ── L-Z15 ─────────────────────────────────────────────────────────────
 def check_lz15_calibrate_params_have_status(
     config_path: Path = DEFAULT_CONFIG_PATH,
@@ -1045,6 +1121,7 @@ ALL_CHECKS = (
     "check_lz10_registered_before_executed",
     "check_lz11_n_used_le_n_dang_ky",
     "check_lz12_no_duplicate_config_hash_different_outcome",
+    "check_td0379_tai_lap_ctrl_khop_goc",
     "check_lz15_calibrate_params_have_status",
     "check_lz16_idea_queue_filter_and_tool_d_results",
     "check_lz17_budget_a_slots_per_quarter",

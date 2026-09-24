@@ -172,5 +172,11 @@ tier_c: # 🔒 KHOÁ — KHÔNG có ô nhập, ghi ở đây
     # thật: 100 mã / 60 phút + lề. KHÔNG polling.
   entry_order_ttl_bars_1h: 3 # 🆕 v7 — §3.5, = §3.3b chờ
   corr_window_days: 30 # 🆕 v7 — §6.2 hệ số 3, định nghĩa
+  tai_lap_ctrl: # 🆕 TD-0379 — ✅ DR-DINH-DANH-01 §4.3: ngưỡng điểm kiểm soát tái lập §0d.4 bước 3
+    # |E_ctrl − E_gốc| ≤ max(sai_so_tuong_doi × |E_gốc|, san_tuyet_doi_r). Hằng KIỂM SOÁT, không phải
+    # tham số chiến lược: không tính DOF (dof.py chỉ đọc tier_b), không đổi N. Sàn 0,001 R = 1% ngưỡng
+    # DSR 0,10 R — chủ dự án chọn 24/09/2026. Đổi = DR mới.
+    sai_so_tuong_doi: 0.001 # "≤ 0.1% expectancy" — chữ spec :592
+    san_tuyet_doi_r: 0.001
   # 🔴 v7 (spec): KHÔNG dùng *Parameter của Freqtrade cho BẤT KỲ khoá nào
   #        ở file này (§0d.2, L-Z37). Đọc YAML → dict → truyền vào hàm.
