@@ -25,24 +25,58 @@ REPO = Path(__file__).resolve().parents[2]
 CONFIG_THAT = REPO / "config" / "tool_d_config.yaml"
 HIEN_VAT = "docs/du-lieu-do/xac-nhan-sau-t3.json"
 CHI_SO = "mean_r"
+SLOT = "IQ-0003"
+NGAY_CHON = "2026-10-01T10:00:00Z"
+HASH_CHAM = "c" * 64
+SO_Y_TUONG = "registry/idea_queue.jsonl"
+SO_TRUY_CAP = "lockbox/lockbox_access.log"
 
 
 def _git(repo: Path, *args: str) -> None:
     subprocess.run(["git", *args], cwd=repo, check=True, capture_output=True)
 
 
+def _dong_y_tuong(*, voided: bool = False) -> list[dict]:
+    """TD-0387 — sổ ý tưởng tối thiểu: `SLOT` QUEUED → SELECTED (→ VOIDED nếu `voided`)."""
+    dong = [{"idea_id": SLOT, "status": "QUEUED", "selected_at": None},
+            {"idea_id": SLOT, "status": "SELECTED", "selected_at": NGAY_CHON}]
+    if voided:
+        dong.append({"idea_id": SLOT, "status": "VOIDED", "selected_at": NGAY_CHON})
+    return dong
+
+
+def _ban_ghi_cham(hash_cham: str = HASH_CHAM) -> dict:
+    return {"accessed_at": "2026-12-01T00:00:00Z", "reason": "D9.5", "config_hash": hash_cham,
+            "seal_path": "lockbox/lockbox_seal_1.json", "seal_file_hash": "d" * 64}
+
+
 def _cfg_that() -> dict:
     return yaml.safe_load(CONFIG_THAT.read_text(encoding="utf-8"))
 
 
-def _repo(tmp_path: Path, cfg: dict, *, hien_vat: dict | None = None, commit_hien_vat: bool = True) -> Path:
-    """Repo tạm: `config/tool_d_config.yaml` (+ hiện vật). Config commit, hiện vật tuỳ `commit_hien_vat`."""
+def _repo(
+    tmp_path: Path,
+    cfg: dict,
+    *,
+    hien_vat: dict | None = None,
+    commit_hien_vat: bool = True,
+    y_tuong: list[dict] | None = None,
+    cham: list[dict] | None = None,
+) -> Path:
+    """Repo tạm: config + sổ ý tưởng (mặc định `SLOT` đã CHỌN) + sổ truy cập lockbox (mặc định một lần chạm
+    `HASH_CHAM`), đều commit; hiện vật tuỳ `commit_hien_vat`. Truyền `[]` để bỏ sổ."""
     repo = tmp_path / "repo"
     (repo / "config").mkdir(parents=True)
     _git(repo, "init", "-q")
     _git(repo, "config", "user.email", "t@t")
     _git(repo, "config", "user.name", "t")
     (repo / "config" / "tool_d_config.yaml").write_text(yaml.safe_dump(cfg, allow_unicode=True), encoding="utf-8")
+    for rel, dong in ((SO_Y_TUONG, _dong_y_tuong() if y_tuong is None else y_tuong),
+                      (SO_TRUY_CAP, [_ban_ghi_cham()] if cham is None else cham)):
+        if dong:
+            p = repo / rel
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_text("".join(json.dumps(d) + "\n" for d in dong), encoding="utf-8")
     _git(repo, "add", "-A")
     _git(repo, "commit", "-qm", "cfg")
     if hien_vat is not None:
@@ -64,8 +98,8 @@ def _cfg_vuot(khoa: str = "E_D", *, chi_so: str | None = CHI_SO, nguong: float |
 
 
 def _hv(**doi) -> dict:
-    hv = {"dr": "DR-LOCKBOX-04", "hypothesis_slot": "IQ-0003", "tu_ngay": "2026-09-07",
-          "n_lenh": 30, "chi_so": CHI_SO, "gia_tri": 0.08}
+    hv = {"dr": "DR-LOCKBOX-04", "hypothesis_slot": SLOT, "tu_ngay": NGAY_CHON[:10],
+          "n_lenh": 30, "chi_so": CHI_SO, "gia_tri": 0.08, "config_sha256": HASH_CHAM}
     hv.update(doi)
     return hv
 
@@ -201,6 +235,57 @@ class TestHienVatXacNhan:
         cfg["tier_c"][KHOA_KHOI]["n_lenh_toi_thieu"] = 10
         with pytest.raises(TranVonError, match="n_lenh_toi_thieu"):
             _load(_repo(tmp_path, cfg, hien_vat=_hv(n_lenh=12)))
+
+
+class TestTD0387SietChot:
+    """TD-0387 — ba điều kiện của quyết định "backtest từ ngày CHỌN, đo một lần" (ô ký DR-LOCKBOX-04 §3, DR-XAC-NHAN-01)."""
+
+    def test_tu_ngay_truoc_ngay_chon_thi_TU_CHOI(self, tmp_path) -> None:
+        repo = _repo(tmp_path, _cfg_vuot(), hien_vat=_hv(tu_ngay="2026-09-30"))
+        with pytest.raises(TranVonError, match="trước ngày CHỌN 2026-10-01"):
+            _load(repo)
+
+    def test_tu_ngay_dung_ngay_chon_thi_qua(self, tmp_path) -> None:
+        """Biên nửa mở `[ngày CHỌN, …)` của DR-XAC-NHAN-01 §2: đúng ngày CHỌN được nhận."""
+        _load(_repo(tmp_path, _cfg_vuot(), hien_vat=_hv(tu_ngay="2026-10-01")))
+
+    def test_lan_chon_da_huy_thi_khong_con_hieu_luc(self, tmp_path) -> None:
+        repo = _repo(tmp_path, _cfg_vuot(), hien_vat=_hv(), y_tuong=_dong_y_tuong(voided=True))
+        with pytest.raises(TranVonError, match="không có lần CHỌN còn hiệu lực"):
+            _load(repo)
+
+    def test_slot_khac_chua_duoc_chon_thi_TU_CHOI(self, tmp_path) -> None:
+        repo = _repo(tmp_path, _cfg_vuot(), hien_vat=_hv(hypothesis_slot="IQ-0009"))
+        with pytest.raises(TranVonError, match="IQ-0009 không có lần CHỌN còn hiệu lực"):
+            _load(repo)
+
+    def test_thieu_so_y_tuong_thi_TU_CHOI(self, tmp_path) -> None:
+        repo = _repo(tmp_path, _cfg_vuot(), hien_vat=_hv(), y_tuong=[])
+        with pytest.raises(TranVonError, match="sổ ý tưởng .* đọc không được"):
+            _load(repo)
+
+    def test_hien_vat_commit_hai_lan_thi_TU_CHOI(self, tmp_path) -> None:
+        """Đo lại rồi commit đè = "đo tới khi đẹp" — cấm kể cả khi bản mới vẫn đạt ngưỡng."""
+        repo = _repo(tmp_path, _cfg_vuot(), hien_vat=_hv(gia_tri=0.06))
+        (repo / HIEN_VAT).write_text(json.dumps(_hv(gia_tri=0.09)), encoding="utf-8")
+        _git(repo, "add", HIEN_VAT)
+        _git(repo, "commit", "-qm", "do lai")
+        with pytest.raises(TranVonError, match="ĐÚNG MỘT commit.*nhận 2"):
+            _load(repo)
+
+    def test_chua_cham_lockbox_thi_TU_CHOI(self, tmp_path) -> None:
+        repo = _repo(tmp_path, _cfg_vuot(), hien_vat=_hv(), cham=[])
+        with pytest.raises(TranVonError, match="chưa có lần chạm lockbox nào"):
+            _load(repo)
+
+    @pytest.mark.parametrize("cfg_hv", ["e" * 64, None])
+    def test_config_khong_khop_lan_cham_thi_TU_CHOI(self, tmp_path, cfg_hv) -> None:
+        repo = _repo(tmp_path, _cfg_vuot(), hien_vat=_hv(config_sha256=cfg_hv))
+        with pytest.raises(TranVonError, match="không khớp cấu hình nào đã chạm lockbox"):
+            _load(repo)
+
+    def test_khop_mot_trong_nhieu_lan_cham_thi_qua(self, tmp_path) -> None:
+        _load(_repo(tmp_path, _cfg_vuot(), hien_vat=_hv(), cham=[_ban_ghi_cham("f" * 64), _ban_ghi_cham()]))
 
 
 class TestNoiDuongSanXuat:

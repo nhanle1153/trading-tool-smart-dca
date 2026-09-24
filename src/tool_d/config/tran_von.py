@@ -10,8 +10,15 @@ Chủ dự án chốt 24/09/2026 (phiên mã `143375ad`), bốn câu:
 
 Không vượt trần ⇒ không kiểm gì thêm, không gọi git. Vượt trần ⇒ phải có hiện vật hợp lệ, không thì `TranVonError`.
 
-⚠️ Điểm mù đã biết: máy kiểm hiện vật ĐÃ COMMIT và NỘI DUNG đạt ngưỡng; nó không kiểm được con số trong đó do bộ đo thật
-sinh ra trên đúng cấu hình đã chạm lockbox. Commit làm việc đó nhìn thấy được, không làm nó đúng (cùng điểm mù `TD-0375`).
+TD-0387 siết thêm ba điều theo quyết định "backtest từ ngày CHỌN, đo một lần" (ô ký `DR-LOCKBOX-04` §3, `DR-XAC-NHAN-01`):
+  a. `tu_ngay` ≥ ngày của lần CHỌN **còn hiệu lực** của `hypothesis_slot` (`registry/idea_queue.jsonl`, qua
+     `idea_events.duyet_so` — lần đã `VOIDED` không tính). Không có lần chọn còn hiệu lực ⇒ chưa đạt.
+  b. Hiện vật có **đúng một commit** trong lịch sử git — đo lại rồi commit đè là "đo tới khi đẹp".
+  c. `config_sha256` của hiện vật phải là `config_hash` của một bản ghi trong `lockbox/lockbox_access.log`. Chưa có lần
+     chạm nào ⇒ chưa đạt (không xác nhận trước lockbox). Nghĩa của mã băm do đường chạm thật (`TD-0352`) định; bộ đo
+     (`TD-0389`) phải ghi đúng cùng loại băm.
+
+⚠️ Điểm mù còn lại: máy vẫn không chứng minh được con số trong hiện vật do chính bộ đo sinh ra. (b) + (c) thu hẹp, không đóng.
 """
 
 from __future__ import annotations
@@ -29,6 +36,9 @@ KHOA_KHOI = "lop_xac_nhan_sau_t3"
 KHOA_VON = ("E_D", "rho_pct", "L_exchange")
 DR_NGUON = "DR-LOCKBOX-04"
 _SLOT_RE = re.compile(r"^IQ-\d{4}$")
+#: TD-0387 — đường dẫn tương đối so với `repo_dir`.
+SO_Y_TUONG = Path("registry/idea_queue.jsonl")
+SO_TRUY_CAP_LOCKBOX = Path("lockbox/lockbox_access.log")
 
 
 def _loi(msg: str) -> Exception:
@@ -80,6 +90,48 @@ def _doc_t3(tier_c: Mapping[str, Any]) -> date:
         raise _loi(f"không đọc được tier_c.data_split.t3: {e!r}") from e
 
 
+def _ngay_chon_hieu_luc(slot: str, repo_dir: Path) -> date | str:
+    """TD-0387 (a) — ngày (UTC) của lần CHỌN còn hiệu lực của `slot`, hoặc lý do không có."""
+    from tool_d.ledger.idea_events import duyet_so
+
+    duong = repo_dir / SO_Y_TUONG
+    try:
+        dong = [json.loads(x) for x in duong.read_text(encoding="utf-8").splitlines() if x.strip()]
+    except (OSError, ValueError) as e:
+        return f"sổ ý tưởng {SO_Y_TUONG.as_posix()} đọc không được: {e!r}"
+    chon = [e for e in duyet_so(dong).chon_hieu_luc if e.get("idea_id") == slot]
+    if not chon:
+        return f"{slot} không có lần CHỌN còn hiệu lực trong {SO_Y_TUONG.as_posix()}"
+    try:
+        return datetime.strptime(str(chon[-1].get("selected_at")), "%Y-%m-%dT%H:%M:%SZ").date()
+    except ValueError:
+        return f"{slot}: selected_at {chon[-1].get('selected_at')!r} không đọc được"
+
+
+def _so_commit(rel: Path, repo_dir: Path) -> int | str:
+    """TD-0387 (b) — số commit từng chạm file hiện vật (theo cả đổi tên)."""
+    import subprocess
+
+    kq = subprocess.run(
+        ["git", "--no-optional-locks", "log", "--follow", "--format=%H", "--", rel.as_posix()],
+        cwd=repo_dir, capture_output=True, text=True,
+    )
+    if kq.returncode != 0:
+        return f"git log lỗi: {kq.stderr.strip()!r}"
+    return len([x for x in kq.stdout.splitlines() if x.strip()])
+
+
+def _hash_da_cham_lockbox(repo_dir: Path) -> set[str] | str:
+    """TD-0387 (c) — tập `config_hash` của mọi bản ghi trong sổ truy cập lockbox."""
+    from tool_d.lockbox.access_log import read_access_log
+
+    try:
+        ban_ghi = read_access_log(repo_dir / SO_TRUY_CAP_LOCKBOX)
+    except (OSError, ValueError) as e:
+        return f"sổ truy cập lockbox đọc không được: {e!r}"
+    return {str(r.get("config_hash")) for r in ban_ghi if r.get("config_hash")}
+
+
 def ly_do_chua_xac_nhan(tier_c: Mapping[str, Any], repo_dir: Path) -> list[str]:
     """Rỗng ⇒ lớp xác nhận ĐẠT. Ngược lại: mọi lý do chưa đạt (liệt kê hết, không dừng ở lý do đầu)."""
     khoi = _doc_khoi(tier_c)
@@ -106,6 +158,11 @@ def ly_do_chua_xac_nhan(tier_c: Mapping[str, Any], repo_dir: Path) -> list[str]:
     loi_commit = _da_commit(rel, repo_dir)
     if loi_commit is not None:
         return ly_do + [f"hiện vật xác nhận: {loi_commit}"]
+    so_commit = _so_commit(rel, repo_dir)
+    if so_commit != 1:
+        ly_do.append(
+            f"hiện vật xác nhận phải có ĐÚNG MỘT commit (đo một lần, DR-XAC-NHAN-01 Q2), nhận {so_commit}"
+        )
     try:
         hv = json.loads((repo_dir / rel).read_text(encoding="utf-8"))
     except (OSError, ValueError) as e:
@@ -126,6 +183,23 @@ def ly_do_chua_xac_nhan(tier_c: Mapping[str, Any], repo_dir: Path) -> list[str]:
     else:
         if tu_ngay <= t3:
             ly_do.append(f"hiện vật: tu_ngay {tu_ngay} không nằm SAU T3 = {t3} (dữ liệu đó thuộc lockbox/WFO)")
+        if isinstance(slot, str) and _SLOT_RE.match(slot):
+            ngay_chon = _ngay_chon_hieu_luc(slot, repo_dir)
+            if isinstance(ngay_chon, str):
+                ly_do.append(f"hiện vật: {ngay_chon}")
+            elif tu_ngay < ngay_chon:
+                ly_do.append(
+                    f"hiện vật: tu_ngay {tu_ngay} trước ngày CHỌN {ngay_chon} của {slot} — dữ liệu đó người ra ý tưởng"
+                    " có thể đã thấy (ô ký DR-LOCKBOX-04 §3)"
+                )
+    cfg_hv = hv.get("config_sha256")
+    hash_cham = _hash_da_cham_lockbox(repo_dir)
+    if isinstance(hash_cham, str):
+        ly_do.append(hash_cham)
+    elif not hash_cham:
+        ly_do.append("chưa có lần chạm lockbox nào — không xác nhận trước lockbox")
+    elif cfg_hv not in hash_cham:
+        ly_do.append(f"hiện vật: config_sha256 {cfg_hv!r} không khớp cấu hình nào đã chạm lockbox")
     n_lenh = hv.get("n_lenh")
     if not isinstance(n_lenh, int) or isinstance(n_lenh, bool):
         ly_do.append(f"hiện vật: n_lenh phải là số nguyên, nhận {n_lenh!r}")

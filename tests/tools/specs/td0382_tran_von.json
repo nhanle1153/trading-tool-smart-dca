@@ -1,5 +1,5 @@
 {
-  "mo_ta": "TD-0382 (DR-LOCKBOX-04): nghiem thu rang cua test chot tran von D12. Moi bien the pha MOT hanh vi cua tran_von.py; test PHAI do dung cho do. M1 chot khong chan gi (tuong duong khong noi), M2 nguong trong thanh 0 thay vi +inf, M3 lay ca ngay T3, M4 bo kiem da commit, M5 chan ca khi bang tran, M6 tran noi them 1 don vi, M7 nhan thieu 1 lenh, M8 chi xet E_D.",
+  "mo_ta": "TD-0382 + TD-0387 (DR-LOCKBOX-04): nghiem thu rang cua test chot tran von D12. M9-M13 (TD-0387): cho commit hai lan, bo kiem ngay CHON, bo kiem config khop lan cham, bo kiem chua cham, tinh ca lan chon da VOIDED. Moi bien the pha MOT hanh vi cua tran_von.py; test PHAI do dung cho do. M1 chot khong chan gi (tuong duong khong noi), M2 nguong trong thanh 0 thay vi +inf, M3 lay ca ngay T3, M4 bo kiem da commit, M5 chan ca khi bang tran, M6 tran noi them 1 don vi, M7 nhan thieu 1 lenh, M8 chi xet E_D.",
   "module": "tool_d.config.tran_von",
   "file": "src/tool_d/config/tran_von.py",
   "khoi_dong": [
@@ -35,6 +35,26 @@
     "M8": {
       "khoi_dong": ["co_khai = [k for k in KHOA_VON if k in tier_a]"],
       "thay": "co_khai = [k for k in (\"E_D\",) if k in tier_a]"
+    },
+    "M9": {
+      "khoi_dong": ["if so_commit != 1:"],
+      "thay": "if so_commit > 2:"
+    },
+    "M10": {
+      "khoi_dong": ["elif tu_ngay < ngay_chon:"],
+      "thay": "elif False:"
+    },
+    "M11": {
+      "khoi_dong": ["elif cfg_hv not in hash_cham:"],
+      "thay": "elif False:"
+    },
+    "M12": {
+      "khoi_dong": ["elif not hash_cham:"],
+      "thay": "elif False:"
+    },
+    "M13": {
+      "khoi_dong": ["chon = [e for e in duyet_so(dong).chon_hieu_luc if e.get(\"idea_id\") == slot]"],
+      "thay": "chon = [e for e in dong if e.get(\"status\") == \"SELECTED\" and e.get(\"idea_id\") == slot]"
     }
   },
   "tests": [
@@ -49,6 +69,11 @@
     "M5": "do",
     "M6": "do",
     "M7": "do",
-    "M8": "do"
+    "M8": "do",
+    "M9": "do",
+    "M10": "do",
+    "M11": "do",
+    "M12": "do",
+    "M13": "do"
   }
 }
