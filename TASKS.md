@@ -1130,6 +1130,31 @@ bộ chạy D10 (`DR-D10-02`): chờ chủ dự án làm xong phần tài khoả
 
 ---
 
+## Khối 38 — Ứng viên suất (d) `IQ-0003`: thiết kế D0 + gỡ bốn chỗ vênh `MT-80`…`MT-83` (mở 24/09/2026)
+
+> **Vì sao khối này tồn tại:** `IQ-0003` SELECTED (`729e27f`, slot `A-Q4-2026-01`) là ứng viên suất (d) đầu tiên còn hiệu
+> lực. Nó là rổ trung tính notional cân lại hằng ngày theo funding — khác hẳn hình dạng chiến lược mà tầng đo được dựng
+> cho (vào lệnh chờ theo tranche). Bốn chỗ vênh chủ dự án đã chốt 24/09/2026 (`MT-80`…`MT-83`, `f15465d`) phải thành DR +
+> mã trước khi suất trial đầu tiên của slot `IQ-0003` được xin. Phiên thi hành đã nhiễm (DR-009): **chỉ dựng đúng thứ tờ
+> chọn khai, không đánh giá, không thêm biến thể**.
+
+| Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
+|---|---|---|---|---|
+| TD-0394 | 🚪 **`DR-D0-IQ0003`** — thiết kế D0 của `IQ-0003`: ánh xạ `tin_hieu`/`quy_tac`/`nguong_bac_bo` sang tham số (tầng A/B/C, N4), cách dựng rổ chéo trong Freqtrade, nguồn funding cả pool, rổ = một hướng `NEUTRAL` + báo cáo tách chân chỉ ghi (`MT-82`), thước đo sai lệch cho lệnh thị trường (`MT-83` câu 2) | 🔒 | — | DR commit RIÊNG, TRƯỚC mã chiến lược; câu kỹ thuật chủ dự án chốt |
+| TD-0395 | 🚪 **`DR-BIEN-THE-01`** — *một biến thể = một cấu hình* (`MT-80` (b)) | 🔒 | — | DR commit RIÊNG, TRƯỚC TD-0396 |
+| TD-0396 | **Phép đếm `TD-0119b` theo cấu hình phân biệt** — đếm số cấu hình phân biệt trên slot (định danh cấu hình theo `DR-DINH-DANH-01`), không đếm suất CONSUMED; giữ phần "chỉ dòng vào `N`" của `TD-0389` | 🔓 | TD-0395 | Test chạy riêng PASS + phá thật đúng ca đỏ; full suite Docker 0 failed |
+| TD-0397 | 🚪 **`DR-CAN-RO-01`** — dải `TIME_STOP` (`TD-0375`) không áp cho chiến lược cân rổ theo lịch (`MT-81` (c)); tiêu chí nhận diện máy đọc được, để lối miễn không mở cho chiến lược khác | 🔒 | — | DR commit RIÊNG, TRƯỚC TD-0398 |
+| TD-0398 | **Cổng `exit_reason_thiet_ke` theo `DR-CAN-RO-01`** — miễn đúng lớp chiến lược đã khai; mọi slot khác giữ nguyên chặn cứng | 🔓 | TD-0397 | Test chạy riêng PASS + phá thật; full suite Docker 0 failed |
+| TD-0399 | 🚪 **`DR-SHORT-02`** — mở lại khâu ĐO Short bằng công tắc chung `tier_a.enable_short` (`MT-83`), khai thẳng là **ghi đè** `DR-SHORT-01` / `DR-HUONG-01` §3; hệ quả dry-run ZA + `L-Z56` | 🔒 | — | DR commit RIÊNG, TRƯỚC TD-0402 |
+| TD-0400 | **Chiến lược rổ `IQ-0003`** — file chiến lược mới theo `DR-D0-IQ0003`; không `*Parameter` (`L-Z37`), không entrypoint thứ 9 (`L-Z36`), tham số chỉ từ `tool_d_config.yaml` (N4) | 🔓 | TD-0394 | Test khoá hành vi rổ trên dữ liệu tổng hợp; full suite Docker 0 failed |
+| TD-0401 | **Đếm `exit_reason` trên EXPLORE, 0 suất** — hiện vật `docs/du-lieu-do/IQ-0003-exit-reason-explore.json` (khuôn `TD-0375`), commit trước suất đầu tiên | 🔓 | TD-0400, TD-0398 | Hiện vật đã commit; `reserve()` của slot `IQ-0003` không còn chặn vì thiếu hiện vật |
+| TD-0402 | **Bật `tier_a.enable_short`** theo `DR-SHORT-02` — báo chủ dự án chọn lúc khởi động lại bot dry-run ZA TRƯỚC khi bật | 🔓 | TD-0399, TD-0400 | Chủ dự án xác nhận lúc bật; full suite Docker 0 failed |
+
+**Đặt chỗ mã (N12 mục 7c):** `TD-0394`…`TD-0402` + `DR-D0-IQ0003`, `DR-BIEN-THE-01`, `DR-CAN-RO-01`, `DR-SHORT-02`,
+commit này, `Phien: 12c579bc`. Khoá 🔒 bốn việc DR cùng commit.
+
+---
+
 ## Việc đã biết là sẽ có, chưa mở
 
 | Giai đoạn | Nội dung | Chặn bởi |
