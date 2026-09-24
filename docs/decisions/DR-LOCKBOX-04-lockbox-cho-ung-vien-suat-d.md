@@ -135,3 +135,34 @@ file phiên CHỌN đọc; không sửa nó để khỏi lộ lockbox là đoạ
 > ~84%. Các phương án bị loại: `mean_r ≥ 0` (lọt ~50%), cận dưới KTC95 ≥ 0 (lợi thế 0,3 R chỉ qua ~31%, vốn đứng yên lâu),
 > `dsr_adj ≥ 0` (như trên). Hướng sai của ngưỡng đã chọn là **cho tăng vốn nhầm ~31% khi không có lợi thế** — chấp nhận vì
 > đây là lớp THỨ HAI sau lockbox PASS, không phải lớp duy nhất.
+
+---
+
+## Bổ sung 24/09/2026 — khoá vốn rổ `von_ro_usdt` vào trần D12 (phiên mã `143375ad`, `TD-0404`)
+
+> Nối cuối; §1–§3 và ô ký giữ nguyên chữ.
+
+**Lỗ hổng** (tự khai ở `DR-D0-IQ0003` §5 mục 4): máy canh §2 dòng 3 (`TD-0382`, `tran_von.KHOA_VON`) chỉ chặn `E_D` /
+`rho_pct` / `L_exchange`. Ứng viên `IQ-0003` dùng vốn RIÊNG `tier_a.von_ro_usdt`, nằm ngoài trần ⇒ *"vốn không tăng quá
+mức D12 trước khi xác nhận"* không có máy canh cho ứng viên này. Chủ dự án chọn (24/09/2026): **đưa vào trần, làm trước**.
+
+**Quy tắc (thi hành ở `TD-0404`):**
+
+| `tier_a.von_ro_usdt` | `tran_d12.von_ro_usdt` | Kết quả khi chưa có hiện vật xác nhận |
+|---|---|---|
+| `null` | bất kỳ | bỏ qua — rổ chưa cấp vốn, `RoFunding` tự từ chối chạy |
+| số | `null` | **VƯỢT** ⇒ nạp config từ chối (`TranVonError`) |
+| số | số | so như ba khoá cũ: vượt trần ⇒ từ chối |
+
+Sau khi lớp xác nhận đạt (`ly_do_chua_xac_nhan` rỗng), trần thôi áp — như ba khoá cũ.
+
+🔑 **Thời điểm chốt con số trần — đính chính cách hỏi ban đầu.** Câu hỏi trình chủ dự án ghi *"con số trần chốt lúc mở D12
+cho IQ-0003"*. Đọc lại `DR-D0-IQ0003` §10 câu (c): `von_ro_usdt` phải có giá trị **trước suất trial đầu tiên** (ví mô phỏng
+của backtest = `von_ro_usdt / tradable_balance_ratio`). Nếu trần để `null` tới D12 thì theo bảng trên, mọi lần nạp config
+(cả backtest lẫn bot dry-run ZA) bị từ chối ngay khi §10 (c) điền vốn. Vì thế **`tran_d12.von_ro_usdt` phải được điền CÙNG
+lần (cùng commit) với `tier_a.von_ro_usdt` ở §10 (c)**, theo đúng khuôn ba khoá cũ: trần = giá trị nghiên cứu đang dùng
+(`E_D` = 750 là trần của chính nó). Không có phương án thứ ba giữ được máy canh: trần để trống mà không chặn thì chính là lỗ hổng.
+Lỗi khi quên điền trần là lỗi **ồn** (config từ chối nạp, thông báo nêu cả hai khoá), không phải lỗi im lặng.
+
+**Test cũ không phải đổi:** `test_td0382_tran_von_d12.py:120` khẳng định trần = giá trị hiện tại cho mọi khoá trong `KHOA_VON`;
+với `von_ro_usdt` cả hai phía đều `null` nên vẫn đúng.
