@@ -1032,7 +1032,7 @@ bộ chạy D10 (`DR-D10-02`): chờ chủ dự án làm xong phần tài khoả
 
 | Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
 |---|---|---|---|---|
-| TD-0366 | 🚪 **`DR-LZ12-01`** + vá `L-Z12`: đơn vị so sánh thành `(config_hash, code_commit)`, GIỮ dòng `CTRL`; mục `MT` theo quy tắc 11 (hai điều đã chốt va nhau) | 🔒 | — | DR commit **RIÊNG và TRƯỚC** mã; kiểm-có-răng: cùng mã + cùng cấu hình + khác kết quả ⇒ **vẫn đỏ**; E6 trên sổ thật hết đỏ; full suite 0 đỏ |
+| TD-0366 | 🚪 **`DR-LZ12-01`** + vá `L-Z12`: đơn vị so sánh thành `(config_hash, code_commit)`, GIỮ dòng `CTRL`; mục `MT` theo quy tắc 11 (hai điều đã chốt va nhau) | ✅ | — | DR commit **RIÊNG và TRƯỚC** mã; kiểm-có-răng: cùng mã + cùng cấu hình + khác kết quả ⇒ **vẫn đỏ**; E6 trên sổ thật hết đỏ; full suite 0 đỏ — ✅ **24/09/2026:** DR `6b4c9dd` · mã `2521a81` · ca ghim giữ `CTRL` `c43b396` (phá thật *"bỏ qua CTRL"* ⇒ đúng 1 ca đỏ) · spec `:3874` `fdc6ef0` · `MT-75`/`MT-76` `ef3f0f9`. Docker: E6 sổ thật 10/16 đạt, **0 chưa đạt**, `L-Z12` ⏳ (đúng DR §7); full suite **3137 passed, 0 failed**; sổ trial 56 dòng không đổi |
 
 **Đặt chỗ mã (N12 mục 7c):** `TD-0366` + `DR-LZ12-01`, commit này, `Phien: dd855fee`. Đã báo `69768527` (giữ
 `TD-0362`…`TD-0365` + `DR-LOCKBOX-03`) rằng tôi nhận `audit_checks.py`. **Thêm 24/09/2026:** chủ dự án giao lại
