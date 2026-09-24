@@ -130,3 +130,29 @@ tiên sẽ làm nó đỏ. Chủ dự án chọn phương án được gắn *"(
 - Dòng `XAC`: `dataset = XAC_NHAN`; `hypothesis_slot` dạng `IQ-xxxx`; `param_under_test = xac_nhan_cua_so`, `che_do = TINH`;
   ≤ 1 dòng `XAC` không bị REFUND mỗi slot.
 - Dòng `CTRL` trên `XAC_NHAN`: khai đúng `ctrl_mo_ta_whitelist = ["so_lenh"]`, `che_do = DEM`.
+
+---
+
+## 9. ✅ RỔ `XAC_NHAN` CHO ỨNG VIÊN ĐÃ CHỌN — gỡ Q5 (24/09/2026, phiên mã `143375ad`, `TD-0391`)
+
+Điều kiện hoãn của Q5 (*"làm khi có ứng viên được CHỌN"*) đã thoả: `IQ-0003` SELECTED `2026-09-24T14:07:20Z` (`729e27f`). Chủ
+dự án chốt cách gỡ ba vướng (chọn qua công cụ hỏi-chọn, 24/09/2026):
+
+| Vướng Q5 | Cách gỡ |
+|---|---|
+| Kho volume THÁNG chỉ có sau khi hết tháng | **Dùng kho NGÀY** `data.binance.vision` — `/data/futures/um/daily/klines/<SYM>/1d/<SYM>-1d-<YYYY-MM-DD>.zip`, có từ hôm sau. Chủ dự án chọn phương án này thay cho khuyến nghị *"chờ kho tháng"*; giá phải trả: thêm một đường đọc mới, rổ này không đi cùng đường đọc với rổ `T0`/`T1`/`T2`. Ngày onboard sát ngưỡng tuổi vẫn đọc kho THÁNG của tháng onboard (đã có) — không đổi |
+| Nguồn khoảng tồn tại `TD-0306` dừng ở 08/2026 | **Đủ dùng, không cần đo lại khoảng.** Sàn tuổi 180 ngày (`build_pool.py:32`) loại mọi mã niêm yết sau 28/03/2026 ⇒ mã mới niêm yết trong 09/2026 không bao giờ vào rổ. Mã còn sống ở tháng cuối của nguồn (08/2026, không có `moc_ngung`): **có file ngày tại ngày CHỌN ⇒ sống**; không có (404) ⇒ xếp `khong_do_duoc.kho_404`, ghi riêng, **không** thay bằng nguồn khác. Cách làm: nối `thang_cuoi` của các mã đó tới tháng CHỌN trước khi gọi `dung_ro_tai_moc` (hàm giữ nguyên); quy ước này ghi vào file rổ |
+| Không có đối chứng `TD-0231` cho ngày bất kỳ | **Chạy lại logic đo `TD-0231`** (`docs/du-lieu-do/do_td0231_pool_point_in_time.py::_dung_mot_moc`) cho ngày CHỌN làm đường thứ hai → hiện vật `docs/du-lieu-do/td0391-ro-xac-nhan-doi-chieu.json`, commit TRƯỚC khi E7 ghi rổ. Hai đường phải **KHÍT** (khuôn `t0`/`t1` của `DR-D1-03` §2, không phải khuôn bất đối xứng của `t2`) |
+
+**File rổ** `config/pool_xac_nhan.yaml`, sinh bằng `E7 --ro-xac-nhan --slot IQ-xxxx --ghi`, 0 trial, từ chối ghi đè, mang:
+`moc_xac_nhan` (ngày UTC của lần CHỌN — khoá `ro_cho_tap` đã đòi), `hypothesis_slot`, `selected_at`. **Ngày đọc từ sổ ý tưởng**
+(lần CHỌN còn hiệu lực, cùng hàm `tran_von._ngay_chon_hieu_luc`), không nhập tay. Tiêu chí, loại EXPLORE đã dùng, loại TRADIFI:
+như rổ `T0`/`T1`/`T2`. Rổ commit **TRƯỚC** lần tải dữ liệu `XAC_NHAN` đầu tiên.
+
+**Quy ước point-in-time, ghi ra để không ai đọc nhầm:** volume của ngày mốc là volume **cả ngày UTC** chứa mốc — cùng quy ước
+rổ `T0`/`T1`/`T2` (`dung_ro_tai_moc` đọc `vol_thang[moc]`). Lần CHỌN lúc 14:07Z nên ~10 giờ cuối ngày nằm sau mốc. Chấp nhận:
+tiêu chí là ngưỡng volume 15 triệu USDT/ngày của cả rổ, không phải kết quả của ứng viên; đổi quy ước chỉ cho rổ này sẽ làm nó
+lệch khuôn ba rổ kia.
+
+**Một rổ cho một lần CHỌN.** Suất (d) hạn ngạch 1 tới 31/12/2026 ⇒ tại một thời điểm có tối đa một ứng viên đang xác nhận. Lần
+CHỌN sau (nếu `IQ-0003` bị VOIDED) cần file rổ mới ⇒ xoá tay + DR, như mọi rổ đã commit.
