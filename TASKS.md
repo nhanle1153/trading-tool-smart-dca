@@ -1073,6 +1073,27 @@ bộ chạy D10 (`DR-D10-02`): chờ chủ dự án làm xong phần tài khoả
 
 ---
 
+## Khối 36 — Định danh một lần chạy + điểm kiểm soát tái lập §0d.4 (mở 24/09/2026, thi hành `DR-DINH-DANH-01`, giải `MT-75`/`MT-76`)
+
+> **Vì sao khối này tồn tại:** hệ thống **không có trường nào định danh "một lần chạy"** — mỗi phép kiểm tự chọn một tập
+> con (`L-Z12` chọn `(config, commit)`, cửa `CTRL` tái lập chọn `config`, cache WFO chọn `config + code + data`); **22/22**
+> dòng RESERVE mang `reproducible_from_sha = False`; và **bước 3 của §0d.4** (*"kết quả phải KHỚP trial gốc, sai số ≤ 0,1%
+> expectancy"*) **chưa có một dòng mã**. 🔴 Đọc thẳng `MT-76` (*"cửa ghi phải xét `code_commit`"*) là SAI HƯỚNG: điểm kiểm
+> soát §0d.4 chạy SAU một commit nên theo định nghĩa khác mã với trial gốc. Chủ dự án duyệt phương án C cho cả hai mục
+> 24/09/2026; ngưỡng tái lập = `max(0,1% × |E_gốc|, 0,001 R)`.
+
+| Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
+|---|---|---|---|---|
+| TD-0377 | 🚪 **`DR-DINH-DANH-01`** — định danh hai tầng (cấu hình / lần chạy), phép kiểm nào dùng tầng nào; tái lập §0d.4 ĐƯỢC khác mã; ngưỡng tái lập; đính chính lý do `DR-LZ12-01` §3.1 | 🔒 | — | DR commit **RIÊNG và TRƯỚC** mọi dòng mã của khối; 0 trial |
+| TD-0378 | **Siết cửa ghi `CTRL` tái lập** (`registry._kiem_ctrl_tai_lap`): từ chối lính canh `"n/a"`/`""`; gốc phải là trial thật (B1/B2/B3, CONSUMED, `expectancy` khác null); `dataset`/`direction`/`param_under_test`/`param_value`/`data_hashes` phải bằng gốc; `code_commit` ĐƯỢC khác | 🔓 | TD-0377 · TD-0375 (cùng `reserve()`) | 4 ca từ chối + 1 ca QUA khi khác `code_commit`; phá thật từng chốt ⇒ đúng ca đó đỏ; `tests/lock/test_td0130_*` xanh không đổi khẳng định nào |
+| TD-0379 | **Phép kiểm kết quả §0d.4 bước 3** — mọi `CTRL` tái lập CONSUMED có `abs(E_ctrl − E_gốc) ≤ max(0,1%·abs(E_gốc), 0,001 R)`, không ⇒ ĐỎ; 0 dòng tái lập ⇒ `pending` (N6). Ngưỡng đọc từ `tool_d_config.yaml` (N4), thiếu ⇒ không PASS | 🔓 | TD-0377 | Test tên `test_td0379_*` (không cấp mã `L-Z`, MT-09); KHÔNG vào `WARN_ONLY_CODES`; E6 sổ thật 0 chưa đạt, ca mới ⏳ |
+| TD-0380 | **Dấu vân tay lần chạy** ghi vào mọi dòng RESERVE MỚI (E1, E3, DR-015 bước 1; E7 miễn): cấu hình + commit + băm diff chưa commit của file ảnh hưởng phép đo + `data_hashes` + phạm vi + image digest (dùng lại `provenance.cache_key()`); `L-Z12` gom theo vân tay khi có, về cặp khi không | 🔓 | TD-0377 | Schema thêm trường TUỲ CHỌN (dòng cũ không có); E6 sổ thật 0 chưa đạt, `L-Z12` ⏳; sổ trial không đổi dòng nào |
+
+**Đặt chỗ mã (N12 mục 7c):** `TD-0377`…`TD-0380` + `DR-DINH-DANH-01`, commit này, `Phien: 30c2eea5`. Đã báo phiên
+`dd855fee` (giữ `TD-0376`, đang đụng `audit_checks.py`); `TD-0378` chờ `TD-0375` (phiên `1d1c91c0`) rời `registry.py`.
+
+---
+
 ## Việc đã biết là sẽ có, chưa mở
 
 | Giai đoạn | Nội dung | Chặn bởi |
