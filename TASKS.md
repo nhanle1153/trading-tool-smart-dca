@@ -953,6 +953,14 @@
 
 **Đặt chỗ mã (N12 mục 7c):** `TD-0349`…`TD-0353` + `DR-TRIEN-KHAI-01`, commit này, `Phien: dd855fee`. Chưa đặt chỗ mã cho
 bộ chạy D10 (`DR-D10-02`): chờ chủ dự án làm xong phần tài khoản Binance phụ (`DR-D11-01` §3).
+**Đặt chỗ 24/09/2026:** chủ dự án xác nhận tài khoản phụ đã có + đã siết ⇒ `TD-0383`…`TD-0385` + `DR-D10-02`, commit này,
+`Phien: dd89043d`. `DR-D10-02` mới là NHÁP (6 câu chờ chủ dự án) — chưa khoá dòng nào.
+
+| Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
+|---|---|---|---|---|
+| TD-0383 | 🚪 **`DR-D10-02`** — cách chạy D10: nguồn vị thế (chiến lược / cưỡng bức / lai), cỡ lệnh, máy kiểm bảo mật tài khoản, chung IP với dry-run, `n < 30`, ai bấm nút | 🔓 | — | Chủ dự án chốt Q1–Q6; commit **RIÊNG và TRƯỚC** mọi dòng mã |
+| TD-0384 | **Bộ chạy live D10** (`ops/live_d10.py`): cấu hình phủ `dry_run: false` + DB live riêng + key qua env; `validate_credentials_for_live()` ở `main()` + kiểm AST; máy canh ngân sách ≤ 20 vị thế tuần tự / cửa sổ 14+14 ngày đọc từ DB; dạng CTRL thứ tư; service sau profile `d10` | 🔓 | TD-0383 | Test qua đường sản xuất + phá thật; `entrypoints/` vẫn 8 file; 0 lệnh thật trước khi full suite xanh |
+| TD-0385 | **Bộ đo ba ngưỡng D10** (`DR-D11-01` §5): D6 theo công thức `DR-D35-01` §4 · p99 `gap_ms` từ bản ghi `DOI_SL` · NO_FILL/khớp một phần — đọc DB live, ghi `docs/du-lieu-do/d10-*.json` | 🔓 | TD-0383 | Ngưỡng đọc từ artifact niêm phong, không số mới; `n < 30` báo thẳng (N6) |
 
 ---
 
