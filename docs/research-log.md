@@ -4270,3 +4270,32 @@ cửa mới từ chối, đúng thiết kế. Vá bằng repo git nhỏ có hi�
 - Notepad lưu `.env.telegram` thành `.env.telegram.txt` (thêm đuôi). `.gitignore` (`.env.*`) vẫn che, nhưng đường dẫn
   compose không tìm thấy ⇒ đổi tên. Vẫn còn treo: lỗi `custom_stoploss` (ngày giờ lẫn kiểu, `gap_ms.py:98`) — chờ chủ dự án
   quyết có mở việc sửa không.
+
+## 25/09/2026 — TD-0403 (`gap_ms` naive/aware) và thử báo động watchdog, đủ chu trình (phiên mã `dd89043d`)
+
+- **Lỗi bắt được từ log dry-run D11, không từ test:** `custom_stoploss` nổ `TypeError: can't compare offset-naive and
+  offset-aware datetimes` (07:01:38 và 07:55:53 ngày 24/09), cả hai ngay sau khi một lệnh SL mới được tạo. Đọc lệnh SL
+  thật trong DB dry-run (N10): SQLite lưu UTC KHÔNG múi giờ ⇒ lệnh nạp từ DB naive, lệnh vừa tạo trong bộ nhớ aware,
+  trộn trong cùng `trade.orders`. Suite xanh vì mọi fixture dựng tay cùng một dạng — đúng họ *"ca sai chỉ đi qua mẫu dựng
+  tay"* đã ghi 08/09.
+- 🔴 **Hậu quả nặng hơn lỗi gốc:** `_ghi_gap_ms()` chạy TRƯỚC `return stoploss_from_absolute(...)`. Freqtrade nuốt exception
+  của callback ⇒ `custom_stoploss` trả `None` ⇒ **SL không được cập nhật vòng đó**. Một lỗi của SỔ ĐO cướp mất LỆNH BẢO VỆ
+  VỐN. Vá cả hai (`ac84fbf`): `_utc()` chuẩn hoá ở `gap_ms.py` (bản ghi giữ `ts` gốc để không đổi khẳng định cũ), và tính SL
+  trước rồi ghi sổ trong `try/except` log `ERROR`. Tự lành: hàm đọc lại toàn bộ lịch sử mỗi lần gọi.
+- **Bằng chứng:** phá thật khớp dự đoán viết trước (3 + 1 + 2 ca đỏ, M0 xanh). Lần đầu đặc tả thứ hai hỏng do CHÍNH TÔI:
+  công cụ `mutate_in_memory.py` gán cùng mức thụt lề của dòng đầu cho MỌI dòng thay thế, nên `finally:` bị thụt vào và bản
+  phá không biên dịch được (báo *"không đọc được tóm tắt"*, không phải "xanh"). Sau khi nạp lại dry-run: 0 ERROR, và
+  `decision_log` dry-run được ghi bù 6 bản `DOI_SL` (`gap_ms` 4,5–213 ms) cho các lệnh giấy cũ — đúng thứ lỗi cũ làm nổ.
+  ⚠️ Đó là thời gian của **giả lập** Freqtrade, không phải sàn thật ⇒ không phải bằng chứng D10.
+- 🔑 **Bẫy đo lường tự gây của tôi:** đếm "18 dòng lỗi" bằng `awk '$1" "$2 >= mốc'` lọt cả dòng `Traceback` không có mốc
+  thời gian (so chuỗi `"Traceback" > "2026"`) ⇒ 18 dương tính giả từ hai lỗi cũ. Đếm lại theo tiền tố mốc thời gian: 0.
+  Trước khi báo "có lỗi mới", lọc theo khoá thật (mốc) chứ không so chuỗi suông.
+- **Thử báo động watchdog (TD-0209/0350) — ĐÃ ĐỦ CHU TRÌNH, chủ dự án xác nhận bằng ảnh Telegram:** tắt bot 17:11:13 UTC ⇒
+  12:11 SA Freqtrade gửi `Status: process died` + cảnh báo còn 1 lệnh mở; 12:16 SA watchdog gửi 🔴 *heartbeat cũ 311s > ngưỡng
+  300s*; bật lại ⇒ 12:20 SA tin khởi động Freqtrade; 12:23 SA watchdog gửi ✅ *ĐÃ PHỤC HỒI*. Độ trễ báo động 311 s ≈ ngưỡng
+  300 s + tới 60 s chu kỳ kiểm, đúng thiết kế. Giới hạn: đây là kiểm **dừng sạch** (SIGTERM), chưa thử **treo** (tiến trình
+  sống mà không ghi heartbeat) — cơ chế kiểm tuổi file cho cả hai, nhưng chưa được chạy thật cho ca treo.
+- ⚠️ **Dry-run đang chạy KHÔNG khớp HEAD:** file `ZoneAbsorption.py` trên đĩa lúc bật lại kèm thay đổi CHƯA COMMIT của phiên
+  khác (TD-0405, tin Telegram lúc khớp). Khối đó nằm trong `try/except` nên không chặn được lệnh, nhưng "chạy đúng bản đã
+  commit" (N7/rollback) không thoả cho tới khi TD-0405 được commit. Ngoài ra full suite lúc commit `TD-0403` có 9 ca đỏ
+  thuộc thay đổi chưa commit của phiên khác (TD-0404).
