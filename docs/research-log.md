@@ -4231,3 +4231,20 @@ cửa mới từ chối, đúng thiết kế. Vá bằng repo git nhỏ có hi�
   `dataset`. Một file gõ tay đúng khuôn rồi commit vẫn qua — commit làm nó nhìn thấy được, không làm nó đúng.
 - Lối thoát DR: máy kiểm giấy tồn tại và đúng địa chỉ, không kiểm nội dung là quyết định của chủ dự án.
 - "Suất đầu tiên" = slot chưa có dòng nào trên sổ; suất bị REFUND vẫn tính là đã qua cửa.
+
+## 24/09/2026 — TD-0349/0350/0353: đóng ba dòng mà đĩa đã xong từ 19–20/09; bật dry-run D11 (phiên mã `dd89043d`)
+
+- **Hình dạng lệch:** `DR-TRIEN-KHAI-01` (`3f1b5a6`, 19/09) và mã dry-run (`b3b766d`, 20/09) đã commit, nhưng ba ô
+  trạng thái vẫn 🔓 suốt 4–5 ngày — không khoá, không đóng. Một bản tóm tắt gửi chủ dự án vẫn ghi hai việc là
+  *"làm được ngay"*. Cùng họ `MT-46`/`OQ-15`, ở chiều ngược: `--kiem-backlog` bắt 🔒 quên đóng và ⏸ lệch ghi chú,
+  **không** bắt 🔓 mà mã đã trên đĩa. Chưa đề xuất máy canh — ghi lại để không ai coi cột 🔓 là "chưa ai làm".
+- **Phá thật trong bộ nhớ** (`fc58b19`): 5 phép phá trên `dry_run`/`heartbeat`/`heartbeat_watchdog`/`equity_peak`,
+  dự đoán viết trước, mỗi phép **đúng 1 ca đỏ** đúng test đã đoán. Giới hạn: hook trong file chiến lược
+  (`bot_loop_start`/`bot_start`) không phá được bằng công cụ này.
+- **Chạy lại thật** vì chiến lược đổi sau `b3b766d` (TD-0364): full suite Docker **3235 passed**; bot dry-run RUNNING,
+  102/102 cặp, heartbeat đổi mốc 15/15 mẫu trong 5 phút, 0 ERROR, container thấy 0 file `lockbox/data`. **Để chạy
+  liên tục** theo chủ dự án. Nhãn theo `DR-TRIEN-KHAI-01` §4: *"dry-run vận hành"* — không trích làm hiệu năng.
+- ⚠️ **`dryrun-watchdog` KHÔNG chạy:** thiếu `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID` ⇒ fail-fast đúng thiết kế, và
+  `restart` làm nó khởi động lại liên tục ⇒ đã `stop`. Tới khi có env, bot chết/treo **không ai được báo** — đúng
+  thứ TD-0209 sinh ra để chặn.
+- D10: đặt chỗ `TD-0383…0385` + `DR-D10-02` (`4c43b0f`); DR còn NHÁP, 6 câu chờ chủ dự án. 0 lệnh thật.
