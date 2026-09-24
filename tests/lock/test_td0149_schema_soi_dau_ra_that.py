@@ -168,8 +168,23 @@ class TestDauRaThatHopLeTheoSchema:
     def test_hypothesis_slot_dang_IQ_cung_hop_le(self, tmp_path: Path) -> None:
         """MT-12 nối sổ ý tưởng vào sổ trial bằng `hypothesis_slot = IQ-xxxx`.
         Nếu schema siết `hypothesis_slot` thành dạng `A-xx` thì cả cơ chế đó
-        gãy — ca này canh cho khỏi siết nhầm."""
-        so = _so(tmp_path)
+        gãy — ca này canh cho khỏi siết nhầm.
+
+        TD-0375: suất đầu tiên của slot `IQ-xxxx` nay cần số đếm `exit_reason` EXPLORE đã commit
+        (`DR-PHAN-QUYET-01` §4.2 bước 3) — dựng một repo git nhỏ có hiện vật hợp lệ. Chỉ đổi SETUP,
+        khẳng định giữ nguyên."""
+        import subprocess
+
+        repo = tmp_path / "repo"
+        (repo / "docs/du-lieu-do").mkdir(parents=True)
+        (repo / "docs/du-lieu-do/IQ-0007-exit-reason-explore.json").write_text(
+            json.dumps({"lenh_that": {"A1": {"so_lenh": 10, "exit_reason": {"TIME_STOP": 1, "x": 9}}}}),
+            encoding="utf-8",
+        )
+        for lenh in (["init", "-q"], ["add", "-A"],
+                     ["-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "seed"]):
+            subprocess.run(["git", *lenh], cwd=repo, check=True, capture_output=True)
+        so = TrialLedger(_duong_dan(tmp_path), repo_dir=repo)
         _reserve(so, hypothesis_slot="IQ-0007")
         jsonschema.validate(_doc_su_kien(tmp_path)[0], SCHEMA)
 

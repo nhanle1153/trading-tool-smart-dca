@@ -61,6 +61,8 @@ def _doc_khoa_cong_vao_d9(runtime_state_path: Path) -> dict[str, bool]:
     return {k: data.get(k) is True for k in KHOA_CONG_VAO_D9}
 
 CTRL_BUDGET_LINE = "CTRL"
+#: `B0` = tiêu chí pool (§0.3), quyết định hạ tầng — không phải đánh giá cấu hình của một ứng viên (TD-0375).
+BUDGET_LINE_B0 = "B0"
 
 CTRL_OUTPUT_ALLOWED = frozenset({"price_delta", "tranche_index", "direction"})
 """Đầu ra cho phép của CTRL dạng *đo thước* — spec dòng 3605-3607 liệt kê
@@ -108,6 +110,12 @@ class B1Error(LedgerError):
     """TD-0253 — một lần đặt chỗ B1 không thuộc `DR-D5-01` (sai giá trị thử, vượt
     trần, cổng D4 chưa đóng…). Từ chối TẠI CỬA, trước khi ghi dòng nào: suất B1
     đã vào sổ là đã chạm CALIB, sổ append-only không lùi được."""
+
+
+class ThietKeChuaKiemError(LedgerError):
+    """TD-0375 — suất ĐẦU TIÊN của ứng viên `IQ-xxxx` khi `DR-PHAN-QUYET-01` §4.2 bước 3 chưa thoả (thiếu số đếm
+    `exit_reason` EXPLORE đã commit, hoặc `TIME_STOP` ngoài dải mà không có DR khai trước). Từ chối TẠI CỬA, trước
+    khi ghi dòng nào — cùng lý do `B1Error`."""
 
 
 class CtrlClaimError(LedgerError):
@@ -254,13 +262,18 @@ class TrialLedger:
         *,
         dr_d5_path: Path = DEFAULT_DR_D5_01_PATH,
         runtime_state_path: Path = DEFAULT_RUNTIME_STATE_PATH,
+        repo_dir: Path = Path("."),
     ) -> None:
         """`dr_d5_path` / `runtime_state_path` chỉ dùng cho cửa B1 (TD-0253), tiêm
         được cùng khuôn `path` của sổ — mặc định là đường THẬT. Không có tham số
-        nào TẮT cửa B1: tắt được là một đường vòng, không phải một cấu hình."""
+        nào TẮT cửa B1: tắt được là một đường vòng, không phải một cấu hình.
+
+        `repo_dir` (TD-0375) là gốc repo để cửa thiết kế tìm hiện vật `exit_reason` và kiểm nó đã commit — cũng
+        không tắt được cửa: đổi gốc thì hiện vật vẫn phải có và đã commit ở gốc mới."""
         self._path = path
         self._dr_d5_path = dr_d5_path
         self._runtime_state_path = runtime_state_path
+        self._repo_dir = repo_dir
         if not self._path.exists():
             self._path.parent.mkdir(parents=True, exist_ok=True)
             self._path.touch()
@@ -518,6 +531,23 @@ class TrialLedger:
         except UngVienError as e:
             raise B1Error(f"TỪ CHỐI đặt chỗ B1 — {e}") from e
 
+    def _kiem_cua_thiet_ke(self, *, budget_line: str, hypothesis_slot: str) -> None:
+        """TD-0375 — `DR-PHAN-QUYET-01` §4.2 bước 3, CHẶN CỨNG (chủ dự án chốt 24/09/2026).
+
+        Chỉ áp cho suất ĐẦU TIÊN của một slot ứng viên `IQ-xxxx`, dòng không phải `B0` (hạ tầng pool, không đánh giá
+        cấu hình) — CTRL không tới được đây. Slot đã có dòng nào trên sổ ⇒ đã qua cửa này lúc đó, không kiểm lại.
+        ZA LONG (slot `A-xx`) không bị áp. Import trễ để không kéo `chi_so_export` vào lúc nạp sổ."""
+        from tool_d.gates import exit_reason_thiet_ke as tk
+
+        if budget_line == BUDGET_LINE_B0 or not tk.la_slot_ung_vien(hypothesis_slot):
+            return
+        if any(p.hypothesis_slot == hypothesis_slot for p in self.projections().values()):
+            return
+        try:
+            tk.kiem_exit_reason_thiet_ke(hypothesis_slot, repo_dir=self._repo_dir)
+        except tk.ExitReasonThietKeError as e:
+            raise ThietKeChuaKiemError(f"TỪ CHỐI suất đầu tiên — {e}") from e
+
     def reserve(
         self,
         *,
@@ -565,6 +595,7 @@ class TrialLedger:
                     param_under_test=param_under_test,
                     param_value=param_value,
                 )
+            self._kiem_cua_thiet_ke(budget_line=budget_line, hypothesis_slot=hypothesis_slot)
             khadung = self.available(
                 n_dang_ky=n_dang_ky, so_lenh_da_dong=so_lenh_da_dong
             )

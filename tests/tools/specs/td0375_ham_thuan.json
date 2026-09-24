@@ -1,0 +1,25 @@
+{
+  "mo_ta": "TD-0375: ham thuan kiem_exit_reason_thiet_ke(). M1 = bien duoi thanh chan doan (de xuat da bi LOAI o DR-PHAN-QUYET-01 4.1); M2 = bo kiem da commit (chi can file ton tai); M3 = bo kiem tong exit_reason khop so_lenh.",
+  "module": "tool_d.gates.exit_reason_thiet_ke",
+  "file": "src/tool_d/gates/exit_reason_thiet_ke.py",
+  "khoi_dong": ["if not lo <= ty_le <= hi:"],
+  "bien_the": {
+    "M0": null,
+    "M1": "if not ty_le <= hi:",
+    "M2": {"khoi_dong": ["ly_do = _da_commit(rel, repo_dir)"], "thay": "ly_do = None if (repo_dir / rel).exists() else \"KHÔNG TỒN TẠI\""},
+    "M3": {"khoi_dong": ["if sum(dem) != so_lenh:"], "thay": "if False:"}
+  },
+  "tests": ["tests/lock/test_td0375_exit_reason_truoc_suat_dau.py"],
+  "ky_vong": {"M0": "xanh", "M1": "do", "M2": "do", "M3": "do"},
+  "ky_vong_do_gom": {
+    "M1": [
+      "tests/lock/test_td0375_exit_reason_truoc_suat_dau.py::TestHamThuan::test_ngoai_dai_ca_hai_bien_deu_chan[0]",
+      "tests/lock/test_td0375_exit_reason_truoc_suat_dau.py::TestNoiVaoReserve::test_ngoai_dai_bi_tu_choi_so_dung_yen"
+    ],
+    "M2": [
+      "tests/lock/test_td0375_exit_reason_truoc_suat_dau.py::TestHamThuan::test_hien_vat_chua_commit_thi_chan",
+      "tests/lock/test_td0375_exit_reason_truoc_suat_dau.py::TestHamThuan::test_hien_vat_sua_sau_commit_thi_chan"
+    ],
+    "M3": ["tests/lock/test_td0375_exit_reason_truoc_suat_dau.py::TestHamThuan::test_hien_vat_hong_thi_chan_khong_doan[tong-lech]"]
+  }
+}

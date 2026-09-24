@@ -4192,3 +4192,42 @@ khớp sha256 trước/sau. Full suite Docker **3134 passed, 0 failed**.
 **Hạn chế:** chưa có hiện vật `TD-0251` ⇒ cổng dùng trần 16 của bảng và ghi điều (9) vào `d5_han_che`. Đường
 thành công của cổng mới chỉ được nuôi bằng suất B1 dựng trong sổ TẠM với bảng thước giả — chưa từng chạy trên suất
 thật (không thể, theo `DR-ZA-01` §2).
+
+## 24/09/2026 — TD-0375: máy canh cho `DR-PHAN-QUYET-01` §4.2 bước 3, CHẶN CỨNG (phiên mã `1d1c91c0`)
+
+### 1. Tiền đề của yêu cầu đã cũ — đo trước khi làm
+
+Yêu cầu vào phiên ghi *"TD-0372 🔒, phiên khác đang giữ (`ea2bfee`)"*. Đĩa nói khác: DR đã commit `bb6c034`, dòng
+`TD-0372` ✅, `OQ-17`/`MT-72`/`MT-73` đã đóng ở `688e6ec`. Viết lại DR = hai nguồn sự thật (sự cố "hai `DR-D4-06`").
+Việc thật còn lại là nợ chính DR tự khai (§6 dòng 3, §8 điểm yếu 2): §4.2 bước 3 chỉ là chữ.
+
+### 2. Thiết kế — chủ dự án chốt CHẶN CỨNG (không chỉ cảnh báo)
+
+- Hàm thuần `src/tool_d/gates/exit_reason_thiet_ke.py`: đọc `docs/du-lieu-do/<IQ-xxxx>-exit-reason-explore.json`,
+  khuôn đầu ra có sẵn của `do_td0193_lenh_nam_explore.py --ket-qua` — không viết bộ đo mới. Dải đọc từ
+  `thresholds.TIME_STOP_RATIO_BAND`, tên cửa thoát từ `chi_so_export.EXIT_TIME_STOP`, kiểm đã-commit dùng lại
+  `cong_d35._da_commit` (MT-03).
+- Từ chối khi: hiện vật không có / chưa commit / sửa sau commit (`DR-PHAN-QUYET-01` §2.3) · đọc lỗi · 0 lệnh ·
+  tổng `exit_reason` ≠ `so_lenh` · MỘT arm bất kỳ ngoài dải. Lối thoát duy nhất: khoá `dr_biet_truoc_truot` trỏ
+  một `.md` ngay trong `docs/decisions/`, đã commit, nhắc đích danh slot và `DR-PHAN-QUYET-01`.
+- Nối ở `TrialLedger.reserve()` (cửa mọi đường ghi sổ), chỉ cho suất ĐẦU TIÊN của slot `IQ-\d{4}`, trừ `B0` và
+  `CTRL`. ZA LONG (slot `A-xx`) không đổi hành vi. **0 suất, không đổi ngưỡng nào.**
+
+### 3. Kiểm có răng
+
+Hai đặc tả phá-thật trong bộ nhớ (`tests/tools/specs/td0375_cua_reserve.json`, `td0375_ham_thuan.json`), cả hai
+**khớp dự đoán viết trước**: bỏ lời gọi ở `reserve()` ⇒ 5 đỏ; bỏ miễn trừ B0 ⇒ đúng 1 đỏ; biên dưới thành chẩn
+đoán (đề xuất đã bị LOẠI ở §4.1) ⇒ đỏ cả ca biên lẫn ca lối thoát DR (vì hiện vật 0% không còn bị coi là ngoài
+dải, lối thoát không bao giờ được hỏi tới); bỏ kiểm đã-commit ⇒ đúng 2 đỏ; bỏ kiểm tổng ⇒ đúng 1 đỏ.
+
+### 4. Một test cũ đỏ — đúng ca đã dự đoán, chỉ vá SETUP
+
+`test_td0149::test_hypothesis_slot_dang_IQ_cung_hop_le` đặt chỗ `IQ-0007` trên repo thật, nơi không có hiện vật ⇒
+cửa mới từ chối, đúng thiết kế. Vá bằng repo git nhỏ có hiện vật hợp lệ; khẳng định giữ nguyên (khuôn `TD-0373`).
+
+### 5. Hạn chế, khai thẳng
+
+- Máy chỉ kiểm hiện vật **nói** gì, không kiểm nó **được đo trên EXPLORE thật**: khuôn `do_td0193` không ghi
+  `dataset`. Một file gõ tay đúng khuôn rồi commit vẫn qua — commit làm nó nhìn thấy được, không làm nó đúng.
+- Lối thoát DR: máy kiểm giấy tồn tại và đúng địa chỉ, không kiểm nội dung là quyết định của chủ dự án.
+- "Suất đầu tiên" = slot chưa có dòng nào trên sổ; suất bị REFUND vẫn tính là đã qua cửa.

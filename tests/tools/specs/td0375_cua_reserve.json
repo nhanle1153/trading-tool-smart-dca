@@ -1,0 +1,21 @@
+{
+  "mo_ta": "TD-0375: cua thiet ke o TrialLedger.reserve() (DR-PHAN-QUYET-01 4.2 buoc 3). M1 = bo loi goi (nghia vu quay ve chi la chu); M2 = bo mien tru B0.",
+  "module": "tool_d.ledger.registry",
+  "file": "src/tool_d/ledger/registry.py",
+  "khoi_dong": ["self._kiem_cua_thiet_ke(budget_line=budget_line, hypothesis_slot=hypothesis_slot)"],
+  "bien_the": {
+    "M0": null,
+    "M1": "pass",
+    "M2": {"khoi_dong": ["if budget_line == BUDGET_LINE_B0 or not tk.la_slot_ung_vien(hypothesis_slot):"], "thay": "if not tk.la_slot_ung_vien(hypothesis_slot):"}
+  },
+  "tests": ["tests/lock/test_td0375_exit_reason_truoc_suat_dau.py"],
+  "ky_vong": {"M0": "xanh", "M1": "do", "M2": "do"},
+  "ky_vong_do_gom": {
+    "M1": [
+      "tests/lock/test_td0375_exit_reason_truoc_suat_dau.py::TestNoiVaoReserve::test_suat_dau_tien_thieu_hien_vat_bi_tu_choi_so_dung_yen",
+      "tests/lock/test_td0375_exit_reason_truoc_suat_dau.py::TestNoiVaoReserve::test_ngoai_dai_bi_tu_choi_so_dung_yen",
+      "tests/lock/test_td0375_exit_reason_truoc_suat_dau.py::TestNoiVaoReserve::test_slot_khac_van_phai_qua_cua"
+    ],
+    "M2": ["tests/lock/test_td0375_exit_reason_truoc_suat_dau.py::TestNoiVaoReserve::test_B0_khong_bi_ap"]
+  }
+}
