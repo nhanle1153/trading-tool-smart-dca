@@ -124,6 +124,11 @@ class B1Error(LedgerError):
     đã vào sổ là đã chạm CALIB, sổ append-only không lùi được."""
 
 
+class BienTheVuotKhaiError(LedgerError):
+    """TD-0396 (`DR-BIEN-THE-01` §4) — dòng mới làm số CẤU HÌNH phân biệt của slot `IQ-xxxx` vượt `so_bien_the` đã
+    khai ở cửa CHỌN, hoặc slot đã khai mà dòng không mang `bien_the_hash`. Từ chối TẠI CỬA, trước khi ghi."""
+
+
 class ThietKeChuaKiemError(LedgerError):
     """TD-0375 — suất ĐẦU TIÊN của ứng viên `IQ-xxxx` khi `DR-PHAN-QUYET-01` §4.2 bước 3 chưa thoả (thiếu số đếm
     `exit_reason` EXPLORE đã commit, hoặc `TIME_STOP` ngoài dải mà không có DR khai trước). Từ chối TẠI CỬA, trước
@@ -189,6 +194,9 @@ class TrialProjection:
     outcome_written: bool = False
     outcome: dict[str, Any] | None = field(default=None)
     refunded: bool = False
+    # TD-0396 (`DR-BIEN-THE-01`) — định danh cấu hình của ứng viên `IQ-xxxx`. Dòng cũ không có ⇒ `None`, và phép đếm
+    # biến thể tính mỗi dòng như vậy là một biến thể riêng (thiếu định danh thì đếm về phía khó tiêu suất hơn).
+    bien_the_hash: str | None = None
 
     @property
     def state(self) -> TrialState:
@@ -282,6 +290,7 @@ class TrialLedger:
         dr_d5_path: Path = DEFAULT_DR_D5_01_PATH,
         runtime_state_path: Path = DEFAULT_RUNTIME_STATE_PATH,
         repo_dir: Path = Path("."),
+        idea_queue_path: Path | None = None,
     ) -> None:
         """`dr_d5_path` / `runtime_state_path` chỉ dùng cho cửa B1 (TD-0253), tiêm
         được cùng khuôn `path` của sổ — mặc định là đường THẬT. Không có tham số
@@ -293,6 +302,8 @@ class TrialLedger:
         self._dr_d5_path = dr_d5_path
         self._runtime_state_path = runtime_state_path
         self._repo_dir = repo_dir
+        # TD-0396 — sổ ý tưởng nằm cạnh sổ trial (`registry/`). Không có file ⇒ không slot nào khai `so_bien_the`.
+        self._idea_queue_path = idea_queue_path if idea_queue_path is not None else path.parent / "idea_queue.jsonl"
         if not self._path.exists():
             self._path.parent.mkdir(parents=True, exist_ok=True)
             self._path.touch()
@@ -338,6 +349,7 @@ class TrialLedger:
                     # Không .get(): RESERVE thiếu `dataset` phải NỔ (schema đòi trường này),
                     # không lặng lẽ thành một tập nào đó rồi lọt qua cửa B1/WFO.
                     dataset=e["dataset"],
+                    bien_the_hash=e.get("bien_the_hash"),
                 )
             elif kind == "SEAL":
                 result[tid].sealed = True
@@ -724,6 +736,48 @@ class TrialLedger:
         except tk.ExitReasonThietKeError as e:
             raise ThietKeChuaKiemError(f"TỪ CHỐI suất đầu tiên — {e}") from e
 
+    def _so_bien_the_da_khai(self) -> dict[str, int]:
+        """`{idea_id: so_bien_the}` của các lần CHỌN còn hiệu lực (bỏ lần `VOIDED`, DR-IQ-02 §4.1)."""
+        from tool_d.ledger.idea_events import duyet_so
+
+        if not self._idea_queue_path.exists():
+            return {}
+        text = self._idea_queue_path.read_text(encoding="utf-8")
+        entries = [json.loads(d) for d in text.splitlines() if d.strip()]
+        return {
+            e["idea_id"]: e["so_bien_the"]
+            for e in duyet_so(entries).chon_hieu_luc
+            if e.get("so_bien_the") is not None
+        }
+
+    def _kiem_so_bien_the(self, *, hypothesis_slot: str, bien_the_hash: str | None) -> None:
+        """TD-0396 (`DR-BIEN-THE-01` §4) — `so_bien_the` đếm CẤU HÌNH phân biệt của slot, không đếm suất.
+
+        Chỉ áp cho dòng vào `N` (CTRL/XAC không tới đây) của slot đã khai `so_bien_the` ở một lần CHỌN còn hiệu lực.
+        Dòng cũ của slot không mang hash ⇒ mỗi dòng là một biến thể riêng. Suất đã REFUND không phải một lần thử."""
+        from tool_d.ledger.bien_the import la_bien_the_hash
+
+        if bien_the_hash is not None and not la_bien_the_hash(bien_the_hash):
+            raise BienTheVuotKhaiError(f"`bien_the_hash` phải là sha256 hex 64 ký tự, nhận {bien_the_hash!r}")
+        khai = self._so_bien_the_da_khai().get(hypothesis_slot)
+        if khai is None:
+            return
+        if bien_the_hash is None:
+            raise BienTheVuotKhaiError(
+                f"TỪ CHỐI — {hypothesis_slot} đã khai so_bien_the = {khai}; dòng vào N phải mang `bien_the_hash` "
+                "(`DR-BIEN-THE-01` §3). Tính bằng `tool_d.ledger.bien_the`."
+            )
+        da_co = {
+            p.bien_the_hash or f"<thiếu hash {p.trial_id}>"
+            for p in self.projections().values()
+            if p.hypothesis_slot == hypothesis_slot and _dem_vao_n(p) and not p.refunded
+        }
+        if len(da_co | {bien_the_hash}) > khai:
+            raise BienTheVuotKhaiError(
+                f"TỪ CHỐI — {hypothesis_slot}: cấu hình {bien_the_hash[:12]}… là biến thể thứ {len(da_co | {bien_the_hash})}, "
+                f"vượt so_bien_the = {khai} đã khai ở cửa CHỌN (`DR-BIEN-THE-01`). Đã có: {sorted(da_co)}"
+            )
+
     def reserve(
         self,
         *,
@@ -744,6 +798,7 @@ class TrialLedger:
         reproduces_trial_id: str | None = None,
         ctrl_output_whitelist: Sequence[str] | None = None,
         ctrl_mo_ta_whitelist: Sequence[str] | None = None,
+        bien_the_hash: str | None = None,
     ) -> str:
         """Đặt chỗ. Raise `BudgetExhaustedError` nếu Khả dụng < contribution
         — TRƯỚC KHI CHẠM BẤT KỲ DỮ LIỆU NÀO (L-Z52, spec dòng 3471-3472).
@@ -790,6 +845,7 @@ class TrialLedger:
                     param_value=param_value,
                 )
             self._kiem_cua_thiet_ke(budget_line=budget_line, hypothesis_slot=hypothesis_slot)
+            self._kiem_so_bien_the(hypothesis_slot=hypothesis_slot, bien_the_hash=bien_the_hash)
             khadung = self.available(
                 n_dang_ky=n_dang_ky, so_lenh_da_dong=so_lenh_da_dong
             )
@@ -844,6 +900,7 @@ class TrialLedger:
                 "contribution": contribution,
                 **khai_ctrl,
                 **van_tay,
+                **({"bien_the_hash": bien_the_hash} if bien_the_hash is not None else {}),
             }
         )
         return trial_id

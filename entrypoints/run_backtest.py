@@ -50,9 +50,17 @@ from tool_d.calibration.ung_vien import BUDGET_LINE_B1, UngVienError, doc_bang_u
 from tool_d.config.loader import load_tool_d_config, resolve
 from tool_d.gates.cache_policy import assert_cache_none
 from tool_d.gates.d0_pre import require_d0_pre_complete
+from tool_d.gates.exit_reason_thiet_ke import la_slot_ung_vien
+from tool_d.ledger.bien_the import BienTheError, doc_khoa_bien_the, tinh_bien_the_hash
 from tool_d.gates.dsr import N_DANG_KY
 from tool_d.ledger.con_dau import duong_khai_so, ghi_con_dau
-from tool_d.ledger.registry import TAP_XAC_NHAN, THAM_SO_CUA_SO_XAC, TrialLedger
+from tool_d.ledger.registry import (
+    BUDGET_LINE_XAC,
+    CTRL_BUDGET_LINE,
+    TAP_XAC_NHAN,
+    THAM_SO_CUA_SO_XAC,
+    TrialLedger,
+)
 from tool_d.ledger.timerange import (
     TimerangeViolationError,
     assert_dataset_timerange,
@@ -364,6 +372,16 @@ def main(argv: list[str] | None = None) -> int:
     thu_muc = Path(".") / ro.thu_muc_du_lieu
     data_hashes = hash_many({f.name: f for f in sorted(thu_muc.glob("*.feather"))})
 
+    # TD-0396 (`DR-BIEN-THE-01` §3) — dòng vào `N` của slot ứng viên `IQ-xxxx` mang định danh CẤU HÌNH, tính trên
+    # bản phủ SẼ CHẠY (`mt.cfg_phu`), theo danh sách khoá DR thiết kế đã commit. Không tính được ⇒ từ chối (fail-closed).
+    bien_the_hash = None
+    if la_slot_ung_vien(args.hypothesis_slot) and args.budget_line not in (CTRL_BUDGET_LINE, BUDGET_LINE_XAC):
+        try:
+            bien_the_hash = tinh_bien_the_hash(mt.cfg_phu, doc_khoa_bien_the(args.hypothesis_slot))
+        except (BienTheError, KeyError) as exc:
+            print(f"🛑 không định danh được biến thể của {args.hypothesis_slot} — {exc}")
+            return EXIT_BO_CHAY_TU_CHOI
+
     git_info = get_git_info(Path("."))
     ledger = TrialLedger()
     trial_id = ledger.reserve(  # L-Z52 — TRƯỚC khi chạm dữ liệu
@@ -389,6 +407,7 @@ def main(argv: list[str] | None = None) -> int:
         contribution=1,
         # TD-0389 — chế độ ĐẾM là CTRL *đo mô tả* đúng `["so_lenh"]` (DR-XAC-NHAN-01 §7); dòng khác không khai gì.
         ctrl_mo_ta_whitelist=["so_lenh"] if xac_nhan and args.che_do == "DEM" else None,
+        bien_the_hash=bien_the_hash,
     )
     print(f"đã đặt chỗ {trial_id} (dòng {args.budget_line})")
 

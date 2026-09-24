@@ -62,6 +62,11 @@
         "code_commit": { "type": "string" },
         "provenance": { "$ref": "#/$defs/provenance" },
         "contribution": { "type": "integer", "minimum": 1 },
+        "bien_the_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "TD-0396 (DR-BIEN-THE-01): sha256 các khoá config mà chiến lược của slot IQ-xxxx đọc (khối DR-BIEN-THE-01:KHOA trong DR thiết kế D0). Bắt buộc ở cửa ghi với dòng vào N của slot đã khai so_bien_the; so_bien_the đếm số giá trị phân biệt."
+        },
         "reproduces_trial_id": {
           "$ref": "#/$defs/trial_id",
           "description": "CHỈ dòng budget_line=CTRL dạng *tái lập* (§0d.4, MT-08). Trial được chạy lại để kiểm tra tái lập. Cửa ghi (registry.reserve) đối chiếu params_frozen_hash + config_hash phải BẰNG ĐÚNG bản ghi của trial này — schema không diễn đạt được ràng buộc liên-dòng đó, nên nó nằm ở cửa ghi, KHÔNG nhân đôi ra đây."

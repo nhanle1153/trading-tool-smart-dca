@@ -684,9 +684,10 @@ def check_td0119_so_bien_the_khong_vuot_khai(
     nếu không nó chỉ là lời khai (đúng loại sai lầm MT-10 vừa phải sửa).
 
     Quy ước nối hai sổ: trial sinh ra từ một ý tưởng trong hàng chờ ghi
-    `hypothesis_slot = <idea_id>` (dạng `IQ-xxxx`). Số trial CONSUMED
-    mang slot đó phải ≤ số đã khai. Vượt = tiêu ngân sách N nhiều hơn
-    mức đăng ký trước — đúng thứ N=114 sinh ra để chặn.
+    `hypothesis_slot = <idea_id>` (dạng `IQ-xxxx`). Số CẤU HÌNH phân biệt
+    (`bien_the_hash`, TD-0396 / `DR-BIEN-THE-01`) trên các trial CONSUMED
+    mang slot đó phải ≤ số đã khai. Vượt = thử nhiều cấu hình hơn mức đăng
+    ký trước — đúng thứ `so_bien_the` sinh ra để chặn.
     """
     entries = _read_jsonl(idea_queue_path)
     khai = {
@@ -699,17 +700,22 @@ def check_td0119_so_bien_the_khong_vuot_khai(
             "TD-0119b", Measured.pending("chưa có ý tưởng CHỌN nào khai so_bien_the")
         )
 
-    da_dung: Counter[str] = Counter()
+    # TD-0396 (`DR-BIEN-THE-01` §4): `so_bien_the` đếm CẤU HÌNH phân biệt (`bien_the_hash`), không đếm suất. Dòng
+    # không mang hash (dòng cũ, đường ghi quên tính) đếm là một biến thể RIÊNG mỗi dòng — thiếu định danh thì đếm về
+    # phía khó tiêu suất hơn. Mỗi suất vẫn vào `N` như cũ; chỉ phép đếm biến thể đổi.
+    bien_the: dict[str, Counter[str]] = defaultdict(Counter)
     for proj in TrialLedger(registry_path).projections().values():
         # TD-0389 (`DR-XAC-NHAN-01` §7): chỉ dòng VÀO `N` là một biến thể — dòng CTRL (đếm/tái lập/thước) và XAC
         # (lần tính lớp xác nhận) mang mã slot nhưng không thử cấu hình nào mới.
         if proj.state is TrialState.CONSUMED and proj.hypothesis_slot in khai and _dem_vao_n(proj):
-            da_dung[proj.hypothesis_slot] += 1
+            dinh_danh = proj.bien_the_hash or f"<thiếu hash {proj.trial_id}>"
+            bien_the[proj.hypothesis_slot][dinh_danh] += 1
 
     violations = [
-        f"{idea_id}: đã tiêu {da_dung[idea_id]} trial > {so_khai} đã khai"
+        f"{idea_id}: {len(bien_the[idea_id])} cấu hình phân biệt > {so_khai} đã khai "
+        f"({', '.join(f'{h[:12]}×{n}' for h, n in sorted(bien_the[idea_id].items()))})"
         for idea_id, so_khai in khai.items()
-        if da_dung[idea_id] > so_khai
+        if len(bien_the[idea_id]) > so_khai
     ]
     return CheckResult(
         "TD-0119b", Measured.ok(len(violations) == 0), evidence="; ".join(violations)
