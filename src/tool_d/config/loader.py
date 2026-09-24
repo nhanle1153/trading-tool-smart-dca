@@ -29,6 +29,11 @@ class ConfigError(RuntimeError):
     khoá `_budget_remaining_B3` không phải `null` (MT-03)."""
 
 
+class TranVonError(ConfigError):
+    """TD-0382 — vốn (`E_D`/`rho_pct`/`L_exchange`) vượt trần D12 mà lớp xác nhận sau `T3` chưa đạt
+    (`DR-LOCKBOX-04`). Xem `tool_d.config.tran_von`."""
+
+
 def _freeze(obj: Any) -> Any:
     """Đệ quy biến dict/list thường thành cấu trúc bất biến (MappingProxyType
     / tuple). Cấm sửa runtime — đúng tinh thần "loader trả dict bất biến,
@@ -58,7 +63,7 @@ class ToolDConfig:
     sha256: str
 
 
-def load_tool_d_config(path: Path = DEFAULT_CONFIG_PATH) -> ToolDConfig:
+def load_tool_d_config(path: Path = DEFAULT_CONFIG_PATH, *, repo_dir: Path | None = None) -> ToolDConfig:
     """Đọc `tool_d_config.yaml`.
 
     Raise `ConfigError` nếu:
@@ -67,6 +72,10 @@ def load_tool_d_config(path: Path = DEFAULT_CONFIG_PATH) -> ToolDConfig:
         dẫn), KHÔNG BAO GIỜ cho tham số tín hiệu hay ngưỡng;
       - `tier_b._budget_remaining_B3` khác `null` (MT-03) — registry là
         nguồn sự thật duy nhất cho ngân sách B3, không phải YAML này.
+
+    Raise `TranVonError` (TD-0382) nếu vốn vượt trần D12 mà lớp xác nhận
+    sau `T3` chưa đạt. `repo_dir` (để kiểm hiện vật đã commit) mặc định là
+    thư mục cha của `config/` — chỉ dùng khi vượt trần.
     """
     raw_text = path.read_text(encoding="utf-8")
     data = yaml.safe_load(raw_text) or {}
@@ -93,6 +102,12 @@ def load_tool_d_config(path: Path = DEFAULT_CONFIG_PATH) -> ToolDConfig:
             "back-end-note.md mục 7). Nhận: "
             f"{tier_b.get('_budget_remaining_B3')!r}"
         )
+
+    from tool_d.config.tran_von import kiem_tran_von_d12
+
+    kiem_tran_von_d12(
+        tier_a, tier_c, repo_dir=repo_dir if repo_dir is not None else path.resolve().parent.parent
+    )
 
     digest = hashlib.sha256(raw_text.encode("utf-8")).hexdigest()
 

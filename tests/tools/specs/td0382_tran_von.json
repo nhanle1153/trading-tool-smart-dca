@@ -1,0 +1,54 @@
+{
+  "mo_ta": "TD-0382 (DR-LOCKBOX-04): nghiem thu rang cua test chot tran von D12. Moi bien the pha MOT hanh vi cua tran_von.py; test PHAI do dung cho do. M1 chot khong chan gi (tuong duong khong noi), M2 nguong trong thanh 0 thay vi +inf, M3 lay ca ngay T3, M4 bo kiem da commit, M5 chan ca khi bang tran, M6 tran noi them 1 don vi, M7 nhan thieu 1 lenh, M8 chi xet E_D.",
+  "module": "tool_d.config.tran_von",
+  "file": "src/tool_d/config/tran_von.py",
+  "khoi_dong": [
+    "vuot = cac_khoa_vuot_tran(tier_a, tier_c)"
+  ],
+  "bien_the": {
+    "M0": null,
+    "M1": "vuot = []",
+    "M2": {
+      "khoi_dong": ["nguong_so = nguong if _so(nguong) else math.inf"],
+      "thay": "nguong_so = nguong if _so(nguong) else 0.0"
+    },
+    "M3": {
+      "khoi_dong": ["if tu_ngay <= t3:"],
+      "thay": "if tu_ngay < t3:"
+    },
+    "M4": {
+      "khoi_dong": ["loi_commit = _da_commit(rel, repo_dir)"],
+      "thay": "loi_commit = None"
+    },
+    "M5": {
+      "khoi_dong": ["if gia_tri > tran_k:"],
+      "thay": "if gia_tri >= tran_k:"
+    },
+    "M6": {
+      "khoi_dong": ["if gia_tri > tran_k:"],
+      "thay": "if gia_tri > tran_k + 1:"
+    },
+    "M7": {
+      "khoi_dong": ["elif isinstance(n_min, int) and n_lenh < n_min:"],
+      "thay": "elif isinstance(n_min, int) and n_lenh < n_min - 1:"
+    },
+    "M8": {
+      "khoi_dong": ["co_khai = [k for k in KHOA_VON if k in tier_a]"],
+      "thay": "co_khai = [k for k in (\"E_D\",) if k in tier_a]"
+    }
+  },
+  "tests": [
+    "tests/lock/test_td0382_tran_von_d12.py"
+  ],
+  "ky_vong": {
+    "M0": "xanh",
+    "M1": "do",
+    "M2": "do",
+    "M3": "do",
+    "M4": "do",
+    "M5": "do",
+    "M6": "do",
+    "M7": "do",
+    "M8": "do"
+  }
+}

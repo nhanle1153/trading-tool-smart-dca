@@ -1,0 +1,21 @@
+{
+  "mo_ta": "TD-0382: go loi goi kiem_tran_von_d12() khoi load_tool_d_config() - chot ton tai nhung khong nam tren duong chay san xuat. Test PHAI do.",
+  "module": "tool_d.config.loader",
+  "file": "src/tool_d/config/loader.py",
+  "khoi_dong": [
+    "kiem_tran_von_d12(",
+    "tier_a, tier_c, repo_dir=repo_dir if repo_dir is not None else path.resolve().parent.parent",
+    ")"
+  ],
+  "bien_the": {
+    "M0": null,
+    "M1": "pass"
+  },
+  "tests": [
+    "tests/lock/test_td0382_tran_von_d12.py"
+  ],
+  "ky_vong": {
+    "M0": "xanh",
+    "M1": "do"
+  }
+}

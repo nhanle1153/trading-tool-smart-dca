@@ -178,5 +178,14 @@ tier_c: # 🔒 KHOÁ — KHÔNG có ô nhập, ghi ở đây
     # DSR 0,10 R — chủ dự án chọn 24/09/2026. Đổi = DR mới.
     sai_so_tuong_doi: 0.001 # "≤ 0.1% expectancy" — chữ spec :592
     san_tuyet_doi_r: 0.001
+  lop_xac_nhan_sau_t3: # 🆕 TD-0382 — ✅ DR-LOCKBOX-04 §2 dòng 3 + §3: CHẶN CỨNG lúc đọc config (loader)
+    # tier_a.E_D / rho_pct / L_exchange vượt trần dưới đây ⇒ load_tool_d_config() TỪ CHỐI, trừ khi hiện vật
+    # xác nhận ĐÃ COMMIT đạt: ≥ n_lenh_toi_thieu lệnh trên dữ liệu SAU data_split.t3, chi_so đúng tên, gia_tri ≥ nguong.
+    # Trần = đúng giá trị tier_a lúc chốt (chủ dự án chọn 24/09/2026). Hằng KIỂM SOÁT: không tính DOF, không đổi N.
+    tran_d12: { E_D: 750, rho_pct: 0.375, L_exchange: 3 }
+    n_lenh_toi_thieu: 30 # sàn DR-011 (spec :3302)
+    chi_so: null # ⏳ chủ dự án điền (DR-LOCKBOX-04 §3), TRƯỚC lần chạm D9.5 của ứng viên
+    nguong: null # ⏳ null ⇒ +inf (L-Z35) ⇒ không thể vô tình đạt
+    hien_vat: docs/du-lieu-do/xac-nhan-sau-t3.json # bộ đo sinh file là việc riêng, chưa có
   # 🔴 v7 (spec): KHÔNG dùng *Parameter của Freqtrade cho BẤT KỲ khoá nào
   #        ở file này (§0d.2, L-Z37). Đọc YAML → dict → truyền vào hàm.
