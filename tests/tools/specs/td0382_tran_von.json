@@ -1,5 +1,5 @@
 {
-  "mo_ta": "TD-0382 + TD-0387 (DR-LOCKBOX-04): nghiem thu rang cua test chot tran von D12. M9-M13 (TD-0387): cho commit hai lan, bo kiem ngay CHON, bo kiem config khop lan cham, bo kiem chua cham, tinh ca lan chon da VOIDED. Moi bien the pha MOT hanh vi cua tran_von.py; test PHAI do dung cho do. M1 chot khong chan gi (tuong duong khong noi), M2 nguong trong thanh 0 thay vi +inf, M3 lay ca ngay T3, M4 bo kiem da commit, M5 chan ca khi bang tran, M6 tran noi them 1 don vi, M7 nhan thieu 1 lenh, M8 chi xet E_D.",
+  "mo_ta": "TD-0382 + TD-0387 (DR-LOCKBOX-04): nghiem thu rang cua test chot tran von D12. M9-M13 (TD-0387): cho commit hai lan, bo kiem ngay CHON, bo kiem config khop lan cham, bo kiem chua cham, tinh ca lan chon da VOIDED. Moi bien the pha MOT hanh vi cua tran_von.py; test PHAI do dung cho do. M1 chot khong chan gi (tuong duong khong noi), M2 nguong trong thanh 0 thay vi +inf, M3 lay ca ngay T3, M4 bo kiem da commit, M5 chan ca khi bang tran, M6 tran noi them 1 don vi, M7 nhan thieu 1 lenh, M8 chi xet E_D. M14-M16 (TD-0404, von ro): M14 bo von_ro_usdt khoi KHOA_VON, M15 tran von ro trong doc thanh khong co tran, M16 von ro null khong duoc bo qua.",
   "module": "tool_d.config.tran_von",
   "file": "src/tool_d/config/tran_von.py",
   "khoi_dong": [
@@ -55,6 +55,24 @@
     "M13": {
       "khoi_dong": ["chon = [e for e in duyet_so(dong).chon_hieu_luc if e.get(\"idea_id\") == slot]"],
       "thay": "chon = [e for e in dong if e.get(\"status\") == \"SELECTED\" and e.get(\"idea_id\") == slot]"
+    },
+    "M14": {
+      "khoi_dong": ["KHOA_VON = (\"E_D\", \"rho_pct\", \"L_exchange\", \"von_ro_usdt\")"],
+      "thay": "KHOA_VON = (\"E_D\", \"rho_pct\", \"L_exchange\")"
+    },
+    "M15": {
+      "khoi_dong": [
+        "if tran_k is None:",
+        "vuot.append(",
+        "f\"{k}: {gia_tri} mà trần tran_d12.{k} còn trống — điền trần cùng commit với tier_a.{k}\"",
+        ")",
+        "continue"
+      ],
+      "thay": ["if tran_k is None:", "    continue"]
+    },
+    "M16": {
+      "khoi_dong": ["if gia_tri is None:", "continue"],
+      "thay": "pass"
     }
   },
   "tests": [
@@ -74,6 +92,9 @@
     "M10": "do",
     "M11": "do",
     "M12": "do",
-    "M13": "do"
+    "M13": "do",
+    "M14": "do",
+    "M15": "do",
+    "M16": "do"
   }
 }

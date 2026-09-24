@@ -166,3 +166,12 @@ Lỗi khi quên điền trần là lỗi **ồn** (config từ chối nạp, th�
 
 **Test cũ không phải đổi:** `test_td0382_tran_von_d12.py:120` khẳng định trần = giá trị hiện tại cho mọi khoá trong `KHOA_VON`;
 với `von_ro_usdt` cả hai phía đều `null` nên vẫn đúng.
+
+> 🔴 **Đính chính cùng ngày, khi code `TD-0404` — câu *"Test cũ không phải đổi"* ở trên SAI, giữ nguyên chữ.** Hai chỗ phải đổi:
+> 1. `test_td0382_tran_von_d12.py::test_tran_bang_dung_gia_tri_dang_chot` ghim nguyên từ điển `tran_d12` ba khoá ⇒ thêm
+>    `"von_ro_usdt": None`. Ba số cũ giữ nguyên. Đây là ngoại lệ đổi khẳng định đã nêu trước trong kế hoạch chủ dự án duyệt
+>    (*"kèm ngoại lệ đổi test khoá TD-0382 nếu có"*); tôi chỉ đọc dòng 120 mà bỏ sót dòng 119.
+> 2. `test_td0400_ro_funding.py` (fixture `kq`, không đổi khẳng định nào): phủ `tier_a.von_ro_usdt = 3000` mà không có trần ⇒
+>    loader từ chối, **đúng quy tắc ở trên**. Cấu hình phủ chỉ thay khoá lá có tên duy nhất nên không điền được
+>    `tran_d12: {…}` ⇒ fixture dựng từ một bản sao `config/` có trần = vốn test. Hệ quả cho sau này: mọi lần chạy **phủ**
+>    `von_ro_usdt` (thay vì sửa YAML) sẽ bị chặn tới khi trần có số — cũng là thứ quy tắc muốn.

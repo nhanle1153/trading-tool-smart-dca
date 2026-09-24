@@ -185,7 +185,7 @@ tier_c: # 🔒 KHOÁ — KHÔNG có ô nhập, ghi ở đây
     # tier_a.E_D / rho_pct / L_exchange vượt trần dưới đây ⇒ load_tool_d_config() TỪ CHỐI, trừ khi hiện vật
     # xác nhận ĐÃ COMMIT đạt: ≥ n_lenh_toi_thieu lệnh trên dữ liệu SAU data_split.t3, chi_so đúng tên, gia_tri ≥ nguong.
     # Trần = đúng giá trị tier_a lúc chốt (chủ dự án chọn 24/09/2026). Hằng KIỂM SOÁT: không tính DOF, không đổi N.
-    tran_d12: { E_D: 750, rho_pct: 0.375, L_exchange: 3 }
+    tran_d12: { E_D: 750, rho_pct: 0.375, L_exchange: 3, von_ro_usdt: null } # von_ro_usdt: TD-0404, điền CÙNG commit với tier_a.von_ro_usdt
     n_lenh_toi_thieu: 30 # sàn DR-011 (spec :3302)
     chi_so: mean_r # ✅ TD-0386 — ô ký DR-LOCKBOX-04 §3 (fe1da36): trung bình r_trien_khai (thong_ke_arm), KHÔNG trừ thuế DSR
     nguong: 0.10 # ✅ TD-0386 — ≥ 0,10 R, đúng ngưỡng kinh tế Nhánh 1; chốt 24/09/2026 trước mọi ứng viên / lần chạm lockbox

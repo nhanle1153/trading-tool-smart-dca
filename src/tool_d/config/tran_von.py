@@ -33,7 +33,11 @@ from typing import Any
 
 KHOA_KHOI = "lop_xac_nhan_sau_t3"
 #: Ba khoá `tier_a` mà tăng lên là tăng tiền thật có thể mất (câu 2).
-KHOA_VON = ("E_D", "rho_pct", "L_exchange")
+#: TD-0404 (`DR-LOCKBOX-04` bổ sung 24/09/2026): thêm vốn RIÊNG của rổ `IQ-0003` — vốn mới nằm ngoài ba khoá kia.
+KHOA_VON = ("E_D", "rho_pct", "L_exchange", "von_ro_usdt")
+#: Khoá vốn được phép `null` ở `tier_a` (= chưa cấp vốn, bỏ qua). Có số mà trần `null` ⇒ VƯỢT: trần phải điền CÙNG commit
+#: với vốn (`DR-D0-IQ0003` §10 câu c), không để trống rồi đọc thành "không có trần".
+KHOA_VON_CO_THE_TRONG = ("von_ro_usdt",)
 DR_NGUON = "DR-LOCKBOX-04"
 _SLOT_RE = re.compile(r"^IQ-\d{4}$")
 #: TD-0387 — đường dẫn tương đối so với `repo_dir`.
@@ -74,6 +78,16 @@ def cac_khoa_vuot_tran(tier_a: Mapping[str, Any], tier_c: Mapping[str, Any]) -> 
     vuot: list[str] = []
     for k in co_khai:
         gia_tri, tran_k = tier_a[k], tran.get(k)
+        if k in KHOA_VON_CO_THE_TRONG:
+            if gia_tri is None:
+                continue
+            if k not in tran:
+                raise _loi(f"thiếu trần tran_d12.{k}")
+            if tran_k is None:
+                vuot.append(
+                    f"{k}: {gia_tri} mà trần tran_d12.{k} còn trống — điền trần cùng commit với tier_a.{k}"
+                )
+                continue
         if not _so(tran_k):
             raise _loi(f"trần tran_d12.{k} phải là số, nhận {tran_k!r}")
         if not _so(gia_tri):

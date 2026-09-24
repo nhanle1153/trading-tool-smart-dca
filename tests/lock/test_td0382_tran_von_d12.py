@@ -91,6 +91,8 @@ def _repo(
 
 def _cfg_vuot(khoa: str = "E_D", *, chi_so: str | None = CHI_SO, nguong: float | None = 0.05) -> dict:
     cfg = copy.deepcopy(_cfg_that())
+    if cfg["tier_c"][KHOA_KHOI]["tran_d12"][khoa] is None:  # TD-0404: trần vốn rổ chưa điền ⇒ dựng một trần số
+        cfg["tier_c"][KHOA_KHOI]["tran_d12"][khoa] = 1000
     cfg["tier_a"][khoa] = cfg["tier_c"][KHOA_KHOI]["tran_d12"][khoa] * 2
     cfg["tier_c"][KHOA_KHOI]["chi_so"] = chi_so
     cfg["tier_c"][KHOA_KHOI]["nguong"] = nguong
@@ -116,7 +118,9 @@ class TestConfigThat:
         """🔴 Ghim QUYẾT ĐỊNH (DR-LOCKBOX-04, chủ dự án 24/09/2026): trần = đúng tier_a lúc chốt. Nâng trần hay nâng vốn
         đều phải sửa dòng này — tức phải nhìn thấy DR."""
         cfg = _cfg_that()
-        assert cfg["tier_c"][KHOA_KHOI]["tran_d12"] == {"E_D": 750, "rho_pct": 0.375, "L_exchange": 3}
+        # 🔄 24/09/2026 (TD-0404, `DR-LOCKBOX-04` bổ sung, ngoại lệ trong kế hoạch chủ dự án duyệt): thêm `von_ro_usdt: None`
+        # — vốn rổ `IQ-0003` chưa chốt (`DR-D0-IQ0003` §10 c), trần điền CÙNG commit. Ba số cũ giữ nguyên.
+        assert cfg["tier_c"][KHOA_KHOI]["tran_d12"] == {"E_D": 750, "rho_pct": 0.375, "L_exchange": 3, "von_ro_usdt": None}
         assert {k: cfg["tier_a"][k] for k in KHOA_VON} == cfg["tier_c"][KHOA_KHOI]["tran_d12"]
 
     def test_config_that_chua_the_xac_nhan(self) -> None:
@@ -300,3 +304,52 @@ class TestNoiDuongSanXuat:
         )
         goi = [n for n in ast.walk(init) if isinstance(n, ast.Call) and getattr(n.func, "id", "") == "load_tool_d_config"]
         assert goi, "ZoneAbsorption.__init__ phải gọi load_tool_d_config()"
+
+
+def _cfg_von_ro(von: object, tran: object = "khong_doi") -> dict:
+    """TD-0404 — config thật, chỉ đổi vốn rổ (và trần nếu truyền). `tran = "xoa"` ⇒ bỏ hẳn khoá khỏi `tran_d12`."""
+    cfg = copy.deepcopy(_cfg_that())
+    cfg["tier_a"]["von_ro_usdt"] = von
+    t = cfg["tier_c"][KHOA_KHOI]["tran_d12"]
+    if tran == "xoa":
+        del t["von_ro_usdt"]
+    elif tran != "khong_doi":
+        t["von_ro_usdt"] = tran
+    return cfg
+
+
+class TestVonRoTD0404:
+    """`DR-LOCKBOX-04` bổ sung 24/09/2026: vốn rổ `IQ-0003` vào trần D12. `null` ⇒ bỏ qua; có số mà trần trống ⇒ VƯỢT."""
+
+    def test_von_ro_null_thi_bo_qua(self, tmp_path) -> None:
+        _load(_repo(tmp_path, _cfg_von_ro(None)))
+
+    def test_von_ro_co_so_ma_tran_trong_thi_TU_CHOI(self, tmp_path) -> None:
+        with pytest.raises(TranVonError, match="von_ro_usdt: 500 mà trần tran_d12.von_ro_usdt còn trống"):
+            _load(_repo(tmp_path, _cfg_von_ro(500)))
+
+    def test_von_ro_bang_tran_thi_qua(self, tmp_path) -> None:
+        _load(_repo(tmp_path, _cfg_von_ro(500, 500)))
+
+    def test_von_ro_vuot_tran_mot_don_vi_thi_TU_CHOI(self, tmp_path) -> None:
+        with pytest.raises(TranVonError, match="von_ro_usdt: 501 > trần 500"):
+            _load(_repo(tmp_path, _cfg_von_ro(501, 500)))
+
+    def test_von_ro_thieu_khoa_tran_thi_TU_CHOI(self, tmp_path) -> None:
+        with pytest.raises(TranVonError, match="thiếu trần tran_d12.von_ro_usdt"):
+            _load(_repo(tmp_path, _cfg_von_ro(500, "xoa")))
+
+    @pytest.mark.parametrize("hong", ["500", math.inf, True])
+    def test_tran_von_ro_hong_thi_TU_CHOI(self, tmp_path, hong) -> None:
+        with pytest.raises(TranVonError, match="tran_d12.von_ro_usdt"):
+            _load(_repo(tmp_path, _cfg_von_ro(500, hong)))
+
+    def test_von_ro_null_khong_can_khoa_tran(self, tmp_path) -> None:
+        """Rổ chưa cấp vốn thì không đòi trần — config cũ thiếu khoá vẫn đọc được."""
+        _load(_repo(tmp_path, _cfg_von_ro(None, "xoa")))
+
+    def test_tran_trong_nhung_da_xac_nhan_thi_qua(self, tmp_path) -> None:
+        """Như ba khoá cũ: lớp xác nhận ĐẠT thì trần thôi áp."""
+        cfg = _cfg_von_ro(500)
+        cfg["tier_c"][KHOA_KHOI]["nguong"] = 0.05
+        _load(_repo(tmp_path, cfg, hien_vat=_hv()))

@@ -18,6 +18,7 @@ from __future__ import annotations
 import ast
 import json
 import math
+import shutil
 import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
@@ -201,8 +202,16 @@ def kq(tmp_path_factory) -> dict:
 
     goc = tmp_path_factory.mktemp("td0400")
     _sinh_du_lieu(goc / "data" / "futures")
+    # TD-0404 (`DR-LOCKBOX-04` bổ sung 24/09/2026): có vốn rổ thì phải có trần vốn rổ cùng lúc, không thì loader từ chối.
+    # Phủ chỉ đổi khoá lá có tên duy nhất, không với tới `tran_d12: {…}` ⇒ điền trần vào một BẢN SAO `config/` rồi dựng từ đó.
+    repo_gia = goc / "repo"
+    shutil.copytree(REPO_ROOT / "config", repo_gia / "config")
+    yaml_gia = repo_gia / "config" / "tool_d_config.yaml"
+    van_ban = yaml_gia.read_text(encoding="utf-8")
+    assert van_ban.count("von_ro_usdt: null }") == 1, "không tìm thấy đúng một ô trần vốn rổ trong tran_d12"
+    yaml_gia.write_text(van_ban.replace("von_ro_usdt: null }", f"von_ro_usdt: {VON_TEST} }}"), encoding="utf-8")
     mt = dung_moi_truong(
-        repo_dir=REPO_ROOT, goc=goc, ghi_de={"tier_a.von_ro_usdt": VON_TEST, "tier_a.enable_short": True},
+        repo_dir=repo_gia, goc=goc, ghi_de={"tier_a.von_ro_usdt": VON_TEST, "tier_a.enable_short": True},
         ma_trong_ro=[f"{m}USDT" for m in MA], chien_luoc="RoFunding",
     )
     proc = subprocess.run(
