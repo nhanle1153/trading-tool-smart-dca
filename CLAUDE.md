@@ -333,7 +333,7 @@ ca `idea_queue` đỏ ~2,5 ngày không ai nhận, 14–16/09).
 
 ## TRẠNG THÁI HIỆN TẠI
 
-**Cập nhật lần cuối: 19/09/2026**
+**Cập nhật lần cuối: 24/09/2026**
 
 > 🔴 **18/09/2026 — đọc trước (N12 mục 7):** mọi câu *"phiên X giữ / nhận / đang làm Y"* trong mục này là
 > **LỊCH SỬ tại ngày ghi**, không phải phân việc hiện tại — tên phiên đổi sau mỗi lần khởi động lại. Chủ
@@ -342,6 +342,26 @@ ca `idea_queue` đỏ ~2,5 ngày không ai nhận, 14–16/09).
 > ⚠️ **Hai (nay ba) phiên Claude Code cùng làm việc song song trên repo này** (chủ dự án xác nhận).
 > Mục này có thể lệch nhịp vài phút so với phiên kia — luôn `git log --oneline` +
 > đọc lại `TASKS.md` (cột 🔓/🔒/✅) trước khi chọn việc tiếp theo, đừng chỉ tin mục này.
+
+**Đang ở (cập nhật 24/09/2026, phiên mã `1d1c91c0` — chỉ ghi phần phiên này đã kiểm trên đĩa; 0 trial, sổ trial
+56 dòng):**
+
+- ✅ **`TD-0372` / `DR-PHAN-QUYET-01`** (`bb6c034`) — giải `OQ-17`, `MT-72`, `MT-73`; ba mục đã đóng trong
+  `back-end-note.md` (`688e6ec`). Dải `time_stop_ratio` 5–25% **giữ nguyên cả hai biên**, phép kiểm chuyển lên LÚC
+  THIẾT KẾ của ứng viên kế tiếp.
+- ✅ **`TD-0375`** (`74d224f`) — máy canh cho §4.2 bước 3, **CHẶN CỨNG** (chủ dự án chốt): `TrialLedger.reserve()`
+  từ chối suất ĐẦU TIÊN (không `B0`/`CTRL`) của slot `IQ-xxxx` khi chưa có
+  `docs/du-lieu-do/<IQ-xxxx>-exit-reason-explore.json` **đã commit** (khuôn `do_td0193_lenh_nam_explore.py
+  --ket-qua`), hoặc `TIME_STOP` ngoài dải mà không có DR *"biết trước là trượt"* đã commit trong `docs/decisions/`.
+  ZA LONG (`A-xx`) không đổi hành vi. Full suite Docker **3194 passed, 0 failed**.
+  🔴 **Ứng viên được CHỌN phải chạy bộ đếm `exit_reason` trên EXPLORE (0 suất) và commit hiện vật TRƯỚC khi xin
+  suất nào** — thiếu là `ThietKeChuaKiemError`.
+  ⚠️ Điểm mù đã biết: máy không kiểm hiện vật được đo trên EXPLORE THẬT (khuôn không ghi `dataset`) — commit làm nó
+  nhìn thấy được, không làm nó đúng (`docs/research-log.md` 24/09).
+- 📌 Cửa CHỌN ý tưởng **mở sớm từ 24/09** thay vì 01/10 (`DR-IQ-03`, `TD-0376` ✅ `b074ed6`, phiên mã `dd855fee`).
+  Khối 36 (`TD-0378`…`TD-0380`, `DR-DINH-DANH-01`) đang 🔒 — chủ việc đọc từ commit khoá `6ef1b3b`, không từ mục này.
+
+*(Đoạn "Đang ở" cũ bên dưới giữ nguyên làm lịch sử.)*
 
 **Đang ở (cập nhật 19/09/2026, phiên mã `e80a877c` — nốt phần Short "dựng, không đo"; 0 trial, sổ trial vẫn
 13 dòng, N = 114, `enable_short` vẫn `false`):** đọc từ đĩa (`TASKS.md`, `git log`, `registry/`), không từ trí nhớ.
