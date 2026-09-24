@@ -69,6 +69,10 @@ vế thứ hai bằng chính sổ thật:
 
 Chủ dự án đổi quyết định trước khi có dòng mã nào — đúng thứ tự.
 
+> 🔧 **Đính chính 24/09/2026 (`DR-DINH-DANH-01` §4.4) — chốt giữ `CTRL` ĐỨNG NGUYÊN, lý do hẹp lại.** Sau bản vá này,
+> `CTRL` tái lập theo §0d.4 (chạy SAU một commit ⇒ khác `code_commit`) rơi vào **nhóm khác** trial gốc, nên `L-Z12`
+> chỉ canh tái lập **cùng commit**, không canh ca §0d.4. Ca §0d.4 do phép kiểm `TD-0379` canh. Chữ cũ ở trên giữ nguyên.
+
 ## 4. KHÔNG thuộc DR này
 
 - Không đổi `config_hash` (cách băm cấu hình) và không thêm mã nguồn vào băm đó.
