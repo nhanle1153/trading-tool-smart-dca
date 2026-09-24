@@ -40,7 +40,7 @@ của `DR-BIEN-THE-01`: đổi **bất kỳ** khoá nào dưới đây sau suấ
 
 <!-- DR-BIEN-THE-01:KHOA:BEGIN -->
 ```json
-{"slot": "IQ-0003", "khoa": ["tier_a.enable_long", "tier_a.enable_short", "tier_a.von_ro_usdt", "tier_c.ro_funding.ro_cua_so_gio", "tier_c.ro_funding.ro_ty_le_k", "tier_c.ro_funding.ro_k_toi_thieu", "tier_c.ro_funding.ro_so_coin_toi_thieu", "tier_c.ro_funding.ro_gio_can_ro_utc", "tier_c.ro_funding.ro_stop_tham_hoa_pct", "tier_c.ro_funding.ro_don_bay"]}
+{"slot": "IQ-0003", "khoa": ["tier_a.enable_long", "tier_a.enable_short", "tier_a.von_ro_usdt", "tier_c.ro_funding.ro_cua_so_gio", "tier_c.ro_funding.ro_ty_le_k", "tier_c.ro_funding.ro_k_toi_thieu", "tier_c.ro_funding.ro_so_coin_toi_thieu", "tier_c.ro_funding.ro_gio_can_ro_utc", "tier_c.ro_funding.ro_stop_tham_hoa_pct", "tier_c.ro_funding.ro_don_bay", "tier_c.ro_funding.ro_don_bay_san"]}
 ```
 <!-- DR-BIEN-THE-01:KHOA:END -->
 
@@ -167,3 +167,32 @@ Máy phán quyết của rổ là **hàm riêng**; không sửa `thresholds.py` 
   nhãn thoát, không nuốt ngoại lệ, không nhìn trước ở điều §3.1).
 - `TD-0401`: số đếm `exit_reason` EXPLORE theo `DR-CAN-RO-01` §3 (khoá `lop_chien_luoc` + `dr_thiet_ke` trỏ file này).
 - Máy phán quyết §7 và đối chứng ngẫu nhiên §7 điều 3: việc riêng, mở mã khi tới D0.9 của ứng viên.
+
+## 12. ĐÍNH CHÍNH THI HÀNH — 24/09/2026, khi dựng `TD-0400` (trước mọi suất của `IQ-0003`)
+
+Chữ §1–§11 giữ nguyên, trừ **khối `DR-BIEN-THE-01:KHOA`** ở §2: khối đó là thứ máy đọc, nên được sửa tại chỗ (thêm
+`ro_don_bay_san`) thay vì để lệch mã. Việc sửa hợp lệ vì slot `IQ-0003` **chưa có suất nào**. Bốn điểm, đều đo được khi
+chạy backtest thật trên dữ liệu tổng hợp (`tests/lock/test_td0400_ro_funding.py`):
+
+1. **Đòn bẩy sàn 2x, phơi nhiễm vẫn 1x** (chủ dự án chốt 24/09/2026). Ở sàn 1x ký quỹ bằng cả notional, nên rổ lỗ là
+   không mở lại được vị thế cỡ cũ. Đo được: cần 500, còn 457 ⇒ lệnh bị từ chối, rổ lệch 2 Short / 3 Long. Khoá mới
+   `tier_c.ro_funding.ro_don_bay_san: 2` (đặt trên sàn); `ro_don_bay: 1` giữ nghĩa phơi nhiễm kinh tế, notional mỗi vị
+   thế = `ro_don_bay × von_ro_usdt / (2k)`, không đổi. Thanh lý isolated 2x ở khoảng −50% giá, stop 25% cắt trước.
+2. **Stop thảm hoạ là stop TĨNH đặt qua file phủ, không `custom_stoploss`** (lệch §4). Freqtrade gắn nhãn
+   `trailing_stop_loss` cho mọi lần `custom_stoploss` dời stop khỏi mức ban đầu. Nhãn đó nằm ngoài lớp
+   `CAN_RO_THEO_LICH` (`DR-CAN-RO-01` §3), và nới tập nhãn là mở cửa cho trailing stop thật. File phủ khai
+   `_stoploss_tu_khoa`; bộ chạy đặt `stoploss = −ro_stop_tham_hoa_pct × ro_don_bay_san / 100` (tỉ lệ trên ký quỹ = 25%
+   giá). Chiến lược tự kiểm stop hiệu dụng trong `populate_indicators` và từ chối chạy nếu lệch (thiếu file phủ).
+3. **Ví mô phỏng theo vốn rổ** (lệch §4: file phủ không chỉ chứa loại lệnh). Ví chung `1000 × 0,75 = 750` là vốn của ZA.
+   File phủ khai `_vi_tu_khoa: tier_a.von_ro_usdt`; bộ chạy đặt `dry_run_wallet = von_ro_usdt / tradable_balance_ratio`.
+   Vốn vẫn chỉ đọc từ YAML (N4).
+4. 🔴 **Lỗ hổng đã biết, chưa xử (ghi để giải trước D12):** trần vốn mức D12 của lớp xác nhận (`TD-0382`,
+   `tier_c.lop_xac_nhan_sau_t3.tran_d12`) chỉ chặn `E_D` / `rho_pct` / `L_exchange`. Khoá vốn rổ `tier_a.von_ro_usdt` là
+   vốn MỚI nằm ngoài trần đó ⇒ `DR-LOCKBOX-04` §2 dòng 3 (*"vốn không tăng quá mức D12 trước khi xác nhận"*) chưa có máy
+   canh cho ứng viên này. Không sửa ở đây: `TD-0382` là cổng đã chốt của phiên khác; cần mục `MT` + quyết định.
+5. **Thoát do cân rổ đi qua TÍN HIỆU thoát, không qua `custom_exit`** (lệch §4). `populate_exit_trend` đặt `exit_long` /
+   `exit_short` + `exit_tag = "CAN_RO"` trên nến tín hiệu, nên lệnh ra khớp ở CÙNG giá mở nến 00:00 với lệnh vào của lần
+   cân rổ đó (Freqtrade dùng `exit_tag` làm `exit_reason`). `custom_exit` sẽ khớp ở một giá khác trong nến. Đổi nhóm
+   (Long ↔ Short) đảo chiều ngay trong cùng nến: đọc `backtesting.py` (Freqtrade 2026.8), vòng xử lý chạy lại lần hai khi
+   có tín hiệu chiều ngược và `can_short`; test khoá ghim hành vi này.
+
