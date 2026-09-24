@@ -1140,7 +1140,7 @@ bộ chạy D10 (`DR-D10-02`): chờ chủ dự án làm xong phần tài khoả
 
 | Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
 |---|---|---|---|---|
-| TD-0394 | 🚪 **`DR-D0-IQ0003`** — thiết kế D0 của `IQ-0003`: ánh xạ `tin_hieu`/`quy_tac`/`nguong_bac_bo` sang tham số (tầng A/B/C, N4), cách dựng rổ chéo trong Freqtrade, nguồn funding cả pool, rổ = một hướng `NEUTRAL` + báo cáo tách chân chỉ ghi (`MT-82`), thước đo sai lệch cho lệnh thị trường (`MT-83` câu 2) | 🔒 | — | DR commit RIÊNG, TRƯỚC mã chiến lược; câu kỹ thuật chủ dự án chốt |
+| TD-0394 | 🚪 **`DR-D0-IQ0003`** — thiết kế D0 của `IQ-0003`: ánh xạ `tin_hieu`/`quy_tac`/`nguong_bac_bo` sang tham số (tầng A/B/C, N4), cách dựng rổ chéo trong Freqtrade, nguồn funding cả pool, rổ = một hướng `NEUTRAL` + báo cáo tách chân chỉ ghi (`MT-82`), thước đo sai lệch cho lệnh thị trường (`MT-83` câu 2) | ✅ | — | DR commit RIÊNG, TRƯỚC mã chiến lược; câu kỹ thuật chủ dự án chốt |
 | TD-0395 | 🚪 **`DR-BIEN-THE-01`** — *một biến thể = một cấu hình* (`MT-80` (b)) | 🔒 | — | DR commit RIÊNG, TRƯỚC TD-0396 |
 | TD-0396 | **Phép đếm `TD-0119b` theo cấu hình phân biệt** — đếm số cấu hình phân biệt trên slot (định danh cấu hình theo `DR-DINH-DANH-01`), không đếm suất CONSUMED; giữ phần "chỉ dòng vào `N`" của `TD-0389` | 🔓 | TD-0395 | Test chạy riêng PASS + phá thật đúng ca đỏ; full suite Docker 0 failed |
 | TD-0397 | 🚪 **`DR-CAN-RO-01`** — dải `TIME_STOP` (`TD-0375`) không áp cho chiến lược cân rổ theo lịch (`MT-81` (c)); tiêu chí nhận diện máy đọc được, để lối miễn không mở cho chiến lược khác | 🔒 | — | DR commit RIÊNG, TRƯỚC TD-0398 |
