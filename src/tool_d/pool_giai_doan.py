@@ -66,7 +66,8 @@ def ro_cho_tap(tap: str, *, repo_dir: Path = Path(".")) -> RoGiaiDoan:
         raise RoGiaiDoanError("bảng rổ theo giai đoạn trỏ vào config/pool.yaml — cấm (DR-D1-05)")
     duong = repo_dir / file_ro
     if not duong.is_file():
-        raise RoGiaiDoanError(f"{file_ro} chưa tồn tại — sinh bằng E7 --ro-{moc} --ghi trước (DR-D1-05)")
+        co = "--ro-xac-nhan --slot IQ-xxxx" if moc == "xac_nhan" else f"--ro-{moc}"  # TD-0391
+        raise RoGiaiDoanError(f"{file_ro} chưa tồn tại — sinh bằng E7 {co} --ghi trước (DR-D1-05)")
     try:
         noi_dung = yaml.safe_load(duong.read_text(encoding="utf-8")) or {}
     except yaml.YAMLError as exc:

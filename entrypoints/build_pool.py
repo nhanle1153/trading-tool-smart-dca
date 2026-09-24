@@ -106,9 +106,18 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--ro-xac-nhan",
+        action="store_true",
+        help=(
+            "TD-0391 / DR-XAC-NHAN-01 §9: dựng rổ pool ĐÚNG TẠI ngày CHỌN của --slot cho tập XAC_NHAN (0 trial). "
+            "Thiếu --ghi chỉ IN; có --ghi thì ghi config/pool_xac_nhan.yaml (từ chối ghi đè)."
+        ),
+    )
+    parser.add_argument("--slot", help="Đi kèm --ro-xac-nhan: mã ý tưởng IQ-xxxx đã CHỌN (mốc đọc từ sổ ý tưởng).")
+    parser.add_argument(
         "--ghi",
         action="store_true",
-        help="Đi kèm --ro-t1/--ro-t0/--ro-t2: thực sự ghi config/pool_<mốc>.yaml.",
+        help="Đi kèm --ro-t1/--ro-t0/--ro-t2/--ro-xac-nhan: thực sự ghi config/pool_<mốc>.yaml.",
     )
     parser.add_argument(
         "--check-min-notional",
@@ -449,6 +458,198 @@ def sinh_ro_tai_moc(
     return 0
 
 
+#: TD-0391 (`DR-XAC-NHAN-01` §9) — rổ `XAC_NHAN` tại ngày CHỌN.
+DUONG_RO_XAC_NHAN = Path("config/pool_xac_nhan.yaml")
+NGUON_DOI_CHIEU_XAC_NHAN = Path("docs/du-lieu-do/td0391-ro-xac-nhan-doi-chieu.json")
+EXIT_RO_XAC_NHAN_TU_CHOI = 114
+
+
+def sinh_ro_xac_nhan(
+    *,
+    slot: str,
+    ghi: bool,
+    repo_dir: Path = Path("."),
+    doc_volume_ngay=None,
+    doc_volume_thang=None,
+    lay_exchange_info=None,
+    thay_doi_chua_commit=None,
+    bay_gio=None,
+    lay_git_info=None,
+) -> int:
+    """TD-0391 (`DR-XAC-NHAN-01` §9) — rổ ĐÚNG TẠI ngày CHỌN của `slot`, **0 trial**, không ghi sổ.
+
+    Khác `sinh_ro_tai_moc()` ở ba chỗ, đều do §9 chốt: mốc đọc từ sổ ý tưởng (lần CHỌN còn hiệu lực), không từ
+    `tier_c.data_split`; volume ngày mốc đọc từ kho NGÀY; nguồn khoảng `TD-0306` được nối tới tháng mốc
+    (`pool_xac_nhan.mo_rong_khoang`). Đối chiếu KHÍT với hiện vật đường thứ hai (`NGUON_DOI_CHIEU_XAC_NHAN`, kịch bản
+    `do_td0391_ro_xac_nhan_doi_chieu.py` chạy logic `TD-0231`), hiện vật đó phải có TRƯỚC.
+    Tham số hàm chỉ để test tiêm thay mạng/git — mặc định là đường sản xuất thật.
+    """
+    import json
+    from datetime import datetime, timezone
+
+    from tool_d.api_client.binance_public import (
+        KhoLuuTruError,
+        doc_quote_volume_1d_ngay,
+        doc_quote_volume_1d_thang,
+    )
+    from tool_d.measurement.gitinfo import thay_doi_anh_huong_phep_do
+    from tool_d.pool_t1 import ThuMucExploreError, dung_ro_tai_moc, ghep_ro_t1, ma_co_du_lieu_explore
+    from tool_d.pool_xac_nhan import RoXacNhanError, doc_volume_cho_moc, lan_chon, mo_rong_khoang
+
+    doc_volume_ngay = doc_volume_ngay or (lambda sym, ngay: doc_quote_volume_1d_ngay(symbol=sym, ngay=ngay))
+    doc_volume_thang = doc_volume_thang or (
+        lambda sym, nam, thang: doc_quote_volume_1d_thang(symbol=sym, nam=nam, thang=thang)
+    )
+    lay_exchange_info = lay_exchange_info or get_exchange_info
+    thay_doi_chua_commit = thay_doi_chua_commit or thay_doi_anh_huong_phep_do
+    bay_gio = bay_gio or (lambda: datetime.now(timezone.utc))
+    lay_git_info = lay_git_info or get_git_info
+
+    dich = repo_dir / DUONG_RO_XAC_NHAN
+    if ghi and dich.exists():
+        print(
+            f"🛑 {DUONG_RO_XAC_NHAN} đã tồn tại — rổ XAC_NHAN ĐÃ được sinh. KHÔNG sinh lại. "
+            "Lần CHỌN mới cần xoá thủ công + DR (DR-XAC-NHAN-01 §9)."
+        )
+        return EXIT_POOL_ALREADY_COMMITTED
+    if ghi:
+        ban = thay_doi_chua_commit(repo_dir)
+        if ban:
+            print("🛑 Có thay đổi chưa commit trong vùng ảnh hưởng phép đo — commit trước:\n  " + "\n  ".join(ban))
+            return EXIT_RO_T1_CAY_BAN
+
+    try:
+        moc, selected_at = lan_chon(slot, repo_dir)
+    except (RoXacNhanError, OSError, ValueError) as exc:
+        print(f"🛑 Không có lần CHỌN còn hiệu lực để làm mốc: {exc}")
+        return EXIT_RO_XAC_NHAN_TU_CHOI
+    if moc >= bay_gio().date():
+        print(f"🛑 Ngày CHỌN {moc} chưa đóng — file ngày của kho chưa đầy đủ, chạy lại từ hôm sau.")
+        return EXIT_RO_XAC_NHAN_TU_CHOI
+
+    duong_dc = repo_dir / NGUON_DOI_CHIEU_XAC_NHAN
+    if not duong_dc.is_file():
+        print(f"🛑 {NGUON_DOI_CHIEU_XAC_NHAN} chưa có — chạy đường đối chiếu thứ hai và commit TRƯỚC (DR-XAC-NHAN-01 §9).")
+        return EXIT_RO_XAC_NHAN_TU_CHOI
+    doi_chieu = json.loads(duong_dc.read_text(encoding="utf-8"))
+
+    try:
+        explore_da_dung = ma_co_du_lieu_explore(repo_dir / THU_MUC_EXPLORE)
+    except ThuMucExploreError as exc:
+        print(f"🛑 {exc}")
+        return EXIT_RO_T1_EXPLORE
+
+    nguon_json = json.loads((repo_dir / NGUON_TD0306).read_text(encoding="utf-8"))
+    try:
+        khoang, da_noi = mo_rong_khoang(nguon_json["khoang_ton_tai"], moc, age_floor_days=AGE_FLOOR_DAYS)
+    except RoXacNhanError as exc:
+        print(f"🛑 {exc}")
+        return EXIT_RO_XAC_NHAN_TU_CHOI
+
+    print(f"Mốc XAC_NHAN = {moc} ({slot}, selected_at {selected_at}) · nối đời sống {len(da_noi)} mã tới tháng mốc")
+    try:
+        kq = dung_ro_tai_moc(
+            moc,
+            khoang,
+            doc_volume_thang=doc_volume_cho_moc(moc, doc_ngay=doc_volume_ngay, doc_thang=doc_volume_thang),
+            age_floor_days=AGE_FLOOR_DAYS,
+            volume_floor_usdt=VOLUME_FLOOR_USDT,
+        )
+        exchange_info = lay_exchange_info()
+    except ValueError as exc:
+        print(f"🛑 {exc}")
+        return EXIT_RO_T1_LECH_TD0231
+    except (KhoLuuTruError, BinancePublicApiError) as exc:
+        print(f"🛑 Tải dữ liệu thất bại, KHÔNG sinh rổ nửa vời: {exc}")
+        return EXIT_FETCH_FAILED
+
+    # DR-D1-03 §2 — hai đường cùng logic phải KHÍT (khuôn t0/t1, không phải khuôn bất đối xứng của t2).
+    lech_moc = doi_chieu.get("moc") != moc.isoformat() or doi_chieu.get("hypothesis_slot") != slot
+    chi_moi = sorted(set(kq.pool_dung) - set(doi_chieu.get("pool_dung", [])))
+    chi_dc = sorted(set(doi_chieu.get("pool_dung", [])) - set(kq.pool_dung))
+    if lech_moc or chi_moi or chi_dc:
+        print(
+            "🛑 Rổ tính lại KHÔNG khớp đường đối chiếu — một trong hai đường đang sai, không ghi.\n"
+            f"  mốc/slot đối chiếu: {doi_chieu.get('moc')} / {doi_chieu.get('hypothesis_slot')} vs {moc} / {slot}\n"
+            f"  chỉ có ở lần tính này ({len(chi_moi)}): {chi_moi}\n  chỉ có ở đối chiếu ({len(chi_dc)}): {chi_dc}"
+        )
+        return EXIT_RO_T1_LECH_TD0231
+
+    ro = ghep_ro_t1(kq.pool_dung, explore_da_dung, exchange_info["symbols"])
+    print(
+        f"Đủ tiêu chí tại {moc}: {len(kq.pool_dung)} (khớp đối chiếu) · loại EXPLORE đã dùng: "
+        f"{len(ro.loai_explore_da_dung)} · loại TRADIFI: {len(ro.loai_tradifi)} · RỔ XAC_NHAN: {len(ro.trading)} mã"
+    )
+    print(f"Không đo được — 404: {len(kq.khong_do_duoc_404)} · thiếu ngày: {len(kq.khong_do_duoc_thieu_ngay)}")
+    if not ghi:
+        print(f"\n(chạy thử — thêm --ghi để ghi {DUONG_RO_XAC_NHAN})")
+        return 0
+
+    try:
+        git_info = lay_git_info(repo_dir)
+    except GitInfoError as exc:
+        print(f"🛑 Không lấy được git_sha, KHÔNG ghi rổ: {exc}")
+        return EXIT_RO_T1_CAY_BAN
+    dich.parent.mkdir(parents=True, exist_ok=True)
+    dich.write_text(
+        yaml.dump(
+            {
+                "_doc": (
+                    "TD-0391 / DR-XAC-NHAN-01 §9 — rổ pool ĐÚNG TẠI ngày CHỌN của ứng viên, sinh bằng E7 --ro-xac-nhan "
+                    "--ghi. 0 trial. KHÔNG phải config/pool.yaml (rổ hôm nay, DR-D1-05 §1)."
+                ),
+                "moc_xac_nhan": moc.isoformat(),
+                "hypothesis_slot": slot,
+                "selected_at": selected_at,
+                "criteria": {"volume_24h_usdt_min": VOLUME_FLOOR_USDT, "listing_age_days_min": AGE_FLOOR_DAYS},
+                "trading": list(ro.trading),
+                "loai": {
+                    "explore_da_dung": list(ro.loai_explore_da_dung),
+                    "tradifi_perpetual": list(ro.loai_tradifi),
+                },
+                "khong_do_duoc": {
+                    "kho_404": list(kq.khong_do_duoc_404),
+                    "thieu_hang_dung_ngay_xac_nhan": list(kq.khong_do_duoc_thieu_ngay),
+                },
+                "dem": {
+                    "ung_vien_song_tai_xac_nhan": len(kq.ung_vien_song),
+                    "du_tieu_chi_tai_xac_nhan": len(kq.pool_dung),
+                    "onboard_ngay_chinh_xac": len(kq.onboard_chinh_xac),
+                    "onboard_xap_xi_theo_thang": kq.onboard_xap_xi,
+                },
+                "explore_da_dung_chup_luc_sinh": {
+                    "thu_muc": str(THU_MUC_EXPLORE),
+                    "n": len(explore_da_dung),
+                    "danh_sach": sorted(explore_da_dung),
+                },
+                "xuat_xu": {
+                    "git_sha": git_info.sha,
+                    "sinh_luc_utc": bay_gio().isoformat(),
+                    "nguon_volume_ngay_moc": "kho NGÀY data.binance.vision (DR-XAC-NHAN-01 §9)",
+                    "nguon_khoang_ton_tai": {"file": str(NGUON_TD0306), "sha256": _sha256(repo_dir / NGUON_TD0306)},
+                    "quy_uoc_noi_doi_song": {
+                        "mo_ta": "mã còn sống ở tháng cuối của nguồn (không moc_ngung) được nối thang_cuoi tới tháng mốc; "
+                        "sống thật tại mốc do file ngày quyết (404 ⇒ kho_404)",
+                        "n_ma_duoc_noi": len(da_noi),
+                    },
+                    "doi_chieu": {
+                        "file": str(NGUON_DOI_CHIEU_XAC_NHAN),
+                        "sha256": _sha256(duong_dc),
+                        "kieu": "khit",
+                        "khit": True,
+                    },
+                    "trial": 0,
+                },
+            },
+            allow_unicode=True,
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    print(f"\n✅ Đã ghi {DUONG_RO_XAC_NHAN} — {len(ro.trading)} mã, git_sha {git_info.sha[:7]}, 0 trial")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else list(argv)
     args, _ = build_parser().parse_known_args(argv)
@@ -463,6 +664,11 @@ def main(argv: list[str] | None = None) -> int:
         return sinh_ro_tai_moc(moc_ten="t0", ghi=args.ghi)
     if args.ro_t2:
         return sinh_ro_tai_moc(moc_ten="t2", ghi=args.ghi)
+    if args.ro_xac_nhan:
+        if not args.slot:
+            print("🛑 --ro-xac-nhan cần --slot IQ-xxxx.")
+            return EXIT_RO_XAC_NHAN_TU_CHOI
+        return sinh_ro_xac_nhan(slot=args.slot, ghi=args.ghi)
 
     if args.check_min_notional:
         return check_min_notional()

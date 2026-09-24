@@ -1,0 +1,19 @@
+{
+  "mo_ta": "TD-0391 (DR-XAC-NHAN-01 9): nghiem thu rang cua test cho logic thuan ro XAC_NHAN. M1 noi ca ma co moc_ngung, M2 bo chot moc qua xa nguon, M3 thang moc doc kho THANG thay vi kho NGAY, M4 bo kiem hai lan doc lan CHON cung ngay.",
+  "module": "tool_d.pool_xac_nhan",
+  "file": "src/tool_d/pool_xac_nhan.py",
+  "khoi_dong": [
+    "if k.get(\"thang_cuoi\") == cuoi_nguon and k.get(\"thang_dau\") and not k.get(\"moc_ngung\"):"
+  ],
+  "bien_the": {
+    "M0": null,
+    "M1": "if k.get(\"thang_cuoi\") == cuoi_nguon and k.get(\"thang_dau\"):",
+    "M2": {"khoi_dong": ["if dau_thang_sau + timedelta(days=age_floor_days) <= moc:"], "thay": "if False:"},
+    "M3": {"khoi_dong": ["if (nam, thang) == (moc.year, moc.month):"], "thay": "if False:"},
+    "M4": {"khoi_dong": ["if isinstance(ngay, str):"], "thay": "if False:"}
+  },
+  "tests": [
+    "tests/lock/test_td0391_ro_xac_nhan.py"
+  ],
+  "ky_vong": {"M0": "xanh", "M1": "do", "M2": "do", "M3": "do", "M4": "do"}
+}

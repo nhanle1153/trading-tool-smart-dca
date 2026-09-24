@@ -880,6 +880,86 @@ def doc_quote_volume_1d_thang(
     return ket_qua
 
 
+def doc_quote_volume_1d_ngay(
+    *,
+    symbol: str,
+    ngay: date,
+    timeout: float = 60.0,
+    hom_nay: date | None = None,
+) -> dict[date, float]:
+    """TD-0391 (`DR-XAC-NHAN-01` §9) — `quote_volume` của ĐÚNG MỘT ngày UTC, từ kho NGÀY.
+
+    Dùng cho rổ `XAC_NHAN` tại ngày CHỌN: kho THÁNG của tháng đó chỉ có sau khi hết tháng, kho NGÀY có từ
+    hôm sau (chủ dự án chọn, 24/09/2026). Trả CÙNG hình `{ngày: quote_volume}` với
+    `doc_quote_volume_1d_thang()` để `dung_ro_tai_moc()` dùng lại nguyên. R1: nằm ở module này, cùng
+    breaker R3, KHÔNG áp `tier_c.api_calls_per_min` (trần của `fapi.binance.com`).
+
+    🔴 Fail-closed, cùng tinh thần bản tháng:
+    1. `ngay` ≥ hôm nay (UTC) ⇒ `ValueError`, KHÔNG gọi mạng — file ngày chưa đóng thì volume thiếu.
+    2. HTTP 404 ⇒ `NenThangKhongCoError` — dữ kiện (mã không giao dịch ngày đó), không phải 0.
+    3. Mốc của hàng khác `ngay` (lẫn đơn vị milli/micro-giây, hoặc file sai) ⇒ `KhoLuuTruError`.
+    4. Không đúng MỘT hàng dữ liệu, hoặc `quote_volume` không đọc được ⇒ `KhoLuuTruError`.
+    """
+    hom_nay = hom_nay or datetime.now(timezone.utc).date()
+    if ngay >= hom_nay:
+        raise ValueError(f"ngày {ngay} chưa đóng (hôm nay UTC {hom_nay}) — file ngày chưa đầy đủ, không đọc")
+    ten = f"{symbol}-1d-{ngay.isoformat()}.zip"
+    duong_dan = f"/data/futures/um/daily/klines/{_ma_url(symbol)}/1d/{_ma_url(ten)}"
+
+    _kiem_tra_breaker()
+    conn = http.client.HTTPSConnection(AGG_TRADES_HOST, timeout=timeout)
+    try:
+        conn.request("GET", duong_dan)
+        resp = conn.getresponse()
+        if resp.status == 404:
+            resp.read()
+            raise NenThangKhongCoError(f"kho không có {ten} (HTTP 404 tại {AGG_TRADES_HOST}{duong_dan})")
+        if resp.status != 200:
+            resp.read()
+            _ghi_nhan_that_bai(http_status=resp.status)
+            raise KhoLuuTruError(f"tải {AGG_TRADES_HOST}{duong_dan} thất bại: HTTP {resp.status}")
+        noi_dung = resp.read()
+        _ghi_nhan_thanh_cong()
+    except OSError as exc:
+        raise KhoLuuTruError(f"tải {AGG_TRADES_HOST}{duong_dan} thất bại: {exc}") from exc
+    finally:
+        conn.close()
+
+    try:
+        with zipfile.ZipFile(io.BytesIO(noi_dung)) as z:
+            tho = z.read(z.namelist()[0]).decode("utf-8")
+    except (zipfile.BadZipFile, IndexError, UnicodeDecodeError) as exc:
+        raise KhoLuuTruError(f"{ten} không giải nén được: {exc}") from exc
+
+    ket_qua: dict[date, float] = {}
+    so_hang = 0
+    for dong in tho.splitlines():
+        o = dong.strip().split(",")
+        if o == [""]:
+            continue
+        if len(o) <= _COT_QUOTE_VOLUME:
+            raise KhoLuuTruError(f"{ten}: hàng thiếu cột — {dong[:80]!r}")
+        try:
+            moc_tho = float(o[_COT_OPEN_TIME])
+        except ValueError:
+            continue  # hàng tiêu đề
+        chia = 1_000_000.0 if moc_tho > _NGUONG_MICRO_GIAY else 1_000.0
+        ngay_hang = datetime.fromtimestamp(moc_tho / chia, tz=timezone.utc).date()
+        if ngay_hang != ngay:
+            raise KhoLuuTruError(
+                f"{ten}: mốc {moc_tho!r} đọc ra {ngay_hang.isoformat()}, không phải {ngay.isoformat()} — "
+                "nghi LẪN ĐƠN VỊ hoặc sai file. DỪNG, không trả số."
+            )
+        try:
+            ket_qua[ngay_hang] = float(o[_COT_QUOTE_VOLUME])
+        except ValueError as exc:
+            raise KhoLuuTruError(f"{ten}: quote_volume không đọc được: {o[_COT_QUOTE_VOLUME]!r}") from exc
+        so_hang += 1
+    if so_hang != 1:
+        raise KhoLuuTruError(f"{ten}: {so_hang} hàng dữ liệu cho một file ngày (cần đúng 1)")
+    return ket_qua
+
+
 #: TD-0247 (`DR-D1-03`) — ba loại dữ liệu tháng của kho cần cho một mã đã huỷ
 #: niêm yết (Freqtrade `download-data` không tải được mã không còn trên sàn).
 LOAI_KHO_THANG = ("klines", "markPriceKlines", "fundingRate")

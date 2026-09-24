@@ -1,0 +1,40 @@
+{
+  "mo_ta": "TD-0391: nghiem thu rang cua test cho bo doc kho NGAY doc_quote_volume_1d_ngay. M1 cho doc ngay hom nay (chua dong), M2 bo kiem hang dung ngay, M3 cho nhieu hang, M4 doc nham duong kho THANG.",
+  "module": "tool_d.api_client.binance_public",
+  "file": "src/tool_d/api_client/binance_public.py",
+  "khoi_dong": [
+    "if ngay >= hom_nay:"
+  ],
+  "bien_the": {
+    "M0": null,
+    "M1": "if ngay > hom_nay:",
+    "M2": {
+      "khoi_dong": [
+        "if ngay_hang != ngay:"
+      ],
+      "thay": "if False:"
+    },
+    "M3": {
+      "khoi_dong": [
+        "if so_hang != 1:"
+      ],
+      "thay": "if so_hang < 1:"
+    },
+    "M4": {
+      "khoi_dong": [
+        "duong_dan = f\"/data/futures/um/daily/klines/{_ma_url(symbol)}/1d/{_ma_url(ten)}\""
+      ],
+      "thay": "duong_dan = f\"/data/futures/um/monthly/klines/{_ma_url(symbol)}/1d/{_ma_url(ten)}\""
+    }
+  },
+  "tests": [
+    "tests/lock/test_td0391_ro_xac_nhan.py"
+  ],
+  "ky_vong": {
+    "M0": "xanh",
+    "M1": "do",
+    "M2": "do",
+    "M3": "do",
+    "M4": "do"
+  }
+}
