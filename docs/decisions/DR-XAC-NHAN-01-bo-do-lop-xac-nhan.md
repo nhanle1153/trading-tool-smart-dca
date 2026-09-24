@@ -91,3 +91,27 @@ Cả ba câu, chủ dự án chọn đúng phương án được gắn *"(Recomm
 
 **Điều kiện dừng khi code (`TD-0389`):** một test cũ phải sửa khẳng định mới xanh ⇒ dừng, báo; hạng `XAC` làm đổi `n_used()` ⇒ dừng
 (nó phải đứng ngoài `N`); chế độ đếm lộ ra bất kỳ trường nào ngoài số lệnh và khoảng ngày ⇒ dừng.
+
+---
+
+## 7. ✅ QUYẾT ĐỊNH LƯỢT 2 — 24/09/2026, khi code `TD-0389` chạm điều kiện dừng (phiên mã `143375ad`)
+
+Khảo sát trước khi code (0 trial, chỉ đọc) tìm ra bốn chỗ vướng. Phiên này **dừng**, trình chủ dự án; chủ dự án chọn cả bốn
+phương án được gắn *"(Recommended)"* (khai theo khuôn `DR-LOCKBOX-01` §1).
+
+| Câu | Chốt |
+|---|---|
+| Q4 test khoá cũ | **Ngoại lệ, chủ dự án duyệt:** `tests/lock/test_td0313_e1_noi_bo_chay.py` đổi khẳng định `TAP_HOP_LE == ("CALIB", "WFO")` → `("CALIB", "WFO", "XAC_NHAN")`. Cùng khuôn ngoại lệ `DR-DINH-DANH-01` §7.1. `LOCKBOX` và mọi tập lạ vẫn bị cấm |
+| Q5 rổ mã | **Dựng phần không vướng ngay, hoãn rổ.** Rổ tại ngày CHỌN chưa dựng được với dữ liệu hiện có (nguồn khoảng tồn tại `TD-0306` dừng ở 08/2026; kho volume tháng của Binance chỉ có sau khi hết tháng; không có đối chứng `TD-0231` cho ngày bất kỳ) ⇒ tách thành **`TD-0391`**, làm khi có ứng viên được CHỌN. Trong lúc chờ: `ro_cho_tap("XAC_NHAN")` trỏ `config/pool_xac_nhan.yaml`; file chưa có ⇒ E1 **từ chối** (fail-closed), không dùng rổ khác thay |
+| Q6 nến khởi động | **Được đọc nến khởi động nằm trong `[T2,T3]`** — lần đo chỉ chạy SAU khi ứng viên đã chạm lockbox ở D9.5 (đoạn đó đã tiêu), và nến khởi động chỉ tính chỉ báo, không đánh giá lệnh nào. Máy kiểm: dòng `XAC` chỉ ghi được khi `lockbox/lockbox_access.log` có ≥ 1 bản ghi |
+| Q7 hoàn lại | **Dòng `XAC` đã `REFUNDED` không tính vào trần 1/slot** (tiền lệ `L-Z27` bỏ dòng REFUNDED). Sau niêm phong không hoàn được (`L-Z53`), nên không thành cửa sau để đo lại khi đã thấy số |
+
+**Cơ chế cụ thể (suy từ §6 + §7, ghi ra để máy và người đọc cùng một nghĩa):**
+- **Chế độ ĐẾM** = dòng `CTRL` dạng *đo mô tả* đã có (`ctrl_mo_ta_whitelist=["so_lenh"]`, `DR-D4-16`), `dataset = XAC_NHAN`,
+  `hypothesis_slot = IQ-xxxx`. Không mở dạng CTRL mới. Chỉ in số lệnh đã đóng + khoảng ngày.
+- **Chế độ TÍNH** = dòng `XAC`. Máy chỉ cho ghi khi: slot có lần CHỌN còn hiệu lực; sổ truy cập lockbox có bản ghi; chưa có dòng
+  `XAC` nào không-`REFUNDED` của slot; và tồn tại dòng ĐẾM `CONSUMED` của slot với `n_trades ≥ n_lenh_toi_thieu` — khoảng ngày của
+  dòng `XAC` phải **bằng** khoảng ngày của dòng ĐẾM **đầu tiên** đạt ngưỡng đó (thi hành Q2 bằng máy).
+- `param_under_test = "xac_nhan_cua_so"`, `param_value = {"che_do", "tu", "den"}` — để hai lần chạy khác chế độ/khác cửa sổ không
+  mang cùng dấu vân tay lần chạy (`L-Z12`).
+- `TD-0119b` (đếm biến thể đã dùng của slot) chỉ đếm dòng vào `N` — dòng `CTRL`/`XAC` không phải biến thể.
