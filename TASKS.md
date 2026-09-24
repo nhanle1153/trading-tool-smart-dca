@@ -1113,7 +1113,7 @@ bộ chạy D10 (`DR-D10-02`): chờ chủ dự án làm xong phần tài khoả
 | Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
 |---|---|---|---|---|
 | TD-0381 | 🚪 **`DR-LOCKBOX-04`** — ứng viên suất (d) dùng đoạn lockbox `[T2,T3]` (seal hiệu lực theo `DR-LOCKBOX-01`); lớp xác nhận trên dữ liệu sau `T3` trước khi tăng vốn quá mức D12; đính chính nối cuối `DR-IQ-01` §3/§5 + `DR-HUONG-01` §5, giữ nguyên chữ cũ | ✅ | — | DR commit **RIÊNG**, TRƯỚC lần CHỌN còn hiệu lực đầu tiên (kiểm `idea_queue.jsonl` tại commit); không chứa số kết quả Tool D (DR-009); 0 trial, không chạm dữ liệu — ✅ **24/09/2026 `cf74603`:** tại commit, sổ ý tưởng 0 lần chọn còn hiệu lực (`IQ-0002` `VOIDED`). Đính chính nối cuối thêm `DR-TRIEN-KHAI-01` §1 (dòng giao `[T2,T3]` cho ZA — hết đường thi hành từ `DR-ZA-01`), ngoài `DR-IQ-01` + `DR-HUONG-01`. Ô ngưỡng xác nhận thứ hai (§3) ⏳ chủ dự án điền, trước lần chạm D9.5 của ứng viên |
-| TD-0382 | **Máy canh lớp xác nhận** — chặn tăng vốn quá mức D12 cho ứng viên suất (d) khi dữ liệu sau `T3` chưa đủ ≥ 30 lệnh HOẶC chưa đạt ngưỡng xác nhận commit TRƯỚC khi thấy số; ngưỡng chưa điền = `+inf` (`L-Z35`) | 🔓 | TD-0381 | Cần lệnh "bắt đầu code"; test chạy riêng PASS ≥ 1 + phá thật đúng ca đỏ; full suite Docker 0 đỏ |
+| TD-0382 | **Máy canh lớp xác nhận** — chặn tăng vốn quá mức D12 cho ứng viên suất (d) khi dữ liệu sau `T3` chưa đủ ≥ 30 lệnh HOẶC chưa đạt ngưỡng xác nhận commit TRƯỚC khi thấy số; ngưỡng chưa điền = `+inf` (`L-Z35`) | 🔒 | TD-0381 | Cần lệnh "bắt đầu code"; test chạy riêng PASS ≥ 1 + phá thật đúng ca đỏ; full suite Docker 0 đỏ |
 
 **Đặt chỗ mã (N12 mục 7c):** `TD-0381`, `TD-0382` + `DR-LOCKBOX-04` (`DR-LOCKBOX-03` đã có chủ, `0a103e7`), commit này,
 `Phien: 143375ad`.
