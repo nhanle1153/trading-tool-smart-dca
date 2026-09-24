@@ -1,6 +1,6 @@
 # DR-D10-02 — Bộ chạy D10: lệnh live tối thiểu trên tài khoản phụ
 
-> **Trạng thái: NHÁP — CHƯA CHỐT.** Soạn 24/09/2026, phiên mã `dd89043d`. Q1 đã chốt 24/09 (CTRL trung tính, `MT-78`); chờ chủ dự án trả lời Q2–Q6.
+> **Trạng thái: NHÁP — CHƯA CHỐT.** Soạn 24/09/2026, phiên mã `dd89043d`. **Q1–Q5 đã chốt 24/09** (Q1 CTRL trung tính, `MT-78`; Q2–Q5 chủ dự án trả lời cùng ngày); **còn Q6** và duyệt toàn văn.
 > Commit ở dạng NHÁP để khỏi mất (tiền lệ `d2f738c`). **Bản CHỐT** phải là một commit **RIÊNG, TRƯỚC** mọi dòng mã của
 > bộ chạy (kiểm bằng `git merge-base --is-ancestor`, không bằng mắt).
 > **Chi phí:** 0 trial. Mọi vị thế D10 là CTRL (`DR-D11-01` §4). Tiền thật: phí + trượt giá + rủi ro vị thế nhỏ.
@@ -74,32 +74,34 @@ bức. Các phương án chạy `ZoneAbsorption` (A, C của bản đầu) **b�
   nhận chiến lược nào. Cổng D12 (`DR-TRIEN-KHAI-01` §3 điều 2) đòi D10 PASS theo cả ba ngưỡng, kể cả D6 ⇒ D6 phải đo
   lại trên chiến lược suất (d) trước D12. Chưa có phần nào của D10 CTRL thay được bước đó.
 
-### Q2 — Cỡ lệnh
+### Q2 — Cỡ lệnh ✅ ĐÃ CHỐT 24/09/2026 (chủ dự án: tài khoản phụ có **100–300 USDT**)
 
-`DR-D11-01` §4 viết notional *"~5–20 USDT"*, nhưng sàn Tool D (`DR-D4-05`) đòi ~**30 USDT/tranche** ở vài mã, và cỡ lệnh
-thật của chiến lược theo `E_D = 750` là ~30–200 USDT. Vì Q1 là CTRL, cỡ lệnh **không** đi qua `E_D`/`rho`
-của chiến lược. Chọn: **(a)** mỗi tranche = sàn Tool D của cặp đó (`san_tool_d()`, `DR-D4-05`) cộng một lề nhỏ,
-tức rẻ nhất có thể mà vẫn qua sàn *(đề xuất)* · **(b)** một con số USDT cố định cho mọi cặp. **Cần biết: tài khoản phụ
-đang có bao nhiêu USDT?**
+Cỡ lệnh **không** đi qua `E_D`/`rho` của chiến lược (Q1 là CTRL). Mỗi tranche = **sàn Tool D của cặp đó**
+(`san_tool_d()`, `DR-D4-05`) cộng một lề nhỏ, tức rẻ nhất có thể mà vẫn qua sàn (~30 USDT notional ở vài mã).
+Với đòn bẩy 3x, ký quỹ mỗi tranche ≈ notional/3 ≈ 10 USDT ⇒ 20 vị thế **tuần tự** (Q1) vừa vốn 100–300 USDT, không đòi
+vốn lớn nằm sẵn. **Đề xuất (chờ xác nhận ở bản CHỐT):** trần *tổng ký quỹ đang mở ≤ 50% số dư* làm chốt an toàn phụ.
+Số dư tối thiểu để mở D10: ≥ 100 USDT (đúng cận dưới câu trả lời).
 
-### Q3 — Kiểm bảo mật tài khoản bằng máy trước mỗi lần khởi động
+### Q3 — Máy kiểm bảo mật tài khoản trước mỗi lần khởi động ✅ ĐÃ CHỐT 24/09/2026: **CÓ máy kiểm**
 
-Đề xuất gọi `GET /sapi/v1/account/apiRestrictions` và **từ chối chạy** nếu `ipRestrict = false` hoặc quyền rút /
-chuyển nội bộ đang bật. Đây là **endpoint ngoài mới** ⇒ theo quy tắc 12/17 phải điền `api-integration-rules.md` Mục 4
-(R1–R12) **trước** khi code. Chọn: **có máy kiểm** *(đề xuất — "đã siết" hôm nay có thể bị mở lại mà không ai biết)* /
-**chỉ checklist tay**.
+Gọi `GET /sapi/v1/account/apiRestrictions` và **từ chối chạy** nếu `ipRestrict = false` hoặc quyền rút / chuyển nội bộ
+đang bật. 🔴 **Hệ quả bắt buộc:** đây là một **endpoint ngoài mới** ⇒ theo quy tắc 12/17 của `CLAUDE.md`, phải điền
+`api-integration-rules.md` **Mục 4** (dòng danh sách dịch vụ, bảng endpoint, bảng mã lỗi, ngưỡng, R1–R12) **TRƯỚC** khi
+cho phép "bắt đầu code" phần này. Chưa làm — mã việc đặt chỗ khi mở.
 
-### Q4 — Dry-run D11 và live D10 chung một IP
+### Q4 — Dry-run D11 và live D10 chung một IP ✅ ĐÃ CHỐT 24/09/2026: **rổ D10 nhỏ ≤ 10 cặp**
 
-Hai bot Freqtrade cùng IP chia chung giới hạn trọng số API Binance. Pool ~100 cặp của dry-run đã tốn phần lớn. Chọn:
-**rổ live D10 nhỏ (≤ 10 cặp thanh khoản cao)** *(đề xuất)* / tạm dừng dry-run trong lúc D10 / để nguyên và đo.
+Dry-run giữ nguyên (~100 cặp, chạy liên tục). D10 chỉ theo dõi ≤ 10 cặp thanh khoản cao ⇒ ít tốn giới hạn API dùng chung.
+D10 dùng **bot Telegram RIÊNG với token RIÊNG** (hai Freqtrade chung một token tranh `getUpdates`, lỗi 409 — đã ghi ở
+`TD-0393`) và quyết riêng có cho nút điều khiển (`/stop`, `/forceexit`) hay không. Chưa đo được tần suất gọi API thực tế của
+cả hai chạy cùng lúc: đọc log D10 đầu tiên, nếu gặp 429/418 thì dừng D10 và trình chủ dự án.
 
-### Q5 — Hết ngân sách mà D2c vẫn `n < 30`
+### Q5 — Hết ngân sách mà D2c vẫn `n < 30` ✅ ĐÃ CHỐT 24/09/2026: **D10 coi như CHƯA ĐẠT**
 
-`DR-D11-01` §5.2 đã nói: báo p99 trên N thực, ghi hạn chế. Còn trống: **D12 có được mở với D2c `n < 30` không?**
-Đề xuất: **không** — D2c `n < 30` = D10 chưa PASS, cần DR mới gia hạn ngân sách (tránh uốn luật sau khi thấy số).
+`DR-D11-01` §5.2 đã nói: báo p99 trên N thực, ghi hạn chế. Chốt thêm: `n < 30` sau khi hết ngân sách ⇒ **D10 chưa PASS ⇒
+D12 không được mở**; muốn mở phải có **DR mới gia hạn ngân sách**, viết trước khi thấy số (tránh uốn luật).
 
-### Q6 — Ai bấm nút
+### Q6 — Ai bấm nút (CÒN MỞ, chờ chủ dự án)
 
 Đề xuất: bộ chạy **không tự bật** khi `docker compose up`; chủ dự án chạy lệnh bật profile `d10` bằng tay mỗi phiên,
 và Telegram báo mỗi vị thế mở/đóng.
