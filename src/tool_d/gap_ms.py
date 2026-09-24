@@ -47,10 +47,20 @@ lấn sang.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 LOAI_DOI_SL = "DOI_SL"
+
+
+def _utc(moc: datetime) -> datetime:
+    """Đưa MỌI mốc thời gian về UTC-aware (TD-0403).
+
+    Freqtrade lưu ngày giờ của `Order` vào SQLite ở dạng UTC KHÔNG mang múi giờ, nên trong CÙNG một `trade.orders`
+    lệnh nạp từ DB là *naive* còn lệnh vừa tạo trong bộ nhớ là *aware*. So hai loại đó (`sorted`, `<=`) ném
+    `TypeError` — đo được trên dry-run D11 (07:01:38 và 07:55:53, 24/09/2026), cả hai ngay sau khi một lệnh SL
+    mới được tạo. Naive được coi là UTC (đúng cách Freqtrade lưu), KHÔNG là giờ địa phương."""
+    return moc.replace(tzinfo=timezone.utc) if moc.tzinfo is None else moc.astimezone(timezone.utc)
 
 
 @dataclass(frozen=True)
@@ -95,19 +105,21 @@ def sinh_ban_ghi_doi_sl(
     Lệnh SL ĐẦU TIÊN của trade (đặt lúc tranche 1 khớp) không sinh bản
     ghi — nó không phải một lần ĐỔI, là lần ĐẶT đầu.
     """
-    theo_thu_tu = sorted(lenh_sl, key=lambda o: o.order_date)
-    moc_sap = sorted(moc_khop_entry)
+    # TD-0403: chuẩn hoá TRƯỚC mọi phép so/trừ, nhưng bản ghi vẫn mang `order_date` GỐC (`ts` giữ đúng dạng đầu vào —
+    # dedup theo `sl_order_id_new` chứ không theo `ts`, nên không đổi định dạng sổ hay khẳng định cũ).
+    theo_thu_tu = sorted(((_utc(o.order_date), o) for o in lenh_sl), key=lambda t: t[0])
+    moc_sap = sorted(_utc(m) for m in moc_khop_entry)
 
     ban_ghi: list[dict[str, Any]] = []
-    for cu, moi in zip(theo_thu_tu, theo_thu_tu[1:]):
+    for (_, cu), (moi_utc, moi) in zip(theo_thu_tu, theo_thu_tu[1:]):
         if cu.status != "canceled":
             # Không phải một cặp huỷ→tạo-lại (vd. hai lệnh SL mở đồng thời
             # do một lỗi lạ nào đó) — không suy đoán, bỏ qua (N6).
             continue
         if cu.order_update_date is None:
             continue
-        gap_ms = (moi.order_date - cu.order_update_date).total_seconds() * 1000.0
-        tranche = sum(1 for m in moc_sap if m <= moi.order_date)
+        gap_ms = (moi_utc - _utc(cu.order_update_date)).total_seconds() * 1000.0
+        tranche = sum(1 for m in moc_sap if m <= moi_utc)
         ban_ghi.append(
             {
                 "loai": LOAI_DOI_SL,

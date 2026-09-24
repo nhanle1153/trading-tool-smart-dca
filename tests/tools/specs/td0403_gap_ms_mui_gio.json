@@ -1,0 +1,32 @@
+{
+  "mo_ta": "TD-0403: _utc() chuan hoa ngay gio ve UTC-aware. M1 = bo chuan hoa (tra nguyen) -> 3 ca tron naive/aware do, ca UTC+7 van xanh (vi toan aware, phep tru dung). M2 = chi gan UTC, khong quy doi mui gio -> dung 1 ca UTC+7 do. Du doan viet TRUOC khi chay.",
+  "module": "tool_d.gap_ms",
+  "file": "src/tool_d/gap_ms.py",
+  "khoi_dong": [
+    "return moc.replace(tzinfo=timezone.utc) if moc.tzinfo is None else moc.astimezone(timezone.utc)"
+  ],
+  "bien_the": {
+    "M0": null,
+    "M1": "return moc",
+    "M2": "return moc.replace(tzinfo=timezone.utc)"
+  },
+  "tests": [
+    "tests/unit/test_td0403_gap_ms_mui_gio.py",
+    "tests/unit/test_gap_ms.py"
+  ],
+  "ky_vong": {
+    "M0": "xanh",
+    "M1": "do",
+    "M2": "do"
+  },
+  "ky_vong_do_gom": {
+    "M1": [
+      "tests/unit/test_td0403_gap_ms_mui_gio.py::TestTronNaiveAware::test_lenh_sl_tron_naive_aware_van_do_dung_gap_ms",
+      "tests/unit/test_td0403_gap_ms_mui_gio.py::TestTronNaiveAware::test_moc_khop_entry_tron_naive_aware_van_dem_dung_tranche",
+      "tests/unit/test_td0403_gap_ms_mui_gio.py::TestTronNaiveAware::test_tron_hay_khong_tron_cho_cung_ket_qua"
+    ],
+    "M2": [
+      "tests/unit/test_td0403_gap_ms_mui_gio.py::TestTronNaiveAware::test_aware_mui_gio_khac_duoc_quy_doi_dung"
+    ]
+  }
+}

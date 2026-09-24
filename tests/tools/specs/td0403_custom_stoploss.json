@@ -1,0 +1,29 @@
+{
+  "mo_ta": "TD-0403: custom_stoploss phai tra SL ke ca khi _ghi_gap_ms no. M1 = thu hep except Exception thanh except KeyError (TypeError lot ra ngoai; Freqtrade nuot -> SL khong duoc cap nhat) -> dung 2 ca do. Du doan viet TRUOC khi chay. Chi phu duoc test chay CUNG tien trinh.",
+  "module": "ZoneAbsorption",
+  "file": "user_data/strategies/ZoneAbsorption.py",
+  "khoi_dong": [
+    "except Exception:  # noqa: BLE001 — cố ý bắt rộng: KHÔNG được để sổ đo cướp mất giá SL",
+    "logger.exception(\"%s: ghi gap_ms thất bại — SL vẫn được trả về (TD-0403)\", trade.pair)"
+  ],
+  "bien_the": {
+    "M0": null,
+    "M1": [
+      "except KeyError:",
+      "    raise"
+    ]
+  },
+  "tests": [
+    "tests/unit/test_td0403_gap_ms_mui_gio.py"
+  ],
+  "ky_vong": {
+    "M0": "xanh",
+    "M1": "do"
+  },
+  "ky_vong_do_gom": {
+    "M1": [
+      "tests/unit/test_td0403_gap_ms_mui_gio.py::TestCustomStoplossKhongBiSoDoCuopGia::test_sl_van_duoc_tra_ve_khi_ghi_gap_ms_no",
+      "tests/unit/test_td0403_gap_ms_mui_gio.py::TestCustomStoplossKhongBiSoDoCuopGia::test_loi_ghi_gap_ms_duoc_log_error_khong_im"
+    ]
+  }
+}

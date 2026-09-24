@@ -1663,8 +1663,16 @@ class ZoneAbsorption(IStrategy):
         bẩy thật (MT-16 triệu chứng vi). `stoploss_from_absolute(...,
         leverage=)` là hàm Freqtrade cấp đúng cho việc này."""
         kh, _, _ = self._doc_ke_hoach(trade)
-        self._ghi_gap_ms(trade, sl_price=kh.sl)
-        return stoploss_from_absolute(kh.sl, current_rate, is_short=trade.is_short, leverage=trade.leverage)
+        sl = stoploss_from_absolute(kh.sl, current_rate, is_short=trade.is_short, leverage=trade.leverage)
+        # TD-0403 — SỔ ĐO không được chặn LỆNH BẢO VỆ VỐN. Trước đây `_ghi_gap_ms()` chạy TRƯỚC `return`: một lỗi
+        # của sổ đo (ví dụ ngày giờ naive/aware trộn lẫn) bị Freqtrade nuốt, `custom_stoploss` trả `None` và SL
+        # KHÔNG được cập nhật vòng đó. Nay SL tính xong trước; lỗi ghi sổ thì log `ERROR` (to, không im) và tự lành:
+        # hàm đọc lại TOÀN BỘ lịch sử mỗi lần gọi, `ghi_neu_chua_co` chống trùng ⇒ lần sau ghi bù.
+        try:
+            self._ghi_gap_ms(trade, sl_price=kh.sl)
+        except Exception:  # noqa: BLE001 — cố ý bắt rộng: KHÔNG được để sổ đo cướp mất giá SL
+            logger.exception("%s: ghi gap_ms thất bại — SL vẫn được trả về (TD-0403)", trade.pair)
+        return sl
 
     def _ghi_gap_ms(self, trade, *, sl_price: float) -> None:
         """TD-0244 (§8.3 LD-21, D2c) — ghi Decision Log mỗi lần khối lượng
