@@ -227,6 +227,11 @@ class TestCuaXacThucCtrl:
         reg = tmp_path / "reg.jsonl"
         ledger = TrialLedger(reg)
         goc = ledger.reserve(**_kw(params_frozen_hash="fh1", config_hash="ch1"))
+        # TD-0378 (`DR-DINH-DANH-01` §4.2 chốt 2): gốc của một tái lập phải đã CONSUMED có expectancy. Chỉ đổi SETUP.
+        ledger.seal(goc, seal_path="runs/td/metrics.seal")
+        ledger.consume(goc, outcome={"expectancy": 0.02, "sharpe": 0.5, "n_trades": 100,
+                                     "max_single_loss_ratio": 1.0}, verdict="REJECTED")
+        truoc = _so_dai(reg)
 
         tid = ledger.reserve(
             **_kw(
@@ -238,7 +243,9 @@ class TestCuaXacThucCtrl:
         )
 
         assert tid
-        assert _so_dai(reg) == 2
+        # TD-0378: khẳng định cũ `== 2` (RESERVE gốc + RESERVE CTRL) đổi thành "dài thêm ĐÚNG 1 dòng" — CÙNG ý, không phụ
+        # thuộc số dòng setup. Ngoại lệ `DR-DINH-DANH-01` §7.1, chủ dự án duyệt 24/09/2026.
+        assert _so_dai(reg) == truoc + 1
 
 
 # ── 4. Bất biến cũ không bị nới ──────────────────────────────────────
@@ -277,6 +284,10 @@ class TestCuaGhiKhongDuocLechSchema:
         reg = tmp_path / "reg.jsonl"
         ledger = TrialLedger(reg)
         goc = ledger.reserve(**_kw())
+        # TD-0378 (`DR-DINH-DANH-01` §4.2 chốt 2): gốc của một tái lập phải đã CONSUMED có expectancy. Chỉ đổi SETUP.
+        ledger.seal(goc, seal_path="runs/td/metrics.seal")
+        ledger.consume(goc, outcome={"expectancy": 0.02, "sharpe": 0.5, "n_trades": 100,
+                                     "max_single_loss_ratio": 1.0}, verdict="REJECTED")
         ledger.reserve(**_kw(budget_line="CTRL", reproduces_trial_id=goc))
 
         jsonschema.validate(self._su_kien_dau(reg), self._schema())

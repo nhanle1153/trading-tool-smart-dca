@@ -404,6 +404,7 @@ class TrialLedger:
         ctrl_mo_ta_whitelist: Sequence[str] | None = None,
         params_frozen_hash: str,
         config_hash: str,
+        pham_vi: Mapping[str, Any] | None = None,
     ) -> None:
         """Máy kiểm lời khai CTRL — raise `CtrlClaimError` nếu không thoả.
 
@@ -445,6 +446,7 @@ class TrialLedger:
                 reproduces_trial_id=str(reproduces_trial_id),
                 params_frozen_hash=params_frozen_hash,
                 config_hash=config_hash,
+                pham_vi=dict(pham_vi or {}),
             )
         elif ctrl_output_whitelist is not None:
             self._kiem_ctrl_do_thuoc(list(ctrl_output_whitelist))
@@ -452,12 +454,26 @@ class TrialLedger:
             self._kiem_ctrl_mo_ta(list(ctrl_mo_ta_whitelist or []))
 
     def _kiem_ctrl_tai_lap(
-        self, *, reproduces_trial_id: str, params_frozen_hash: str, config_hash: str
+        self,
+        *,
+        reproduces_trial_id: str,
+        params_frozen_hash: str,
+        config_hash: str,
+        pham_vi: Mapping[str, Any],
     ) -> None:
         """Dạng *tái lập* (§0d.4): chạy lại ĐÚNG một trial đã có, để xem có
         ra cùng số không. "Đúng" ở đây máy kiểm được: cùng tham số, cùng
         cấu hình. Đổi một trong hai thì đó là phép thử mới, không phải tái
-        lập — và phải tiêu ngân sách như mọi phép thử."""
+        lập — và phải tiêu ngân sách như mọi phép thử.
+
+        TD-0378 (`DR-DINH-DANH-01` §4.2) siết thêm, theo đúng trục:
+        - lính canh `"n/a"`/`""` không chứng minh được cùng cấu hình (hai chuỗi lính canh bằng nhau — `D-0001`…`D-0004`);
+        - gốc phải là trial THẬT đã ra số (B1/B2/B3, CONSUMED, `expectancy` khác null) — không có gì để tái lập ở dòng
+          B0/CTRL hay trial chưa có kết quả, và phép kiểm kết quả `TD-0379` cần đúng số đó;
+        - `dataset`/`direction`/`param_under_test`/`param_value`/`data_hashes` phải BẰNG gốc — đổi dữ liệu hay phạm vi là
+          phép thử mới.
+        🔑 `code_commit` ĐƯỢC khác gốc, cố ý: §0d.4 chạy điểm kiểm soát SAU khi commit giá trị mới, và chính mục đích của
+        nó là chứng minh *"mã đổi mà kết quả không trôi"*. Bắt cùng commit = không điểm kiểm soát nào thoả được (DR §3.1)."""
         goc = None
         for e in self._read_events():
             if e["event"] == "RESERVE" and e["trial_id"] == reproduces_trial_id:
@@ -479,6 +495,40 @@ class TrialLedger:
             raise CtrlClaimError(
                 f"CTRL khai tái lập {reproduces_trial_id} nhưng {', '.join(lech)} lệch "
                 "bản ghi gốc — đổi cấu hình thì không còn là tái lập, đó là phép thử mới"
+            )
+        linh_canh = sorted(
+            {h for h in (config_hash, params_frozen_hash, goc["config_hash"], goc["params_frozen_hash"])}
+            & CONFIG_HASH_LINH_CANH
+        )
+        if linh_canh:
+            raise CtrlClaimError(
+                f"CTRL khai tái lập {reproduces_trial_id} trên hash lính canh {linh_canh} — hai chuỗi lính canh bằng nhau "
+                "không chứng minh cùng cấu hình (DR-DINH-DANH-01 §4.2 chốt 1)"
+            )
+        if goc.get("budget_line") not in (BUDGET_LINE_B1, "B2", "B3"):
+            raise CtrlClaimError(
+                f"CTRL khai tái lập {reproduces_trial_id} (dòng {goc.get('budget_line')}) — chỉ tái lập được trial "
+                "B1/B2/B3 (DR-DINH-DANH-01 §4.2 chốt 2)"
+            )
+        tieu_thu = next(
+            (e for e in self._read_events() if e["event"] == "CONSUME" and e["trial_id"] == reproduces_trial_id),
+            None,
+        )
+        if tieu_thu is None or (tieu_thu.get("outcome") or {}).get("expectancy") is None:
+            raise CtrlClaimError(
+                f"CTRL khai tái lập {reproduces_trial_id} nhưng gốc chưa CONSUMED hoặc chưa có expectancy — không có "
+                "số để so (§0d.4 bước 3, TD-0379; DR-DINH-DANH-01 §4.2 chốt 2)"
+            )
+        lech_pham_vi = sorted(
+            ten
+            for ten in ("dataset", "direction", "param_under_test", "param_value", "data_hashes")
+            if pham_vi.get(ten)
+            != (goc.get("provenance", {}).get("data_hashes") if ten == "data_hashes" else goc.get(ten))
+        )
+        if lech_pham_vi:
+            raise CtrlClaimError(
+                f"CTRL khai tái lập {reproduces_trial_id} nhưng {', '.join(lech_pham_vi)} lệch bản ghi gốc — đổi dữ liệu "
+                "hay phạm vi là phép thử mới, phải tiêu ngân sách (DR-DINH-DANH-01 §4.2 chốt 3)"
             )
 
     def _kiem_ctrl_do_thuoc(self, whitelist: list[str]) -> None:
@@ -591,6 +641,13 @@ class TrialLedger:
                 ctrl_mo_ta_whitelist=ctrl_mo_ta_whitelist,
                 params_frozen_hash=params_frozen_hash,
                 config_hash=config_hash,
+                pham_vi={
+                    "dataset": dataset,
+                    "direction": direction,
+                    "param_under_test": param_under_test,
+                    "param_value": param_value,
+                    "data_hashes": dict(provenance).get("data_hashes"),
+                },
             )
         else:
             if budget_line == BUDGET_LINE_B1:

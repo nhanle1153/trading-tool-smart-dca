@@ -141,6 +141,10 @@ class TestDauRaThatHopLeTheoSchema:
         Ca này tồn tại để lần sửa đó không lặng lẽ mất đi."""
         so = _so(tmp_path)
         goc = _reserve(so)
+        # TD-0378 (`DR-DINH-DANH-01` §4.2 chốt 2): gốc của một tái lập phải đã CONSUMED có expectancy. Chỉ đổi SETUP.
+        so.seal(goc, seal_path="runs/td/metrics.seal")
+        so.consume(goc, outcome={"expectancy": 0.02, "sharpe": 0.5, "n_trades": 100,
+                                     "max_single_loss_ratio": 1.0}, verdict="REJECTED")
         so.reserve(
             n_dang_ky=114, so_lenh_da_dong=0, tool_id="D", budget_line="CTRL",
             hypothesis_slot="A-01", direction="LONG", dataset="CALIB",

@@ -59,16 +59,23 @@ def _outcome(e: float | None) -> dict:
 def _so_tai_lap(
     tmp_path: Path, repo: Path, *, e_goc: float | None, e_ctrl: float | None, goc_consumed: bool = True
 ) -> Path:
-    """Trial gốc B3 + một dòng CTRL tái lập (§0d.4: chạy SAU một commit ⇒ khác `code_commit`)."""
+    """Trial gốc B3 + một dòng CTRL tái lập (§0d.4: chạy SAU một commit ⇒ khác `code_commit`).
+
+    `goc_consumed=False`: cửa ghi (TD-0378) KHÔNG cho ghi ca này nữa, nên dựng sổ hợp lệ rồi XOÁ dòng CONSUME của gốc —
+    mô phỏng sổ ghi trước TD-0378 hay bị sửa tay, đúng chỗ phép kiểm sau-sự-việc vẫn phải canh."""
     so_path = tmp_path / "reg.jsonl"
     so = TrialLedger(so_path, repo_dir=repo)
     goc = so.reserve(**_kw())
     so.seal(goc, seal_path=f"runs/{goc}/metrics.seal")
-    if goc_consumed:
-        so.consume(goc, outcome=_outcome(e_goc), verdict="REJECTED")
+    so.consume(goc, outcome=_outcome(e_goc if goc_consumed else 0.02), verdict="REJECTED")
     ctrl = so.reserve(**_kw(budget_line="CTRL", reproduces_trial_id=goc, code_commit="b" * 40))
     so.seal(ctrl, seal_path=f"runs/{ctrl}/metrics.seal")
     so.consume(ctrl, outcome=_outcome(e_ctrl), verdict="REJECTED")
+    if not goc_consumed:
+        dong = so_path.read_text(encoding="utf-8").splitlines(keepends=True)
+        giu = [d for d in dong if not ('"CONSUME"' in d and f'"{goc}"' in d)]
+        assert len(giu) == len(dong) - 1
+        so_path.write_text("".join(giu), encoding="utf-8")
     return so_path
 
 
