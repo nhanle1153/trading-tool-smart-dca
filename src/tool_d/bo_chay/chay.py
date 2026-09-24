@@ -251,7 +251,8 @@ def chay_mot_luot(
     # 4 — môi trường chạy tạm.
     goc = Path(tempfile.mkdtemp(prefix=f"bochay_{yeu_cau.tap.lower()}_")) if goc_tam is None else goc_tam
     mt = dung_moi_truong(
-        repo_dir=repo_dir, goc=goc, ghi_de=yeu_cau.ghi_de_config, ma_trong_ro=ma
+        repo_dir=repo_dir, goc=goc, ghi_de=yeu_cau.ghi_de_config, ma_trong_ro=ma,
+        chien_luoc=yeu_cau.chien_luoc,
     )
 
     # 5 — gọi Freqtrade. `timerange` là CÙNG chuỗi phép kiểm độ phủ ở bước 3 đã dùng.

@@ -28,6 +28,9 @@ tier_a: # chỉnh tự do, 0 trial
   enable_long: true
   enable_short: false # chỉ bật khi DG7 (§4c) xong
   pool_size_target: 100
+  # 🆕 TD-0400 — ✅ DR-D0-IQ0003 §2: vốn RIÊNG của rổ funding IQ-0003 (chủ dự án chốt 24/09/2026), không
+  # đụng E_D của ZA. null ⇒ RoFunding TỪ CHỐI chạy (fail-closed); giá trị chốt theo §10 câu (c) trước suất đầu.
+  von_ro_usdt: null
 
   _derived: # HỆ THỐNG TÍNH, không nhập tay
     max_open_positions: null # ← §6.8f, DAO ĐỘNG theo zone width
@@ -187,5 +190,16 @@ tier_c: # 🔒 KHOÁ — KHÔNG có ô nhập, ghi ở đây
     chi_so: mean_r # ✅ TD-0386 — ô ký DR-LOCKBOX-04 §3 (fe1da36): trung bình r_trien_khai (thong_ke_arm), KHÔNG trừ thuế DSR
     nguong: 0.10 # ✅ TD-0386 — ≥ 0,10 R, đúng ngưỡng kinh tế Nhánh 1; chốt 24/09/2026 trước mọi ứng viên / lần chạm lockbox
     hien_vat: docs/du-lieu-do/xac-nhan-sau-t3.json # bộ đo sinh file là việc riêng, chưa có
+  ro_funding: # 🆕 TD-0400 — ✅ DR-D0-IQ0003 §2: tham số rổ funding IQ-0003, dịch từ tờ chọn (729e27f)
+    # Ngoài tier_b ⇒ không vào N (vẫn 114). Chống tinh chỉnh ngầm = DR-BIEN-THE-01: đổi bất kỳ khoá nào
+    # sau suất đầu tiên là biến thể thứ hai, vượt so_bien_the: 1 ⇒ máy chặn ở cửa ghi.
+    ro_cua_so_gio: 72 # tổng funding các kỳ chốt trong (t − 72h, t] — DIỄN GIẢI chủ dự án chốt (DR §3.2)
+    ro_ty_le_k: 0.20
+    ro_k_toi_thieu: 3
+    ro_so_coin_toi_thieu: 6
+    ro_gio_can_ro_utc: 0
+    ro_stop_tham_hoa_pct: 25
+    ro_don_bay: 1 # PHƠI NHIỄM kinh tế: tổng notional = ro_don_bay × von_ro_usdt ("đòn bẩy 1x mỗi chân")
+    ro_don_bay_san: 2 # đòn bẩy ĐẶT TRÊN SÀN: ký quỹ = notional / 2, nửa vốn còn lại làm đệm lỗ (chủ dự án chốt 24/09/2026)
   # 🔴 v7 (spec): KHÔNG dùng *Parameter của Freqtrade cho BẤT KỲ khoá nào
   #        ở file này (§0d.2, L-Z37). Đọc YAML → dict → truyền vào hàm.

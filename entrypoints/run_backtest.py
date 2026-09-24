@@ -361,7 +361,9 @@ def main(argv: list[str] | None = None) -> int:
 
     goc = Path(tempfile.mkdtemp(prefix=f"e1_{args.tap.lower()}_"))
     try:
-        mt = dung_moi_truong(repo_dir=Path("."), goc=goc, ghi_de=ghi_de, ma_trong_ro=ro.trading)
+        mt = dung_moi_truong(
+            repo_dir=Path("."), goc=goc, ghi_de=ghi_de, ma_trong_ro=ro.trading, chien_luoc=args.chien_luoc
+        )
     except BoChayError as exc:
         print(f"🛑 {exc}")
         return EXIT_BO_CHAY_TU_CHOI

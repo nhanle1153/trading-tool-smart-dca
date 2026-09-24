@@ -1,0 +1,27 @@
+{
+  "_ghi_chu": "TD-0400 (DR-D0-IQ0003 §4) — file phủ riêng của chiến lược RoFunding: lệnh THỊ TRƯỜNG (tờ chọn IQ-0003). Bộ chạy áp khi chạy đúng chiến lược này; ZA không đổi. Không chứa khoá nào test_lz24 ghim.",
+  "_vi_tu_khoa": "tier_a.von_ro_usdt",
+  "_stoploss_tu_khoa": {"phan_tram": "tier_c.ro_funding.ro_stop_tham_hoa_pct", "don_bay_san": "tier_c.ro_funding.ro_don_bay_san"},
+  "order_types": {
+    "entry": "market",
+    "exit": "market",
+    "emergency_exit": "market",
+    "force_entry": "market",
+    "force_exit": "market",
+    "stoploss": "market"
+  },
+  "order_time_in_force": {
+    "entry": "GTC",
+    "exit": "GTC"
+  },
+  "entry_pricing": {
+    "price_side": "other",
+    "use_order_book": true,
+    "order_book_top": 1
+  },
+  "exit_pricing": {
+    "price_side": "other",
+    "use_order_book": true,
+    "order_book_top": 1
+  }
+}
