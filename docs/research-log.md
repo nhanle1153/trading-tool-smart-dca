@@ -4347,3 +4347,27 @@ cửa mới từ chối, đúng thiết kế. Vá bằng repo git nhỏ có hi�
 - **Chưa chạy thật — cần chủ dự án:** `.env.d10` (key tài khoản phụ, bot Telegram RIÊNG, tài khoản control API + JWT ≥ 32 ký
   tự), `--chon-ro` rồi commit `config/d10_ro.yaml`, E6 `--d10-dat-cho`. Việc đầu tiên khi có key: gọi thật `apiRestrictions`
   một lần để đối chiếu tên trường (đang lấy theo tài liệu Binance).
+
+## 25/09/2026 — Rổ IQ-0003 sẵn sàng tới cửa suất đầu tiên; Short bật trước commit (phiên mã `12c579bc`)
+
+- **Xong:** `TD-0406` (`7c837f7`, vốn rổ 1.900 USDT + trần D12 cùng commit), `TD-0401` (`65df167`), `TD-0402` (`5fc1cbb`).
+  Full suite Docker **3612 passed, 0 failed**. Cổng thiết kế của `IQ-0003` (`TD-0375` + `TD-0398`) chạy thật: **QUA**.
+- **Số đếm EXPLORE bắt một lỗi thật (chỉ đếm, không PnL):** lần đầu 2.709 lệnh có **2 lệnh `roi`**. `minimal_roi` chung
+  `{"0": 10}` (tỉ lệ trên ký quỹ) chạm được ở đòn bẩy sàn 2 (giá +500% trong 2 năm altcoin), trái tờ chọn *"không chốt
+  lời"*. File phủ nay THAY TRỌN `minimal_roi = {}`; đếm lại 2.704 lệnh: `CAN_RO` 2.341 · `stop_loss` 331 · `force_exit` 32.
+  Nếu không có cổng nhãn hẹp của `DR-CAN-RO-01`, hai lệnh đó lọt qua im lặng — đúng loại lỗi *"thứ không ai viết sai
+  dòng nào"*.
+- **Sàn rổ:** sàn Tool D lớn nhất 30 USDT (BCH/ETC/LINK/LTC, khớp `DR-D4-05`), `k_max = 28` ⇒ 1.848 ⇒ 1.900. Đo KHÔNG
+  đọc dữ liệu thị trường CALIB/WFO (né `MT-19`): danh sách mã từ file rổ + metadata sàn hiện tại qua adapter. Ước lượng
+  1.200–1.500 của tôi lúc hỏi chủ dự án là thấp; đã báo lại trước khi ghi.
+- 🔴 **`enable_short` có hiệu lực ở dry-run ~20 phút TRƯỚC commit (`MT-86`).** Dòng `true` nằm trên đĩa chờ full suite;
+  bot dry-run được khởi động lại (không do phiên này) lúc ~04:31 UTC và nạp YAML từ thư mục làm việc (mount `..`) ⇒ đường
+  Short của ZA chạy từ 04:32 (log `XAC_NHAN_3_3B_SHORT`), 0 lệnh Short mở. Kết cục trùng ý chủ dự án (bật ngay), nhưng
+  đường đi không ai chủ định. Bài học: **với một service chạy dài đọc thẳng repo, "chưa commit" KHÔNG có nghĩa "chưa có
+  hiệu lực"** — N12 canh index dùng chung, không canh cái này. Đã khởi động lại lúc 04:53 UTC trên HEAD `5fc1cbb`.
+- **Test phải đổi nhiều hơn `DR-SHORT-02` dự đoán** (DR nói 1 ca, thực tế 5 file): ghim quyết định `test_td0321` (2 ca,
+  nêu tên DR) + ba fixture/ca đường Long tắt Short TƯỜNG MINH (`test_td0321`, `test_td0335` lô E3, `test_td0193`). Không
+  khẳng định hành vi nào bị nới. `L-Z56` không sửa — E3 bị chặn khi thiếu Δ_R(SHORT), đúng thiết kế.
+- **Còn treo:** `MT-85` (lớp xác nhận của rổ chưa có máy canh theo thước lợi suất ngày), `MT-86`; theo dõi log dry-run 24h
+  đầu cho lỗi giới hạn API (`DR-SHORT-02` §5).
+
