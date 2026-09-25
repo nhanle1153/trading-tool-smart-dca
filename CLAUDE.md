@@ -215,7 +215,7 @@ IDEA/CHỌN không đọc): `docs/lich-su/trang-thai-den-25-09-2026.md`.
 - **Khối 39 xong** (`TD-0417`…`TD-0420`): một phiên duy nhất, `CLAUDE.md` gọn, script phiên sạch, vòng đời chung cho ứng
   viên (`DR-VONG-DOI-01`) + tiêu chí chọn quý 1/2027 (`DR-Q1-2027`, hạn ngạch 1, độ mạnh thống kê ≥ 50%). `[T2,T3]` chuyển cho
   ứng viên kế tiếp (`DR-LOCKBOX-04` bổ sung).
-- **Bước kế tiếp:** cửa chọn quý 1/2027 mở từ 01/01/2027 — chủ dự án chạy
+- **Bước kế tiếp:** cửa CHỌN đã mở từ 25/09/2026 (`DR-IQ-04`, dùng trước lượt quý 1/2027, `TD-0421`) — chủ dự án chạy
   `python scripts/tao_phien_sach.py --tieu-chi docs/decisions/DR-Q1-2027-tieu-chi-chon-y-tuong.md`.
 - **Mâu thuẫn chờ chủ dự án:** `back-end-note.md` mục 7, các dòng 🟡 chưa giải.
 - **Phiên ý tưởng sạch:** chạy `python scripts/tao_phien_sach.py` (xem `docs/phien-sach/`), mở phiên Claude MỚI trong thư
