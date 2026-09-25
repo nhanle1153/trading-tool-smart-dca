@@ -794,15 +794,22 @@ def tieu_chi_cho_ngay(tieu_chi_dir: Path, d: date) -> tuple[Path, int, int]:
     **và được đếm vào quỹ hạn ngạch của quý đó** — mở sớm không bao giờ thành thêm một suất.
 
     Cửa CHỌN (`idea_queue.chon_y_tuong`) và audit `TD-0120` cùng gọi hàm này: một luật, hai nơi dùng.
+
+    `DR-IQ-04` (`TD-0421`, chủ dự án chốt 25/09/2026): khối có thể khai `"cat_khoi": "<DR>"` — khối của DR đó **thôi
+    phủ** từ `tu_ngay` của khối cắt. Cắt phải tường minh và phải thật sự chồng; chồng mà không khai vẫn là lỗi.
     """
     nam, quy = _quarter_of(d)
-    khop: list[tuple[Path, int, int, str]] = []
+    # Mỗi khối: [dr, file tiêu chí, năm, quý, từ ngày, hết (không gồm), cat_khoi, tên file DR]
+    khoi: list[list[Any]] = []
     for f in sorted(tieu_chi_dir.glob("DR-IQ-*.md")):
         for m in MO_SOM_RE.finditer(f.read_text(encoding="utf-8")):
             try:
                 obj = json.loads(m.group("json"))
                 ten, tu = obj["tieu_chi"], date.fromisoformat(obj["tu_ngay"])
-            except (ValueError, KeyError, TypeError) as exc:
+                cat = obj.get("cat_khoi")
+                if cat is not None and not isinstance(cat, str):
+                    raise TypeError(f"cat_khoi phải là chuỗi, nhận {cat!r}")
+            except (ValueError, KeyError, TypeError, AttributeError) as exc:
                 raise TieuChiError(f"{f.name}: khối MO_SOM hỏng — {exc!r}") from exc
             mt = _TEN_FILE_TIEU_CHI_RE.match(ten)
             if mt is None:
@@ -813,8 +820,18 @@ def tieu_chi_cho_ngay(tieu_chi_dir: Path, d: date) -> tuple[Path, int, int]:
                 raise TieuChiError(f"{f.name}: tu_ngay {tu} không đứng TRƯỚC đầu quý {q}/{n} — không phải mở sớm")
             if not (tieu_chi_dir / ten).is_file():
                 raise TieuChiError(f"{f.name}: MO_SOM trỏ {ten} nhưng file không tồn tại")
-            if tu <= d < dau_quy:
-                khop.append((tieu_chi_dir / ten, n, q, f.name))
+            khoi.append([m.group("dr"), tieu_chi_dir / ten, n, q, tu, dau_quy, cat, f.name])
+    for k in khoi:
+        if k[6] is None:
+            continue
+        bi_cat = [x for x in khoi if x[0] == k[6] and x is not k]
+        if not bi_cat:
+            raise TieuChiError(f"{k[7]}: cat_khoi {k[6]!r} nhưng không có khối MO_SOM nào của DR đó")
+        for x in bi_cat:
+            if not x[4] < k[4] < x[5]:
+                raise TieuChiError(f"{k[7]}: cat_khoi {k[6]} tại {k[4]} nhưng khối đó phủ [{x[4]}, {x[5]}) — không chồng")
+            x[5] = k[4]
+    khop = [(k[1], k[2], k[3], k[7]) for k in khoi if k[4] <= d < k[5]]
     if len(khop) > 1:
         raise TieuChiError(f"ngày {d}: nhiều khối MO_SOM cùng phủ — {[k[3] for k in khop]}")
     if khop:

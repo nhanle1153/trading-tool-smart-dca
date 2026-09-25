@@ -5,7 +5,8 @@
     "docs/mau-don-y-tuong.yaml",
     "docs/decisions/DR-IQ-01A-danh-sach-loai-tru-co-che.md",
     "docs/decisions/DR-IQ-02-so-y-tuong-nhat-ky-su-kien.md",
-    "docs/decisions/DR-VONG-DOI-01-vong-doi-ung-vien.md"
+    "docs/decisions/DR-VONG-DOI-01-vong-doi-ung-vien.md",
+    "docs/decisions/DR-IQ-04-mo-som-cua-chon-q1-2027.md"
   ],
   "trich_spec": {
     "nguon": "tool-d-smart-dca.md",

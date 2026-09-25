@@ -183,8 +183,9 @@ class TestDRThat:
 
     DIR = REPO_ROOT / "docs/decisions"
 
-    def test_25_09_dung_tieu_chi_Q4_quy_4(self) -> None:
-        path, nam, quy = tieu_chi_cho_ngay(self.DIR, date(2026, 9, 25))
+    def test_24_09_dung_tieu_chi_Q4_quy_4(self) -> None:
+        # Từ 25/09/2026 khối này bị `DR-IQ-04` cắt (TD-0421) — ca 25/09 trở đi canh ở test_td0421.
+        path, nam, quy = tieu_chi_cho_ngay(self.DIR, date(2026, 9, 24))
         assert (path.name, nam, quy) == ("DR-Q4-2026-tieu-chi-chon-y-tuong.md", 2026, 4)
 
     def test_23_09_van_la_quy_3(self) -> None:
