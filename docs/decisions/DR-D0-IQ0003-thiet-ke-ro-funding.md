@@ -216,3 +216,30 @@ Chữ §10 giữ nguyên làm lịch sử; mục này là câu trả lời.
   36 mã CALIB đã huỷ niêm yết không có metadata, coi như sàn lớn nhất.
 
 > 🔴 **Đính chính §13 (a), 25/09/2026:** câu *"Nối máy canh lớp xác nhận theo thước này là việc riêng, chưa làm (`MT-84`)"* trỏ SAI mã — `MT-84` là trần vốn rổ (đã giải, `TD-0404`). Việc đó là **`MT-85`** (`back-end-note.md`, `39164a4`). Giữ nguyên chữ cũ.
+
+## 14. Suất trial đầu tiên — CALIB, viết TRƯỚC khi chạy (25/09/2026, chủ dự án chốt; `TD-0407`…`TD-0409`)
+
+- **Dòng ngân sách: `B3`** (dự phòng). B1 khoá cho D5 của ZA, B2 dành cho ablation.
+- **Hướng: `NEUTRAL`** (giá trị mới của sổ, `MT-82`). Cửa ghi chỉ nhận `NEUTRAL` cho slot `IQ-xxxx` có lớp
+  `CAN_RO_THEO_LICH` (khối `DR-CAN-RO-01:LOP`) — `TD-0407`.
+- **Tham số cố định của lần chạy:** `--param-under-test cau_hinh`, `--param-value "IQ-0003-v1"`, **không `--ghi-de`**
+  (ghi đè là biến thể thứ hai, `DR-BIEN-THE-01`). Điểm kiểm soát tái lập sau này dùng đúng các giá trị này.
+- **Cửa sổ:** toàn bộ CALIB `[t0, t1)` = `[2024-04-09, 2025-06-12)`, `timeframe_detail 5m`, rổ `pool_t0` (143 mã).
+- **Cách đo (chủ dự án chốt: lãi/lỗ đã chốt theo ngày đóng lệnh):**
+  - một quan sát = một ngày lịch UTC, từ ngày của lần cân rổ ĐẦU TIÊN có lệnh mở tới ngày cuối cửa sổ;
+  - lợi suất ngày = Σ `profit_abs` (DR-013, đã trừ phí + funding) các lệnh ĐÓNG trong ngày / `von_ro_usdt`;
+  - ngày không đóng lệnh nào = 0.
+  - Chỉ số ghi ra: `n`, `mean`, `std` (mẫu), `h = √(2·ln N)` với `N` hiện hành, `mean − h·std/√n`. Kèm (chỉ ghi, không
+    phán quyết): tổng funding nhận ròng và tỉ phần của nó trong lãi ròng, tách chân Long/Short (số lệnh, `profit_abs`,
+    funding), số lệnh theo nhãn thoát.
+  - `outcome.expectancy` trong sổ = `mean` lợi suất ngày — **đơn vị KHÁC R**, ghi rõ trong hiện vật. Verdict
+    `INCONCLUSIVE`: phán quyết là việc của D0.9 (§7), không phải của suất CALIB.
+  - Giới hạn biết trước: lãi/lỗ đã chốt theo ngày đóng làm chuỗi ngày gồ ghề hơn giá trị rổ thật ⇒ `std` lớn hơn (về phía
+    khó qua cổng); backtest không mô hình trượt giá (§8).
+- **OQ-17 (`DR-PHAN-QUYET-01` §2.3): *không ước lượng được T*.** Chưa có hiện vật đã commit nào mang σ `ok` cho đại lượng
+  lợi suất ngày của rổ — đây là lần đo đầu tiên của đơn vị này; không điền số thay thế (N6). Hai câu theo khuôn §2.1 dù
+  luật không áp: (a) suất này mua **thước đo đầu tiên** của rổ trên dữ liệu nghiên cứu (σ, n, phần funding) — thứ mọi lô
+  sau cần để tính `T`; (b) các tiêu chí vẫn đo được dù `mean` rơi vào vùng không phân biệt được: phần funding trong lãi
+  ròng (điều 4 của `nguong_bac_bo`), tách chân, phân bố nhãn thoát, số ngày có rổ.
+- **Không chạy lại** nếu kết quả xấu: chạy lại cùng cấu hình là một suất nữa; đổi cấu hình là biến thể thứ hai (bị chặn).
+
