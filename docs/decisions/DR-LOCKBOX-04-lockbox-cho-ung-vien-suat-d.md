@@ -175,3 +175,13 @@ với `von_ro_usdt` cả hai phía đều `null` nên vẫn đúng.
 >    loader từ chối, **đúng quy tắc ở trên**. Cấu hình phủ chỉ thay khoá lá có tên duy nhất nên không điền được
 >    `tran_d12: {…}` ⇒ fixture dựng từ một bản sao `config/` có trần = vốn test. Hệ quả cho sau này: mọi lần chạy **phủ**
 >    `von_ro_usdt` (thay vì sửa YAML) sẽ bị chặn tới khi trần có số — cũng là thứ quy tắc muốn.
+
+## Bổ sung 25/09/2026 — `[T2,T3]` chuyển cho ứng viên kế tiếp (chủ dự án chốt; `DR-VONG-DOI-01` §6 (b), `TD-0420`)
+
+Chữ cũ giữ nguyên. §2 dòng 5 gắn `[T2,T3]` cho *"ứng viên suất (d) ĐẦU TIÊN"*, tức `IQ-0003`. `IQ-0003` đã dừng ở WFO và
+**không chạm lockbox** (`DR-KET-CUC-IQ0003-01`), nên đoạn `[T2,T3]` vẫn sạch. Chủ dự án chốt: `[T2,T3]` dành cho **ứng viên
+đầu tiên THỰC SỰ tới bước lockbox** theo `DR-VONG-DOI-01`, dùng đúng các điều kiện §2–§4 của DR này (seal/rổ theo
+`DR-LOCKBOX-01`, lớp xác nhận sau `T3`, ngưỡng PASS viết trước). Cổng vào lockbox của ứng viên một cấu hình theo
+`DR-VONG-DOI-01` §2.1 thay cho `DR-LOCKBOX-03` §2. Điều kiện §4.1 (DR commit trước lần CHỌN còn hiệu lực đầu tiên) áp lại cho
+lần CHỌN kế tiếp: bổ sung này commit TRƯỚC mọi lần CHỌN của quý 1/2027.
+
