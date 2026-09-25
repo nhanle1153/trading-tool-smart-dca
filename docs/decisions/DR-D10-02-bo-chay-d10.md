@@ -146,3 +146,17 @@ Commit riêng, TRƯỚC mọi dòng mã chiến lược CTRL. Tham số số ghi
 
 Chi phí dự kiến mỗi vị thế: phí + trượt giá, vài cent tới ~1 USDT; lỗ tối đa khi chạm SL ≈ 2% × tổng notional đã khớp.
 Mục đích DUY NHẤT là sinh sự kiện đổi khối lượng SL + đo lệch khớp/post-only (§3 Q1) — không phải để có lãi.
+
+### 5.3 Sổ trial — MỘT dòng CTRL cho cả đợt D10 (chủ dự án chốt 25/09/2026, thay chữ §2 mục 6)
+
+§2 mục 6 viết *"mỗi vị thế một dòng CTRL"*. Khi vào mã, cách đó buộc **bot tiền thật tự ghi** vào sổ trial — file có
+trong git, nơi các phiên khác cùng ghi và commit — trong lúc đang chạy. Chủ dự án chọn thay bằng:
+
+- **Một dòng CTRL cho cả đợt D10**, dạng thứ tư *đo vận hành* (khai `ctrl_van_hanh_whitelist`, danh sách CHO PHÉP đúng
+  bốn tên của §2 mục 6: `gap_ms`, `fill_price`, `p_i`, `order_status` — toàn đo MÁY, không PnL).
+- **Người vận hành** đặt chỗ dòng đó bằng E6 `--d10-dat-cho` TRƯỚC lần bật đầu tiên; bộ đo ba ngưỡng (`TD-0385`) ghi
+  kết cục (CONSUME) khi đợt kết thúc. **Bot không bao giờ đụng sổ trial.**
+- `hypothesis_slot = "D10"`, `dataset = "N/A"` (D10 không chạm CALIB/WFO/LOCKBOX); tại một thời điểm chỉ được có
+  **một** dòng D10 đang mở (chưa CONSUME/REFUND) — cửa ghi từ chối dòng thứ hai.
+- Chi tiết từng vị thế nằm ở Decision Log (runmode `live`) và DB live, như đã có. Vẫn đúng *"khai CTRL, 0 trial"* của
+  `DR-D11-01` §4 và `MT-02`.
