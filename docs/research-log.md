@@ -4407,3 +4407,25 @@ cửa mới từ chối, đúng thiết kế. Vá bằng repo git nhỏ có hi�
   lo. Tỉ lệ lệnh Short/Long WFO 1,23 (CALIB 1,36) — giả thuyết stop chân Short vẫn chưa đo.
 - Hiện vật đã commit: `docs/du-lieu-do/IQ-0003-D-0024-wfo-loi-suat-ngay.json`.
 
+## 25/09/2026 — Dừng IQ-0003 ở WFO, ngưng hệ thống (phiên mã `12c579bc`)
+
+- **Vì sao dừng trước lockbox:** σ lớn nhất đã commit 0,01447/ngày, lockbox ~217 ngày ⇒ `T ≈ 0,30%/ngày`, gấp ~4 lần mean
+  WFO ⇒ điều (2) đã đăng ký gần như chắc FAIL vì CỠ MẪU, kéo theo `retest_forbidden` + lockbox dùng hết. Thêm: `DR-LOCKBOX-03`
+  viết cho ZA (D9/PBO) không ánh xạ được sang ứng viên một cấu hình. Chủ dự án chọn dừng ở WFO: `DR-KET-CUC-IQ0003-01`
+  (`b1820d3`) — INCONCLUSIVE vì thiếu độ mạnh, không L3, không `retest_forbidden`, lockbox chưa chạm.
+- **Va chạm hai phiên, giải bằng hỏi chủ dự án, không tự chọn bên:** phiên mã `dd89043d` đang dựng D10 tiền thật cho chính
+  IQ-0003 theo quyết định chủ dự án chốt ở đó cùng ngày. Chủ dự án chốt *"dừng hết, kể cả D10"*; phiên đó tự căn `TD-0412`/
+  `TD-0413` sang ⏸ (`13daf20`, `59bba98`), hạ tầng giữ nguyên. Phiên `143375ad` căn `TD-0391` sang ⏸ (`691ee4b`).
+- **Ngưng hệ thống:** `DR-SHORT-03` (`3955b45`) + `TD-0415` (`79a206d`): `enable_short: false`. Dry-run D11 (`dryrun` +
+  `dryrun-watchdog`) dừng **2026-09-25 08:38:53 UTC**; sổ dry-run lúc dừng: 0 lệnh mở, 0 lệnh Short từng mở, 3 lệnh Long đã
+  đóng. Chạy lại: `docker compose -f docker/docker-compose.yml --profile van_hanh up -d`.
+- **Sót của chính tôi, bắt ở full suite:** dây báo động sổ thật (`test_registry_schemas._kiem_so_that`) đòi cập nhật kèm DR
+  mỗi khi một trial B1/B2/B3 xuất hiện — tôi tiêu hai suất B3 mà không sửa dây. Bắt được ở full suite của `TD-0415`, sửa ở
+  `fd99e2d` (B3 chỉ `IQ-0003`/`NEUTRAL`, ≤ 2). Bài học: **tiêu suất là một thay đổi trạng thái sổ; chạy lại full suite SAU
+  khi tiêu suất**, không chỉ trước.
+- **Nhiễu môi trường, không phải lỗi:** một lượt suite bị phiên khác dừng nhầm container (`docker stop` lọc theo tên chung —
+  họ tự báo); một lượt khác có 3 ca `test_td0143` chết vì `git status` quá 10 giây, chạy riêng thì xanh. Lượt cuối **3696
+  passed, 0 failed**.
+- **Bản rà soát thiết kế lại:** `DR-TAI-THIET-KE-01` (NHÁP, `a7e2e41`) — bài học cấu trúc + 5 câu hỏi cho chủ dự án + 2 mục
+  `MT` đề xuất (chưa ghi `back-end-note.md`, chờ lệnh).
+
