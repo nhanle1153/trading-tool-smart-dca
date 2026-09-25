@@ -83,3 +83,50 @@ services:
     volumes:
       - ..:/workspace
       - /workspace/lockbox/data
+
+  # ── D10 — lệnh live TỐI THIỂU, TIỀN THẬT (TD-0384, DR-D10-02) — CHỈ bật bằng tay ─────────────
+  # `docker compose -f docker/docker-compose.yml --profile d10 up -d live-d10 live-d10-watchdog risk-supervisor-d10`
+  # Profile RIÊNG `d10` (không chung `van_hanh`): `up` nhầm profile dry-run không bao giờ bật tiền thật.
+  # Bí mật (key tài khoản phụ, token Telegram bot RIÊNG của D10, tài khoản control API) nạp từ `.env.d10` ở gốc repo
+  # (đã `.gitignore` qua `.env.*`, không commit). `required: true`: thiếu file thì KHÔNG khởi động.
+
+  live-d10:
+    <<: *base
+    profiles: ["d10"]
+    entrypoint: ["python", "-m", "tool_d.ops.live_d10"]
+    # 🔴 KHÔNG có `restart` (DR-D10-02 Q6): máy/Docker khởi động lại ⇒ D10 DỪNG và KHÔNG tự chạy lại. Lệnh đang mở vẫn
+    # có SL sống trên sàn (`stoploss_on_exchange`); watchdog bên dưới báo 🔴.
+    env_file:
+      - path: ../.env.d10
+        required: true
+    volumes:
+      - ..:/workspace
+      - /workspace/lockbox/data
+
+  live-d10-watchdog:
+    <<: *base
+    profiles: ["d10"]
+    entrypoint: ["python", "-m", "tool_d.ops.heartbeat_watchdog", "--runmode", "live"]
+    # Watchdog ĐƯỢC tự chạy lại sau khi máy khởi động lại — chính nó là thứ báo "D10 đang tắt" khi bot không tự chạy lại.
+    restart: unless-stopped
+    env_file:
+      - path: ../.env.d10
+        required: true
+    volumes:
+      - ..:/workspace
+      - /workspace/lockbox/data
+
+  risk-supervisor-d10:
+    <<: *base
+    profiles: ["d10"]
+    entrypoint: ["python", "-m", "tool_d.ops.risk_supervisor_daemon", "--freqtrade-api-base-url", "http://127.0.0.1:8081"]
+    # Dùng CHUNG mạng với `live-d10` để `127.0.0.1:8081` (control API chỉ nghe localhost — config.risk_supervisor.json)
+    # là chính bot D10. Giải TODO "topology daemon ↔ Freqtrade" của `risk_supervisor_daemon.py` (DR-D11-03).
+    network_mode: "service:live-d10"
+    depends_on: ["live-d10"]
+    env_file:
+      - path: ../.env.d10
+        required: true
+    volumes:
+      - ..:/workspace
+      - /workspace/lockbox/data
