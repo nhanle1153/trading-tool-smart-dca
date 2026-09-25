@@ -196,3 +196,14 @@ trong đợt này.
   lần (giữ khuôn `DR-D11-01` §4). Thiếu mẫu sau hạn ⇒ D10 chưa đạt (Q5).
 - **Q9 — Vốn rổ đi vào đâu.** `tier_a.von_ro_usdt` (1.900) là vốn sản xuất; D10 cần một số RIÊNG, nhỏ hơn. Đề xuất: bộ khởi chạy D10
   phủ `von_ro_usdt` bằng số ở Q7 **trong bản cấu hình phủ** (không sửa `tool_d_config.yaml`), và ghi số đó vào dòng CTRL đợt D10.
+
+### 6.3 Q7–Q9 — chủ dự án chốt 25/09/2026
+
+- **Q7 ✅** tài khoản phụ **≥ 200 USDT**; giữ luật rổ §5.1 (sàn ≤ 30 USDT, 10 cặp thanh khoản cao nhất). Vốn rổ D10 =
+  **6 × sàn Tool D lớn nhất trong rổ × 1,10** (`tier_c.ctrl_d10.he_so_le_san`), tính lúc khởi chạy từ metadata sàn.
+- **Q8 ✅** dừng mở vị thế mới khi đã có **≥ 30 lệnh vào/ra khớp** VÀ **≥ 7 lần cân rổ**; hạn 14 ngày, gia hạn đúng một lần nếu
+  chưa đủ mẫu; thiếu mẫu sau hạn ⇒ D10 chưa đạt (Q5). Lệnh RA tại lần cân rổ luôn được phép (đóng vị thế là chiều an toàn).
+- **Q9 ✅** vốn D10 đi qua **cấu hình phủ của bộ khởi chạy** (khoá riêng trong bản phủ Freqtrade); `tool_d_config.yaml`
+  (`von_ro_usdt: 1900`, vốn sản xuất) KHÔNG đổi. Số vốn ghi vào dòng CTRL đợt D10.
+- **Cách nối (kỹ thuật, không có đánh đổi kinh doanh):** lớp con `RoFundingD10(RoFunding)` — chỉ thay vốn và thêm máy canh D10 vào
+  `confirm_trade_entry`; KHÔNG sửa `RoFunding.py` (file của ứng viên, kỷ luật `DR-BIEN-THE-01`). Trần ký quỹ 50% (Q2) giữ nguyên.
