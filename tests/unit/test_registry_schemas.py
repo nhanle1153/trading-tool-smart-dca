@@ -76,11 +76,16 @@ def _kiem_so_that(events: list[dict]) -> None:
     miễn khỏi phần ghim B0/B2 — dây báo động chạy SAU khi dòng đã ghi nên không ngăn được gì — nhưng phải đúng LUẬT:
     chỉ trên `XAC_NHAN`, slot `IQ-xxxx`, `xac_nhan_cua_so` + `TINH`, ≤ 1 dòng không REFUND mỗi slot. CTRL trên
     `XAC_NHAN` chỉ được là dòng ĐẾM khai đúng `["so_lenh"]`. Phần ghim B0/B2/B1/B3 bên dưới không đổi chữ nào.
+
+    🔄 25/09/2026 (chủ dự án ra lệnh tiêu hai suất, `DR-D0-IQ0003` §14 + §15; lô đóng ở `DR-KET-CUC-IQ0003-01`): đúng cái
+    QUYẾT ĐỊNH mà dòng đầu chờ — ứng viên `IQ-0003` tiêu `B3`. B3 chỉ hợp lệ khi slot `IQ-0003`, hướng `NEUTRAL`, số suất
+    không REFUND ≤ 2 (D-0023 CALIB, D-0024 WFO). Lô đã đóng: suất B3 thứ ba ⇒ đỏ, cần DR mới. B1 vẫn cấm. Dây này lẽ
+    ra phải sửa CÙNG lúc tiêu suất (`TD-0409`/`TD-0410`) — bị sót, bắt được ở full suite của `TD-0415`.
     """
     reserve = [e for e in events if e["event"] == "RESERVE"]
     _kiem_dong_xac_nhan(events)
     that = [e for e in reserve if e["budget_line"] not in ("CTRL", BUDGET_LINE_XAC)]
-    assert all(e["budget_line"] in ("B0", "B2") for e in that), [(e["trial_id"], e["budget_line"]) for e in that]
+    assert all(e["budget_line"] in ("B0", "B2", "B3") for e in that), [(e["trial_id"], e["budget_line"]) for e in that]
     b0 = [e for e in that if e["budget_line"] == "B0"]
     assert len(b0) == 4, f"{len(b0)} trial B0 — tiêu suất mới là quyết định cần DR"
     b2 = [e for e in that if e["budget_line"] == "B2"]
@@ -97,6 +102,12 @@ def _kiem_so_that(events: list[dict]) -> None:
         cua_lo = [t for t in b2_khong_hoan if slot_cua_trial[t] == slot]
         assert len(cua_lo) <= tran, f"{cua_lo}: lô {slot} vượt trần {tran} suất B2 — cần DR mới"
     assert len(b2_khong_hoan) <= sum(TRAN_THEO_LO.values()), b2_khong_hoan
+    b3 = [e for e in that if e["budget_line"] == "B3"]
+    assert all(e["hypothesis_slot"] == "IQ-0003" and e["direction"] == "NEUTRAL" for e in b3), [
+        (e["trial_id"], e["hypothesis_slot"], e["direction"]) for e in b3
+    ]
+    b3_khong_hoan = [e["trial_id"] for e in b3 if e["trial_id"] not in hoan]
+    assert len(b3_khong_hoan) <= 2, f"{b3_khong_hoan}: lô B3 IQ-0003 đã đóng ở 2 suất (DR-KET-CUC-IQ0003-01) — cần DR mới"
     for e in reserve:
         if e["budget_line"] == "CTRL":
             dang = [k for k in _KHOA_DANG_CTRL if k in e]
