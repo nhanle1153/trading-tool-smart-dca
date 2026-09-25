@@ -263,3 +263,4 @@ Chữ §10 giữ nguyên làm lịch sử; mục này là câu trả lời.
     Short ghi ở `research-log` 25/09).
 - **Không chạy lại** nếu kết quả xấu; không đổi cấu hình theo kết quả CALIB.
 
+> 🔴 **Kết cục 25/09/2026:** IQ-0003 dừng ở WFO — `DR-KET-CUC-IQ0003-01` (INCONCLUSIVE vì thiếu độ mạnh thống kê, không chạm lockbox, D10 không chạy). Chữ §1–§15 giữ nguyên.
