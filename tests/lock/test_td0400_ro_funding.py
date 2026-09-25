@@ -301,5 +301,19 @@ class TestBacktestThat:
         short_mo = ltc[ltc["is_short"]]["open_date"]
         assert set(long_dong) & set(short_mo), (list(long_dong), list(short_mo))
 
+    def test_bo_do_loi_suat_ngay_chay_tren_lenh_that(self, kq) -> None:
+        """TD-0408 — bộ đo lợi suất ngày đọc được lệnh THẬT do Freqtrade xuất (qua đúng bộ lọc `TRUONG_LENH` của
+        `doc_ket_qua`): kiểu mốc thời gian, dấu `funding_fees`, `is_short`. Chuỗi ngày bắt đầu ở lần cân rổ đầu."""
+        from datetime import date
+
+        from tool_d.bo_chay.doc_ket_qua import TRUONG_LENH
+        from tool_d.ro_funding_do import do_loi_suat_ngay
+
+        lenh = [{k: t[k] for k in TRUONG_LENH if k in t} for t in kq["trades"]]
+        do = do_loi_suat_ngay(lenh, von_usdt=VON_TEST, tu=date(2025, 1, 1), den=date(2025, 1, 17), n_trials=114)
+        assert do["so_lenh"] == len(lenh) > 0 and do["ngay_dau"] == "2025-01-04"
+        assert do["n_ngay"] == 13 and do["std"] is not None and do["can_duoi"] is not None
+        assert do["chi_ghi"]["tach_chan"]["long"]["so_lenh"] > 0 and do["chi_ghi"]["tach_chan"]["short"]["so_lenh"] > 0
+
     def test_co_funding_that(self, kq) -> None:
         assert (_lenh(kq)["funding_fees"].abs() > 0).any()

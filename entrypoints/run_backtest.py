@@ -52,6 +52,7 @@ from tool_d.gates.cache_policy import assert_cache_none
 from tool_d.gates.d0_pre import require_d0_pre_complete
 from tool_d.gates.exit_reason_thiet_ke import la_slot_ung_vien
 from tool_d.ledger.bien_the import BienTheError, doc_khoa_bien_the, tinh_bien_the_hash
+from tool_d.ro_funding_do import do_loi_suat_ngay
 from tool_d.gates.dsr import N_DANG_KY
 from tool_d.ledger.con_dau import duong_khai_so, ghi_con_dau
 from tool_d.ledger.registry import (
@@ -86,6 +87,8 @@ EXIT_CHUA_XAC_NHAN_CHAY = 105
 EXIT_BACKTEST_HONG = 106
 #: Lõi bộ chạy từ chối trước khi chạy (rổ sai, thiếu 5m, timerange sai…).
 EXIT_BO_CHAY_TU_CHOI = 107
+#: TD-0408 — chiến lược đo bằng lợi suất ngày (`tool_d.ro_funding_do`), không bằng R.
+CHIEN_LUOC_RO = "RoFunding"
 
 #: TD-0373 — `--budget-line B1` khi khoá `D5_DO_TAM_DUNG` đang bật (`DR-ZA-01` §2). Mã MỚI, không tái dùng
 #: `110` của E3: hai khoá, hai quyết định, hai mã.
@@ -452,6 +455,14 @@ def main(argv: list[str] | None = None) -> int:
     ledger.seal(trial_id, seal_path=duong_khai_so(trial_id))
 
     thu_muc_ra.mkdir(parents=True, exist_ok=True)
+    # TD-0408 — zip kết quả Freqtrade nằm trong `mkdtemp`, mất khi container `--rm` kết thúc ⇒ chép vào `runs/<id>/`.
+    # SAU con dấu nên lỗi chép không làm hỏng suất: chỉ in cảnh báo, không đổi luồng.
+    try:
+        import shutil
+
+        shutil.copy2(kq.duong_ket_qua, thu_muc_ra / kq.duong_ket_qua.name)
+    except Exception as exc:  # noqa: BLE001 — hiện vật phụ, không phải chỉ số
+        print(f"⚠️ không chép được zip kết quả: {exc}")
     # TD-0389: chế độ ĐẾM chỉ được sinh ra số lệnh + khoảng ngày (DR-XAC-NHAN-01 §6 Q2) ⇒ KHÔNG ghi `ket_qua.json`
     # (mang số dư đầu/cuối), KHÔNG dựng bảng R. Con dấu (`ghi_con_dau`) chỉ mang cửa sổ/số mã/số lệnh/băm — giữ.
     dem = xac_nhan and args.che_do == "DEM"
@@ -488,7 +499,17 @@ def main(argv: list[str] | None = None) -> int:
     lenh_luot = _lenh_da_dong(kq.lenh) if xac_nhan else list(kq.lenh)
     so_lenh = len(lenh_luot) if xac_nhan else kq.so_lenh
     try:
-        if not dem:
+        if not dem and args.chien_luoc == CHIEN_LUOC_RO:
+            # TD-0408 (`DR-D0-IQ0003` §13 a, §14): rổ không có R, không có tranche ⇒ KHÔNG đi `lenh_tu_freqtrade`.
+            # Thước = lợi suất ngày trên vốn rổ; `expectancy` trong sổ = mean lợi suất ngày (đơn vị KHÁC R).
+            do = do_loi_suat_ngay(
+                lenh_luot, von_usdt=float(resolve(mt.cfg_phu, "tier_a.von_ro_usdt")), tu=tu, den=den, n_trials=N_DANG_KY
+            )
+            do["trial_id"] = trial_id
+            (thu_muc_ra / "ro_ngay.json").write_text(json.dumps(do, indent=2, ensure_ascii=False), encoding="utf-8")
+            so_lenh = do["so_lenh"]
+            expectancy = do["mean"]
+        elif not dem:
             arm = str(resolve(mt.cfg_phu, KHOA_ARM))
             lenhs = [lenh_tu_freqtrade(t, cfg=mt.cfg_phu, arm=arm) for t in lenh_luot]
             ghi_bang_r(thu_muc_ra, lenhs, trial_id=trial_id)
