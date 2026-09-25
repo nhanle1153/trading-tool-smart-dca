@@ -1190,7 +1190,7 @@ commit này, `Phien: 12c579bc`. Khoá 🔒 bốn việc DR cùng commit.
 
 | Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
 |---|---|---|---|---|
-| TD-0421 | **Mở cửa CHỌN từ 25/09/2026** — `DR-IQ-04`: tiêu chí + hạn ngạch `DR-Q1-2027` hiệu lực sớm (dùng trước lượt quý 1/2027, không thêm lượt); khối `MO_SOM` được `cat_khoi` cắt tường minh khối `DR-IQ-03` (chủ dự án: *"Dùng luôn từ ngày hôm nay 25/09"*) | 🔒 | TD-0420 | Code + test + DR commit; full suite Docker 0 failed; audit sổ ý tưởng sạch |
+| TD-0421 | **Mở cửa CHỌN từ 25/09/2026** — `DR-IQ-04`: tiêu chí + hạn ngạch `DR-Q1-2027` hiệu lực sớm (dùng trước lượt quý 1/2027, không thêm lượt); khối `MO_SOM` được `cat_khoi` cắt tường minh khối `DR-IQ-03` (chủ dự án: *"Dùng luôn từ ngày hôm nay 25/09"*) | ✅ | TD-0420 | Code + test + DR commit; full suite Docker 0 failed; audit sổ ý tưởng sạch |
 
 **Đặt chỗ mã (N12 mục 4):** `TD-0421` + `DR-IQ-04`, commit này, `Phien: 12c579bc`.
 
