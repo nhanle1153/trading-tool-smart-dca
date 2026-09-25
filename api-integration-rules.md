@@ -18,6 +18,7 @@
 | 4 | Binance USDⓈ-M Futures REST **KÝ** — đọc margin/vị thế/thanh lý (`GET /fapi/v2/account`, `/fapi/v2/positionRisk`, `/fapi/v1/forceOrders`) | Risk Supervisor (§6.6, TD-0241) tự đọc trạng thái tài khoản — dùng từ D11-D12, KHÔNG chạy ở D0-PRE/D4 (không có tài khoản live để đọc) | ☑ MOCK (test đơn vị) ☐ SANDBOX (không có testnet cho endpoint này, `DR-D35-01`) ☑ LIVE (D11-D12) | ☐ Có ☑ Không |
 | 5 | Freqtrade REST API **CỤC BỘ** — `POST /api/v1/stop` | Risk Supervisor dừng HẲN vòng lặp bot khi `LIQUIDATED`/breaker `dung_han` (TD-0241, `DR-D11-03`) — control API của CHÍNH tiến trình Freqtrade trên máy, KHÔNG phải Binance | ☑ MOCK (test đơn vị) ☑ LIVE (D11-D12, chỉ khi Freqtrade chạy với `-c config/freqtrade/config.risk_supervisor.json`) ☐ SANDBOX | ☐ Có ☑ Không |
 | 6 | Binance **kho lưu trữ công khai** `data.binance.vision` (file ZIP tĩnh, không phải REST) | Dữ liệu lịch sử đã đóng: nến 1d theo THÁNG (volume rổ point-in-time, `TD-0231`/`TD-0247`/`TD-0300`/`TD-0307`), dump `aggTrades` theo NGÀY (`TD-0162`, DR-015 bước 2), nến 1d theo NGÀY cho rổ `XAC_NHAN` tại ngày CHỌN (`TD-0391`, `DR-XAC-NHAN-01` §9); liệt kê bucket (`TD-0230`). Chỉ ĐỌC | ☐ MOCK ☐ SANDBOX ☑ LIVE (dữ liệu công khai, không khoá) | ☐ Có ☑ Không |
+| 7 | Binance **SAPI KÝ** — `GET /sapi/v1/account/apiRestrictions` (host `api.binance.com`, KHÁC `fapi`) | Máy kiểm bảo mật TÀI KHOẢN PHỤ trước MỖI lần bật bộ chạy D10 (`DR-D10-02` Q3): IP whitelist phải bật, quyền rút / chuyển tiền phải tắt — không thoả ⇒ TỪ CHỐI bật. Gọi MỘT lần mỗi lần khởi động, không nằm trong vòng lặp | ☑ MOCK (test đơn vị) ☐ SANDBOX (không có testnet cho endpoint này) ☑ LIVE (D10+, key tài khoản phụ) | ☐ Có ☑ Không |
 
 > ⚠️ G2 đã đúng như cảnh báo của template: SDK `ccxt` (Freqtrade dùng nội bộ) gọi mạng ngầm — không
 > tự viết HTTP client riêng, nhưng vẫn phải áp R1-R12 vì bản chất vẫn là gọi ra ngoài.
@@ -45,6 +46,7 @@
 | `GET data.binance.vision/data/futures/um/daily/aggTrades/<SYM>/<SYM>-aggTrades-<YYYY-MM-DD>.zip` (`tai_dump_agg_trades`) | GET | ☑ Có | Như trên | 120 | ☑ Có *(có cache đĩa, đổi tên nguyên tử; 404 = `AggTradesNotFoundError`)* |
 | `GET data.binance.vision/data/futures/um/daily/klines/<SYM>/1d/<SYM>-1d-<YYYY-MM-DD>.zip` (`TD-0391`, chưa code) | GET | ☑ Có | Như trên | 60 | ☑ Có *(404 = dữ kiện, cùng họ `NenThangKhongCoError` ⇒ `dung_ro_tai_moc` xếp `kho_404`; không đọc ngày HÔM NAY — file ngày chưa đóng)* |
 | `GET s3-ap-northeast-1.amazonaws.com/data.binance.vision?prefix=…` (liệt kê bucket S3 đứng sau kho, `liet_ke_kho_luu_tru`) | GET | ☑ Có | Như trên | 30 | ☑ Có *(prefix rỗng bị cấm; lỗi ⇒ `KhoLuuTruError`, không trả rỗng)* |
+| `GET /sapi/v1/account/apiRestrictions` (`api.binance.com`, `DR-D10-02` Q3, TD-0384 — chưa code) | GET | ☑ Có | weight 1 theo tài liệu Binance (**chưa verify bằng gọi thật**); gọi một lần/lần khởi động ⇒ không chịu áp lực trần | 10 | ☑ Có *(qua breaker R3 hiện có; hết lượt ⇒ TỪ CHỐI bật D10, không bật mù)* |
 
 > Cột `Idempotent?` — endpoint đặt lệnh và sửa lệnh đánh dấu **Không**: gọi lại khi không chắc lệnh
 > trước có tới nơi hay không (timeout, mất kết nối) có thể tạo lệnh trùng hoặc sửa hai lần. Freqtrade
@@ -73,6 +75,10 @@
 | Telegram 5xx / timeout / lỗi kết nối | ☑ Retry được | KHÔNG backoff nội bộ — một lần thử, thất bại thì ghi log cục bộ + giữ nguyên trạng thái "chưa báo", vòng poll 60s kế tiếp tự thử lại (4.4b) |
 | Freqtrade control API 401 (Unauthorized — sai username/password, TD-0241) | ☑ Lỗi logic | Không retry — lỗi CẤU HÌNH cục bộ (`.env` sai), raise `FreqtradeAuthError` ngay ở lần gọi đầu tiên |
 | Freqtrade control API 5xx / timeout / lỗi kết nối (TD-0241) | ☑ Retry được | Backoff CỐ ĐỊNH 2s (không luỹ tiến — sự kiện dừng khẩn cấp cần thử nhanh, không phải tiết kiệm tài nguyên), tối đa 5 lần rồi RAISE (không nuốt) |
+| `apiRestrictions` -2014 / -2015 (API key sai định dạng / key sai, IP không trong whitelist, hoặc thiếu quyền) | ☑ Lỗi logic | Không retry — TỪ CHỐI bật D10 + log mức cao nhất. Ghi chú: gọi từ IP ngoài whitelist mà nhận -2015 là whitelist ĐANG hoạt động, nhưng bộ chạy vẫn phải dừng vì không đọc được cấu hình tài khoản (`DR-D10-02` Q3) |
+| `apiRestrictions` -1021 (timestamp ngoài `recvWindow`) | ☑ Lỗi logic | Không retry — lệch đồng hồ máy chạy, lỗi CẤU HÌNH cục bộ; TỪ CHỐI bật D10 |
+| `apiRestrictions` 5xx / timeout / lỗi kết nối | ☑ Retry được | Qua breaker R3 hiện có; hết lượt hoặc breaker mở ⇒ TỪ CHỐI bật D10 (fail-closed: không đọc được thì coi như KHÔNG an toàn) |
+| `apiRestrictions` trả 200 nhưng thiếu trường cần kiểm | ☑ Lỗi logic | TỪ CHỐI bật D10 (N6 — không đoán giá trị mặc định cho một cờ bảo mật) |
 
 ## 4.4. Ngưỡng cấu hình
 
@@ -124,6 +130,37 @@ thật** (D10-D12 chưa mở) — hai TODO cuối `heartbeat_watchdog.py` (cơ c
 Freqtrade có gọi vòng lặp worker ở CẢ hai trạng thái RUNNING/STOPPED hay chỉ RUNNING, chưa đọc mã
 nguồn cho câu này — rule 6, không đoán).
 
+### 4.4c. Máy kiểm bảo mật tài khoản phụ D10 — dịch vụ #7 (`DR-D10-02` Q3, chốt 25/09/2026, chưa code)
+
+Bảng quyết định trên JSON trả về. Tên trường lấy theo tài liệu Binance, **CHƯA verify bằng gọi thật** — việc đầu tiên
+khi code (`TD-0384`) là gọi thật MỘT lần bằng key tài khoản phụ, đối chiếu tên + kiểu trường, rồi mới viết bảng này thành mã.
+
+| Trường | Điều kiện được bật D10 | Lý do |
+|---|---|---|
+| `ipRestrict` | phải `true` | IP whitelist tắt ⇒ lộ key là mất quyền điều khiển từ bất kỳ đâu (`DR-D11-01` §3) |
+| `enableWithdrawals` | phải `false` | Key D10 chỉ cần giao dịch futures; quyền rút là rủi ro không có lợi ích |
+| `enableInternalTransfer` | phải `false` | Cùng lý do; `DR-D11-01` §3 đòi tắt Universal Transfer |
+| `permitsUniversalTransfer` | phải `false` | Như trên |
+| `enableFutures` | phải `true` | Không có quyền futures thì bộ chạy không đặt được lệnh — báo sớm thay vì lỗi giữa chừng |
+| Thiếu bất kỳ trường nào ở trên | TỪ CHỐI | N6: không đoán mặc định cho một cờ bảo mật |
+
+Áp R1–R12 cho endpoint này:
+
+| R | Cách áp |
+|---|---|
+| R1 single egress | Đi qua `_goi_json_ky(path, base_url=SPOT_BASE_URL)` sẵn có ở `src/tool_d/api_client/binance_public.py` — KHÔNG dựng module ký thứ hai. Khi code phải sửa chú thích `SPOT_BASE_URL` (hôm nay ghi *chỉ dùng cho phép đo latency*) |
+| R2 rate limit | Chung `_cho_nhip_goi()`; một lần gọi/lần khởi động nên không đáng kể |
+| R3 circuit breaker | Chung breaker của `binance_public.py`; breaker mở ⇒ TỪ CHỐI bật |
+| R4 phân biệt mã lỗi | Bốn dòng `apiRestrictions` ở 4.3 |
+| R5 bounded loop | Không có vòng lặp — một lần gọi, thử lại tối đa theo breaker |
+| R6 kill switch | Không bật D10 (Q6 bật bằng tay, không tự khởi động lại) |
+| R7 tách môi trường | Key RIÊNG của tài khoản phụ, không dùng chung key nào khác; dry-run không gọi endpoint này |
+| R8 log dedup | Một dòng log mỗi lần khởi động, không lặp |
+| R9 idempotency | GET chỉ đọc, idempotent tự nhiên |
+| R10 secret | Key/secret tài khoản phụ qua biến môi trường, file `.env.*` đã `.gitignore`; không in giá trị ra log hay kết quả lệnh (bài học 24/09, `TD-0393`) |
+| R11 timeout | 10 s, như mọi endpoint Binance khác |
+| R12 quota | Không có hạn mức ngày; weight 1 so với trần phút |
+
 ## 5. Bảng nghiệm thu — TD-0197, 09/09/2026
 
 Chạy lần đầu sau khi TD-0197 nối R2/R3 vào `src/tool_d/api_client/binance_public.py` (đã có gọi
@@ -161,3 +198,4 @@ bắt buộc nghiệm thu lại trong context sạch riêng khi D3.5 viết code
 | 1.3 | 13/09/2026 | TD-0209 (gate check, chưa có dòng code): thêm dịch vụ #3 Telegram Bot API vào Mục 4.1-4.3 (chủ dự án chốt kênh + cách phát hiện qua trao đổi trực tiếp). Thêm Mục 4.4b — 9 tham số ĐỀ XUẤT (ngưỡng heartbeat, chu kỳ watchdog, retry, vị trí module...), CHỜ chủ dự án xác nhận trước khi "bắt đầu code" theo quy tắc 17. `provider-map.md` đã có dòng tương ứng |
 | 1.4 | 14/09/2026 | TD-0209: "bắt đầu code" — dựng tầng thuần (`src/tool_d/ops/{heartbeat,telegram_client,heartbeat_watchdog}.py`), 56 test Docker. Đổi 1 tham số lúc code (retry Telegram: bỏ backoff nội bộ 3 lần, dùng chu kỳ poll 60s làm cơ chế thử lại — ghi tại chỗ ở 4.4b, không xoá đề xuất cũ). Chưa nối vào Freqtrade/launcher thật |
 | 1.5 | 25/09/2026 | Khai bù dịch vụ #6 `data.binance.vision` vào Mục 4.1–4.2 (lệnh "chuẩn hóa và lưu", phiên mã `143375ad`). Bốn đường đọc đã dùng từ `TD-0162`/`TD-0230`/`TD-0231`/`TD-0247` mà **chưa từng được khai** (nợ cũ, phát hiện khi chuẩn bị `TD-0391`) + đường nến 1d theo NGÀY mới cho rổ `XAC_NHAN` (`DR-XAC-NHAN-01` §9) — khai TRƯỚC khi code theo quy tắc 17. Không đổi dòng cũ nào; R1 giữ nguyên: mọi đường nằm trong `src/tool_d/api_client/binance_public.py` |
+| 1.6 | 25/09/2026 | Thêm dịch vụ **#7** Binance SAPI ký `GET /sapi/v1/account/apiRestrictions` vào Mục 4.1–4.3 + mục **4.4c** (bảng quyết định + R1–R12) cho máy kiểm bảo mật tài khoản phụ D10 (`DR-D10-02` Q3, chốt `5bb2b58`). Lệnh "chuẩn hóa và lưu" 25/09/2026, phiên mã `dd89043d`. Chỉ THÊM, không sửa/xoá dòng nào có sẵn. Hoàn tất điều kiện quy tắc 17 cho phần này TRƯỚC "bắt đầu code" `TD-0384`. Tên trường trả về CHƯA verify bằng gọi thật |
