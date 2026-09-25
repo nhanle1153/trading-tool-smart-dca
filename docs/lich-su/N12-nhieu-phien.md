@@ -2,6 +2,8 @@
 
 > Chuyển NGUYÊN VĂN từ `CLAUDE.md` ngày 25/09/2026 (`TD-0417`) khi chủ dự án chốt **một phiên duy nhất** trên repo.
 > Muốn quay lại chạy nhiều phiên: đọc hết file này và khôi phục luật vào `CLAUDE.md` TRƯỚC khi mở phiên thứ hai.
+> ⟲ **Đã khôi phục vào `CLAUDE.md` ngày 26/09/2026 (`TD-0429`)** — chủ dự án chọn quay lại nhiều phiên. Bản trong
+> `CLAUDE.md` là bản hiệu lực; file này giữ làm lịch sử.
 
 
 ### N12 — 🔴 Kỷ luật git khi có 2 phiên cùng sửa một thư mục đĩa
