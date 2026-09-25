@@ -4371,3 +4371,23 @@ cửa mới từ chối, đúng thiết kế. Vá bằng repo git nhỏ có hi�
 - **Còn treo:** `MT-85` (lớp xác nhận của rổ chưa có máy canh theo thước lợi suất ngày), `MT-86`; theo dõi log dry-run 24h
   đầu cho lỗi giới hạn API (`DR-SHORT-02` §5).
 
+## 25/09/2026 — Suất trial đầu tiên của IQ-0003: D-0023, CALIB (phiên mã `12c579bc`)
+
+- **Trước khi tiêu suất, đường E1 là NO-GO** (agent đọc mã, chưa chạy gì): sau con dấu E1 trích lệnh kiểu ZA
+  (`trich_lenh`: chỉ Long, `enter_tag` JSON tranche, đòn bẩy 3) ⇒ mọi lệnh rổ bị từ chối SAU niêm phong, suất mất không
+  có số. Dựng `TD-0407` (hướng `NEUTRAL`, `5e6d187`) + `TD-0408` (bộ đo lợi suất ngày + nhánh E1, `68f7f81`) trước.
+  Test trên backtest thật bắt thêm một lỗi y như vậy: `force_exit` đóng ĐÚNG 00:00 của biên `den` ⇒ bộ đo từ chối ⇒ suất
+  CALIB thật cũng sẽ hỏng sau niêm phong. Quy tắc biên viết vào `DR-D0-IQ0003` §14 TRƯỚC suất (`29eca16`).
+- **D-0023** (`cf8b913`): B3, `NEUTRAL`, `cau_hinh = "IQ-0003-v1"`, không ghi đè, `[2024-04-09, 2025-06-12)`, 143 mã, 5m.
+  4.747 lệnh; nhãn thoát `CAN_RO` 4.474 · `stop_loss` 232 · `force_exit` 41; 0 exception bị nuốt.
+- **Số (đơn vị lợi suất ngày trên vốn rổ 1.900, lãi/lỗ đã chốt theo ngày đóng — CALIB, KHÔNG phải phán quyết):**
+  426 ngày từ 2024-04-12; mean **+0,0114%/ngày**, std **1,265%/ngày**, `h = 3,0777` (N = 114) ⇒ `mean − h·std/√n` =
+  **−0,177%/ngày**. 207 ngày dương / 219 âm. Lãi ròng +92,3 USDT; funding nhận ròng **+370,3** ⇒ phần giá hai chân
+  ≈ **−278**. Tách chân (chỉ ghi): Long 2.008 lệnh, −352,6 USDT (funding +249,0); Short 2.739 lệnh, +444,9 (funding +121,3).
+- **Đọc đúng, không đọc quá tay:** cận dưới âm ⇒ ở cỡ mẫu CALIB này lãi trung bình **không phân biệt được với 0** sau thuế
+  nhiễu N = 114 — không phải *"có bằng chứng thua"*. Funding dương đúng chiều cơ chế khai (người long crowd trả), nhưng bị
+  phần giá ăn mất. Số lệnh Short nhiều hơn Long ~36% dù rổ đối xứng — ứng viên cho lý do: stop thảm hoạ nổ nhiều hơn ở chân
+  Short rồi mở lại lần cân rổ sau; CHƯA đo, chỉ là giả thuyết.
+- Hiện vật: `runs/D-0023/` (ignored) + bản đã commit `docs/du-lieu-do/IQ-0003-D-0023-calib-loi-suat-ngay.json` — nguồn σ
+  cho `T` của lô sau (`DR-PHAN-QUYET-01` §2.3).
+
