@@ -4429,3 +4429,18 @@ cửa mới từ chối, đúng thiết kế. Vá bằng repo git nhỏ có hi�
 - **Bản rà soát thiết kế lại:** `DR-TAI-THIET-KE-01` (NHÁP, `a7e2e41`) — bài học cấu trúc + 5 câu hỏi cho chủ dự án + 2 mục
   `MT` đề xuất (chưa ghi `back-end-note.md`, chờ lệnh).
 
+
+## 25/09/2026 — Bật lại dry-run ZA LONG, không tiền, Short tắt (phiên mã `12c579bc`, `TD-0423`)
+
+- **Chủ dự án chốt:** *"chỉ chạy Long theo ý tưởng ban đầu và tắt short"*, chọn mức **chạy thử không tiền** (không phải tiền
+  thật vốn nhỏ, không phải chỉ ghi luật). Số liệu dry-run chỉ để **quan sát**, KHÔNG dùng để lật FAIL của `DR-ZA-01`; 0 trial;
+  D10 vẫn ⏸; lockbox không chạm.
+- **Kiểm trước:** `git status` sạch ở `config/` + `user_data/strategies/` (`MT-86`); `enable_short: false`; không container nào.
+- **Bật 2026-09-25 15:47:13 UTC** (`StartedAt`; dựng lại image mất ~3 phút trước đó):
+  `docker compose -f docker/docker-compose.yml --profile van_hanh up -d dryrun dryrun-watchdog`.
+- **Kiểm sau:** `Dry run is enabled`; `Using resolved strategy ZoneAbsorption`; whitelist 102 cặp; `Changing state to:
+  RUNNING`; Telegram bật; `RestartCount` 0 cả hai container; `resolve(cfg, "tier_a.enable_short")` trong container = `False`
+  (chiến lược chặn lệnh short ở `ZoneAbsorption.py:1223`); sổ dry-run: 3 lệnh Long đã đóng, 0 lệnh mở, 0 lệnh Short.
+- **Dừng:** `docker compose -f docker/docker-compose.yml --profile van_hanh stop dryrun dryrun-watchdog`.
+- 🔴 **Đính chính dòng "Chạy lại" của mục 25/09 bên trên** (giữ nguyên chữ cũ): phải NÊU TÊN hai dịch vụ như lệnh ở trên.
+  `up -d` trơn cũng bật `tests`, `freqtrade`, `lockbox` (ba dịch vụ không gắn profile).

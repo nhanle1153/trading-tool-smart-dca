@@ -207,7 +207,8 @@ ca `idea_queue` đỏ ~2,5 ngày không ai nhận, 14–16/09).
 `TASKS.md`, `registry/`, `back-end-note.md` mục 7 trước khi chọn việc. Lịch sử trước ngày này (có số kết quả — phiên
 IDEA/CHỌN không đọc): `docs/lich-su/trang-thai-den-25-09-2026.md`.
 
-- **Hệ thống đang NGƯNG** để thiết kế lại: dry-run D11 dừng, D10 không chạy, `enable_short: false` (`DR-SHORT-03`).
+- **Chỉ chạy LONG, không tiền:** dry-run D11 Zone Absorption LONG chạy lại 25/09/2026 (`TD-0423`, quan sát — KHÔNG lật
+  `DR-ZA-01`); D10 không chạy; `enable_short: false` (`DR-SHORT-03`).
 - **Zone Absorption LONG:** loại (`DR-ZA-01`). ZA SHORT: dựng code, không đo (`DR-SHORT-01`/`-03`).
 - **Ứng viên suất (d) `IQ-0003`:** dừng ở WFO, INCONCLUSIVE vì thiếu độ mạnh thống kê (`DR-KET-CUC-IQ0003-01`). Lockbox
   `[T2,T3]` CHƯA chạm.
