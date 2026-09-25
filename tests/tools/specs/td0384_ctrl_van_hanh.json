@@ -1,0 +1,81 @@
+{
+  "mo_ta": "TD-0384 chang 3b: dang CTRL thu TU do van hanh (DR-D10-02 5.3). Du doan viet TRUOC khi chay: M1 dang van hanh khong duoc DEM -> 13 do (ca 'khong khai dang nao' van xanh vi cau bao loi van co chu 'do van hanh'; td0344 khong doi); M2 bo loc ten -> 4; M3 bo chot chi D10 -> 2; M4 bo chot mot dong mo -> 1; M5 khong ghi loi khai vao dong RESERVE -> 1.",
+  "module": "tool_d.ledger.registry",
+  "file": "src/tool_d/ledger/registry.py",
+  "khoi_dong": [
+    "\"đo vận hành (ctrl_van_hanh_whitelist)\": ctrl_van_hanh_whitelist is not None,"
+  ],
+  "bien_the": {
+    "M0": null,
+    "M1": "\"đo vận hành (ctrl_van_hanh_whitelist)\": False,",
+    "M2": {
+      "khoi_dong": [
+        "ngoai = sorted(set(whitelist) - CTRL_VAN_HANH_ALLOWED)"
+      ],
+      "thay": "ngoai = []"
+    },
+    "M3": {
+      "khoi_dong": [
+        "if hypothesis_slot != HYPOTHESIS_SLOT_D10 or dataset != DATASET_D10:"
+      ],
+      "thay": "if False:"
+    },
+    "M4": {
+      "khoi_dong": [
+        "if dang_mo:"
+      ],
+      "thay": "if False:"
+    },
+    "M5": {
+      "khoi_dong": [
+        "khai_ctrl[\"ctrl_van_hanh_whitelist\"] = list(ctrl_van_hanh_whitelist)"
+      ],
+      "thay": "pass"
+    }
+  },
+  "tests": [
+    "tests/lock/test_td0384_ctrl_van_hanh.py",
+    "tests/lock/test_td0344_ctrl_mo_ta.py"
+  ],
+  "ky_vong": {
+    "M0": "xanh",
+    "M1": "do",
+    "M2": "do",
+    "M3": "do",
+    "M4": "do",
+    "M5": "do"
+  },
+  "ky_vong_do_gom": {
+    "M1": [
+      "tests/lock/test_td0384_ctrl_van_hanh.py::TestNhan::test_dong_d10_duoc_ghi_va_khop_schema",
+      "tests/lock/test_td0384_ctrl_van_hanh.py::TestNhan::test_khong_vao_N",
+      "tests/lock/test_td0384_ctrl_van_hanh.py::TestNhan::test_dong_truoc_da_consume_thi_dot_moi_duoc_mo",
+      "tests/lock/test_td0384_ctrl_van_hanh.py::TestTuChoi::test_ten_ngoai_allowlist[pnl_abs]",
+      "tests/lock/test_td0384_ctrl_van_hanh.py::TestTuChoi::test_ten_ngoai_allowlist[profit_ratio]",
+      "tests/lock/test_td0384_ctrl_van_hanh.py::TestTuChoi::test_ten_ngoai_allowlist[win_rate]",
+      "tests/lock/test_td0384_ctrl_van_hanh.py::TestTuChoi::test_ten_ngoai_allowlist[expectancy]",
+      "tests/lock/test_td0384_ctrl_van_hanh.py::TestTuChoi::test_danh_sach_rong",
+      "tests/lock/test_td0384_ctrl_van_hanh.py::TestTuChoi::test_khai_chong_thi_tu_choi[chong-do-thuoc]",
+      "tests/lock/test_td0384_ctrl_van_hanh.py::TestTuChoi::test_khai_chong_thi_tu_choi[chong-mo-ta]",
+      "tests/lock/test_td0384_ctrl_van_hanh.py::TestTuChoi::test_chi_danh_cho_d10[slot]",
+      "tests/lock/test_td0384_ctrl_van_hanh.py::TestTuChoi::test_chi_danh_cho_d10[dataset]",
+      "tests/lock/test_td0384_ctrl_van_hanh.py::TestTuChoi::test_dong_d10_thu_hai_khi_dong_truoc_con_mo"
+    ],
+    "M2": [
+      "tests/lock/test_td0384_ctrl_van_hanh.py::TestTuChoi::test_ten_ngoai_allowlist[pnl_abs]",
+      "tests/lock/test_td0384_ctrl_van_hanh.py::TestTuChoi::test_ten_ngoai_allowlist[profit_ratio]",
+      "tests/lock/test_td0384_ctrl_van_hanh.py::TestTuChoi::test_ten_ngoai_allowlist[win_rate]",
+      "tests/lock/test_td0384_ctrl_van_hanh.py::TestTuChoi::test_ten_ngoai_allowlist[expectancy]"
+    ],
+    "M3": [
+      "tests/lock/test_td0384_ctrl_van_hanh.py::TestTuChoi::test_chi_danh_cho_d10[slot]",
+      "tests/lock/test_td0384_ctrl_van_hanh.py::TestTuChoi::test_chi_danh_cho_d10[dataset]"
+    ],
+    "M4": [
+      "tests/lock/test_td0384_ctrl_van_hanh.py::TestTuChoi::test_dong_d10_thu_hai_khi_dong_truoc_con_mo"
+    ],
+    "M5": [
+      "tests/lock/test_td0384_ctrl_van_hanh.py::TestNhan::test_dong_d10_duoc_ghi_va_khop_schema"
+    ]
+  }
+}

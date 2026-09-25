@@ -100,6 +100,17 @@ sách — gộp là nới danh sách của D3.5 một cách lặng lẽ (`MT-19`
 """
 
 
+CTRL_VAN_HANH_ALLOWED = frozenset({"gap_ms", "fill_price", "p_i", "order_status"})
+"""Đầu ra cho phép của CTRL dạng thứ TƯ *đo vận hành* — `DR-D10-02` §2 mục 6 + §5.3 (TD-0384): MỘT dòng cho cả đợt D10
+(lệnh live tối thiểu), người vận hành đặt chỗ qua E6 `--d10-dat-cho`, bot KHÔNG bao giờ đụng sổ. Toàn là đo MÁY:
+khoảng trống không-SL, giá khớp, giá kế hoạch, trạng thái lệnh. 🔴 Không PnL, không thắng/thua. Thêm tên = DR mới.
+Tách khỏi ba danh sách kia — gộp là nới danh sách của một phạm vi khác một cách lặng lẽ (`MT-19`)."""
+
+#: `DR-D10-02` §5.3 — dòng đo vận hành chỉ dành cho D10, không chạm CALIB/WFO/LOCKBOX.
+HYPOTHESIS_SLOT_D10 = "D10"
+DATASET_D10 = "N/A"
+
+
 class TrialState(Enum):
     RESERVED = "RESERVED"
     CONSUMED = "CONSUMED"
@@ -428,6 +439,8 @@ class TrialLedger:
         reproduces_trial_id: str | None,
         ctrl_output_whitelist: Sequence[str] | None,
         ctrl_mo_ta_whitelist: Sequence[str] | None = None,
+        ctrl_van_hanh_whitelist: Sequence[str] | None = None,
+        hypothesis_slot: str | None = None,
         params_frozen_hash: str,
         config_hash: str,
         pham_vi: Mapping[str, Any] | None = None,
@@ -452,6 +465,7 @@ class TrialLedger:
             "tái lập (reproduces_trial_id)": reproduces_trial_id is not None,
             "đo thước (ctrl_output_whitelist)": ctrl_output_whitelist is not None,
             "đo mô tả (ctrl_mo_ta_whitelist)": ctrl_mo_ta_whitelist is not None,
+            "đo vận hành (ctrl_van_hanh_whitelist)": ctrl_van_hanh_whitelist is not None,
         }
         da_khai = [ten for ten, co in khai.items() if co]
 
@@ -462,9 +476,9 @@ class TrialLedger:
             )
         if not da_khai:
             raise CtrlClaimError(
-                "dòng CTRL phải khai một trong BA dạng: *tái lập* (reproduces_trial_id, §0d.4), "
-                "*đo thước* (ctrl_output_whitelist, D3.5 Bước 1) hoặc *đo mô tả* "
-                "(ctrl_mo_ta_whitelist, MT-19 / DR-D4-16) — TỪ CHỐI ghi"
+                "dòng CTRL phải khai một trong BA dạng đo trên dữ liệu lịch sử: *tái lập* (reproduces_trial_id, "
+                "§0d.4), *đo thước* (ctrl_output_whitelist, D3.5 Bước 1) hoặc *đo mô tả* (ctrl_mo_ta_whitelist, "
+                "MT-19 / DR-D4-16) — hoặc dạng *đo vận hành* D10 (ctrl_van_hanh_whitelist, DR-D10-02 §5.3) — TỪ CHỐI ghi"
             )
 
         if reproduces_trial_id is not None:
@@ -476,6 +490,12 @@ class TrialLedger:
             )
         elif ctrl_output_whitelist is not None:
             self._kiem_ctrl_do_thuoc(list(ctrl_output_whitelist))
+        elif ctrl_van_hanh_whitelist is not None:
+            self._kiem_ctrl_van_hanh(
+                list(ctrl_van_hanh_whitelist),
+                hypothesis_slot=hypothesis_slot,
+                dataset=dict(pham_vi or {}).get("dataset"),
+            )
         else:
             self._kiem_ctrl_mo_ta(list(ctrl_mo_ta_whitelist or []))
 
@@ -583,6 +603,36 @@ class TrialLedger:
             raise CtrlClaimError(
                 f"CTRL đo mô tả có đầu ra ngoài danh sách cho phép: {ngoai}. "
                 f"Chỉ cho phép {sorted(CTRL_MO_TA_ALLOWED)} (DR-D4-16 §3) — thêm tên = DR mới"
+            )
+
+    def _kiem_ctrl_van_hanh(self, whitelist: list[str], *, hypothesis_slot: str | None, dataset: str | None) -> None:
+        """Dạng *đo vận hành* (`DR-D10-02` §5.3): MỘT dòng cho cả đợt D10 — đầu ra trong `CTRL_VAN_HANH_ALLOWED`,
+        `hypothesis_slot = "D10"`, `dataset = "N/A"`, và KHÔNG có dòng D10 nào khác đang mở (chưa CONSUME/REFUND)."""
+        if not whitelist:
+            raise CtrlClaimError("CTRL khai đo vận hành nhưng danh sách đầu ra RỖNG — khai suông, không đo gì")
+        ngoai = sorted(set(whitelist) - CTRL_VAN_HANH_ALLOWED)
+        if ngoai:
+            raise CtrlClaimError(
+                f"CTRL đo vận hành có đầu ra ngoài danh sách cho phép: {ngoai}. "
+                f"Chỉ cho phép {sorted(CTRL_VAN_HANH_ALLOWED)} (DR-D10-02 §5.3) — thêm tên = DR mới"
+            )
+        if hypothesis_slot != HYPOTHESIS_SLOT_D10 or dataset != DATASET_D10:
+            raise CtrlClaimError(
+                f"CTRL đo vận hành chỉ dành cho D10: cần hypothesis_slot={HYPOTHESIS_SLOT_D10!r}, "
+                f"dataset={DATASET_D10!r} — nhận {hypothesis_slot!r} / {dataset!r} (DR-D10-02 §5.3)"
+            )
+        dang_mo = sorted(
+            p.trial_id
+            for p in self.projections().values()
+            if p.budget_line == CTRL_BUDGET_LINE
+            and p.hypothesis_slot == HYPOTHESIS_SLOT_D10
+            and not p.outcome_written
+            and not p.refunded
+        )
+        if dang_mo:
+            raise CtrlClaimError(
+                f"đã có dòng D10 đang mở {dang_mo} — một đợt D10 một dòng (DR-D10-02 §5.3); "
+                "ghi kết cục (CONSUME) hoặc hoàn trả dòng đó trước"
             )
 
     def _kiem_cua_b1(
@@ -799,6 +849,7 @@ class TrialLedger:
         ctrl_output_whitelist: Sequence[str] | None = None,
         ctrl_mo_ta_whitelist: Sequence[str] | None = None,
         bien_the_hash: str | None = None,
+        ctrl_van_hanh_whitelist: Sequence[str] | None = None,
     ) -> str:
         """Đặt chỗ. Raise `BudgetExhaustedError` nếu Khả dụng < contribution
         — TRƯỚC KHI CHẠM BẤT KỲ DỮ LIỆU NÀO (L-Z52, spec dòng 3471-3472).
@@ -826,6 +877,8 @@ class TrialLedger:
                 reproduces_trial_id=reproduces_trial_id,
                 ctrl_output_whitelist=ctrl_output_whitelist,
                 ctrl_mo_ta_whitelist=ctrl_mo_ta_whitelist,
+                ctrl_van_hanh_whitelist=ctrl_van_hanh_whitelist,
+                hypothesis_slot=hypothesis_slot,
                 params_frozen_hash=params_frozen_hash,
                 config_hash=config_hash,
                 pham_vi={
@@ -881,6 +934,8 @@ class TrialLedger:
                 khai_ctrl["ctrl_output_whitelist"] = list(ctrl_output_whitelist)
             if ctrl_mo_ta_whitelist is not None:
                 khai_ctrl["ctrl_mo_ta_whitelist"] = list(ctrl_mo_ta_whitelist)
+            if ctrl_van_hanh_whitelist is not None:
+                khai_ctrl["ctrl_van_hanh_whitelist"] = list(ctrl_van_hanh_whitelist)
         self._append(
             {
                 "event": "RESERVE",

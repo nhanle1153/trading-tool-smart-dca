@@ -62,7 +62,7 @@ from tool_d.ledger.audit_checks import (
 from tool_d.ledger.backlog_check import bao_cao as bao_cao_backlog
 from tool_d.ledger.idea_queue import IdeaQueueError, chon_y_tuong, huy_chon, submit_idea
 from tool_d.ledger.param_proposals import ParamProposalError, submit_proposal
-from tool_d.ledger.registry import DEFAULT_REGISTRY_PATH
+from tool_d.ledger.registry import DEFAULT_REGISTRY_PATH, LedgerError, TrialLedger
 from tool_d.measurement.gitinfo import get_git_info
 
 # `_thay_doi_anh_huong_phep_do` chuyển sang `gitinfo` ngày 17/09/2026 (TD-0247,
@@ -180,6 +180,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="TD-0125 (OQ-13) — nộp một đề xuất đổi tham số vào "
         "registry/param_change_proposals.jsonl (mẫu: docs/mau-de-xuat-doi-tham-so.yaml). "
         "Đề xuất không hợp lệ thì TỪ CHỐI ghi.",
+    )
+    parser.add_argument(
+        "--d10-dat-cho",
+        action="store_true",
+        help="TD-0384 (DR-D10-02 §5.3) — đặt chỗ MỘT dòng CTRL đo vận hành cho cả đợt D10, TRƯỚC lần bật đầu tiên. "
+        "Rổ config/d10_ro.yaml phải đã commit. Đã có dòng D10 đang mở thì TỪ CHỐI.",
     )
     parser.add_argument(
         "--close-d1-gate",
@@ -337,6 +343,20 @@ def huy_chon_y_tuong(idea_id: str, ly_do: str | None) -> tuple[int, str]:
         return EXIT_DON_TU_CHOI, f"🛑 TỪ CHỐI ghi — sổ KHÔNG bị đụng tới.\n{exc}"
     audit_exit, audit_text = run_audit()
     return audit_exit, f"✅ Đã ghi {idea_id} VOIDED vào {DEFAULT_IDEA_QUEUE_PATH}.\n{audit_text}"
+
+
+def d10_dat_cho(*, registry_path: Path = DEFAULT_REGISTRY_PATH, repo_dir: Path = Path(".")) -> tuple[int, str]:
+    """TD-0384 (`DR-D10-02` §5.3) — đặt chỗ dòng CTRL đo vận hành cho đợt D10, rồi tự audit. Mọi lỗi (rổ chưa commit,
+    dòng D10 đang mở, lời khai sai, chạy ngoài ảnh project) ⇒ TỪ CHỐI, sổ không đổi dòng nào."""
+    from tool_d.ops.live_d10 import LiveD10Error
+    from tool_d.ops.so_d10 import dat_cho_dong_d10
+
+    try:
+        trial_id = dat_cho_dong_d10(ledger=TrialLedger(registry_path), repo_dir=repo_dir)
+    except (LedgerError, LiveD10Error, OSError, ValueError, RuntimeError) as exc:
+        return EXIT_DON_TU_CHOI, f"🛑 TỪ CHỐI đặt chỗ D10 — sổ KHÔNG bị đụng tới.\n{type(exc).__name__}: {exc}"
+    audit_exit, audit_text = run_audit()
+    return audit_exit, f"✅ Đã đặt chỗ {trial_id} (CTRL đo vận hành, đợt D10) vào {registry_path}.\n{audit_text}"
 
 
 def nop_de_xuat_doi_tham_so(de_xuat_path: Path) -> tuple[int, str]:
@@ -1587,6 +1607,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.huy_chon:
         exit_code, text = huy_chon_y_tuong(args.huy_chon, args.ly_do)
+        print(text)
+        return exit_code
+
+    if args.d10_dat_cho:
+        exit_code, text = d10_dat_cho()
         print(text)
         return exit_code
 

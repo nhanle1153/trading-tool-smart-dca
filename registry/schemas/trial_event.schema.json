@@ -85,6 +85,13 @@
           "uniqueItems": true,
           "description": "CHỈ dòng budget_line=CTRL dạng *đo mô tả* (MT-19 đường (c), DR-D4-16 §3). Danh sách CHO PHÉP, liệt kê đích danh — toàn là SỐ ĐẾM; cố ý KHÔNG có exit_reason, thời gian giữ, hay bất cứ gì mang profit/pnl/R. Loại trừ với reproduces_trial_id và ctrl_output_whitelist — cửa ghi (registry.reserve) cưỡng chế."
         },
+        "ctrl_van_hanh_whitelist": {
+          "type": "array",
+          "items": { "enum": ["gap_ms", "fill_price", "p_i", "order_status"] },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "CHỈ dòng budget_line=CTRL dạng *đo vận hành* (DR-D10-02 §5.3, TD-0384): MỘT dòng cho cả đợt D10, hypothesis_slot='D10', dataset='N/A'. Danh sách CHO PHÉP — toàn đo MÁY, không PnL. Loại trừ với ba dạng kia; tối đa một dòng D10 đang mở — cửa ghi (registry.reserve) cưỡng chế."
+        },
         "run_fingerprint": {
           "type": "string",
           "pattern": "^[0-9a-f]{64}$",
