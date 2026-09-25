@@ -215,3 +215,4 @@ Chữ §10 giữ nguyên làm lịch sử; mục này là câu trả lời.
   lúc hỏi chủ dự án là thấp, đã báo lại và chủ dự án xác nhận con số đo. Giới hạn đo: giá hiện tại (không phải lịch sử);
   36 mã CALIB đã huỷ niêm yết không có metadata, coi như sàn lớn nhất.
 
+> 🔴 **Đính chính §13 (a), 25/09/2026:** câu *"Nối máy canh lớp xác nhận theo thước này là việc riêng, chưa làm (`MT-84`)"* trỏ SAI mã — `MT-84` là trần vốn rổ (đã giải, `TD-0404`). Việc đó là **`MT-85`** (`back-end-note.md`, `39164a4`). Giữ nguyên chữ cũ.
