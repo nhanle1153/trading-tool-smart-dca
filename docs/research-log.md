@@ -4391,3 +4391,19 @@ cửa mới từ chối, đúng thiết kế. Vá bằng repo git nhỏ có hi�
 - Hiện vật: `runs/D-0023/` (ignored) + bản đã commit `docs/du-lieu-do/IQ-0003-D-0023-calib-loi-suat-ngay.json` — nguồn σ
   cho `T` của lô sau (`DR-PHAN-QUYET-01` §2.3).
 
+## 25/09/2026 — Suất thứ hai của IQ-0003: D-0024, WFO (phiên mã `12c579bc`)
+
+- `T` khai TRƯỚC (`DR-D0-IQ0003` §15, `4f9af2c`): σ D-0023 = 0,01265/ngày, n ≈ 228 ⇒ `T ≈ 0,258%/ngày` — gấp ~23 lần mean
+  CALIB ⇒ biết trước suất không mua được PASS thống kê; hai câu (a)(b) đã viết.
+- **D-0024**: `pool_t1` 107 mã, `[2025-06-12, 2026-01-29)`, cùng `bien_the_hash` (vẫn 1 biến thể). 2.169 lệnh; `CAN_RO`
+  2.040 · `stop_loss` 89 · `force_exit` 40; 0 exception bị nuốt.
+- **Số (lợi suất ngày trên vốn rổ, lãi/lỗ đã chốt — WFO, KHÔNG phải phán quyết):** 228 ngày; mean **+0,081%/ngày**, std
+  **1,447%/ngày**, `mean − h·std/√n` = **−0,214%/ngày**; 117 ngày dương / 110 âm. Lãi ròng **+351 USDT**; funding ròng
+  **+244** (tỉ phần **0,70** — dưới ngưỡng 50% của điều 4 là "không đúng cơ chế", ở đây funding ≥ 50%: đúng cơ chế trên
+  WFO); phần giá ≈ +107. Tách chân: Long 972 lệnh, −183,5 (funding +190,6); Short 1.197 lệnh, +534,5 (funding +53,4).
+- **So với CALIB, đọc cẩn thận:** cùng dấu mean dương, cùng hình dạng *chân Long lỗ giá nhưng nhận funding, chân Short lãi
+  giá*; nhưng cả hai cận dưới đều âm ⇒ vẫn không phân biệt được với 0. Tỉ phần funding CALIB 4,0 (giá ăn funding) vs WFO
+  0,70 (giá cộng thêm) — phần giá đổi dấu giữa hai giai đoạn, đúng loại lệch theo chế độ thị trường mà `DR-LOCKBOX-04` §4.3
+  lo. Tỉ lệ lệnh Short/Long WFO 1,23 (CALIB 1,36) — giả thuyết stop chân Short vẫn chưa đo.
+- Hiện vật đã commit: `docs/du-lieu-do/IQ-0003-D-0024-wfo-loi-suat-ngay.json`.
+
