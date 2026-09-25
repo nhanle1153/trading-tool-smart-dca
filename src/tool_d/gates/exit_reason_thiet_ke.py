@@ -154,6 +154,35 @@ def _mien_dai_can_ro(kq: dict, lenh_that: dict, hypothesis_slot: str, repo_dir: 
     return True
 
 
+HUONG_NEUTRAL = "NEUTRAL"
+
+
+def kiem_huong_neutral(hypothesis_slot: str, *, repo_dir: Path = Path(".")) -> None:
+    """TD-0407 (`DR-D0-IQ0003` §14, `MT-82`) — hướng `NEUTRAL` chỉ hợp lệ cho slot ứng viên `IQ-xxxx` có ĐÚNG MỘT DR
+    thiết kế đã commit khai lớp `CAN_RO_THEO_LICH` (khối `DR-CAN-RO-01:LOP`, cùng phép kiểm `_kiem_dr_thiet_ke_can_ro`).
+    Raise `ExitReasonThietKeError` nếu không — một nhãn hướng không ai kiểm được là một lời khai."""
+    if not la_slot_ung_vien(hypothesis_slot):
+        raise ExitReasonThietKeError(f"hướng {HUONG_NEUTRAL} chỉ cho slot ứng viên IQ-xxxx, nhận {hypothesis_slot!r}")
+    thay: list[Path] = []
+    for p in sorted((repo_dir / THU_MUC_DR).glob("*.md")):
+        for tho in _KHOI_LOP.findall(p.read_text(encoding="utf-8")):
+            try:
+                khoi = json.loads(tho)
+            except json.JSONDecodeError:
+                if hypothesis_slot in tho:
+                    raise ExitReasonThietKeError(f"{p.name}: khối `DR-CAN-RO-01:LOP` của {hypothesis_slot} hỏng") from None
+                continue
+            if isinstance(khoi, dict) and khoi.get("slot") == hypothesis_slot:
+                thay.append(p)
+    if len(thay) != 1:
+        raise ExitReasonThietKeError(
+            f"hướng {HUONG_NEUTRAL} cho {hypothesis_slot}: cần ĐÚNG MỘT DR thiết kế khai lớp {LOP_CAN_RO}, thấy {len(thay)}"
+        )
+    loi = _kiem_dr_thiet_ke_can_ro(thay[0].relative_to(repo_dir).as_posix(), hypothesis_slot, repo_dir)
+    if loi is not None:
+        raise ExitReasonThietKeError(f"hướng {HUONG_NEUTRAL} cho {hypothesis_slot}: {loi}")
+
+
 def kiem_exit_reason_thiet_ke(
     hypothesis_slot: str,
     *,

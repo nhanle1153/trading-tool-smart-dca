@@ -114,7 +114,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--hypothesis-slot", help="BẮT BUỘC khi --chay.")
     parser.add_argument("--param-under-test", help="BẮT BUỘC khi --chay.")
     parser.add_argument("--param-value", help="BẮT BUỘC khi --chay. Đọc như JSON, không parse được thì giữ chuỗi.")
-    parser.add_argument("--direction", default="LONG", choices=("LONG", "SHORT"))
+    # TD-0407 — NEUTRAL: rổ trung tính (DR-D0-IQ0003 §14); cửa ghi `reserve()` chỉ nhận cho slot có lớp rổ.
+    parser.add_argument("--direction", default="LONG", choices=("LONG", "SHORT", "NEUTRAL"))
     parser.add_argument(
         "--ghi-de", action="append", default=[], metavar="KHOA=GIATRI",
         help="Phủ một khoá dotted của tool_d_config.yaml, lặp lại được. Ví dụ tier_c.arm_ablation.arm=Z0",

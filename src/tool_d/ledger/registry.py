@@ -135,6 +135,10 @@ class B1Error(LedgerError):
     đã vào sổ là đã chạm CALIB, sổ append-only không lùi được."""
 
 
+class HuongNeutralError(LedgerError):
+    """TD-0407 — hướng `NEUTRAL` cho slot không có lớp rổ `CAN_RO_THEO_LICH` đã khai. Từ chối TẠI CỬA, trước khi ghi."""
+
+
 class BienTheVuotKhaiError(LedgerError):
     """TD-0396 (`DR-BIEN-THE-01` §4) — dòng mới làm số CẤU HÌNH phân biệt của slot `IQ-xxxx` vượt `so_bien_the` đã
     khai ở cửa CHỌN, hoặc slot đã khai mà dòng không mang `bien_the_hash`. Từ chối TẠI CỬA, trước khi ghi."""
@@ -861,6 +865,14 @@ class TrialLedger:
         """
         if contribution < 1:
             raise LedgerError("contribution phải >= 1 — không có mức 0 (fail-closed)")
+        if direction == "NEUTRAL":
+            # TD-0407 — áp cho MỌI dòng (kể cả CTRL tái lập của một suất NEUTRAL). Import trễ, cùng lý do cửa thiết kế.
+            from tool_d.gates import exit_reason_thiet_ke as tk
+
+            try:
+                tk.kiem_huong_neutral(hypothesis_slot, repo_dir=self._repo_dir)
+            except tk.ExitReasonThietKeError as e:
+                raise HuongNeutralError(f"TỪ CHỐI — {e}") from e
         self._kiem_tap_xac_nhan(
             budget_line=budget_line,
             dataset=dataset,
