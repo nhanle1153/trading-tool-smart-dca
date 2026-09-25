@@ -4321,3 +4321,29 @@ cửa mới từ chối, đúng thiết kế. Vá bằng repo git nhỏ có hi�
   thêm dòng. R1 dùng lại `_goi_json_ky(base_url=SPOT_BASE_URL)`. Tên trường **chưa verify bằng gọi thật**.
 - **Còn lại trước khi code D10 (`TD-0384`):** chủ dự án gõ "bắt đầu code"; bot Telegram RIÊNG + key tài khoản phụ qua `.env.*`
   riêng; gọi thật `apiRestrictions` một lần để đối chiếu tên trường.
+
+## 25/09/2026 — TD-0384: bộ chạy D10 viết xong, chưa chạy thật (phiên mã `dd89043d`)
+
+- **Chia ba chặng, mỗi chặng commit riêng, DR luôn đi trước mã:** máy kiểm bảo mật + ngân sách (`2100411`) → tầng thuần
+  CTRL + `tier_c.ctrl_d10` (`db91d7f`) → chiến lược `CtrlD10` (`2376420`) → bộ khởi chạy + compose `d10` (`3a8de08`) → dạng
+  CTRL thứ tư + E6 `--d10-dat-cho` (`b4e03fc`) → từ điển N13 (`19ca25b`). Ba lần chủ dự án chốt thêm giữa chừng, mỗi lần ghi
+  phụ lục DR trước khi viết tiếp: `b546b2b` (rổ máy chọn + gói lệnh CTRL), `9252def` (một dòng CTRL cho cả đợt thay vì mỗi
+  vị thế — bot tiền thật không được tự ghi vào file git mà phiên khác cùng commit).
+- **Bảy đặc tả phá thật, dự đoán viết trước, đều khớp.** Đáng giữ nhất: M5 của máy canh ngân sách lần đầu khớp dự đoán "2
+  ca đỏ" nhưng chính dự đoán đó lộ ra test số dư `0`/`-5` xanh vì LÝ DO SAI (câu vượt trần ký quỹ cũng chứa chữ "số dư"); siết
+  test ⇒ 4 ca đỏ. Test AST thứ tự chốt trong `main()` đọc file trên đĩa nên công cụ phá trong bộ nhớ không chạm tới — kiểm răng
+  bằng sửa tạm file thật + khôi phục từ bản sao, so `sha256`.
+- 🔴 **Sự cố N12 tránh được trong gang tấc:** bản làm việc của `tool_d_config.yaml` cùng lúc chứa khối `ctrl_d10` của tôi và
+  dòng `von_ro_usdt: 1900` sửa dở của phiên khác. `git commit -- <file>` sẽ chụp cả hai. Commit qua **index tạm**
+  (`GIT_INDEX_FILE`, `read-tree HEAD` + `update-index --cacheinfo` bản = HEAD + đúng khối của mình), rồi `git reset -- <paths>`
+  đồng bộ index chung (trước đó index chung hiện `D` cho ba file mới — một `git commit` không pathspec của phiên khác lúc ấy sẽ
+  XOÁ chúng). Cùng thời điểm, đặc tả phá thật `ctrl_d10` báo M0 đỏ: không phải mã sai, mà yaml dở của phiên kia làm bộ nạp
+  cấu hình từ chối (`TranVonError`) — chẩn đoán bằng chạy riêng M0 đọc lỗi thật, không đoán.
+- **Giữ khẳng định test khoá thay vì sửa:** thêm dạng CTRL thứ tư đổi câu báo lỗi "một trong BA dạng" mà `test_td0344` ghim.
+  Viết lại câu cho vẫn đúng và vẫn chứa "BA dạng" (*"BA dạng đo trên dữ liệu lịch sử … hoặc dạng đo vận hành D10"*) — không cần
+  xin duyệt sửa test khoá.
+- **Full suite Docker 3611 passed, 1 failed** — `test_td0193`, do sửa dở chưa commit `enable_short: true` (TD-0402) của phiên
+  khác. ⚠️ Dry-run D11 đang chạy nạp cấu hình lúc 22:40 UTC 24/09 (trước thay đổi đó); lần khởi động lại tới nó sẽ vào cả Short.
+- **Chưa chạy thật — cần chủ dự án:** `.env.d10` (key tài khoản phụ, bot Telegram RIÊNG, tài khoản control API + JWT ≥ 32 ký
+  tự), `--chon-ro` rồi commit `config/d10_ro.yaml`, E6 `--d10-dat-cho`. Việc đầu tiên khi có key: gọi thật `apiRestrictions`
+  một lần để đối chiếu tên trường (đang lấy theo tài liệu Binance).
