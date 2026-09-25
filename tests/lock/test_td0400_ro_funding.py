@@ -18,6 +18,7 @@ from __future__ import annotations
 import ast
 import json
 import math
+import re
 import shutil
 import subprocess
 import sys
@@ -208,8 +209,10 @@ def kq(tmp_path_factory) -> dict:
     shutil.copytree(REPO_ROOT / "config", repo_gia / "config")
     yaml_gia = repo_gia / "config" / "tool_d_config.yaml"
     van_ban = yaml_gia.read_text(encoding="utf-8")
-    assert van_ban.count("von_ro_usdt: null }") == 1, "không tìm thấy đúng một ô trần vốn rổ trong tran_d12"
-    yaml_gia.write_text(van_ban.replace("von_ro_usdt: null }", f"von_ro_usdt: {VON_TEST} }}"), encoding="utf-8")
+    # TD-0406 điền trần thật (1900) ⇒ khớp ô trần theo MẪU, không theo giá trị hiện tại của nó.
+    tran = re.findall(r"von_ro_usdt: [^ }]+ }", van_ban)
+    assert len(tran) == 1, f"không tìm thấy đúng một ô trần vốn rổ trong tran_d12: {tran}"
+    yaml_gia.write_text(van_ban.replace(tran[0], f"von_ro_usdt: {VON_TEST} }}"), encoding="utf-8")
     mt = dung_moi_truong(
         repo_dir=repo_gia, goc=goc, ghi_de={"tier_a.von_ro_usdt": VON_TEST, "tier_a.enable_short": True},
         ma_trong_ro=[f"{m}USDT" for m in MA], chien_luoc="RoFunding",
@@ -251,6 +254,8 @@ class TestBacktestThat:
     def test_file_phu_lenh_thi_truong_da_ap(self, kq) -> None:
         cfg = kq["_cfg_ft"]
         assert cfg["order_types"]["entry"] == "market" and cfg["order_types"]["exit"] == "market"
+        assert cfg["minimal_roi"] == {}, "ROI phải TẮT (tờ chọn: không chốt lời) — TD-0401 đo thấy 2 lệnh roi khi chưa tắt"
+        assert cfg["stoploss"] == pytest.approx(-0.5)
         assert cfg["trailing_stop"] is False and cfg["position_adjustment_enable"] is True  # L-Z24 không bị phủ
 
     def test_nhan_thoat_chi_thuoc_lop_can_ro(self, kq) -> None:

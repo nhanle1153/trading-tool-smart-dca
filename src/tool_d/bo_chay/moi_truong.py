@@ -108,7 +108,9 @@ def _hau_kiem(goc: ToolDConfig, phu: ToolDConfig, ghi_de: Mapping[str, Any]) -> 
 
 #: TD-0400 (`DR-D0-IQ0003` §4) — khoá Freqtrade mà một file phủ theo chiến lược ĐƯỢC chạm. Danh sách CHO PHÉP: khoá
 #: `test_lz24` ghim (`trailing_stop`, `position_adjustment_enable`, `use_exit_signal`, `edge`, …) không nằm ở đây.
-KHOA_PHU_CHO_PHEP = frozenset({"order_types", "order_time_in_force", "entry_pricing", "exit_pricing"})
+KHOA_PHU_CHO_PHEP = frozenset({"order_types", "order_time_in_force", "entry_pricing", "exit_pricing", "minimal_roi"})
+#: Khoá THAY TRỌN (không gộp): gộp `{}` vào `{"0": 10}` vẫn ra `{"0": 10}` — tắt ROI là không làm được bằng gộp.
+KHOA_PHU_THAY_TRON = frozenset({"minimal_roi"})
 THU_MUC_PHU = Path("freqtrade") / "phu"
 #: Khoá chú thích/dẫn xuất của file phủ. Khoá `_…` lạ ⇒ từ chối (không lặng lẽ bỏ qua một ý định).
 KHOA_PHU_META = frozenset({"_ghi_chu", "_vi_tu_khoa", "_stoploss_tu_khoa"})
@@ -128,7 +130,7 @@ def _ap_file_phu(ft: dict[str, Any], nguon_config: Path, chien_luoc: str, cfg_ph
     if la:
         raise MoiTruongError(f"{duong}: khoá không được phủ {la} — chỉ nhận {sorted(KHOA_PHU_CHO_PHEP)}")
     for khoa in KHOA_PHU_CHO_PHEP & phu.keys():
-        ft[khoa] = {**ft.get(khoa, {}), **phu[khoa]}
+        ft[khoa] = dict(phu[khoa]) if khoa in KHOA_PHU_THAY_TRON else {**ft.get(khoa, {}), **phu[khoa]}
     if "_vi_tu_khoa" in phu:
         von = resolve(cfg_phu, phu["_vi_tu_khoa"])
         if von is None or not isinstance(von, (int, float)) or von <= 0:

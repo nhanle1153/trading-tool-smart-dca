@@ -46,8 +46,9 @@ class RoFunding(IStrategy):
     process_only_new_candles = True
     # Giá trị lớp; cấu hình thắng thuộc tính — stop hiệu dụng do file phủ đặt, kiểm ở `_kiem_stop_hieu_dung()`.
     stoploss = -0.99
-    # Không chốt lời (tờ chọn). 10 = +1000% ở 1x — không bao giờ chạm; cùng giá trị cấu hình chung.
-    minimal_roi = {"0": 10}
+    # Không chốt lời (tờ chọn): TẮT ROI. Cấu hình chung `{"0": 10}` thắng thuộc tính này, và ở đòn bẩy sàn 2 nó CÓ chạm
+    # (2 lệnh `roi` trên EXPLORE, TD-0401) ⇒ file phủ THAY TRỌN `minimal_roi` bằng `{}`.
+    minimal_roi: dict = {}
 
     def __init__(self, config: dict) -> None:
         super().__init__(config)

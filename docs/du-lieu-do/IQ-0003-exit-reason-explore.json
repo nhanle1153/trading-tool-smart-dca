@@ -1,0 +1,25 @@
+{
+  "nguon": "TD-0401 — DR-PHAN-QUYET-01 §4.2 bước 2 cho IQ-0003; 0 suất; CHỈ ĐẾM, không PnL",
+  "dataset": "EXPLORE",
+  "timerange": "20240409-20260129",
+  "so_ma": 100,
+  "timeframe_detail": null,
+  "lenh_that": {
+    "RO": {
+      "so_lenh": 2704,
+      "exit_reason": {
+        "CAN_RO": 2341,
+        "force_exit": 32,
+        "stop_loss": 331
+      }
+    }
+  },
+  "lop_chien_luoc": "CAN_RO_THEO_LICH",
+  "dr_thiet_ke": "docs/decisions/DR-D0-IQ0003-thiet-ke-ro-funding.md",
+  "exception_bi_nuot": 0,
+  "giay": 210.4,
+  "ghi_chu": [
+    "EXPLORE không có nến 5m ⇒ chạy không timeframe_detail; stop thảm hoạ khớp theo nến 1H",
+    "tier_a.enable_short ghi đè true chỉ trong cấu hình tạm của lần đếm (TD-0402 lật công tắc thật)"
+  ]
+}
