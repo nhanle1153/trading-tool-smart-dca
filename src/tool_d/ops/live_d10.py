@@ -5,6 +5,7 @@ fail-closed chạy TRƯỚC khi một byte lệnh nào ra sàn, theo đúng th�
 
 1. `validate_credentials_for_live()` (TD-0242) — ĐẦU TIÊN, ở `main()`, KHÔNG trong callback chiến lược (callback bị
    Freqtrade nuốt exception — MT-16 vii). Có phép kiểm AST vị trí gọi (`test_td0384_live_d10.py`).
+1b. `kiem_cay_khop_head()` (TD-0425, `MT-86`) — `config/`, `src/`, `user_data/strategies/` phải KHỚP HEAD; lệch ⇒ từ chối.
 2. `kiem_truoc_khi_bat()` (`DR-D10-02` Q3) — IP whitelist bật, quyền rút / chuyển tiền tắt; không đọc được ⇒ từ chối.
 3. Rổ `config/d10_ro.yaml` (`DR-D10-02` §5.1) phải tồn tại, ĐÃ COMMIT và KHÔNG bị sửa sau commit (máy kiểm bằng git).
 4. Dựng cấu hình phủ rồi `exec freqtrade trade`.
@@ -44,7 +45,8 @@ from tool_d.bo_chay.yeu_cau import ten_cap_freqtrade
 from tool_d.config.loader import load_tool_d_config, resolve
 from tool_d.notional import build_symbol_filters, san_tool_d
 from tool_d.ops.ctrl_d10 import CtrlD10Error, UngVienRo, chon_ro, doc_tham_so
-from tool_d.ops.dry_run import bien_moi_truong_telegram
+from tool_d.measurement.gitinfo import GitInfoError, kiem_cay_khop_head
+from tool_d.ops.dry_run import EXIT_CAY_LECH_HEAD, bien_moi_truong_telegram
 from tool_d.ops.kiem_bao_mat_d10 import BaoMatD10Error, kiem_truoc_khi_bat
 from tool_d.ops.ngan_sach_d10_ro import NganSachD10RoError, von_ro_d10
 from tool_d.pool_giai_doan import POOL_HOM_NAY
@@ -259,6 +261,13 @@ def main(argv: list[str] | None = None) -> None:  # pragma: no cover — exec ti
         print(str(exc), file=sys.stderr, flush=True)
         sys.exit(EXIT_MISSING_API_CREDENTIALS)
     try:
+        # 1b — TD-0425 (MT-86): cây làm việc khớp HEAD ở vùng bot nạp, TRƯỚC mọi lời gọi mạng. Mount `..:/workspace` ⇒
+        # không có chốt này thì tiền thật chạy mã/cấu hình chưa commit (sự cố dry-run 25/09/2026, cùng khuôn mount).
+        git_sha = kiem_cay_khop_head(Path("."))
+    except GitInfoError as exc:
+        print(str(exc), file=sys.stderr, flush=True)
+        sys.exit(EXIT_CAY_LECH_HEAD)
+    try:
         kiem_truoc_khi_bat(api_key=api_key, api_secret=api_secret)  # 2 — DR-D10-02 Q3
     except BaoMatD10Error as exc:
         print(str(exc), file=sys.stderr, flush=True)
@@ -277,7 +286,7 @@ def main(argv: list[str] | None = None) -> None:  # pragma: no cover — exec ti
     os.environ.update(telegram)
     lenh = lenh_freqtrade(cau_hinh)
     print(
-        f"D10 LIVE ({cau_hinh.chien_luoc}, vốn rổ {cau_hinh.von_ro_usdt}): {cau_hinh.so_cap} cặp, cấu hình {cau_hinh.duong_dan}, "
+        f"D10 LIVE @ {git_sha} ({cau_hinh.chien_luoc}, vốn rổ {cau_hinh.von_ro_usdt}): {cau_hinh.so_cap} cặp, cấu hình {cau_hinh.duong_dan}, "
         f"Telegram {'BẬT' if telegram else 'TẮT'} — TIỀN THẬT",
         file=sys.stderr, flush=True,
     )

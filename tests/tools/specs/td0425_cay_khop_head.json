@@ -1,0 +1,34 @@
+{
+  "mo_ta": "TD-0425 (MT-86): chot tu choi khoi dong khi cay lech HEAD. M1 = bo han chot (khong bao gio tu choi - dung hinh su co 25/09); M2 = bo loc vung + bo file chua theo doi (chi tinh file da theo doi, moi noi); M3 = bo xu ly doi ten (chi nhin dau cu). Moi bien the phai ra DUNG ca do.",
+  "module": "tool_d.measurement.gitinfo",
+  "file": "src/tool_d/measurement/gitinfo.py",
+  "khoi_dong": ["if lech:"],
+  "bien_the": {
+    "M0": null,
+    "M1": "if False:",
+    "M2": {
+      "khoi_dong": ["if any(dau.strip().strip('\"').startswith(thu_muc) for dau in duong_dan.split(\" -> \"))"],
+      "thay": "if trang_thai != \"??\""
+    },
+    "M3": {
+      "khoi_dong": ["if any(dau.strip().strip('\"').startswith(thu_muc) for dau in duong_dan.split(\" -> \"))"],
+      "thay": "if duong_dan.startswith(thu_muc)"
+    }
+  },
+  "tests": ["tests/unit/test_td0425_cay_khop_head.py"],
+  "ky_vong": {"M0": "xanh", "M1": "do", "M2": "do", "M3": "do"},
+  "ky_vong_do_gom": {
+    "M1": [
+      "tests/unit/test_td0425_cay_khop_head.py::TestKiemCayKhopHead::test_ca_su_co_25_09_sua_yaml_chua_commit_thi_TU_CHOI",
+      "tests/unit/test_td0425_cay_khop_head.py::TestKiemCayKhopHead::test_sua_da_staged_van_TU_CHOI",
+      "tests/unit/test_td0425_cay_khop_head.py::TestKiemCayKhopHead::test_loi_nhan_liet_ke_moi_file_lech"
+    ],
+    "M2": [
+      "tests/unit/test_td0425_cay_khop_head.py::TestKiemCayKhopHead::test_file_CHUA_THEO_DOI_trong_vung_thi_TU_CHOI[src/tool_d/moi.py]",
+      "tests/unit/test_td0425_cay_khop_head.py::TestKiemCayKhopHead::test_sua_NGOAI_vung_bot_nap_thi_KHONG_chan"
+    ],
+    "M3": [
+      "tests/unit/test_td0425_cay_khop_head.py::TestKiemCayKhopHead::test_doi_ten_tu_ngoai_vao_trong_vung_thi_TU_CHOI"
+    ]
+  }
+}

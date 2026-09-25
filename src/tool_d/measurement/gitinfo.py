@@ -106,14 +106,59 @@ def _loc_status_anh_huong(dong: list[str]) -> list[tuple[str, str]]:
     """Quy tắc lọc DUY NHẤT cho *"thay đổi chưa commit nào ảnh hưởng phép đo"* — `thay_doi_anh_huong_phep_do()` và
     `bam_thay_doi_chua_commit()` cùng gọi, không chép (MT-03). Trả `(trạng_thái, đường_dẫn)` từ `git status --porcelain`."""
     ket_qua: list[tuple[str, str]] = []
-    for d in dong:
-        if not d.strip():
-            continue
-        trang_thai, duong_dan = d[:2], d[3:].strip().strip('"')
+    for trang_thai, duong_dan in _tach_status(dong):
         if trang_thai == "??" and not duong_dan.startswith(THU_MUC_ANH_HUONG_PHEP_DO):
             continue
         ket_qua.append((trang_thai, duong_dan))
     return ket_qua
+
+
+def _tach_status(dong: list[str]) -> list[tuple[str, str]]:
+    """Cách đọc DUY NHẤT một dòng `git status --porcelain` (v1) thành `(trạng_thái, đường_dẫn)`; bỏ dòng rỗng."""
+    return [(d[:2], d[3:].strip().strip('"')) for d in dong if d.strip()]
+
+
+#: TD-0425 (`MT-86`) — thứ một bot chạy dài (dry-run D11, live D10) THỰC SỰ nạp từ thư mục làm việc: cấu hình + rổ
+#: (`config/`), mã Tool D (`src/`), chiến lược Freqtrade (`user_data/strategies/`). CỐ Ý hẹp hơn
+#: `thay_doi_anh_huong_phep_do()` (vốn tính MỌI file đã theo dõi, kể cả `docs/`, `TASKS.md`): với nhiều phiên cùng một
+#: thư mục, tài liệu gần như lúc nào cũng có sửa dở, và một chốt không bao giờ thoả sẽ bị gỡ bỏ.
+THU_MUC_BOT_NAP = ("config/", "src/", "user_data/strategies/")
+
+
+class CayLechHeadError(GitInfoError):
+    """Cây làm việc lệch HEAD ở vùng bot nạp — bot TỪ CHỐI khởi động (`MT-86`)."""
+
+
+def kiem_cay_khop_head(repo_dir: Path, thu_muc: tuple[str, ...] = THU_MUC_BOT_NAP) -> str:
+    """TD-0425 (`MT-86` phương án (a)) — trả `git_sha` của HEAD nếu `thu_muc` KHỚP HEAD; không thì raise.
+
+    Sự cố 25/09/2026: `enable_short: true` còn nằm trên đĩa, CHƯA commit, thì bot dry-run khởi động lại và chạy đường
+    Short ~20 phút trước commit. Kỷ luật *"commit = thay đổi có hiệu lực"* đã được viết trước đó mà vẫn thủng ⇒ máy kiểm.
+
+    Tính cả file đã theo dõi bị sửa/xoá/staged LẪN file CHƯA theo dõi trong `thu_muc` (một `.py` mới trong `src/` vẫn
+    được import). File ngoài `thu_muc` bỏ qua. Đổi tên tính nếu MỘT trong hai đầu nằm trong vùng.
+
+    FAIL-CLOSED: git lỗi (không có `.git`, "dubious ownership") ⇒ `GitInfoError` — KHÔNG coi là sạch.
+    """
+    # Cùng cờ `-c` với `bam_thay_doi_chua_commit()`: index do git Windows ghi, container Linux đọc lại nội dung mọi file.
+    dong = _run_git(
+        ["-c", "core.checkStat=minimal", "-c", "core.trustctime=false", "status", "--porcelain"], repo_dir
+    ).splitlines()
+    lech = [
+        f"[{trang_thai.strip()}] {duong_dan}"
+        for trang_thai, duong_dan in _tach_status(dong)
+        if any(dau.strip().strip('"').startswith(thu_muc) for dau in duong_dan.split(" -> "))
+    ]
+    if lech:
+        raise CayLechHeadError(
+            "TỪ CHỐI KHỞI ĐỘNG (MT-86): cây làm việc lệch HEAD ở vùng bot nạp "
+            f"{', '.join(thu_muc)} — bot sẽ chạy mã/cấu hình KHÔNG có trong commit nào. "
+            "Commit (hoặc bỏ) các thay đổi rồi khởi động lại:\n  " + "\n  ".join(lech)
+        )
+    sha = _run_git(["rev-parse", "HEAD"], repo_dir).strip()
+    if not sha:
+        raise GitInfoError("git rev-parse HEAD trả rỗng — không xác định được commit đang chạy")
+    return sha
 
 
 def bam_thay_doi_chua_commit(repo_dir: Path) -> str:

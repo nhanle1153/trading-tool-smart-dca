@@ -33,8 +33,13 @@ from pathlib import Path
 import yaml
 
 from tool_d.bo_chay.yeu_cau import ten_cap_freqtrade
+from tool_d.measurement.gitinfo import GitInfoError, kiem_cay_khop_head
 from tool_d.ops.telegram_client import ENV_TELEGRAM_BOT_TOKEN, ENV_TELEGRAM_CHAT_ID
 from tool_d.pool_giai_doan import POOL_HOM_NAY
+
+#: TD-0425 (MT-86) — cây làm việc lệch HEAD ở vùng bot nạp. Số KHÔNG trùng mã nào khác của dự án (99–114 đã dùng; có
+#: test canh), để log container đọc thẳng ra nguyên nhân. `live_d10` import lại, không định nghĩa lần hai.
+EXIT_CAY_LECH_HEAD = 115
 
 TEN_CHIEN_LUOC = "ZoneAbsorption"
 CAU_HINH_FREQTRADE_GOC = Path("config/freqtrade/config.json")
@@ -146,12 +151,19 @@ def lenh_freqtrade(cau_hinh: CauHinhDryRun) -> list[str]:
 
 
 def main() -> None:  # pragma: no cover — exec tiến trình thật; phần thuần đã khoá bằng test
+    # TD-0425 (MT-86) — ĐẦU TIÊN: bot đọc thẳng thư mục làm việc, nên cây lệch HEAD = chạy mã không có trong commit nào.
+    # `restart: unless-stopped` ⇒ Docker thử lại với độ trễ tăng dần; bot tự lên lại khi cây sạch, watchdog báo 🔴 lúc nằm.
+    try:
+        git_sha = kiem_cay_khop_head(Path("."))
+    except GitInfoError as exc:
+        print(str(exc), file=sys.stderr, flush=True)
+        sys.exit(EXIT_CAY_LECH_HEAD)
     cau_hinh = dung_cau_hinh_dry_run()
     lenh = lenh_freqtrade(cau_hinh)
     telegram = bien_moi_truong_telegram(os.environ)
     os.environ.update(telegram)  # `execvp` bên dưới cho tiến trình con thừa hưởng
     print(
-        f"dry-run: {cau_hinh.so_cap} cặp, cấu hình {cau_hinh.duong_dan}, "
+        f"dry-run @ {git_sha}: {cau_hinh.so_cap} cặp, cấu hình {cau_hinh.duong_dan}, "
         f"Telegram Freqtrade {'BẬT' if telegram else 'TẮT (thiếu TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID)'}",
         file=sys.stderr, flush=True,
     )
