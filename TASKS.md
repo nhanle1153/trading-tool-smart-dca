@@ -1237,7 +1237,7 @@ commit này, `Phien: 12c579bc`. Khoá 🔒 bốn việc DR cùng commit.
 | Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
 |---|---|---|---|---|
 | TD-0429 | **Khôi phục N12 nhiều phiên** — chép nguyên văn `docs/lich-su/N12-nhieu-phien.md` vào `CLAUDE.md`, giữ các điều mới của N12 rút gọn mà bản cũ không có (phiên sạch ngoài repo, `MT-86`, `docker info`, `_kiem_so_that`, dừng container theo ID) | ✅ | — | `CLAUDE.md` + file lịch sử commit, diff đọc hết |
-| TD-0430 | **Máy kiểm độ mạnh ở cửa CHỌN** (`MT-89`) — `gates/do_manh_chon.py` tự tính `Φ(μ·√n/σ − h)`, `h` từ `dsr_hurdle(N_DANG_KY)`; ngưỡng đọc từ dòng `DO_MANH_TOI_THIEU` của file tiêu chí quý (nối vào `DR-Q1-2027`); nối vào `chon_y_tuong` + audit `TD-0120` ca (f) | 🔒 | TD-0429 | Test khoá + phá thật; sổ thật xanh; full suite Docker 0 failed |
+| TD-0430 | **Máy kiểm độ mạnh ở cửa CHỌN** (`MT-89`) — `gates/do_manh_chon.py` tự tính `Φ(μ·√n/σ − h)`, `h` từ `dsr_hurdle(N_DANG_KY)`; ngưỡng đọc từ dòng `DO_MANH_TOI_THIEU` của file tiêu chí quý (nối vào `DR-Q1-2027`); nối vào `chon_y_tuong` + audit `TD-0120` ca (f) | ✅ `42828b4` | TD-0429 | Test khoá + phá thật; sổ thật xanh; full suite Docker 0 failed — ✅ **26/09/2026:** 38 ca khoá; phá thật cửa ⇒ đúng 3 ca đỏ, phá ca (f) ⇒ đúng 1 ca đỏ; Docker full suite **3817 passed, 0 failed** |
 
 **Đặt chỗ mã (N12 mục 7c bản khôi phục):** `TD-0429`, `TD-0430`, commit này, `Phien: 518225e3`.
 
