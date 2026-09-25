@@ -278,8 +278,10 @@ def lo_that(tmp_path_factory):
     # riêng (`test_lz56_*`). Lô E3 ở đây là máy ablation LONG của ZA ⇒ tắt Short TƯỜNG MINH trong bản sao cấu hình.
     yaml_p = goc / "config" / "tool_d_config.yaml"
     y = yaml_p.read_text(encoding="utf-8")
-    assert y.count("enable_short: true") == 1, "YAML không còn đúng một dòng enable_short: true — cập nhật fixture"
-    yaml_p.write_text(y.replace("enable_short: true", "enable_short: false"), encoding="utf-8")
+    # TD-0415 (`DR-SHORT-03`): YAML thật đã tắt lại — chốt vẫn ÉP false, không phụ thuộc giá trị thật.
+    dong = [d for d in y.splitlines() if d.strip().startswith("enable_short:")]
+    assert len(dong) == 1, f"YAML phải có đúng một dòng enable_short, thấy {dong}"
+    yaml_p.write_text(y.replace(dong[0], "  enable_short: false"), encoding="utf-8")
     td._sinh_du_lieu(goc / "user_data" / "data" / "pool_t1")
     so_path = goc / "so.jsonl"
     mp = pytest.MonkeyPatch()
