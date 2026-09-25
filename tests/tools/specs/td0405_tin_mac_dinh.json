@@ -1,0 +1,17 @@
+{
+  "mo_ta": "TD-0405 (chu du an chot 25/09): tin vao lenh MAC DINH cua Freqtrade chay SONG SONG tin cua chien luoc. M1 = tat lai tin dat lenh (NOTIFICATION_SETTINGS__ENTRY=off) -> 2 ca do: ca bang-nhau cua TD-0393 va ca kiem qua bo kiem schema that. M2 = tat strategy_msg (kenh tin TD-0405) -> 2 ca do. Du doan viet TRUOC khi chay.",
+  "module": "tool_d.ops.dry_run",
+  "file": "src/tool_d/ops/dry_run.py",
+  "khoi_dong": ["\"FREQTRADE__TELEGRAM__CHAT_ID\": chat_id,"],
+  "bien_the": {
+    "M0": null,
+    "M1": ["        \"FREQTRADE__TELEGRAM__CHAT_ID\": chat_id,", "        \"FREQTRADE__TELEGRAM__NOTIFICATION_SETTINGS__ENTRY\": \"off\","],
+    "M2": ["        \"FREQTRADE__TELEGRAM__CHAT_ID\": chat_id,", "        \"FREQTRADE__TELEGRAM__NOTIFICATION_SETTINGS__STRATEGY_MSG\": \"off\","]
+  },
+  "tests": ["tests/unit/test_trien_khai_dry_run.py"],
+  "ky_vong": {"M0": "xanh", "M1": "do", "M2": "do"},
+  "ky_vong_do_gom": {
+    "M1": ["tests/unit/test_trien_khai_dry_run.py::TestTelegramTichHopFreqtrade::test_du_hai_bien_thi_bat", "tests/unit/test_trien_khai_dry_run.py::TestTelegramTichHopFreqtrade::test_tin_mac_dinh_va_tin_chien_luoc_cung_bat"],
+    "M2": ["tests/unit/test_trien_khai_dry_run.py::TestTelegramTichHopFreqtrade::test_du_hai_bien_thi_bat", "tests/unit/test_trien_khai_dry_run.py::TestTelegramTichHopFreqtrade::test_tin_mac_dinh_va_tin_chien_luoc_cung_bat"]
+  }
+}

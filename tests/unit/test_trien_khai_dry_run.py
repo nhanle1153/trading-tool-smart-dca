@@ -227,20 +227,22 @@ class TestTelegramTichHopFreqtrade:
             "FREQTRADE__TELEGRAM__ENABLED": "true",
             "FREQTRADE__TELEGRAM__TOKEN": self.TOKEN_GIA,
             "FREQTRADE__TELEGRAM__CHAT_ID": self.CHAT_GIA,
-            # TD-0405 — tin vào lệnh mặc định tắt, chiến lược tự gửi tin lúc khớp.
-            "FREQTRADE__TELEGRAM__NOTIFICATION_SETTINGS__ENTRY": "off",
-            "FREQTRADE__TELEGRAM__NOTIFICATION_SETTINGS__ENTRY_FILL": "off",
-            "FREQTRADE__TELEGRAM__NOTIFICATION_SETTINGS__ENTRY_CANCEL": "off",
         }
 
-    def test_freqtrade_doc_env_thanh_notification_settings(self) -> None:
-        """TD-0405 — đi qua bộ gộp env THẬT của Freqtrade: khoá lồng phải ra đúng `notification_settings` mà
-        `rpc/telegram.py` đọc, và `strategy_msg` (kênh tin của chiến lược) KHÔNG bị tắt."""
+    def test_tin_mac_dinh_va_tin_chien_luoc_cung_bat(self) -> None:
+        """TD-0405 (chủ dự án chốt 25/09: tin mặc định chạy SONG SONG tin của chiến lược) — đi qua bộ gộp env VÀ bộ
+        kiểm schema THẬT của Freqtrade (bộ kiểm tự điền mặc định): tin đặt lệnh `entry` và `strategy_msg` (kênh tin
+        TD-0405) không bị ai đặt ⇒ `rpc/telegram.py::_message_loudness` cho `"on"`."""
+        from freqtrade.config_schema.config_schema import CONF_SCHEMA
+        from freqtrade.configuration.config_validation import FreqtradeValidator
         from freqtrade.configuration.environment_vars import _flat_vars_to_nested_dict
 
         env = bien_moi_truong_telegram({"TELEGRAM_BOT_TOKEN": self.TOKEN_GIA, "TELEGRAM_CHAT_ID": self.CHAT_GIA})
         cfg = _flat_vars_to_nested_dict(env, "FREQTRADE__")
-        assert cfg["telegram"]["notification_settings"] == {"entry": "off", "entry_fill": "off", "entry_cancel": "off"}
+        FreqtradeValidator({"type": "object", "properties": {"telegram": CONF_SCHEMA["properties"]["telegram"]}}).validate(cfg)
+        cai_dat = cfg["telegram"].get("notification_settings", {})
+        for loai in ("entry", "entry_cancel", "strategy_msg"):
+            assert cai_dat.get(loai, "on") == "on", (loai, cai_dat)
 
     @pytest.mark.parametrize(
         "env",

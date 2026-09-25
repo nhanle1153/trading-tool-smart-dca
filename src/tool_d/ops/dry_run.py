@@ -42,8 +42,6 @@ CAU_HINH_FREQTRADE_GOC = Path("config/freqtrade/config.json")
 THU_MUC_VAN_HANH = Path("runs/van_hanh/dry_run")
 TEN_FILE_CAU_HINH_PHU = "cfg.json"
 TEN_FILE_LOG = "freqtrade.log"
-#: TD-0405 — khoá `telegram.notification_settings` của Freqtrade bị tắt (xem `bien_moi_truong_telegram`).
-TIN_VAO_LENH_MAC_DINH_TAT = ("ENTRY", "ENTRY_FILL", "ENTRY_CANCEL")
 
 
 class DryRunError(RuntimeError):
@@ -119,10 +117,11 @@ def bien_moi_truong_telegram(env: Mapping[str, str]) -> dict[str, str]:
     (`force_entry_enable: false` chỉ chặn `/forcebuy`). Chấp nhận ở dry-run; LIVE phải quyết riêng và dùng bot RIÊNG
     (hai Freqtrade chung một token tranh `getUpdates`).
 
-    TD-0405 — tắt ba tin vào lệnh MẶC ĐỊNH (`entry` lúc đặt lệnh, `entry_fill`, `entry_cancel`): chiến lược tự gửi
-    tin lúc KHỚP kèm cắt lỗ + rủi ro (`ops/thong_bao_lenh.py`, qua `strategy_msg` — vẫn bật). Tin đặt/huỷ lệnh chờ
-    post-only (chờ tới 180 phút) không còn ý nghĩa khi đã báo ở lúc khớp. Tin thoát lệnh, khởi động, `/status` giữ
-    nguyên."""
+    TD-0405 — KHÔNG khai `notification_settings`: tin mặc định của Freqtrade giữ nguyên, chạy SONG SONG với tin lúc
+    KHỚP kèm cắt lỗ + rủi ro của chiến lược (`ops/thong_bao_lenh.py`, qua `strategy_msg`). Bản đầu `7ace95a` tắt ba
+    tin vào lệnh mặc định; chủ dự án đổi ý 25/09/2026 — muốn nhận cả hai, đừng tắt lại. Đo schema freqtrade 2026.8:
+    không khai gì thì bộ kiểm tự điền `entry_fill: "off"`, còn `entry` (đặt lệnh), `entry_cancel`, `strategy_msg`
+    là `"on"` — đúng hành vi trước TD-0405."""
     token = env.get(ENV_TELEGRAM_BOT_TOKEN, "")
     chat_id = env.get(ENV_TELEGRAM_CHAT_ID, "")
     if not token or not chat_id:
@@ -131,7 +130,6 @@ def bien_moi_truong_telegram(env: Mapping[str, str]) -> dict[str, str]:
         "FREQTRADE__TELEGRAM__ENABLED": "true",
         "FREQTRADE__TELEGRAM__TOKEN": token,
         "FREQTRADE__TELEGRAM__CHAT_ID": chat_id,
-        **{f"FREQTRADE__TELEGRAM__NOTIFICATION_SETTINGS__{loai}": "off" for loai in TIN_VAO_LENH_MAC_DINH_TAT},
     }
 
 
