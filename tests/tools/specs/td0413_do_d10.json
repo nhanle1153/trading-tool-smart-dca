@@ -1,0 +1,75 @@
+{
+  "mo_ta": "TD-0413: bo do D10 cho RoFunding (tang thuan). Du doan viet TRUOC khi chay: M1 bo nguong truot gia -> 2 (vuot nguong + truot am); M2 bo tri tuyet doi -> 1 (truot am lot); M3 tinh ca lenh stop -> 1; M4 bo dieu kien so lan can ro -> 1; M5 bo kiem SL tren san -> 1; M6 bo thieu gia -> 1.",
+  "module": "tool_d.ops.do_d10",
+  "file": "src/tool_d/ops/do_d10.py",
+  "khoi_dong": [
+    "if tb is not None and tb > NGUONG_TRUOT_GIA:"
+  ],
+  "bien_the": {
+    "M0": null,
+    "M1": "if False:",
+    "M2": {
+      "khoi_dong": [
+        "tg = None if hong else abs(x.gia_khop - mo) / mo"
+      ],
+      "thay": "tg = None if hong else (x.gia_khop - mo) / mo"
+    },
+    "M3": {
+      "khoi_dong": [
+        "ds = [x for x in lenh if x.side != \"stoploss\"]"
+      ],
+      "thay": "ds = list(lenh)"
+    },
+    "M4": {
+      "khoi_dong": [
+        "if len(ds) < DU_LENH_KHOP or len(lan_can_ro) < DU_LAN_CAN_RO:"
+      ],
+      "thay": "if len(ds) < DU_LENH_KHOP:"
+    },
+    "M5": {
+      "khoi_dong": [
+        "thieu_stop = tuple(sorted(v.trade_id for v in vi_the if not v.co_lenh_stop))"
+      ],
+      "thay": "thieu_stop = ()"
+    },
+    "M6": {
+      "khoi_dong": [
+        "if thieu_gia:"
+      ],
+      "thay": "if False:"
+    }
+  },
+  "tests": [
+    "tests/unit/test_td0413_do_d10.py"
+  ],
+  "ky_vong": {
+    "M0": "xanh",
+    "M1": "do",
+    "M2": "do",
+    "M3": "do",
+    "M4": "do",
+    "M5": "do",
+    "M6": "do"
+  },
+  "ky_vong_do_gom": {
+    "M1": [
+      "tests/unit/test_td0413_do_d10.py::TestKetCuc::test_truot_vuot_nguong_thi_rejected",
+      "tests/unit/test_td0413_do_d10.py::TestKetCuc::test_truot_am_tinh_theo_tri_tuyet_doi"
+    ],
+    "M2": [
+      "tests/unit/test_td0413_do_d10.py::TestKetCuc::test_truot_am_tinh_theo_tri_tuyet_doi"
+    ],
+    "M3": [
+      "tests/unit/test_td0413_do_d10.py::TestKetCuc::test_lenh_stop_khong_tinh_vao_mau"
+    ],
+    "M4": [
+      "tests/unit/test_td0413_do_d10.py::TestKetCuc::test_thieu_mau_thi_inconclusive[thieu-lan-can-ro]"
+    ],
+    "M5": [
+      "tests/unit/test_td0413_do_d10.py::TestKetCuc::test_vi_the_thieu_stop_thi_rejected_du_truot_tot"
+    ],
+    "M6": [
+      "tests/unit/test_td0413_do_d10.py::TestKetCuc::test_thieu_gia_mo_nen_thi_inconclusive_khong_doan"
+    ]
+  }
+}
