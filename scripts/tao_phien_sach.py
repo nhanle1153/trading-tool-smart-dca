@@ -40,7 +40,8 @@ def main(argv: list[str] | None = None) -> int:
     print("Bước tiếp theo:")
     print(f"  1. Trong VS Code, mở thư mục {dich} (KHÔNG phải repo) và mở một phiên Claude Code MỚI.")
     print("  2. Dán câu ở mục 1 của LOI-MO-DAU.md vào phiên đó.")
-    print("  3. Lệnh nộp/chọn: mục 2 của LOI-MO-DAU.md — chạy trong PowerShell riêng, không qua Claude.")
+    print("  3. Bật script canh (tự nộp/chọn): mục 2 của LOI-MO-DAU.md — PowerShell riêng, không qua Claude.")
+    print(f"     python scripts/canh_phien_sach.py --thu-muc \"{dich}\"")
     return 0
 
 

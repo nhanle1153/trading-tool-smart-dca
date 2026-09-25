@@ -11,11 +11,24 @@ là gì, AI trả tiền cho mình và vì sao họ buộc phải trả, vì sao
 lời được câu "ai trả tiền" thì tự loại, ghi rõ lý do. Nếu file tiêu chí của quý đòi tính toán kèm theo (vd độ mạnh
 thống kê), làm luôn cho từng ý tưởng.
 
-Việc 2: tôi chọn ý tưởng nào đáng nộp thì mới soạn đơn don-N.yaml theo mau-don-y-tuong.yaml.
-Chưa soạn tờ chọn cho tới khi tôi dán lại kết quả nộp.
+Việc 2: tôi chọn ý tưởng nào đáng nộp thì mới soạn đơn don-N.yaml theo mau-don-y-tuong.yaml. Chỉ khi tôi bảo
+"nộp" thì mới chép đơn đó vào thư mục con cho-nop\, rồi đọc kết quả ở cuối ket-qua-nop.txt (xem README.md).
+Chưa soạn tờ chọn cho tới khi có kết quả nộp.
 ```
 
-## 2. Dành cho chủ dự án — lệnh chạy (PowerShell riêng, KHÔNG chạy qua Claude)
+## 2. Dành cho chủ dự án — bật script canh (một lần, để cửa sổ mở)
+
+Mở một cửa sổ PowerShell, chạy rồi để đó (Ctrl+C để dừng):
+
+```powershell
+cd "C:\Trading Tool_Smart DCA"
+python scripts/canh_phien_sach.py --thu-muc "{thu_muc_windows}"
+```
+
+Nó tự nộp mọi `don-N.yaml` mà phiên sạch đặt vào `cho-nop\`, và ghi dòng ✅/🛑 đã lọc vào `ket-qua-nop.txt`. Với
+`to-chon.yaml`, nó **hỏi** trong cửa sổ đó: gõ `CHON` mới chọn. Bạn không phải copy-dán gì giữa hai bên.
+
+## 3. Dự phòng — lệnh tay (PowerShell riêng, KHÔNG chạy qua Claude)
 
 Lệnh chỉ in dòng ✅ khi ghi được; báo cáo kiểm tra sổ sau dòng đó bị lọc bỏ. Bị từ chối thì in 🛑 kèm lý do (chỉ nói về
 lỗi của đơn, dán lại được). Không nhận ra kết quả thì in một câu cảnh báo, không in lọt báo cáo.

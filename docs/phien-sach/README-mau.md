@@ -35,7 +35,16 @@ ngờ phiên đã nhiễm ⇒ khai `data_source: TOOL_D_RESULTS` (tự loại đ
 ## Cách nộp và chọn — phiên này KHÔNG chạy lệnh nào
 
 🔴 Phiên IDEA không chạy lệnh Docker hay lệnh nào đụng tới repo: báo cáo kiểm tra sổ in sau khi ghi có thể chứa số kết quả
-của Tool D. Việc của phiên này: soạn file trong **thư mục này**, rồi dừng. Chủ dự án chạy lệnh (xem `LOI-MO-DAU.md`) và
-dán lại **chỉ** dòng ✅ hoặc 🛑.
+của Tool D. Việc của phiên này: soạn file trong **thư mục này**, rồi dừng.
+
+**Cách nộp (script canh thư mục của chủ dự án, `TD-0422`):**
+- Soạn nháp `don-N.yaml` / `to-chon.yaml` ở thư mục này. Nháp **không** bao giờ bị nộp.
+- CHỈ khi chủ dự án bảo nộp một đơn, chép đúng file đó vào thư mục con `cho-nop\`. Script sẽ tự nộp. Mỗi lần nộp, kể cả
+  bị từ chối, tính vào trần 10 đơn/quý, nên đừng đặt file vào `cho-nop\` để "thử".
+- Tờ chọn: chép `to-chon.yaml` vào `cho-nop\`. Script chỉ chọn sau khi chủ dự án gõ xác nhận ở cửa sổ canh.
+- Kết quả (chỉ dòng ✅/🛑 đã lọc) nằm ở cuối `ket-qua-nop.txt` trong thư mục này. Tự đọc file đó, không cần chủ dự án dán.
+- Bị 🛑 thì sửa file trong `cho-nop\` (lưu đè). Nội dung đổi, script nộp lại.
+
+Không có script canh thì chủ dự án chạy lệnh tay (xem `LOI-MO-DAU.md`) và dán lại **chỉ** dòng ✅ hoặc 🛑.
 
 ⚠️ Mở phiên này là **phiên mới**, không "tiếp tục" phiên cũ.
