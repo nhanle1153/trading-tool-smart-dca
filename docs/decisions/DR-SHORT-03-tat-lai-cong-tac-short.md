@@ -33,3 +33,9 @@
 - `tests/lock/test_td0321_duong_short_backtest_that.py`: ghim về `False`, nêu DR này. Các fixture/ca đã sửa ở `TD-0402` căn lại
   sao cho khẳng định hành vi không đổi.
 - `L-Z56` không đổi. Với Short tắt, E3 hết bị chặn vì thiếu Δ_R(SHORT).
+
+---
+
+> 🔄 **BỔ SUNG 25/09/2026 (`DR-DONG-MT-ZA-01`, nối cuối, chữ ở trên giữ nguyên).** Mở lại khâu đo Short còn phải qua bốn
+> điều kiện nhận từ `MT-30`/`MT-55`/`MT-58` — xem `DR-DONG-MT-ZA-01` §3 (a). Bổ sung, không thay điều kiện của
+> `DR-HUONG-01` §3 và `DR-D4-01` §2b.

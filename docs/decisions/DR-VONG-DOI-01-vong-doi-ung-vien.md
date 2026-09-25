@@ -64,3 +64,12 @@ Không sửa `DR-LOCKBOX-03` (vẫn đúng cho ZA/ứng viên nhiều biến th�
   đã biết kết quả.
 - Hạn ngạch chọn quý 1/2027 = **1** (`DR-Q1-2027`).
 
+## 7. Bổ sung 25/09/2026 — hai điều kiểm cho DR thiết kế D0 (`DR-DONG-MT-ZA-01`, nối cuối, chữ ở trên giữ nguyên)
+
+1. **Mỗi biến thể/arm đổi đúng MỘT biến — và phải chứng minh, không giả định.** Nếu biến đang xét làm đổi cỡ lệnh, cổng
+   kết nạp hoặc tập lệnh được vào, thì phép so với mốc chỉ hợp lệ trên **tập lệnh giao** và phải khai là *"hẹp, không
+   ngoại suy"*. DR thiết kế D0 ghi trước cách đếm tập giao và cách đọc khi tập giao nhỏ.
+2. **Rổ mã đúng thời điểm.** CALIB, WFO và lockbox chạy trên rổ đúng tại mốc của đoạn đó (`config/pool_t0/t1/t2.yaml`,
+   `DR-D1-03`), **không** trên `config/pool.yaml` (rổ hôm nay — chỉ dùng cho D10–D12). DR thiết kế D0 ghi rổ nào cho đoạn
+   nào; đoạn nào chưa có rổ đúng thời điểm thì sinh rổ trước suất (0 trial).
+
