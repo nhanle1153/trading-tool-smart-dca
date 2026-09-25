@@ -117,3 +117,32 @@ lần khởi động lại máy không bao giờ âm thầm bật bot tiền th�
 Mã việc đặt chỗ ở Khối 31 `TASKS.md`. Thứ tự: DR này (commit riêng) → `api-integration-rules.md` Mục 4 (Q3 = có ⇒ bắt buộc)
 → bộ chạy + máy canh ngân sách + dạng CTRL thứ tư → bộ đo ba ngưỡng → chạy thật. Không đặt lệnh thật nào trước khi
 đủ bốn bước đầu và full suite Docker xanh.
+
+## 5. Bổ sung 25/09/2026 — rổ D10 và cách đặt lệnh CTRL (chủ dự án chốt, trước khi viết chiến lược)
+
+Chỉ THÊM; §0–§4 giữ nguyên. Hai câu chưa chốt ở bản CHỐT, chủ dự án trả lời 25/09/2026 sau lệnh "bắt đầu code" `TD-0384`.
+Commit riêng, TRƯỚC mọi dòng mã chiến lược CTRL. Tham số số ghi vào `config/tool_d_config.yaml` khối `tier_c.ctrl_d10`
+(N4; ngoài `tier_b` ⇒ không vào N, cùng tiền lệ `tier_c.ro_funding`).
+
+### 5.1 Rổ D10 — MÁY chọn theo luật, không chọn tay
+
+- Nguồn: rổ hôm nay `config/pool.yaml` (`trading`).
+- Lọc: sàn Tool D mỗi tranche (`notional.san_tool_d()`, `DR-D4-05`) **≤ 30 USDT**.
+- Xếp: thanh khoản 24h (`quoteVolume` của `GET /fapi/v1/ticker/24hr`) giảm dần; lấy **10** cặp đầu.
+- Kết quả ghi ra `config/d10_ro.yaml` kèm mốc thời gian và nguồn, **commit TRƯỚC lần chạy D10 đầu tiên**. Chọn lại = một
+  commit mới của file đó, không sửa tay giữa phiên. Ít hơn 1 cặp qua lọc ⇒ từ chối bật (fail-closed).
+
+### 5.2 Lệnh CTRL — gói đề xuất, chủ dự án chọn
+
+| Hạng mục | Chốt |
+|---|---|
+| Hướng | Chỉ Long |
+| Tranche 1 | Limit post-only tại giá mua tốt nhất lúc đặt (`entry_pricing.price_side = same`, config hiện có) ⇒ `p1` |
+| Tranche 2 / 3 | Lệnh chờ tại `p1 × (1 − 0,3%)` / `p1 × (1 − 0,6%)`, đặt sau khi tranche trước khớp |
+| Cỡ mỗi tranche | Sàn Tool D của cặp × 1,10 (lề 10%, chi tiết kỹ thuật) — bằng nhau cho ba tranche |
+| Đòn bẩy | `tier_a.L_exchange` (3×) |
+| SL | `p1 × (1 − 2%)`, BẤT BIẾN suốt vị thế (D0.2), sống trên sàn |
+| Thoát | Đóng toàn bộ **10 phút** sau khi đủ 3 tranche; hoặc **4 giờ** sau khi mở nếu chưa đủ; SL trên sàn lo phần lỗ |
+
+Chi phí dự kiến mỗi vị thế: phí + trượt giá, vài cent tới ~1 USDT; lỗ tối đa khi chạm SL ≈ 2% × tổng notional đã khớp.
+Mục đích DUY NHẤT là sinh sự kiện đổi khối lượng SL + đo lệch khớp/post-only (§3 Q1) — không phải để có lãi.
