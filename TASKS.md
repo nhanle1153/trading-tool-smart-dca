@@ -1174,6 +1174,22 @@ commit này, `Phien: 12c579bc`. Khoá 🔒 bốn việc DR cùng commit.
 
 ---
 
+## Khối 39 — Làm gọn cách vận hành trước vòng ý tưởng kế tiếp (mở 25/09/2026, chủ dự án chốt; nguồn `DR-TAI-THIET-KE-01`)
+
+> Chủ dự án hỏi có nên reset hệ thống; khuyến nghị (được duyệt): KHÔNG xoá — giữ sổ trial + lockbox chưa chạm + hạ tầng —
+> mà làm gọn cách vận hành. Chủ dự án chốt **một phiên duy nhất** trên repo. 0 trial, không đụng lockbox, không đụng dữ liệu.
+
+| Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
+|---|---|---|---|---|
+| TD-0417 | **Một phiên duy nhất** — rút N12 trong `CLAUDE.md` về luật ngắn; bản N12 cũ chuyển nguyên văn sang `docs/lich-su/N12-nhieu-phien.md` | 🔒 | — | `CLAUDE.md` + file lịch sử commit; chủ dự án đóng các phiên khác |
+| TD-0418 | **Làm gọn `CLAUDE.md`** — giữ Quy tắc gốc + N1–N13; lịch sử "Đang ở" chuyển nguyên văn sang `docs/lich-su/trang-thai-den-25-09-2026.md`; mục trạng thái mới < 30 dòng, KHÔNG số kết quả | 🔒 | TD-0417 | Kiểm máy: chữ chuyển đi khớp từng ký tự; `CLAUDE.md` không còn số kết quả |
+| TD-0419 | **Script tạo phiên sạch** `scripts/tao_phien_sach.py` + mẫu `docs/phien-sach/` — chép file được phép, hàng chờ rút gọn, dò số liệu Tool D (dính ⇒ dừng) | 🔒 | — | Test + chạy thật một lần; full suite Docker 0 failed |
+| TD-0420 | **Vòng đời tổng quát cho ứng viên** — `DR-VONG-DOI-01` + tiêu chí chọn quý 1/2027 (kiểm độ mạnh thống kê, ràng buộc hai chiều) — NHÁP, chủ dự án chốt (a) ngưỡng độ mạnh (b) lockbox `[T2,T3]` (c) `N`/rào; giải `MT-88`, `MT-89` | 🔓 | TD-0416 | DR chốt + commit; `MT-88`/`MT-89` ghi đã giải (cần "chuẩn hóa và lưu") |
+
+**Đặt chỗ mã (N12 mục 7c):** `TD-0417`…`TD-0420` + `DR-VONG-DOI-01`, `DR-Q1-2027-tieu-chi-chon-y-tuong`, commit này, `Phien: 12c579bc`.
+
+---
+
 ## Việc đã biết là sẽ có, chưa mở
 
 | Giai đoạn | Nội dung | Chặn bởi |
