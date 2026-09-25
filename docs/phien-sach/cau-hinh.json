@@ -1,0 +1,49 @@
+{
+  "_ghi_chu": "TD-0419 — cấu hình script tạo phiên IDEA/CHỌN sạch (DR-009). Sửa danh sách file ở đây, KHÔNG sửa script. Mọi file chép sang đều bị dò 'mau_cam'; dính một dòng là script DỪNG và xoá thư mục tạm, không để lại gì.",
+  "thu_muc_dich_mac_dinh": "C:/Users/ADMIN/phien-y-tuong-sach-{ngay}",
+  "file_chep": [
+    "docs/mau-don-y-tuong.yaml",
+    "docs/decisions/DR-IQ-01A-danh-sach-loai-tru-co-che.md",
+    "docs/decisions/DR-IQ-02-so-y-tuong-nhat-ky-su-kien.md",
+    "docs/decisions/DR-VONG-DOI-01-vong-doi-ung-vien.md"
+  ],
+  "trich_spec": {
+    "nguon": "tool-d-smart-dca.md",
+    "dich": "spec-trich-dr009-explore-idea-queue.md",
+    "doan": [
+      ["## 📋 DR-009", "## 📋 DR-010"],
+      ["## 9c.4b.", "## 9c.5."],
+      ["## 9c.7.", "# PHẦN 10"]
+    ]
+  },
+  "hang_cho": {
+    "nguon": "registry/idea_queue.jsonl",
+    "dich": "idea_queue-rut-gon.jsonl",
+    "giu_truong": ["idea_id", "status", "mechanism", "who_pays", "durability", "overlaps_with"]
+  },
+  "mau": {
+    "docs/phien-sach/README-mau.md": "README.md",
+    "docs/phien-sach/LOI-MO-DAU-mau.md": "LOI-MO-DAU.md"
+  },
+  "mau_cam": [
+    "\\bD-00\\d\\d\\b",
+    "n_giao",
+    "lệnh/năm",
+    "\\bexpectancy\\b\\s*[=:]\\s*-?\\d",
+    "dsr_adj",
+    "can_duoi",
+    "\\bmean_r\\b",
+    "time_stop_ratio",
+    "du-lieu-do/[\\w.-]+\\.json",
+    "\\bKTC\\d*\\b",
+    "%/ngày",
+    "DR-ZA-01",
+    "DR-HUONG-01",
+    "DR-PHAN-QUYET-01",
+    "DR-KET-CUC",
+    "DR-TAI-THIET-KE",
+    "DR-D0-IQ",
+    "DR-D4-\\d",
+    "td0\\d{3}-.*\\.json"
+  ]
+}
