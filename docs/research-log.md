@@ -4299,3 +4299,25 @@ cửa mới từ chối, đúng thiết kế. Vá bằng repo git nhỏ có hi�
   khác (TD-0405, tin Telegram lúc khớp). Khối đó nằm trong `try/except` nên không chặn được lệnh, nhưng "chạy đúng bản đã
   commit" (N7/rollback) không thoả cho tới khi TD-0405 được commit. Ngoài ra full suite lúc commit `TD-0403` có 9 ca đỏ
   thuộc thay đổi chưa commit của phiên khác (TD-0404).
+
+## 25/09/2026 — Năm việc treo sau TD-0403: dry-run khớp HEAD, suite sạch, watchdog ca TREO, DR-D10-02 CHỐT, Rules 1.6 (phiên mã `dd89043d`)
+
+- **Dry-run khớp HEAD:** TD-0405 commit `7ace95a` lúc 17:55 UTC, SAU lần bật lại 17:20 UTC, và sửa cả `ops/dry_run.py` (chỉ chạy
+  lúc container khởi động) ⇒ bot đang chạy bản trung gian. Tạo lại container ở HEAD `ac2461c`: RUNNING, 102 cặp, Telegram bật,
+  0 ERROR. Vòng đầu mất ~1 phút 40 giây mới ghi heartbeat (102 cặp) — thấp hơn nhiều ngưỡng 300 s nên không báo động giả.
+  Lúc đó phiên khác đang sửa dở `pool_giai_doan.py` + `binance_public.py`: đã kiểm dry-run chỉ lấy hằng `POOL_HOM_NAY` (không
+  gọi hàm bị sửa) và chiến lược không nạp `binance_public.py` ⇒ hành vi vẫn đúng HEAD.
+- **Full suite Docker 3474 passed, 0 failed:** 9 ca đỏ của lượt trước hết khi TD-0404 được commit — xác nhận chẩn đoán lúc đó
+  (thay đổi chưa commit của phiên khác), không sửa gì.
+- **Watchdog ca TREO — đã thử thật:** `docker pause` lúc 22:43:38 UTC (tiến trình sống, không chạy vòng nào). Kết quả, chủ dự án
+  xác nhận bằng ảnh Telegram: 🔴 lúc 22:49 UTC (heartbeat cũ 345 s), **không có** `process died` của Freqtrade — Telegram tích hợp
+  câm theo, vì nằm cùng tiến trình. Đây là ca CHỈ watchdog bắt được, khác ca dừng sạch (24/09) nơi Freqtrade tự báo. `unpause`
+  ⇒ 0 lỗi, Freqtrade vào lại vòng lặp ngay, ✅ PHỤC HỒI được chủ dự án xác nhận.
+  ⚠️ **Giá phải trả của cách thử:** bot bị đóng băng ~2 giờ 45 phút vì chờ người xác nhận (lệnh giấy không được theo dõi). Lần
+  sau thử cơ chế vận hành: đặt sẵn giờ bỏ đóng băng tự động, không để thao tác hoàn tác phụ thuộc vào một tin nhắn.
+- **`DR-D10-02` CHỐT** (`5bb2b58`, riêng và trước mọi mã D10): Q6 bật bằng tay, `live-d10` không `restart: unless-stopped`; trần
+  tổng ký quỹ đang mở ≤ 50% số dư. `TD-0383` ✅ (`b1ecbf3`).
+- **`api-integration-rules.md` 1.6 + `provider-map.md`** (`e76508c`, lệnh "chuẩn hóa và lưu"): dịch vụ #7 `apiRestrictions`, chỉ
+  thêm dòng. R1 dùng lại `_goi_json_ky(base_url=SPOT_BASE_URL)`. Tên trường **chưa verify bằng gọi thật**.
+- **Còn lại trước khi code D10 (`TD-0384`):** chủ dự án gõ "bắt đầu code"; bot Telegram RIÊNG + key tài khoản phụ qua `.env.*`
+  riêng; gọi thật `apiRestrictions` một lần để đối chiếu tên trường.
