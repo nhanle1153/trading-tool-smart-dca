@@ -1211,6 +1211,24 @@ commit này, `Phien: 12c579bc`. Khoá 🔒 bốn việc DR cùng commit.
 
 ---
 
+## Khối 41 — Nền móng trước tiền thật cho ứng viên kế tiếp: `MT-86`/`MT-40`/`MT-71`/`MT-06` (mở 26/09/2026, chủ dự án duyệt kế hoạch)
+
+> Phân tích tổng thể 5 dòng mục 7 (`MT-86`, `MT-78`, `MT-40`, `MT-71`, `MT-06`), phiên mã `809d6cd8`. Mẫu số chung: **lời
+> khai đứng một chỗ, máy thi hành đứng chỗ khác**. Hướng chung: đặt bảo đảm ở điểm bắt buộc đi qua trước tiền (bộ khởi động
+> `ops/*` + Risk Supervisor), không ở kỷ luật người hay trong từng chiến lược. Hôm nay không chiến lược nào đi tới tiền
+> ⇒ không việc nào chặn hôm nay; chặn lần bật D10 kế tiếp. `MT-78` chỉ cần ghi, không có mã việc. 0 trial.
+
+| Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
+|---|---|---|---|---|
+| TD-0425 | **Từ chối khởi động khi cây lệch HEAD** (`MT-86` phương án (a)) — `ops/dry_run.py` và `ops/live_d10.py` gọi ở đầu `main()` một phép kiểm dùng lại `thay_doi_anh_huong_phep_do()` (`measurement/gitinfo.py`), mở rộng phạm vi sang `user_data/strategies/` bằng tham số, KHÔNG đổi hành vi các cổng đang dùng hàm; in `git_sha` lúc khởi động | 🔓 | — | Test qua đường sản xuất; phá thật: sửa một dòng `config/tool_d_config.yaml` không commit ⇒ cả hai bộ khởi động thoát, lỗi nêu tên file (trả file bằng bản sao lưu); full suite Docker 0 failed |
+| TD-0426 | **Thi hành đúng hai sự kiện đặt lại đỉnh equity + tầng chặn nền** (`MT-40`, mở rộng `TD-0270`) — sổ append-only chỉ nhận `NAP_RUT` (kèm số tiền) và `ABORT`; `equity_peak.py` tính đỉnh sau sự kiện cuối. ⏸ **Phần "HALT 8% / ABORT 20% ở Risk Supervisor cho mọi chiến lược" chờ chủ dự án chốt kiến trúc** | 🔓 | chốt kiến trúc `MT-40` | Test đỏ khi có sự kiện thứ ba; rút vốn có ghi sổ ⇒ `_dd_pct` không nhảy; full suite Docker 0 failed |
+| TD-0427 | **Test khoá fail-closed tầng ĐO → tầng QUYẾT ĐỊNH** (`MT-71` luật chung) — quét import từ `user_data/strategies/` + `src/tool_d/ops/` sang `tool_d.ablation`/`tool_d.measurement`; mỗi hàm được import phải nằm trong danh sách đã khai phạm vi + có ca gọi ngoài phạm vi ném lỗi đọc được | 🔓 | — | Test khoá có răng (phá thật: bỏ kiểm phạm vi ⇒ đỏ); full suite Docker 0 failed |
+| TD-0428 | *(Tuỳ chọn)* **Gia cố image chống hyperopt** (`MT-06`) — ĐO trước: Freqtrade các chế độ backtest/dry-run/live có cần thư viện tối ưu của hyperopt không; chỉ gỡ nếu không cần, kèm test *"`freqtrade hyperopt` trong image phải thất bại"* | 🔓 | — | Bản đo ghi `docs/research-log.md`; nếu gỡ: full suite Docker 0 failed |
+
+**Đặt chỗ mã (N12 mục 4):** `TD-0425`…`TD-0428`, commit này, `Phien: 809d6cd8`.
+
+---
+
 ## Việc đã biết là sẽ có, chưa mở
 
 | Giai đoạn | Nội dung | Chặn bởi |
