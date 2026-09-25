@@ -1,0 +1,64 @@
+{
+  "mo_ta": "TD-0384 chang 2: tang thuan lenh CTRL D10 (DR-D10-02 5). Du doan viet TRUOC khi chay: moi phep pha DUNG 1 ca do. M1 bo chot thu tu gia; M2 bo moc 4 gio; M3 >= thanh > o moc 10 phut; M4 <= thanh < o tran san; M5 bo khoa phu ten khi hoa thanh khoan.",
+  "module": "tool_d.ops.ctrl_d10",
+  "file": "src/tool_d/ops/ctrl_d10.py",
+  "khoi_dong": [
+    "if not (0 < ts.lech_t2_pct < ts.lech_t3_pct < ts.sl_pct):"
+  ],
+  "bien_the": {
+    "M0": null,
+    "M1": "if False:",
+    "M2": {
+      "khoi_dong": [
+        "if now - mo_luc >= timedelta(hours=ts.thoat_toi_da_gio):"
+      ],
+      "thay": "if False:"
+    },
+    "M3": {
+      "khoi_dong": [
+        "if now - luc_khop_cuoi >= timedelta(minutes=ts.thoat_sau_du_3_phut):"
+      ],
+      "thay": "if now - luc_khop_cuoi > timedelta(minutes=ts.thoat_sau_du_3_phut):"
+    },
+    "M4": {
+      "khoi_dong": [
+        "and 0 < u.san_usdt <= ts.ro_tran_san_usdt"
+      ],
+      "thay": "and 0 < u.san_usdt < ts.ro_tran_san_usdt"
+    },
+    "M5": {
+      "khoi_dong": [
+        "hop_le.sort(key=lambda u: (-u.quote_volume_24h, u.cap))"
+      ],
+      "thay": "hop_le.sort(key=lambda u: -u.quote_volume_24h)"
+    }
+  },
+  "tests": [
+    "tests/unit/test_td0384_ctrl_d10.py"
+  ],
+  "ky_vong": {
+    "M0": "xanh",
+    "M1": "do",
+    "M2": "do",
+    "M3": "do",
+    "M4": "do",
+    "M5": "do"
+  },
+  "ky_vong_do_gom": {
+    "M1": [
+      "tests/unit/test_td0384_ctrl_d10.py::TestThamSoThat::test_thu_tu_gia_sai_chieu_bi_tu_choi"
+    ],
+    "M2": [
+      "tests/unit/test_td0384_ctrl_d10.py::TestLyDoThoat::test_het_4_gio_thi_thoat_du_moi_tranche"
+    ],
+    "M3": [
+      "tests/unit/test_td0384_ctrl_d10.py::TestLyDoThoat::test_du_3_va_du_10_phut_thi_thoat"
+    ],
+    "M4": [
+      "tests/unit/test_td0384_ctrl_d10.py::TestChonRo::test_loc_san_xep_thanh_khoan_lay_n_dau"
+    ],
+    "M5": [
+      "tests/unit/test_td0384_ctrl_d10.py::TestChonRo::test_hoa_thanh_khoan_xep_theo_ten_tat_dinh"
+    ]
+  }
+}

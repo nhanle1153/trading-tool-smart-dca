@@ -201,5 +201,16 @@ tier_c: # 🔒 KHOÁ — KHÔNG có ô nhập, ghi ở đây
     ro_stop_tham_hoa_pct: 25
     ro_don_bay: 1 # PHƠI NHIỄM kinh tế: tổng notional = ro_don_bay × von_ro_usdt ("đòn bẩy 1x mỗi chân")
     ro_don_bay_san: 2 # đòn bẩy ĐẶT TRÊN SÀN: ký quỹ = notional / 2, nửa vốn còn lại làm đệm lỗ (chủ dự án chốt 24/09/2026)
+  ctrl_d10: # 🆕 TD-0384 — ✅ DR-D10-02 §5 (b546b2b): lệnh CTRL đo HẠ TẦNG D10 (tiền thật, 0 trial). Ngoài tier_b ⇒ không vào N.
+    # Đổi một khoá = đổi DR-D10-02 §5. Ngưỡng NGÂN SÁCH (20 vị thế, 14+14 ngày, 30 sự kiện, 50% ký quỹ) KHÔNG ở đây:
+    # hằng số vận hành đã chốt bằng DR-D11-01 §4 / DR-D10-02 Q2, nằm ở src/tool_d/ops/ngan_sach_d10.py.
+    ro_so_cap: 10 # §5.1 — lấy 10 cặp thanh khoản 24h cao nhất
+    ro_tran_san_usdt: 30 # §5.1 — chỉ cặp có sàn Tool D mỗi tranche ≤ 30 USDT
+    lech_t2_pct: 0.3 # §5.2 — tranche 2 chờ tại p1 × (1 − 0,3%)
+    lech_t3_pct: 0.6 # §5.2 — tranche 3 chờ tại p1 × (1 − 0,6%)
+    sl_pct: 2 # §5.2 — SL = p1 × (1 − 2%), bất biến (D0.2)
+    he_so_le_san: 1.10 # §5.2 — mỗi tranche = sàn Tool D × 1,10
+    thoat_sau_du_3_phut: 10 # §5.2 — đóng toàn bộ 10 phút sau khi đủ 3 tranche
+    thoat_toi_da_gio: 4 # §5.2 — hoặc 4 giờ sau khi mở nếu chưa đủ
   # 🔴 v7 (spec): KHÔNG dùng *Parameter của Freqtrade cho BẤT KỲ khoá nào
   #        ở file này (§0d.2, L-Z37). Đọc YAML → dict → truyền vào hàm.
