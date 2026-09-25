@@ -169,6 +169,29 @@
       ],
       "minimum": 1,
       "description": "CỬA CHỌN — khai TRƯỚC sẽ thử bao nhiêu cấu hình; mỗi cấu hình trừ 1 vào N=114. BẮT BUỘC khi status == SELECTED. Máy đối chiếu: số trial CONSUMED mang hypothesis_slot == idea_id phải ≤ số này (TD-0119)."
+    },
+    "do_manh": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "required": [
+        "don_vi",
+        "sigma",
+        "n_lockbox",
+        "mu",
+        "nguon_sigma"
+      ],
+      "properties": {
+        "don_vi": {"type": "string", "minLength": 1},
+        "sigma": {"type": "number"},
+        "n_lockbox": {"type": "integer", "minimum": 1},
+        "mu": {"type": "number"},
+        "nguon_sigma": {"type": "string", "minLength": 1},
+        "xac_suat_khai": {"type": ["number", "null"]}
+      },
+      "additionalProperties": false,
+      "description": "CỬA CHỌN (TD-0430, MT-89) — phép tính độ mạnh: đơn vị đo, σ (từ dữ liệu thô EXPLORE hoặc lập luận cơ chế), n dự kiến trên lockbox, lợi thế tự khai μ. Bắt buộc khi file tiêu chí của quý khai DO_MANH_TOI_THIEU; máy TỰ TÍNH xác suất phát hiện (gates/do_manh_chon.py), xac_suat_khai chỉ in cạnh. Dòng cũ không có khoá này vẫn hợp lệ."
     }
   },
   "additionalProperties": false

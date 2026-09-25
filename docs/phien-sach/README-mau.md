@@ -31,6 +31,17 @@ ngờ phiên đã nhiễm ⇒ khai `data_source: TOOL_D_RESULTS` (tự loại đ
 - Tờ chọn: `selected_at` **để trống** (máy đóng dấu); `selection_reason` trích mã tiêu chí có trong file tiêu chí của quý,
   ghi rõ *"không thuộc Z-1…Z-5"* kèm lý do, và **chỉ lập luận bằng cơ chế kinh tế** — không viện dẫn diễn biến giá hay sự
   kiện thị trường cụ thể nào có ngày tháng.
+- Tờ chọn — **độ mạnh thống kê:** nếu file tiêu chí khai dòng `DO_MANH_TOI_THIEU`, tờ chọn phải có khối:
+  ```yaml
+  do_manh:
+    don_vi: "lợi suất ngày"      # đơn vị của một quan sát
+    sigma: 0.0                   # độ lệch chuẩn một quan sát — từ dữ liệu thô EXPLORE hoặc lập luận cơ chế
+    n_lockbox: 0                 # số quan sát dự kiến trên lockbox (số nguyên)
+    mu: 0.0                      # lợi thế tự khai, cùng đơn vị
+    nguon_sigma: "…"             # sigma lấy từ đâu, tính thế nào
+    xac_suat_khai: 0.0           # tuỳ chọn — máy chỉ in cạnh, không dùng
+  ```
+  Máy **tự tính** xác suất phát hiện `Φ(μ·√n/σ − h)` với rào `h` của dự án; dưới ngưỡng ⇒ từ chối ghi.
 
 ## Cách nộp và chọn — phiên này KHÔNG chạy lệnh nào
 

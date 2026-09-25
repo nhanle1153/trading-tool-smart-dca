@@ -13,6 +13,7 @@
 
 ```
 HAN_NGACH_CHON: 1
+DO_MANH_TOI_THIEU: 0.50
 ```
 
 Chủ dự án chốt **1** (25/09/2026). Ý tưởng được chọn đi theo `DR-VONG-DOI-01` (vòng đời chung cho ứng viên) và dùng lockbox
@@ -55,4 +56,6 @@ phủ Freqtrade theo chiến lược, đo theo ngày hoặc theo lệnh. **Xếp
 
 `selection_reason` phải trích ít nhất một mã `TC-Q1-2027-nn` có thật trong file này; `HAN_NGACH_CHON` giới hạn số lần
 chọn. `TC-Q1-2027-00` (độ mạnh) **chưa có máy kiểm** — người chọn phải ghi phép tính trong tờ chọn; máy kiểm là việc sau
-(`MT-89`).
+(`MT-89`). ✅ **Nối 26/09/2026 (`TD-0430`):** máy kiểm đã có — dòng `DO_MANH_TOI_THIEU` ở §1 là con số
+máy đọc cho chính ngưỡng 50% đã chốt ở `TC-Q1-2027-00` (không đổi luật). Tờ chọn khai khối `do_manh` (`don_vi`,
+`sigma`, `n_lockbox`, `mu`, `nguon_sigma`); máy TỰ TÍNH xác suất phát hiện, dưới ngưỡng ⇒ từ chối ghi.

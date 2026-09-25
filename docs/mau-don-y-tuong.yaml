@@ -70,7 +70,8 @@ status: QUEUED # QUEUED | REJECTED (cửa NỘP chỉ ghi được hai giá tr�
 
 # ── Cửa CHỌN — KHÔNG điền ở đây ───────────────────────────────────────────
 # selected_at / budget_a_slot / selection_reason / tin_hieu / quy_tac /
-# nguong_bac_bo / so_bien_the chỉ được điền khi ý tưởng được CHỌN ra để chạy.
+# nguong_bac_bo / so_bien_the (+ do_manh nếu file tiêu chí của quý khai
+# DO_MANH_TOI_THIEU — TD-0430) chỉ được điền khi ý tưởng được CHỌN ra để chạy.
 # Lý do hoãn tới lúc đó: một ý tưởng có thể nằm chờ vài quý, con số viết lúc
 # nộp sẽ lạc hậu; và điều kiện tiền-đăng-ký chỉ đòi "viết TRƯỚC khi thấy kết
 # quả của CHÍNH phép thử này", không phải "trước khi vào hàng chờ".

@@ -32,6 +32,7 @@ from typing import Any
 
 import jsonschema
 
+from tool_d.gates.do_manh_chon import kiem_do_manh
 from tool_d.ledger.audit_checks import (
     CUA_CHON_FIELDS,
     DEFAULT_IDEA_QUEUE_PATH,
@@ -327,7 +328,7 @@ def submit_idea(
 # Tờ chọn chỉ được mang các khoá này. `selected_at` KHÔNG nằm trong danh sách:
 # máy đóng dấu (§4.5) — ngày chọn do người điền chính là gốc của MT-65.
 KHOA_TO_CHON = frozenset(
-    {"idea_id", "status", "selection_reason", "budget_a_slot", *CUA_CHON_FIELDS, *TRUONG_NOP}
+    {"idea_id", "status", "selection_reason", "budget_a_slot", "do_manh", *CUA_CHON_FIELDS, *TRUONG_NOP}
 )
 
 
@@ -390,6 +391,8 @@ def chon_y_tuong(
     e["selection_reason"] = t.get("selection_reason")
     for f in CUA_CHON_FIELDS:
         e[f] = t.get(f)
+    if t.get("do_manh") is not None:
+        e["do_manh"] = t["do_manh"]
 
     try:
         jsonschema.validate(e, _load_schema(schema_path))
@@ -416,6 +419,12 @@ def chon_y_tuong(
     if m is None:
         raise IdeaQueueError(f"{file_tc} không khai HAN_NGACH_CHON — TỪ CHỐI chọn (fail-closed).")
     han_ngach = int(m.group(1))
+    # TD-0430 (MT-89): quý khai DO_MANH_TOI_THIEU ⇒ máy tự tính độ mạnh; cùng hàm audit TD-0120 dùng.
+    loi_do_manh = kiem_do_manh(e.get("do_manh"), noi_dung)
+    if loi_do_manh:
+        raise IdeaQueueError(
+            f"Độ mạnh thống kê không đạt ({file_tc.name}) — TỪ CHỐI chọn:\n  " + "\n  ".join(loi_do_manh)
+        )
     # Đếm theo quý TÍNH HẠN NGẠCH (không theo quý lịch): lần chọn sớm của `DR-IQ-03` ăn vào quỹ quý 4.
     da_chon = sum(
         1

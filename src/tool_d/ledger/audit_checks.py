@@ -20,6 +20,7 @@ import yaml
 
 from tool_d.calibration.ung_vien import PARAM_XAC_NHAN, cung_gia_tri
 from tool_d.config.loader import DEFAULT_CONFIG_PATH, load_tool_d_config
+from tool_d.gates.do_manh_chon import kiem_do_manh
 from tool_d.ledger import budget as _budget
 from tool_d.ledger.idea_events import duyet_so
 from tool_d.ledger.registry import CONFIG_HASH_LINH_CANH as _CONFIG_HASH_LINH_CANH
@@ -856,6 +857,8 @@ def check_td0120_selection_reason_trich_ma_tieu_chi(
           spec dòng 4935: mở queue trước khi commit tiêu chí)
       (d) quý đó khai `HAN_NGACH_CHON: 0` mà vẫn có dòng SELECTED
       (e) DR-IQ-02 §4.4 — số lần chọn còn hiệu lực trong quý > `HAN_NGACH_CHON`
+      (f) TD-0430 (`MT-89`) — quý khai `DO_MANH_TOI_THIEU` mà dòng chọn thiếu `do_manh` hoặc xác suất
+          phát hiện MÁY TÍNH dưới ngưỡng (cùng `kiem_do_manh` cửa CHỌN dùng)
 
     Chỉ tính lần chọn CÒN HIỆU LỰC (DR-IQ-02): lần đã bị VOIDED không chịu
     các ca trên nữa, nhưng vẫn được nêu trong bằng chứng để không ai phải đoán.
@@ -903,6 +906,8 @@ def check_td0120_selection_reason_trich_ma_tieu_chi(
                 f"{idea_id}: lần chọn thứ {so_chon_theo_quy[(nam, quy)]} còn hiệu lực trong quý "
                 f"{quy}/{nam} > HAN_NGACH_CHON: {han_ngach.group(1)}"
             )
+
+        violations.extend(f"{idea_id}: {v}" for v in kiem_do_manh(e.get("do_manh"), noi_dung))
 
         ly_do = e.get("selection_reason") or ""
         ma_trich = {m.group(0) for m in TC_CODE_RE.finditer(ly_do)}
