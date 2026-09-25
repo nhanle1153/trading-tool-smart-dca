@@ -1,0 +1,105 @@
+{
+  "nguon": "TD-0406 — DR-D0-IQ0003 §10 câu (c); 0 suất, đo mô tả, không đọc dữ liệu thị trường CALIB/WFO",
+  "luc_do_utc": "2026-09-25T03:52:39Z",
+  "stoploss_hieu_dung": -0.5,
+  "ro_don_bay": 1.0,
+  "ro_don_bay_san": 2.0,
+  "he_so_le": 1.1,
+  "theo_tap": {
+    "CALIB": {
+      "file_ro": "config/pool_t0.yaml",
+      "so_ma_trading": 143,
+      "k_max": 28,
+      "san_max_usdt": 30.0,
+      "ma_san_max": [
+        "BCHUSDT",
+        "ETCUSDT",
+        "LINKUSDT",
+        "LTCUSDT"
+      ],
+      "phan_bo_san_usdt": {
+        "7.50": 99,
+        "8.12": 1,
+        "9.57": 1,
+        "10.67": 1,
+        "15.25": 1,
+        "30.00": 4
+      },
+      "ma_thieu_metadata_gan_san_max": [
+        "AGIXUSDT",
+        "ALPHAUSDT",
+        "ATAUSDT",
+        "BAKEUSDT",
+        "BLZUSDT",
+        "BNXUSDT",
+        "DENTUSDT",
+        "EOSUSDT",
+        "FLMUSDT",
+        "FRONTUSDT",
+        "FTMUSDT",
+        "FXSUSDT",
+        "GALUSDT",
+        "HIFIUSDT",
+        "HIGHUSDT",
+        "HOOKUSDT",
+        "KEYUSDT",
+        "LEVERUSDT",
+        "LINAUSDT",
+        "LRCUSDT",
+        "MATICUSDT",
+        "MKRUSDT",
+        "NKNUSDT",
+        "OCEANUSDT",
+        "PERPUSDT",
+        "RDNTUSDT",
+        "REEFUSDT",
+        "RENUSDT",
+        "RNDRUSDT",
+        "STMXUSDT",
+        "STORJUSDT",
+        "SXPUSDT",
+        "TRUUSDT",
+        "UNFIUSDT",
+        "WAVESUSDT",
+        "XEMUSDT"
+      ]
+    },
+    "WFO": {
+      "file_ro": "config/pool_t1.yaml",
+      "so_ma_trading": 107,
+      "k_max": 21,
+      "san_max_usdt": 30.0,
+      "ma_san_max": [
+        "BCHUSDT",
+        "ETCUSDT",
+        "LINKUSDT",
+        "LTCUSDT"
+      ],
+      "phan_bo_san_usdt": {
+        "7.50": 92,
+        "8.12": 1,
+        "9.57": 1,
+        "10.67": 1,
+        "15.25": 1,
+        "30.00": 4
+      },
+      "ma_thieu_metadata_gan_san_max": [
+        "AERGOUSDT",
+        "DEGOUSDT",
+        "FLMUSDT",
+        "ICXUSDT",
+        "MKRUSDT",
+        "OMUSDT",
+        "TONUSDT"
+      ]
+    }
+  },
+  "k_max": 28,
+  "san_max_usdt": 30.0,
+  "von_toi_thieu_usdt": 1848.0,
+  "von_de_xuat_usdt": 1900,
+  "gioi_han": [
+    "giá HIỆN TẠI, không phải giá lịch sử của giai đoạn — vế min_qty × giá có thể lệch",
+    "mã đã huỷ niêm yết không có trong exchangeInfo — liệt kê ở ma_thieu_metadata_gan_san_max, coi như sàn lớn nhất"
+  ]
+}

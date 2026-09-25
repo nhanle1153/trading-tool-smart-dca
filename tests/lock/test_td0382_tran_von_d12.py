@@ -120,7 +120,8 @@ class TestConfigThat:
         cfg = _cfg_that()
         # 🔄 24/09/2026 (TD-0404, `DR-LOCKBOX-04` bổ sung, ngoại lệ trong kế hoạch chủ dự án duyệt): thêm `von_ro_usdt: None`
         # — vốn rổ `IQ-0003` chưa chốt (`DR-D0-IQ0003` §10 c), trần điền CÙNG commit. Ba số cũ giữ nguyên.
-        assert cfg["tier_c"][KHOA_KHOI]["tran_d12"] == {"E_D": 750, "rho_pct": 0.375, "L_exchange": 3, "von_ro_usdt": None}
+        # 🔄 25/09/2026 (TD-0406, `DR-D0-IQ0003` §13 c): vốn rổ chốt 1900, trần điền CÙNG commit theo khuôn TD-0404.
+        assert cfg["tier_c"][KHOA_KHOI]["tran_d12"] == {"E_D": 750, "rho_pct": 0.375, "L_exchange": 3, "von_ro_usdt": 1900}
         assert {k: cfg["tier_a"][k] for k in KHOA_VON} == cfg["tier_c"][KHOA_KHOI]["tran_d12"]
 
     def test_config_that_chua_the_xac_nhan(self) -> None:
@@ -326,7 +327,8 @@ class TestVonRoTD0404:
 
     def test_von_ro_co_so_ma_tran_trong_thi_TU_CHOI(self, tmp_path) -> None:
         with pytest.raises(TranVonError, match="von_ro_usdt: 500 mà trần tran_d12.von_ro_usdt còn trống"):
-            _load(_repo(tmp_path, _cfg_von_ro(500)))
+            # Trần trống TƯỜNG MINH — không dựa vào config thật (trần thật đã điền ở TD-0406).
+            _load(_repo(tmp_path, _cfg_von_ro(500, None)))
 
     def test_von_ro_bang_tran_thi_qua(self, tmp_path) -> None:
         _load(_repo(tmp_path, _cfg_von_ro(500, 500)))
