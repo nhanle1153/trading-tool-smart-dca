@@ -1,0 +1,68 @@
+{
+  "mo_ta": "TD-0384 chang 1: may canh ngan sach D10 (DR-D11-01 4, DR-D10-02 Q2). Du doan viet TRUOC khi chay. M1 bo tuan tu -> 1; M2 >= thanh > o tran 20 -> 1; M3 bo gia han -> 2; M4 > thanh >= o tran ky quy -> 1; M5 chi kiem so du None -> 4 ca do (nan, 0, -5, inf). Lan chay dau chi 2 do: test cu kiem long chu 'so du' nen 0/-5 xanh vi LY DO SAI; da siet test.",
+  "module": "tool_d.ops.ngan_sach_d10",
+  "file": "src/tool_d/ops/ngan_sach_d10.py",
+  "khoi_dong": [
+    "if tt.so_vi_the_dang_mo > 0:"
+  ],
+  "bien_the": {
+    "M0": null,
+    "M1": "if False:",
+    "M2": {
+      "khoi_dong": [
+        "if tt.so_vi_the_da_mo >= TRAN_VI_THE:"
+      ],
+      "thay": "if tt.so_vi_the_da_mo > TRAN_VI_THE:"
+    },
+    "M3": {
+      "khoi_dong": [
+        "han += GIA_HAN"
+      ],
+      "thay": "pass"
+    },
+    "M4": {
+      "khoi_dong": [
+        "elif tt.ky_quy_dang_mo + ky_quy_them > TRAN_KY_QUY_TREN_SO_DU * so_du:"
+      ],
+      "thay": "elif tt.ky_quy_dang_mo + ky_quy_them >= TRAN_KY_QUY_TREN_SO_DU * so_du:"
+    },
+    "M5": {
+      "khoi_dong": [
+        "if so_du is None or not math.isfinite(so_du) or so_du <= 0:"
+      ],
+      "thay": "if so_du is None:"
+    }
+  },
+  "tests": [
+    "tests/unit/test_td0384_bao_mat_ngan_sach_d10.py"
+  ],
+  "ky_vong": {
+    "M0": "xanh",
+    "M1": "do",
+    "M2": "do",
+    "M3": "do",
+    "M4": "do",
+    "M5": "do"
+  },
+  "ky_vong_do_gom": {
+    "M1": [
+      "tests/unit/test_td0384_bao_mat_ngan_sach_d10.py::TestNganSachViTheMoi::test_con_vi_the_dang_mo_thi_tu_choi_tuan_tu"
+    ],
+    "M2": [
+      "tests/unit/test_td0384_bao_mat_ngan_sach_d10.py::TestNganSachViTheMoi::test_du_20_vi_the_thi_tu_choi"
+    ],
+    "M3": [
+      "tests/unit/test_td0384_bao_mat_ngan_sach_d10.py::TestCuaSo::test_chua_du_mau_thi_gia_han_dung_mot_lan",
+      "tests/unit/test_td0384_bao_mat_ngan_sach_d10.py::TestCuaSo::test_trong_han_gia_han_duoc_mo"
+    ],
+    "M4": [
+      "tests/unit/test_td0384_bao_mat_ngan_sach_d10.py::TestTranKyQuy::test_dung_50_phan_tram_van_duoc"
+    ],
+    "M5": [
+      "tests/unit/test_td0384_bao_mat_ngan_sach_d10.py::TestTranKyQuy::test_so_du_khong_doc_duoc_thi_tu_choi[nan]",
+      "tests/unit/test_td0384_bao_mat_ngan_sach_d10.py::TestTranKyQuy::test_so_du_khong_doc_duoc_thi_tu_choi[0.0]",
+      "tests/unit/test_td0384_bao_mat_ngan_sach_d10.py::TestTranKyQuy::test_so_du_khong_doc_duoc_thi_tu_choi[-5.0]",
+      "tests/unit/test_td0384_bao_mat_ngan_sach_d10.py::TestTranKyQuy::test_so_du_khong_doc_duoc_thi_tu_choi[inf]"
+    ]
+  }
+}

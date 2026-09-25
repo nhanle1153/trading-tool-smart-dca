@@ -1,0 +1,55 @@
+{
+  "mo_ta": "TD-0384 chang 1: may kiem bao mat tai khoan phu (api-integration-rules 4.4c). Du doan viet TRUOC khi chay. M1 bo chot 'phai la bool' -> 4 ca tham so do (thong diep sai du van tu choi); M2 bo so gia tri -> 7 ca do; M3 thu hep except -> 3 ca loi doc do.",
+  "module": "tool_d.ops.kiem_bao_mat_d10",
+  "file": "src/tool_d/ops/kiem_bao_mat_d10.py",
+  "khoi_dong": [
+    "if not isinstance(gia_tri, bool):"
+  ],
+  "bien_the": {
+    "M0": null,
+    "M1": "if False:",
+    "M2": {
+      "khoi_dong": [
+        "if gia_tri is not can:"
+      ],
+      "thay": "if False:"
+    },
+    "M3": {
+      "khoi_dong": [
+        "except Exception as exc:  # noqa: BLE001 — cố ý bắt rộng: KHÔNG đọc được thì KHÔNG bật (fail-closed)"
+      ],
+      "thay": "except KeyError as exc:"
+    }
+  },
+  "tests": [
+    "tests/unit/test_td0384_bao_mat_ngan_sach_d10.py"
+  ],
+  "ky_vong": {
+    "M0": "xanh",
+    "M1": "do",
+    "M2": "do",
+    "M3": "do"
+  },
+  "ky_vong_do_gom": {
+    "M1": [
+      "tests/unit/test_td0384_bao_mat_ngan_sach_d10.py::TestDanhGiaQuyenKey::test_khong_phai_bool_thi_tu_choi_khong_doan[false]",
+      "tests/unit/test_td0384_bao_mat_ngan_sach_d10.py::TestDanhGiaQuyenKey::test_khong_phai_bool_thi_tu_choi_khong_doan[0]",
+      "tests/unit/test_td0384_bao_mat_ngan_sach_d10.py::TestDanhGiaQuyenKey::test_khong_phai_bool_thi_tu_choi_khong_doan[None]",
+      "tests/unit/test_td0384_bao_mat_ngan_sach_d10.py::TestDanhGiaQuyenKey::test_khong_phai_bool_thi_tu_choi_khong_doan[False]"
+    ],
+    "M2": [
+      "tests/unit/test_td0384_bao_mat_ngan_sach_d10.py::TestDanhGiaQuyenKey::test_moi_co_sai_la_mot_ly_do_rieng[ipRestrict-False]",
+      "tests/unit/test_td0384_bao_mat_ngan_sach_d10.py::TestDanhGiaQuyenKey::test_moi_co_sai_la_mot_ly_do_rieng[enableWithdrawals-True]",
+      "tests/unit/test_td0384_bao_mat_ngan_sach_d10.py::TestDanhGiaQuyenKey::test_moi_co_sai_la_mot_ly_do_rieng[enableInternalTransfer-True]",
+      "tests/unit/test_td0384_bao_mat_ngan_sach_d10.py::TestDanhGiaQuyenKey::test_moi_co_sai_la_mot_ly_do_rieng[permitsUniversalTransfer-True]",
+      "tests/unit/test_td0384_bao_mat_ngan_sach_d10.py::TestDanhGiaQuyenKey::test_moi_co_sai_la_mot_ly_do_rieng[enableFutures-False]",
+      "tests/unit/test_td0384_bao_mat_ngan_sach_d10.py::TestDanhGiaQuyenKey::test_gom_het_ly_do_khong_dung_o_ly_do_dau",
+      "tests/unit/test_td0384_bao_mat_ngan_sach_d10.py::TestKiemTruocKhiBat::test_khong_dat_thi_raise_liet_ke_ly_do"
+    ],
+    "M3": [
+      "tests/unit/test_td0384_bao_mat_ngan_sach_d10.py::TestKiemTruocKhiBat::test_moi_loi_doc_deu_tu_choi_fail_closed[loi0]",
+      "tests/unit/test_td0384_bao_mat_ngan_sach_d10.py::TestKiemTruocKhiBat::test_moi_loi_doc_deu_tu_choi_fail_closed[loi1]",
+      "tests/unit/test_td0384_bao_mat_ngan_sach_d10.py::TestKiemTruocKhiBat::test_moi_loi_doc_deu_tu_choi_fail_closed[loi2]"
+    ]
+  }
+}

@@ -68,7 +68,9 @@ from tool_d.risk_supervisor import (
 )
 
 BASE_URL = "https://fapi.binance.com"
-SPOT_BASE_URL = "https://api.binance.com"  # TD-0116: chỉ dùng cho phép ĐO latency (H15), không dùng cho dữ liệu/nghiệp vụ — Tool D giao dịch futures
+#: TD-0116: phép ĐO latency (H15). TD-0384: `get_api_restrictions()` (SAPI ký, dịch vụ #7 của `api-integration-rules.md`)
+#: — máy kiểm bảo mật tài khoản phụ D10. Không dùng cho dữ liệu/nghiệp vụ giao dịch — Tool D giao dịch futures.
+SPOT_BASE_URL = "https://api.binance.com"
 DEFAULT_TIMEOUT_S = 10.0  # R11 — timeout riêng cho từng request, không dựa mặc định thư viện
 MAX_MAU_LATENCY = 200  # R5 — trần trên cho `n` của latency_samples_ms(); không ca dùng thật nào (H15 §6.7) cần hơn vài chục mẫu
 
@@ -421,6 +423,21 @@ def get_force_orders(
         extra["startTime"] = str(start_time_ms)
     return _goi_json_ky(
         "/fapi/v1/forceOrders", api_key=api_key, api_secret=api_secret, extra_params=extra, timeout=timeout
+    )
+
+
+def get_api_restrictions(*, api_key: str, api_secret: str, timeout: float = DEFAULT_TIMEOUT_S) -> dict:
+    """`GET /sapi/v1/account/apiRestrictions` trên `api.binance.com` — cờ quyền của CHÍNH API key đang dùng (TD-0384,
+    `DR-D10-02` Q3, dịch vụ #7 `api-integration-rules.md` 4.4c). Đi qua `_goi_json_ky` nên chung breaker/giãn nhịp/
+    phân loại lỗi (R1–R4). Hàm này CHỈ đọc; phán quyết bật/không bật nằm ở `ops/kiem_bao_mat_d10.py`.
+
+    ⚠️ Tên trường trả về lấy theo tài liệu Binance, CHƯA verify bằng gọi thật (`api-integration-rules.md` 1.6)."""
+    return _goi_json_ky(
+        "/sapi/v1/account/apiRestrictions",
+        api_key=api_key,
+        api_secret=api_secret,
+        base_url=SPOT_BASE_URL,
+        timeout=timeout,
     )
 
 
