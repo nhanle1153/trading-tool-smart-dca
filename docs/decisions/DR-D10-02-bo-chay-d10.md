@@ -160,3 +160,39 @@ trong git, nơi các phiên khác cùng ghi và commit — trong lúc đang ch�
   **một** dòng D10 đang mở (chưa CONSUME/REFUND) — cửa ghi từ chối dòng thứ hai.
 - Chi tiết từng vị thế nằm ở Decision Log (runmode `live`) và DB live, như đã có. Vẫn đúng *"khai CTRL, 0 trial"* của
   `DR-D11-01` §4 và `MT-02`.
+
+## 6. Bổ sung 25/09/2026 — D10 đo cho ứng viên IQ-0003 `RoFunding` (chủ dự án chốt; `MT-87`, `TD-0411`)
+
+Chỉ THÊM; §0–§5.3 giữ nguyên chữ làm lịch sử. **Mục tiêu D10 đổi** từ lệnh CTRL DCA post-only (§3 Q1, §5.2) sang chính
+chiến lược sẽ lên tiền thật: ứng viên suất (d) **IQ-0003 `RoFunding`** (`DR-D0-IQ0003`). Lý do: `RoFunding` dùng **lệnh thị
+trường, không DCA, không post-only** (`config/freqtrade/phu/RoFunding.json`), nên hai trong ba phép đo của `DR-D11-01` §5 không có
+gì để đo trên chiến lược thật, còn phép đo nó thật sự cần — trượt giá lệnh thị trường — chưa có máy.
+
+### 6.1 Đã chốt
+
+| Phép đo `DR-D11-01` §5 | Với `RoFunding` |
+|---|---|
+| §5.2 D2c `gap_ms` (≥ 30 lần đổi khối lượng SL) | **N/A** — không DCA ⇒ khối lượng SL không bao giờ đổi. Cùng nguyên tắc `MT-43` (`d2c_na` hợp lệ khi và chỉ khi chiến lược sản xuất một lần vào) |
+| §5.3 tỉ lệ khớp post-only | **N/A** — lệnh thị trường, không post-only |
+| §5.1 D6 lệch khớp theo R | **Thay bằng** trượt giá `DR-D0-IQ0003` §13 (b): trung bình \|giá khớp − giá mở nến 1H của lần cân rổ\| / giá mở nến, trên mọi lệnh vào/ra tại lần cân rổ, **≤ 0,05%** |
+| (thêm) | SL thảm hoạ (`tier_c.ro_funding.ro_stop_tham_hoa_pct`) phải **sống trên sàn** mỗi vị thế — kiểm bằng lệnh stop thật trong DB live |
+
+🔴 **Ghi đè có ý thức:** `DR-TRIEN-KHAI-01` §3 điều 2 (*"D10 PASS theo ba ngưỡng `DR-D11-01` §5"*) đọc là **"D10 PASS theo
+các phép đo áp dụng được cho chiến lược lên tiền"** — với `RoFunding` là trượt giá §13 (b) + SL trên sàn. Các DR cũ giữ nguyên
+chữ. Nếu sau này một chiến lược CÓ DCA lên tiền thật, N/A mất hiệu lực và `gap_ms`/post-only quay lại là điều kiện (chiều quay
+lại của `MT-43`).
+
+**Dùng lại nguyên hạ tầng `TD-0384`:** máy kiểm bảo mật tài khoản phụ (Q3), bật bằng tay (Q6), profile `d10`, watchdog, Risk
+Supervisor, bot Telegram riêng (Q4), **một dòng CTRL đo vận hành cho cả đợt** (§5.3). `CtrlD10` giữ làm công cụ phụ, không chạy
+trong đợt này.
+
+### 6.2 Câu còn mở — đề xuất, CHỜ chủ dự án chốt trước khi viết mã `TD-0412`
+
+- **Q7 — Cỡ rổ D10.** Với rổ D10 10 cặp (§5.1), `RoFunding` tự lấy `k = max(3, ⌊0,2 × 10⌋) = 3` coin mỗi chân ⇒ 6 vị thế, mỗi vị
+  thế = vốn rổ / 6 phải ≥ sàn Tool D. Đề xuất: **vốn rổ D10 = 6 × sàn lớn nhất trong rổ × 1,10** (lề 10%); với sàn ≤ 30 USDT là
+  ≤ ~200 USDT notional, ký quỹ ≈ 100 USDT (đòn bẩy sàn 2) ⇒ cần số dư ≥ ~200 USDT để giữ trần ký quỹ 50% (Q2). Tài khoản 100–300
+  USDT: nếu số dư dưới 200, hạ trần sàn của rổ (§5.1) xuống ~10 USDT.
+- **Q8 — Khi nào dừng.** Đề xuất: đủ **≥ 30 lệnh vào/ra** được đo trượt giá **và ≥ 7 lần cân rổ**; tối đa 14 ngày, gia hạn đúng một
+  lần (giữ khuôn `DR-D11-01` §4). Thiếu mẫu sau hạn ⇒ D10 chưa đạt (Q5).
+- **Q9 — Vốn rổ đi vào đâu.** `tier_a.von_ro_usdt` (1.900) là vốn sản xuất; D10 cần một số RIÊNG, nhỏ hơn. Đề xuất: bộ khởi chạy D10
+  phủ `von_ro_usdt` bằng số ở Q7 **trong bản cấu hình phủ** (không sửa `tool_d_config.yaml`), và ghi số đó vào dòng CTRL đợt D10.
