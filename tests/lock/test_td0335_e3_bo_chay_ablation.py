@@ -274,6 +274,12 @@ def lo_that(tmp_path_factory):
     shutil.copytree(REPO / "config", goc / "config")
     (goc / "config" / "pool_t1.yaml").write_text(f"moc_t1: '2025-06-12'\ntrading:\n- {MA}\n", encoding="utf-8")
     shutil.copytree(REPO / "user_data" / "strategies", goc / "user_data" / "strategies")
+    # TD-0402 (`DR-SHORT-02` §3): Short bật ⇒ `L-Z56` chặn mọi lượt E3 khi chưa có Δ_R(SHORT) — đúng thiết kế, có test
+    # riêng (`test_lz56_*`). Lô E3 ở đây là máy ablation LONG của ZA ⇒ tắt Short TƯỜNG MINH trong bản sao cấu hình.
+    yaml_p = goc / "config" / "tool_d_config.yaml"
+    y = yaml_p.read_text(encoding="utf-8")
+    assert y.count("enable_short: true") == 1, "YAML không còn đúng một dòng enable_short: true — cập nhật fixture"
+    yaml_p.write_text(y.replace("enable_short: true", "enable_short: false"), encoding="utf-8")
     td._sinh_du_lieu(goc / "user_data" / "data" / "pool_t1")
     so_path = goc / "so.jsonl"
     mp = pytest.MonkeyPatch()

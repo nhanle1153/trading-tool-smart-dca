@@ -217,14 +217,16 @@ class TestCongTacTat:
         quyết định đó."""
         from tool_d.config.loader import load_tool_d_config, resolve
 
-        assert resolve(load_tool_d_config(), "tier_a.enable_short") is False, (
-            "tier_a.enable_short đã bị bật: khâu ĐO Short mở khoá theo DR-HUONG-01 §3 và "
-            "DR-D4-01 §2b, không phải theo DR-SHORT-01 (chỉ cho DỰNG code)."
+        # 🔄 25/09/2026 (TD-0402): `DR-SHORT-02` — chủ dự án chốt công tắc Short CHUNG cho ZA + rổ `IQ-0003`, GHI ĐÈ có ý
+        # thức `DR-SHORT-01` / `DR-HUONG-01` §3 (khai trong DR, xác nhận hai lần). `L-Z56` vẫn chặn E3 khi thiếu
+        # Δ_R(SHORT). Tắt lại ⇒ sửa dòng này, tức phải đọc `DR-SHORT-02` §5 (điều kiện lật về).
+        assert resolve(load_tool_d_config(), "tier_a.enable_short") is True, (
+            "tier_a.enable_short đã TẮT: `DR-SHORT-02` bật nó cho rổ IQ-0003 — tắt phải có DR hoặc điều kiện §5 của DR đó."
         )
 
     def test_chien_luoc_that_doc_hai_cong_tac_tu_yaml(self) -> None:
         s = _chien_luoc()
-        assert s._enable_short is False
+        assert s._enable_short is True  # 🔄 TD-0402, `DR-SHORT-02`
         assert s._enable_long is True
 
     def test_chot_kep_confirm_trade_entry_tu_choi_short_khi_tat(self) -> None:
@@ -439,14 +441,16 @@ def kq_short(tmp_module) -> dict:
     """Bật Short, TẮT Long — cô lập đường Short (và chứng minh công tắc Long)."""
     return _chay(
         tmp_module, "short",
-        sua_yaml={"enable_short: false": "enable_short: true", "enable_long: true": "enable_long: false"},
+        # TD-0402: YAML thật đã bật Short (`DR-SHORT-02`) ⇒ chỉ còn tắt Long.
+        sua_yaml={"enable_long: true": "enable_long: false"},
     )
 
 
 @pytest.fixture(scope="module")
 def kq_yaml_that(tmp_module) -> dict:
-    """YAML THẬT không sửa gì (`enable_short: false`) trên CÙNG dữ liệu có tín hiệu Short."""
-    return _chay(tmp_module, "yaml_that", sua_yaml={})
+    """Công tắc Short TẮT trên CÙNG dữ liệu có tín hiệu Short. 🔄 TD-0402: YAML thật đã bật (`DR-SHORT-02`) ⇒ tắt
+    TƯỜNG MINH trong bản sao — khẳng định về HÀNH VI của công tắc giữ nguyên, chỉ bỏ việc dựa vào giá trị YAML thật."""
+    return _chay(tmp_module, "yaml_that", sua_yaml={"enable_short: true": "enable_short: false"})
 
 
 def _lenh_short(kq: dict) -> list[dict]:

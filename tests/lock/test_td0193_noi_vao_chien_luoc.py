@@ -260,6 +260,9 @@ class TestPhanThucBChiGhi:
     def test_xoa_hai_cot_phan_thuc_tap_lenh_khong_doi(self, khung) -> None:
         df1, df4 = khung
         s = _chien_luoc()
+        # TD-0402 (`DR-SHORT-02`): YAML thật bật Short, mà khung ở đây chỉ dựng cột đường LONG (§3.3b đáy) ⇒ tắt Short
+        # TƯỜNG MINH; ca này chỉ nói về phản thực B của đường Long.
+        s._enable_short = False
         d = _xac_nhan(s, df1, df4)
         # `populate_entry_trend` cần các cột `_4h`/`_1d` — ghép như populate_indicators.
         from freqtrade.strategy import merge_informative_pair

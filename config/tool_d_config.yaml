@@ -26,7 +26,7 @@ tier_a: # chỉnh tự do, 0 trial
   rho_pct: 0.375 # chỉ đổi khi danh mục RỖNG. ✅ DR-D0PRE-06
   daily_loss_budget_pct: 8.0 # ✅ DR-D0PRE-06 — đi cặp với dd_ladder.halt (§12c.5)
   enable_long: true
-  enable_short: false # chỉ bật khi DG7 (§4c) xong
+  enable_short: true # ✅ DR-SHORT-02 (TD-0402, 25/09/2026): công tắc Short CHUNG — ZA + rổ IQ-0003; ghi đè có ý thức
   pool_size_target: 100
   # 🆕 TD-0400 — ✅ DR-D0-IQ0003 §2: vốn RIÊNG của rổ funding IQ-0003 (chủ dự án chốt 24/09/2026), không
   # đụng E_D của ZA. null ⇒ RoFunding TỪ CHỐI chạy (fail-closed).
