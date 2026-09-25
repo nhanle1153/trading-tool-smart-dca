@@ -1161,12 +1161,16 @@ bộ chạy D10 (`DR-D10-02`): chờ chủ dự án làm xong phần tài khoả
 | TD-0408 | **Bộ đo lợi suất ngày của rổ + nhánh E1** (`DR-D0-IQ0003` §13 a, §14) — `tool_d/ro_funding_do.py` (lãi/lỗ đã chốt theo ngày đóng / `von_ro_usdt`, `mean − h·std/√n`, tách chân chỉ ghi); E1 với `RoFunding` không đi `lenh_tu_freqtrade`; chép zip kết quả vào `runs/<id>/` | ✅ | TD-0400, TD-0407 | Test + chạy E1 thật trên dữ liệu tổng hợp với sổ tạm; full suite Docker 0 failed |
 | TD-0409 | **Suất trial ĐẦU TIÊN của `IQ-0003`: CALIB, B3** (chủ dự án ra lệnh 25/09/2026) — E1 `--chien-luoc RoFunding --direction NEUTRAL`, `cau_hinh = "IQ-0003-v1"`, không `--ghi-de` | ✅ | TD-0407, TD-0408 | Sổ RESERVE→SEAL→CONSUME; `runs/<id>/ro_ngay.json`; audit exit 0 |
 | TD-0410 | **Suất thứ hai của `IQ-0003`: WFO `[T1,T2)`, B3, CÙNG cấu hình** (chủ dự án ra lệnh 25/09/2026) — khai `T` trước (`DR-D0-IQ0003` §15, σ từ D-0023); E1 `--tap WFO --chien-luoc RoFunding --direction NEUTRAL`, `cau_hinh = "IQ-0003-v1"`, không `--ghi-de` | ✅ | TD-0409 | Sổ RESERVE→SEAL→CONSUME; hiện vật đo đã commit; audit exit 0 |
+| TD-0414 | 🚪 **`DR-KET-CUC-IQ0003-01`** — IQ-0003 dừng ở WFO: kết cục INCONCLUSIVE vì thiếu độ mạnh thống kê, KHÔNG chạm lockbox (chủ dự án chốt 25/09/2026, phiên mã `12c579bc`); không L3, không `retest_forbidden`; điều kiện mở lại viết trước | 🔒 | TD-0410 | DR commit riêng; đính chính nối cuối `DR-D0-IQ0003` |
+| TD-0415 | **Ngưng hệ thống: tắt Short + dừng dry-run** — `DR-SHORT-03` (đóng công tắc chung), `enable_short: false`, căn test ghim `test_td0321`; dừng `dryrun` + `dryrun-watchdog` (chủ dự án chốt "dừng hết, kể cả D10") | 🔒 | TD-0414 | Full suite Docker 0 failed; `docker ps` không còn dry-run; research-log |
+| TD-0416 | **Bản rà soát thiết kế lại** `DR-TAI-THIET-KE-01` (NHÁP) — bài học cấu trúc sau ZA + IQ-0003, yêu cầu hai chiều thành ràng buộc tiêu chí quý 1/2027, câu hỏi mở cho chủ dự án; KHÔNG sinh ý tưởng (DR-009) | 🔒 | TD-0414 | DR nháp commit; chủ dự án đọc và quyết |
 
 **Đặt chỗ mã (N12 mục 7c):** `TD-0394`…`TD-0402` + `DR-D0-IQ0003`, `DR-BIEN-THE-01`, `DR-CAN-RO-01`, `DR-SHORT-02`,
 commit này, `Phien: 12c579bc`. Khoá 🔒 bốn việc DR cùng commit.
 **Lượt 2 (25/09/2026):** `TD-0406` (đặt chỗ + khoá), commit riêng, `Phien: 12c579bc` (`TD-0403`…`0405` đã có chủ).
 **Lượt 3 (25/09/2026):** `TD-0407`…`TD-0409` (khoá `TD-0407`, `TD-0408`), commit riêng, `Phien: 12c579bc`.
 **Lượt 4 (25/09/2026):** `TD-0410` (đặt chỗ + khoá), commit riêng, `Phien: 12c579bc`.
+**Lượt 5 (25/09/2026):** `TD-0414`…`TD-0416` + `DR-KET-CUC-IQ0003-01`, `DR-SHORT-03`, `DR-TAI-THIET-KE-01` (đặt chỗ + khoá), commit riêng, `Phien: 12c579bc` (`TD-0411`…`0413` đã có chủ).
 
 ---
 
