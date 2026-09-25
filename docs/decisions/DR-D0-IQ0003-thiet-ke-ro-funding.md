@@ -244,3 +244,22 @@ Chữ §10 giữ nguyên làm lịch sử; mục này là câu trả lời.
 - **Không chạy lại** nếu kết quả xấu: chạy lại cùng cấu hình là một suất nữa; đổi cấu hình là biến thể thứ hai (bị chặn).
 
 > **Bổ sung §14 trước suất (25/09/2026, `TD-0408`):** lệnh đóng ĐÚNG tại biên mở `den` (00:00 — Freqtrade `force_exit` khi hết cửa sổ) được tính vào **ngày cuối cửa sổ**. Đo được trên backtest thật dữ liệu tổng hợp: không có quy tắc này thì bộ đo từ chối và suất CALIB thật (đóng cưỡng bức lúc 2025-06-12 00:00) hỏng SAU niêm phong.
+
+## 15. Suất thứ hai — WFO `[T1, T2)`, viết TRƯỚC khi chạy (25/09/2026, chủ dự án ra lệnh; `TD-0410`)
+
+- **Cùng mọi chốt của §14:** B3, `NEUTRAL`, `cau_hinh = "IQ-0003-v1"`, không `--ghi-de` (cùng `bien_the_hash` ⇒ vẫn MỘT biến
+  thể), `timeframe_detail 5m`, cùng cách đo lợi suất ngày + quy tắc biên. Rổ `pool_t1` (107 mã, `ro_cho_tap("WFO")`),
+  cửa sổ `[2025-06-12, 2026-01-29)`. Chạy qua E1 `--tap WFO` (E2 không nhận tham số chiến lược).
+- **Thuế nhiễu `T` (`DR-PHAN-QUYET-01` §2, `OQ-17`):** σ = **0,012646 /ngày**, nguồn đã commit
+  `docs/du-lieu-do/IQ-0003-D-0023-calib-loi-suat-ngay.json` (D-0023, hệ thống hiện hành, nguồn duy nhất). `n` dự kiến
+  ≈ **228** ngày (lần cân rổ đầu 2025-06-15 → 2026-01-28). `h = 3,0777` (N = 114).
+  **`T = h·σ/√n ≈ 0,00258 /ngày` (0,258%/ngày).** Tiêu chí mà suất đo tới là cổng §7 điều 5: `mean − T > 0`, tức ngưỡng
+  thực tế là `mean > T`. Mean CALIB đo được 0,000114 /ngày, thấp hơn `T` khoảng 23 lần ⇒ **`T` vượt xa mọi mức mean hợp lý**.
+  - **(a) Suất này mua gì khi PASS gần như không đạt được ở cỡ mẫu này:** một số đo NGOÀI mẫu (khác rổ, khác giai đoạn)
+    của cùng cấu hình, chưa ai nhìn — để biết dấu của mean và phần funding có giữ trên dữ liệu mới không, và thêm n cho σ.
+    Nó KHÔNG mua được một PASS thống kê.
+  - **(b) Tiêu chí vẫn đo được dù mean INCONCLUSIVE:** tỉ phần funding trong lãi ròng (điều 4 `nguong_bac_bo`); dấu của
+    funding nhận ròng theo từng chân; tách chân Long/Short; phân bố nhãn thoát; tỉ lệ lệnh Short/Long (giả thuyết stop chân
+    Short ghi ở `research-log` 25/09).
+- **Không chạy lại** nếu kết quả xấu; không đổi cấu hình theo kết quả CALIB.
+
