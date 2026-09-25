@@ -1,0 +1,90 @@
+{
+  "mo_ta": "TD-0384 chang 2b: CtrlD10 noi ba module thuan vao callback. Du doan viet TRUOC khi chay. M1 bo may canh vi the moi -> 3; M2 bo may canh tranche -> 1; M3 SL thanh None -> 2; M4 bo try quanh so do -> 1; M5 bo _utc o custom_exit -> 1 (ca 4 gio van xanh vi het gio xet truoc); M6 ghi de p1 moi lan khop -> 1; M7 dem DOI_SL khong loc runmode -> 1.",
+  "module": "CtrlD10",
+  "file": "user_data/strategies/CtrlD10.py",
+  "khoi_dong": [
+    "ly_do = xet_vi_the_moi(self._trang_thai(), ky_quy_lenh=amount * rate / self._l, now=_utc(current_time))"
+  ],
+  "bien_the": {
+    "M0": null,
+    "M1": "ly_do = ()",
+    "M2": {
+      "khoi_dong": [
+        "ly_do = xet_them_tranche(self._trang_thai(), ky_quy_them=stake, now=_utc(current_time))"
+      ],
+      "thay": "ly_do = ()"
+    },
+    "M3": {
+      "khoi_dong": [
+        "sl = stoploss_from_absolute(kh.sl, current_rate, is_short=False, leverage=trade.leverage)"
+      ],
+      "thay": "sl = None"
+    },
+    "M4": {
+      "khoi_dong": [
+        "try:  # TD-0403 — sổ đo không được cướp giá SL",
+        "self._ghi_gap_ms(trade, sl_price=kh.sl)",
+        "except Exception:  # noqa: BLE001",
+        "logger.exception(\"%s: ghi gap_ms thất bại — SL vẫn được trả về (TD-0384)\", pair)"
+      ],
+      "thay": "self._ghi_gap_ms(trade, sl_price=kh.sl)"
+    },
+    "M5": {
+      "khoi_dong": [
+        "_utc(o.order_filled_date)"
+      ],
+      "thay": "o.order_filled_date"
+    },
+    "M6": {
+      "khoi_dong": [
+        "if trade.nr_of_successful_entries == 1 and trade.get_custom_data(KHOA_P1) is None:"
+      ],
+      "thay": "if trade.nr_of_successful_entries == 1:"
+    },
+    "M7": {
+      "khoi_dong": [
+        "if ban_ghi.get(\"loai\") == LOAI_DOI_SL and ban_ghi.get(\"nguon\") == self._runmode():"
+      ],
+      "thay": "if ban_ghi.get(\"loai\") == LOAI_DOI_SL:"
+    }
+  },
+  "tests": [
+    "tests/unit/test_td0384_chien_luoc_ctrl_d10.py"
+  ],
+  "ky_vong": {
+    "M0": "xanh",
+    "M1": "do",
+    "M2": "do",
+    "M3": "do",
+    "M4": "do",
+    "M5": "do",
+    "M6": "do",
+    "M7": "do"
+  },
+  "ky_vong_do_gom": {
+    "M1": [
+      "tests/unit/test_td0384_chien_luoc_ctrl_d10.py::TestNganSachVaoLenh::test_con_vi_the_mo_thi_tu_choi_tuan_tu",
+      "tests/unit/test_td0384_chien_luoc_ctrl_d10.py::TestNganSachVaoLenh::test_du_20_vi_the_thi_tu_choi",
+      "tests/unit/test_td0384_chien_luoc_ctrl_d10.py::TestNganSachVaoLenh::test_khong_doc_duoc_so_du_thi_tu_choi"
+    ],
+    "M2": [
+      "tests/unit/test_td0384_chien_luoc_ctrl_d10.py::TestThemTranche::test_vuot_tran_ky_quy_thi_khong_bom"
+    ],
+    "M3": [
+      "tests/unit/test_td0384_chien_luoc_ctrl_d10.py::TestStoploss::test_sl_tuyet_doi_p1_tru_2_phan_tram",
+      "tests/unit/test_td0384_chien_luoc_ctrl_d10.py::TestStoploss::test_so_do_no_van_tra_sl"
+    ],
+    "M4": [
+      "tests/unit/test_td0384_chien_luoc_ctrl_d10.py::TestStoploss::test_so_do_no_van_tra_sl"
+    ],
+    "M5": [
+      "tests/unit/test_td0384_chien_luoc_ctrl_d10.py::TestThoat::test_du_3_tranche_10_phut_thi_thoat_voi_ngay_gio_tron_kieu"
+    ],
+    "M6": [
+      "tests/unit/test_td0384_chien_luoc_ctrl_d10.py::TestSoDecisionLog::test_order_filled_ghi_p1_mot_lan_va_ghi_so_theo_runmode"
+    ],
+    "M7": [
+      "tests/unit/test_td0384_chien_luoc_ctrl_d10.py::TestSoDecisionLog::test_dem_su_kien_chi_dem_doi_sl_cung_runmode"
+    ]
+  }
+}
