@@ -1,7 +1,7 @@
-# DR-VONG-DOI-01 — Vòng đời chung cho ứng viên suất (d) (NHÁP)
+# DR-VONG-DOI-01 — Vòng đời chung cho ứng viên suất (d)
 
-> **Trạng thái: NHÁP — chủ dự án chốt §4 (a)(b)(c) trước khi có hiệu lực.** Soạn 25/09/2026, phiên mã `12c579bc`
-> (`TD-0420`, đặt chỗ `4d76675`). Giải `MT-88` khi chốt. **Chi phí:** 0 trial.
+> **Trạng thái: CHỐT 25/09/2026** — chủ dự án trả lời §4 (a)(b)(c), xem §6. Soạn bởi phiên mã `12c579bc` (`TD-0420`,
+> đặt chỗ `4d76675`; bản nháp `93f0d16`). Giải `MT-88`. **Chi phí:** 0 trial.
 
 > ✅ **Phiên IDEA/CHỌN ĐƯỢC đọc file này:** nó chỉ nói thủ tục, không chứa con số hay kết cục định lượng nào của Tool D.
 > Ai sửa file này phải giữ nguyên tính chất đó.
@@ -53,3 +53,14 @@ quả Tool D), `n` dự kiến trên lockbox, mức lợi thế tự khai `μ`, 
 
 Không sửa `DR-LOCKBOX-03` (vẫn đúng cho ZA/ứng viên nhiều biến thể), không đổi seal, không chạm lockbox, không đổi
 `N`/`h` (trừ khi §4 (c) chốt khác bằng DR riêng).
+
+## 6. Chủ dự án chốt §4 — 25/09/2026
+
+- **(a)** Ngưỡng độ mạnh ở cửa CHỌN: **xác suất phát hiện ≥ 50%** ở mức lợi thế tờ chọn tự khai (`Φ(μ·√n/σ − h) ≥ 0,5`,
+  tương đương `μ ≥ h·σ/√n`). Dưới ngưỡng ⇒ không được chọn. Ghi vào tiêu chí quý (`TC-Q1-2027-00`).
+- **(b)** Lockbox `[T2,T3]` **chuyển cho ứng viên kế tiếp** — ứng viên đầu tiên THỰC SỰ chạm lockbox. Ghi bổ sung vào
+  `DR-LOCKBOX-04` (§2.5 cũ gắn cho "ứng viên suất (d) đầu tiên", tức IQ-0003, đã dừng mà không chạm).
+- **(c)** **Giữ nguyên `N = 114` và rào `h`.** Cửa độ mạnh (a) lọc trước các ý tưởng không đo nổi, thay vì nới chuẩn sau khi
+  đã biết kết quả.
+- Hạn ngạch chọn quý 1/2027 = **1** (`DR-Q1-2027`).
+

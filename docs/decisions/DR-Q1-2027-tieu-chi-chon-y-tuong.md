@@ -1,8 +1,7 @@
-# DR-Q1-2027 — Tiêu chí chọn ý tưởng ra khỏi Idea Queue, quý 1/2027 (NHÁP)
+# DR-Q1-2027 — Tiêu chí chọn ý tưởng ra khỏi Idea Queue, quý 1/2027
 
-> **Trạng thái: NHÁP.** Soạn 25/09/2026, phiên mã `12c579bc` (`TD-0420`). Hạn ngạch để **0** tới khi chủ dự án chốt —
-> máy chọn đọc file này theo quý, và một bản nháp ghi 1 sẽ vô tình mở cửa chọn. Chốt xong: đổi dòng hạn ngạch, xoá dòng
-> NHÁP, commit RIÊNG và TRƯỚC mọi dòng `SELECTED` của quý 1/2027.
+> **Chốt 25/09/2026** (chủ dự án), soạn bởi phiên mã `12c579bc` (`TD-0420`; bản nháp `93f0d16` để hạn ngạch 0). Commit RIÊNG
+> và TRƯỚC mọi dòng `SELECTED` của quý 1/2027.
 
 > ✅ **Phiên IDEA/CHỌN ĐƯỢC đọc file này.** 🔴 File này cố ý **không** ghi con số hay kết cục định lượng nào của Tool D.
 
@@ -13,10 +12,11 @@
 ## 1. HẠN NGẠCH CHỌN QUÝ NÀY
 
 ```
-HAN_NGACH_CHON: 0
+HAN_NGACH_CHON: 1
 ```
 
-⏳ Chờ chủ dự án chốt (đề xuất: 1). Ý tưởng được chọn đi theo `DR-VONG-DOI-01` (vòng đời chung cho ứng viên).
+Chủ dự án chốt **1** (25/09/2026). Ý tưởng được chọn đi theo `DR-VONG-DOI-01` (vòng đời chung cho ứng viên) và dùng lockbox
+`[T2,T3]` nếu tới được bước lockbox (`DR-VONG-DOI-01` §6 (b)).
 
 **Giới hạn:** không chọn ý tưởng thuộc Z-1…Z-5 (`DR-IQ-01A`); CHỌN do phiên IDEA sạch (DR-009); `selection_reason` không
 tham chiếu kết quả định lượng Tool D và không viện dẫn diễn biến thị trường cụ thể có ngày tháng; không dồn, không chọn bù.
@@ -25,8 +25,8 @@ tham chiếu kết quả định lượng Tool D và không viện dẫn diễn 
 
 ### TC-Q1-2027-00 — Độ mạnh thống kê đủ (bắt buộc, `DR-VONG-DOI-01` §3)
 Tờ chọn khai đơn vị đo, `σ` (ước lượng từ dữ liệu thô EXPLORE hoặc lập luận cơ chế), `n` dự kiến trên lockbox, lợi thế tự
-khai `μ`, rào `h = √(2·ln N)`, và xác suất phát hiện ≈ `Φ(μ·√n/σ − h)`. **Dưới ngưỡng ⇒ không chọn.** Ngưỡng: ⏳ chờ chủ dự
-án (đề xuất ≥ 50%).
+khai `μ`, rào `h = √(2·ln N)`, và xác suất phát hiện ≈ `Φ(μ·√n/σ − h)`. **Dưới 50% ⇒ không chọn** (chủ dự án chốt
+25/09/2026; tương đương `μ ≥ h·σ/√n`).
 *Vì sao:* một phép thử không có khả năng PASS ở cỡ mẫu hiện có sẽ tiêu suất và lockbox mà không trả lời được câu hỏi nào.
 
 ## 3. TIÊU CHÍ XẾP HẠNG — THỨ TỰ TỪ ĐIỂN, không phải điểm có trọng số
