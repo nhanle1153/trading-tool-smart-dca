@@ -1205,7 +1205,7 @@ commit này, `Phien: 12c579bc`. Khoá 🔒 bốn việc DR cùng commit.
 
 | Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
 |---|---|---|---|---|
-| TD-0424 | **`DR-DONG-MT-ZA-01`** — đóng MT-30/31/34/44/55/58/64 theo ba cách (đóng hẳn · bài học chung · điều kiện mở lại); nối đính chính `DR-VONG-DOI-01` + `DR-SHORT-03`; ghi đóng ở `back-end-note.md` mục 7 (cần "chuẩn hóa và lưu") | 🔒 | — | DR commit; 7 dòng mục 7 mang ✅ ĐÓNG + mã DR; full suite Docker 0 failed |
+| TD-0424 | **`DR-DONG-MT-ZA-01`** — đóng MT-30/31/34/44/55/58/64 theo ba cách (đóng hẳn · bài học chung · điều kiện mở lại); nối đính chính `DR-VONG-DOI-01` + `DR-SHORT-03`; ghi đóng ở `back-end-note.md` mục 7 (cần "chuẩn hóa và lưu") | ✅ | — | DR commit; 7 dòng mục 7 mang ✅ ĐÓNG + mã DR; full suite Docker 0 failed |
 
 **Đặt chỗ mã (N12 mục 4):** `TD-0424` + `DR-DONG-MT-ZA-01`, commit này, `Phien: 2d853646`.
 
