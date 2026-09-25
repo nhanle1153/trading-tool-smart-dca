@@ -1,0 +1,59 @@
+{
+  "mo_ta": "TD-0412: lop con RoFundingD10. Du doan viet TRUOC khi chay: M1 chi kiem von None -> 5 ca von hong xanh sai (0, -5, nan, True, '200'); M2 bo may canh -> 2; M3 dem ca lenh stop -> 1; M4 bo lam tron gio khi dem lan can ro -> 1 (ca moi them sau khi thay khoang ho nay).",
+  "module": "RoFundingD10",
+  "file": "user_data/strategies/RoFundingD10.py",
+  "khoi_dong": [
+    "if not isinstance(von, (int, float)) or isinstance(von, bool) or not math.isfinite(von) or von <= 0:"
+  ],
+  "bien_the": {
+    "M0": null,
+    "M1": "if von is None:",
+    "M2": {
+      "khoi_dong": [
+        "ly_do = xet_vao_lenh(self._trang_thai_d10(), ky_quy_lenh=amount * rate / self._don_bay_san, now=_utc(current_time))"
+      ],
+      "thay": "ly_do = ()"
+    },
+    "M3": {
+      "khoi_dong": [
+        "if o.ft_order_side == \"stoploss\" or o.status != \"closed\" or o.order_filled_date is None:"
+      ],
+      "thay": "if o.status != \"closed\" or o.order_filled_date is None:"
+    },
+    "M4": {
+      "khoi_dong": [
+        "lan_can_ro.add(_utc(o.order_filled_date).replace(minute=0, second=0, microsecond=0))"
+      ],
+      "thay": "lan_can_ro.add(o.order_filled_date)"
+    }
+  },
+  "tests": [
+    "tests/unit/test_td0412_d10_rofunding.py"
+  ],
+  "ky_vong": {
+    "M0": "xanh",
+    "M1": "do",
+    "M2": "do",
+    "M3": "do",
+    "M4": "do"
+  },
+  "ky_vong_do_gom": {
+    "M1": [
+      "tests/unit/test_td0412_d10_rofunding.py::TestLopCon::test_thieu_hay_hong_von_d10_thi_tu_choi_khong_roi_ve_von_san_xuat[0]",
+      "tests/unit/test_td0412_d10_rofunding.py::TestLopCon::test_thieu_hay_hong_von_d10_thi_tu_choi_khong_roi_ve_von_san_xuat[-5]",
+      "tests/unit/test_td0412_d10_rofunding.py::TestLopCon::test_thieu_hay_hong_von_d10_thi_tu_choi_khong_roi_ve_von_san_xuat[nan]",
+      "tests/unit/test_td0412_d10_rofunding.py::TestLopCon::test_thieu_hay_hong_von_d10_thi_tu_choi_khong_roi_ve_von_san_xuat[True]",
+      "tests/unit/test_td0412_d10_rofunding.py::TestLopCon::test_thieu_hay_hong_von_d10_thi_tu_choi_khong_roi_ve_von_san_xuat[200]"
+    ],
+    "M2": [
+      "tests/unit/test_td0412_d10_rofunding.py::TestLopCon::test_du_mau_thi_dung_mo_moi",
+      "tests/unit/test_td0412_d10_rofunding.py::TestLopCon::test_vuot_tran_ky_quy_thi_tu_choi"
+    ],
+    "M3": [
+      "tests/unit/test_td0412_d10_rofunding.py::TestLopCon::test_lenh_stop_khong_tinh_la_lenh_do"
+    ],
+    "M4": [
+      "tests/unit/test_td0412_d10_rofunding.py::TestLopCon::test_cac_lenh_cung_mot_lan_can_ro_dem_la_mot"
+    ]
+  }
+}

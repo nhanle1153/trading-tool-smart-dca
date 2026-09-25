@@ -19,7 +19,7 @@ from tool_d.ops.live_d10 import (
     CAU_HINH_FREQTRADE_GOC,
     DB_URL_LIVE,
     RO_D10,
-    TEN_CHIEN_LUOC,
+    TEN_CHIEN_LUOC_CTRL,
     LiveD10Error,
     bien_moi_truong_san,
     chon_ro_va_ghi,
@@ -49,10 +49,10 @@ def _repo_gia(tmp_path: Path, *, sua=None) -> Path:
 
 class TestDungCauHinh:
     def test_chi_doi_khoa_d10_va_ro(self, tmp_path) -> None:
-        kq = dung_cau_hinh_live_d10(ro=RO, repo_dir=REPO_ROOT, thu_muc_ra=tmp_path)
+        kq = dung_cau_hinh_live_d10(ro=RO, chien_luoc=TEN_CHIEN_LUOC_CTRL, repo_dir=REPO_ROOT, thu_muc_ra=tmp_path)
         goc = json.loads((REPO_ROOT / CAU_HINH_FREQTRADE_GOC).read_text(encoding="utf-8"))
         phu = json.loads(kq.duong_dan.read_text(encoding="utf-8"))
-        assert phu["dry_run"] is False and phu["strategy"] == TEN_CHIEN_LUOC and phu["db_url"] == DB_URL_LIVE
+        assert phu["dry_run"] is False and phu["strategy"] == TEN_CHIEN_LUOC_CTRL and phu["db_url"] == DB_URL_LIVE
         assert phu["db_url"] != goc["db_url"]  # DB live TÁCH DB dry-run (N11)
         assert phu["max_open_trades"] == 1
         doi = {k for k in set(goc) | set(phu) if goc.get(k) != phu.get(k)}
@@ -61,24 +61,24 @@ class TestDungCauHinh:
         assert phu["exchange"]["pair_whitelist"] == list(RO)
 
     def test_ban_phu_khong_chua_bi_mat(self, tmp_path) -> None:
-        kq = dung_cau_hinh_live_d10(ro=RO, repo_dir=REPO_ROOT, thu_muc_ra=tmp_path)
+        kq = dung_cau_hinh_live_d10(ro=RO, chien_luoc=TEN_CHIEN_LUOC_CTRL, repo_dir=REPO_ROOT, thu_muc_ra=tmp_path)
         phu = json.loads(kq.duong_dan.read_text(encoding="utf-8"))
         assert not phu["exchange"].get("key") and not phu["exchange"].get("secret") and "telegram" not in phu
 
     def test_tu_choi_file_goc_co_key(self, tmp_path) -> None:
         goc = _repo_gia(tmp_path, sua=lambda ft: ft["exchange"].update(secret="bi-mat-gia"))
         with pytest.raises(LiveD10Error, match="secret"):
-            dung_cau_hinh_live_d10(ro=RO, repo_dir=goc, thu_muc_ra=tmp_path / "ra")
+            dung_cau_hinh_live_d10(ro=RO, chien_luoc=TEN_CHIEN_LUOC_CTRL, repo_dir=goc, thu_muc_ra=tmp_path / "ra")
 
     def test_tu_choi_ro_rong(self, tmp_path) -> None:
         with pytest.raises(LiveD10Error, match="rỗng"):
-            dung_cau_hinh_live_d10(ro=(), repo_dir=REPO_ROOT, thu_muc_ra=tmp_path)
+            dung_cau_hinh_live_d10(ro=(), chien_luoc=TEN_CHIEN_LUOC_CTRL, repo_dir=REPO_ROOT, thu_muc_ra=tmp_path)
 
     def test_lenh_co_ca_cau_hinh_control_api(self, tmp_path) -> None:
-        lenh = lenh_freqtrade(dung_cau_hinh_live_d10(ro=RO, repo_dir=REPO_ROOT, thu_muc_ra=tmp_path))
+        lenh = lenh_freqtrade(dung_cau_hinh_live_d10(ro=RO, chien_luoc=TEN_CHIEN_LUOC_CTRL, repo_dir=REPO_ROOT, thu_muc_ra=tmp_path))
         cau_hinh = [lenh[i + 1] for i, x in enumerate(lenh) if x == "--config"]
         assert lenh[:2] == ["freqtrade", "trade"] and str(CAU_HINH_API_SERVER) in cau_hinh and len(cau_hinh) == 2
-        assert lenh[lenh.index("--strategy") + 1] == TEN_CHIEN_LUOC
+        assert lenh[lenh.index("--strategy") + 1] == TEN_CHIEN_LUOC_CTRL
 
     def test_key_di_qua_env_dung_ten_freqtrade(self) -> None:
         assert bien_moi_truong_san("k", "s") == {"FREQTRADE__EXCHANGE__KEY": "k", "FREQTRADE__EXCHANGE__SECRET": "s"}

@@ -22,7 +22,7 @@ from tool_d.ledger.registry import (
     TrialLedger,
 )
 from tool_d.measurement.provenance import build_provenance, doc_runtime_image_digest
-from tool_d.ops.live_d10 import RO_D10, doc_ro_d10, kiem_ro_da_commit
+from tool_d.ops.live_d10 import RO_D10, TEN_CHIEN_LUOC, doc_ro_d10, kiem_ro_da_commit
 
 THAM_SO_D10 = "d10_ha_tang"
 
@@ -57,7 +57,7 @@ def dat_cho_dong_d10(
         direction="LONG",
         dataset=DATASET_D10,
         param_under_test=THAM_SO_D10,
-        param_value={"ro": list(ro), "ctrl_d10": tham_so},
+        param_value={"ro": list(ro), "chien_luoc": TEN_CHIEN_LUOC, "ctrl_d10": tham_so},  # §6: RoFundingD10
         params_frozen_hash=cfg.sha256,
         config_hash=cfg.sha256,
         code_commit=provenance.git_sha,

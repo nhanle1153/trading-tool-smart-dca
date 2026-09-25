@@ -39,15 +39,24 @@ from tool_d.api_client.binance_public import (
     get_ticker_price,
     validate_credentials_for_live,
 )
+from tool_d.bo_chay.moi_truong import _ap_file_phu
 from tool_d.bo_chay.yeu_cau import ten_cap_freqtrade
-from tool_d.config.loader import load_tool_d_config
+from tool_d.config.loader import load_tool_d_config, resolve
 from tool_d.notional import build_symbol_filters, san_tool_d
 from tool_d.ops.ctrl_d10 import CtrlD10Error, UngVienRo, chon_ro, doc_tham_so
 from tool_d.ops.dry_run import bien_moi_truong_telegram
 from tool_d.ops.kiem_bao_mat_d10 import BaoMatD10Error, kiem_truoc_khi_bat
+from tool_d.ops.ngan_sach_d10_ro import NganSachD10RoError, von_ro_d10
 from tool_d.pool_giai_doan import POOL_HOM_NAY
 
-TEN_CHIEN_LUOC = "CtrlD10"
+#: `DR-D10-02` §6 (MT-87): D10 đo cho ứng viên IQ-0003 ⇒ `RoFundingD10` là MẶC ĐỊNH. `CtrlD10` giữ làm công cụ phụ.
+TEN_CHIEN_LUOC_RO = "RoFundingD10"
+TEN_CHIEN_LUOC_CTRL = "CtrlD10"
+TEN_CHIEN_LUOC = TEN_CHIEN_LUOC_RO
+CHIEN_LUOC_HOP_LE = (TEN_CHIEN_LUOC_RO, TEN_CHIEN_LUOC_CTRL)
+#: File phủ lệnh thị trường + stop thảm hoạ của `RoFunding` — CÙNG đường `_ap_file_phu` bộ chạy backtest dùng (quy tắc 9).
+CHIEN_LUOC_FILE_PHU = "RoFunding"
+KHOA_CAU_HINH_D10 = "tool_d_d10"
 CAU_HINH_FREQTRADE_GOC = Path("config/freqtrade/config.json")
 CAU_HINH_API_SERVER = Path("config/freqtrade/config.risk_supervisor.json")  # TD-0241: control API cho Risk Supervisor
 RO_D10 = Path("config/d10_ro.yaml")
@@ -70,6 +79,8 @@ class LiveD10Error(RuntimeError):
 class CauHinhLiveD10:
     duong_dan: Path
     so_cap: int
+    chien_luoc: str = TEN_CHIEN_LUOC
+    von_ro_usdt: float | None = None
 
 
 def doc_ro_d10(duong: Path) -> tuple[str, ...]:
@@ -103,9 +114,21 @@ def kiem_ro_da_commit(duong: Path, *, repo_dir: Path = Path(".")) -> None:
 
 
 def dung_cau_hinh_live_d10(
-    *, ro: tuple[str, ...], repo_dir: Path = Path("."), thu_muc_ra: Path | None = None
+    *,
+    ro: tuple[str, ...],
+    chien_luoc: str = TEN_CHIEN_LUOC,
+    exchange_info: dict | None = None,
+    gia: list[dict] | None = None,
+    repo_dir: Path = Path("."),
+    thu_muc_ra: Path | None = None,
 ) -> CauHinhLiveD10:
-    """Ghi `<thu_muc_ra>/cfg.json` = cấu hình gốc + khoá vận hành D10 + rổ. KHÔNG chứa bí mật nào."""
+    """Ghi `<thu_muc_ra>/cfg.json` = cấu hình gốc + khoá vận hành D10 + rổ. KHÔNG chứa bí mật nào.
+
+    `RoFundingD10` (mặc định, §6): áp file phủ `RoFunding.json` qua đúng `_ap_file_phu` của bộ chạy, rồi tính vốn rổ D10 từ
+    sàn Tool D THẬT của rổ (`exchange_info` + `gia`, bắt buộc) với stoploss SAU khi phủ — sàn phụ thuộc stoploss. `CtrlD10`:
+    tuần tự, `max_open_trades = 1`."""
+    if chien_luoc not in CHIEN_LUOC_HOP_LE:
+        raise LiveD10Error(f"chiến lược D10 {chien_luoc!r} không hợp lệ — chỉ {CHIEN_LUOC_HOP_LE}")
     goc = repo_dir / CAU_HINH_FREQTRADE_GOC
     if not goc.is_file():
         raise LiveD10Error(f"{goc} không tồn tại")
@@ -119,18 +142,45 @@ def dung_cau_hinh_live_d10(
         raise LiveD10Error("rổ D10 rỗng — từ chối bật (DR-D10-02 §5.1)")
 
     ft["dry_run"] = False  # ĐƯỜNG TIỀN THẬT — chỉ ở module này, không bao giờ là một cờ ở dry-run
-    ft["strategy"] = TEN_CHIEN_LUOC
+    ft["strategy"] = chien_luoc
     ft["db_url"] = DB_URL_LIVE
     ft["bot_name"] = "tool_d_live_d10"
     ft["initial_state"] = "running"
-    ft["max_open_trades"] = 1  # tuần tự (DR-D11-01 §4) — chốt thứ hai bên cạnh máy canh ngân sách
     ft["exchange"]["pair_whitelist"] = list(ro)
+    von: float | None = None
+    if chien_luoc == TEN_CHIEN_LUOC_CTRL:
+        ft["max_open_trades"] = 1  # tuần tự (DR-D11-01 §4) — chốt thứ hai bên cạnh máy canh ngân sách
+    else:
+        von = _von_ro_d10(ft, ro=ro, exchange_info=exchange_info, gia=gia, repo_dir=repo_dir)
+        ft[KHOA_CAU_HINH_D10] = {"von_ro_usdt": von, "nguon": "DR-D10-02 §6.3 Q7 — 2k × max(sàn rổ) × lề / ro_don_bay"}
 
     ra = thu_muc_ra if thu_muc_ra is not None else repo_dir / THU_MUC_VAN_HANH
     ra.mkdir(parents=True, exist_ok=True)
     duong = ra / TEN_FILE_CAU_HINH_PHU
     duong.write_text(json.dumps(ft, ensure_ascii=False, indent=1), encoding="utf-8")
-    return CauHinhLiveD10(duong_dan=duong, so_cap=len(ro))
+    return CauHinhLiveD10(duong_dan=duong, so_cap=len(ro), chien_luoc=chien_luoc, von_ro_usdt=von)
+
+
+def _von_ro_d10(ft: dict, *, ro: tuple[str, ...], exchange_info: dict | None, gia: list[dict] | None,
+                repo_dir: Path) -> float:
+    if exchange_info is None or gia is None:
+        raise LiveD10Error("RoFundingD10 cần metadata sàn (exchange_info + giá) để tính vốn D10 — không đoán (N6)")
+    cfg = load_tool_d_config(repo_dir / "config/tool_d_config.yaml")
+    _ap_file_phu(ft, repo_dir / "config", CHIEN_LUOC_FILE_PHU, cfg)
+    ma = {c: c.split("/")[0] + "USDT" for c in ro}
+    try:
+        loc = {f.symbol: f for f in build_symbol_filters(exchange_info, gia, set(ma.values()))}
+        san = [san_tool_d(loc[ma[c]], strategy_stoploss=float(ft["stoploss"])) for c in ro]
+        return von_ro_d10(
+            san,
+            so_cap_ro=len(ro),
+            ty_le_k=float(resolve(cfg, "tier_c.ro_funding.ro_ty_le_k")),
+            k_toi_thieu=int(resolve(cfg, "tier_c.ro_funding.ro_k_toi_thieu")),
+            he_so_le_san=float(resolve(cfg, "tier_c.ctrl_d10.he_so_le_san")),
+            don_bay=float(resolve(cfg, "tier_c.ro_funding.ro_don_bay")),
+        )
+    except (ValueError, NganSachD10RoError, KeyError) as exc:
+        raise LiveD10Error(f"không tính được vốn rổ D10: {exc}") from exc
 
 
 def lenh_freqtrade(cau_hinh: CauHinhLiveD10) -> list[str]:
@@ -139,7 +189,7 @@ def lenh_freqtrade(cau_hinh: CauHinhLiveD10) -> list[str]:
         "freqtrade", "trade",
         "--config", str(cau_hinh.duong_dan),
         "--config", str(CAU_HINH_API_SERVER),
-        "--strategy", TEN_CHIEN_LUOC,
+        "--strategy", cau_hinh.chien_luoc,
         "--strategy-path", "user_data/strategies",
         "--userdir", "user_data",
         "--logfile", str(cau_hinh.duong_dan.parent / TEN_FILE_LOG),
@@ -193,6 +243,8 @@ def chon_ro_va_ghi(*, repo_dir: Path = Path("."), now: datetime | None = None) -
 def main(argv: list[str] | None = None) -> None:  # pragma: no cover — exec tiến trình thật; phần thuần đã khoá bằng test
     p = argparse.ArgumentParser(description="Bộ chạy D10 — lệnh live tối thiểu (DR-D10-02)")
     p.add_argument("--chon-ro", action="store_true", help="chỉ chọn rổ và ghi config/d10_ro.yaml, không bật bot")
+    p.add_argument("--chien-luoc", choices=CHIEN_LUOC_HOP_LE, default=TEN_CHIEN_LUOC,
+                   help="DR-D10-02 §6: RoFundingD10 (mặc định, đo cho IQ-0003) hoặc CtrlD10 (công cụ phụ)")
     args = p.parse_args(argv)
     if args.chon_ro:
         ro = chon_ro_va_ghi()
@@ -214,7 +266,8 @@ def main(argv: list[str] | None = None) -> None:  # pragma: no cover — exec ti
     try:
         kiem_ro_da_commit(RO_D10)  # 3 — DR-D10-02 §5.1
         ro = doc_ro_d10(RO_D10)
-        cau_hinh = dung_cau_hinh_live_d10(ro=ro)
+        meta = (get_exchange_info(), get_ticker_price()) if args.chien_luoc == TEN_CHIEN_LUOC_RO else (None, None)
+        cau_hinh = dung_cau_hinh_live_d10(ro=ro, chien_luoc=args.chien_luoc, exchange_info=meta[0], gia=meta[1])
     except (LiveD10Error, CtrlD10Error) as exc:
         print(str(exc), file=sys.stderr, flush=True)
         sys.exit(EXIT_RO_D10)
@@ -224,7 +277,7 @@ def main(argv: list[str] | None = None) -> None:  # pragma: no cover — exec ti
     os.environ.update(telegram)
     lenh = lenh_freqtrade(cau_hinh)
     print(
-        f"D10 LIVE: {cau_hinh.so_cap} cặp, cấu hình {cau_hinh.duong_dan}, "
+        f"D10 LIVE ({cau_hinh.chien_luoc}, vốn rổ {cau_hinh.von_ro_usdt}): {cau_hinh.so_cap} cặp, cấu hình {cau_hinh.duong_dan}, "
         f"Telegram {'BẬT' if telegram else 'TẮT'} — TIỀN THẬT",
         file=sys.stderr, flush=True,
     )
