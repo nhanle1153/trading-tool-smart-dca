@@ -196,3 +196,22 @@ chạy backtest thật trên dữ liệu tổng hợp (`tests/lock/test_td0400_r
    (Long ↔ Short) đảo chiều ngay trong cùng nến: đọc `backtesting.py` (Freqtrade 2026.8), vòng xử lý chạy lại lần hai khi
    có tín hiệu chiều ngược và `can_short`; test khoá ghim hành vi này.
 
+## 13. Chốt ba câu mở của §10 — 25/09/2026 (chủ dự án), `TD-0406`, trước mọi suất của `IQ-0003`
+
+Chữ §10 giữ nguyên làm lịch sử; mục này là câu trả lời.
+
+- **(a) Đơn vị (chủ dự án chốt "lợi suất ngày trên vốn rổ"):** một quan sát = một ngày giữ rổ; lợi suất ngày = `pnl_abs`
+  của ngày (đã trừ phí + funding, DR-013) / `von_ro_usdt`. **Cổng thống kê §7 điều 5:** `mean − h·std/√n > 0`,
+  `h = √(2·ln N)` với `N` hiện hành (cùng hệ số rào DSR). Không có ngưỡng tối thiểu kiểu `0,10 R`. **Lớp xác nhận sau `T3`**
+  (`DR-LOCKBOX-04` §3) của ứng viên này đo bằng CÙNG thước: trung bình lợi suất ngày > 0 trên ≥ 30 ngày giữ rổ. Ô ký
+  `mean_r ≥ 0,10 R` (`TD-0386`) viết cho ứng viên đơn vị R, không đọc được với rổ. Nối máy canh lớp xác nhận theo thước
+  này là việc riêng, chưa làm (`MT-84`).
+- **(b) Trượt giá D10 (chủ dự án chốt):** trung bình |giá khớp − giá mở nến 1H của lần cân rổ| / giá mở nến, trên mọi lệnh
+  vào/ra tại lần cân rổ ở D10, **≤ 0,05%** (bằng một lần phí taker Binance — khoản backtest đã tính). Vượt ⇒ D10 không
+  qua. Viết TRƯỚC khi có lệnh D10 nào.
+- **(c) Vốn (chủ dự án chốt 1.900 USDT):** đo `docs/du-lieu-do/IQ-0003-san-von.json` (`do_iq0003_san_von.py`, 0 suất,
+  không đọc dữ liệu thị trường CALIB/WFO). Sàn lớn nhất 30 USDT (BCH/ETC/LINK/LTC, khớp `DR-D4-05`), `k_max = 28`
+  (143 mã CALIB) ⇒ `1,1 × 2 × 28 × 30 = 1.848` ⇒ làm tròn lên **1.900**. Gấp ~2,5 lần `E_D` của ZA; ước lượng 1.200–1.500
+  lúc hỏi chủ dự án là thấp, đã báo lại và chủ dự án xác nhận con số đo. Giới hạn đo: giá hiện tại (không phải lịch sử);
+  36 mã CALIB đã huỷ niêm yết không có metadata, coi như sàn lớn nhất.
+
