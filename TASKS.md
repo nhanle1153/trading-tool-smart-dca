@@ -1154,10 +1154,14 @@ bộ chạy D10 (`DR-D10-02`): chờ chủ dự án làm xong phần tài khoả
 | TD-0401 | **Đếm `exit_reason` trên EXPLORE, 0 suất** — hiện vật `docs/du-lieu-do/IQ-0003-exit-reason-explore.json` (khuôn `TD-0375`), commit trước suất đầu tiên | ✅ | TD-0400, TD-0398 | Hiện vật đã commit; `reserve()` của slot `IQ-0003` không còn chặn vì thiếu hiện vật |
 | TD-0402 | **Bật `tier_a.enable_short`** theo `DR-SHORT-02` — báo chủ dự án chọn lúc khởi động lại bot dry-run ZA TRƯỚC khi bật | ✅ | TD-0399, TD-0400 | Chủ dự án xác nhận lúc bật; full suite Docker 0 failed |
 | TD-0406 | **Chốt vốn rổ + hai câu mở §10 (a)(b) của `DR-D0-IQ0003`** — đo sàn `san_tool_d()` trên `pool_t0` ∪ `pool_t1` (0 suất, đo mô tả; metadata qua `get_exchange_info()`), `von_ro_usdt ≥ 1,1 × 2 × k_max × sàn_max / ro_don_bay`; ghi (a) đơn vị = lợi suất ngày trên vốn rổ, (b) trượt giá D10 ≤ 0,05%/lệnh (chủ dự án chốt 25/09/2026) vào `DR-D0-IQ0003` §13 | ✅ | TD-0400 | Hiện vật đo đã commit; `tier_a.von_ro_usdt` khác `null`; full suite Docker 0 failed |
+| TD-0407 | **Hướng `NEUTRAL` trong sổ trial** (`DR-D0-IQ0003` §14, `MT-82`) — enum schema + `--direction` của E1; cửa ghi chỉ nhận `NEUTRAL` cho slot `IQ-xxxx` có lớp `CAN_RO_THEO_LICH` (khối `DR-CAN-RO-01:LOP`) | 🔒 | TD-0398 | Test chạy riêng PASS + phá thật; full suite Docker 0 failed |
+| TD-0408 | **Bộ đo lợi suất ngày của rổ + nhánh E1** (`DR-D0-IQ0003` §13 a, §14) — `tool_d/ro_funding_do.py` (lãi/lỗ đã chốt theo ngày đóng / `von_ro_usdt`, `mean − h·std/√n`, tách chân chỉ ghi); E1 với `RoFunding` không đi `lenh_tu_freqtrade`; chép zip kết quả vào `runs/<id>/` | 🔒 | TD-0400, TD-0407 | Test + chạy E1 thật trên dữ liệu tổng hợp với sổ tạm; full suite Docker 0 failed |
+| TD-0409 | **Suất trial ĐẦU TIÊN của `IQ-0003`: CALIB, B3** (chủ dự án ra lệnh 25/09/2026) — E1 `--chien-luoc RoFunding --direction NEUTRAL`, `cau_hinh = "IQ-0003-v1"`, không `--ghi-de` | 🔓 | TD-0407, TD-0408 | Sổ RESERVE→SEAL→CONSUME; `runs/<id>/ro_ngay.json`; audit exit 0 |
 
 **Đặt chỗ mã (N12 mục 7c):** `TD-0394`…`TD-0402` + `DR-D0-IQ0003`, `DR-BIEN-THE-01`, `DR-CAN-RO-01`, `DR-SHORT-02`,
 commit này, `Phien: 12c579bc`. Khoá 🔒 bốn việc DR cùng commit.
 **Lượt 2 (25/09/2026):** `TD-0406` (đặt chỗ + khoá), commit riêng, `Phien: 12c579bc` (`TD-0403`…`0405` đã có chủ).
+**Lượt 3 (25/09/2026):** `TD-0407`…`TD-0409` (khoá `TD-0407`, `TD-0408`), commit riêng, `Phien: 12c579bc`.
 
 ---
 
