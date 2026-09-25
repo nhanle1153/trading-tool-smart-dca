@@ -243,3 +243,4 @@ Chữ §10 giữ nguyên làm lịch sử; mục này là câu trả lời.
   ròng (điều 4 của `nguong_bac_bo`), tách chân, phân bố nhãn thoát, số ngày có rổ.
 - **Không chạy lại** nếu kết quả xấu: chạy lại cùng cấu hình là một suất nữa; đổi cấu hình là biến thể thứ hai (bị chặn).
 
+> **Bổ sung §14 trước suất (25/09/2026, `TD-0408`):** lệnh đóng ĐÚNG tại biên mở `den` (00:00 — Freqtrade `force_exit` khi hết cửa sổ) được tính vào **ngày cuối cửa sổ**. Đo được trên backtest thật dữ liệu tổng hợp: không có quy tắc này thì bộ đo từ chối và suất CALIB thật (đóng cưỡng bức lúc 2025-06-12 00:00) hỏng SAU niêm phong.
