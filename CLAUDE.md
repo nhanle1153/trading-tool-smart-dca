@@ -212,8 +212,11 @@ IDEA/CHỌN không đọc): `docs/lich-su/trang-thai-den-25-09-2026.md`.
 - **Ứng viên suất (d) `IQ-0003`:** dừng ở WFO, INCONCLUSIVE vì thiếu độ mạnh thống kê (`DR-KET-CUC-IQ0003-01`). Lockbox
   `[T2,T3]` CHƯA chạm.
 - **Ngân sách trial:** đọc bằng máy (E6 `trial_ledger_audit.py`), không ghi con số ở đây.
-- **Việc đang mở:** Khối 39 (`TD-0417`…`TD-0420`) — làm gọn vận hành; vòng đời tổng quát cho ứng viên + tiêu chí chọn quý
-  1/2027 chờ chủ dự án (`DR-TAI-THIET-KE-01` §5, `MT-88`, `MT-89`).
+- **Khối 39 xong** (`TD-0417`…`TD-0420`): một phiên duy nhất, `CLAUDE.md` gọn, script phiên sạch, vòng đời chung cho ứng
+  viên (`DR-VONG-DOI-01`) + tiêu chí chọn quý 1/2027 (`DR-Q1-2027`, hạn ngạch 1, độ mạnh thống kê ≥ 50%). `[T2,T3]` chuyển cho
+  ứng viên kế tiếp (`DR-LOCKBOX-04` bổ sung).
+- **Bước kế tiếp:** cửa chọn quý 1/2027 mở từ 01/01/2027 — chủ dự án chạy
+  `python scripts/tao_phien_sach.py --tieu-chi docs/decisions/DR-Q1-2027-tieu-chi-chon-y-tuong.md`.
 - **Mâu thuẫn chờ chủ dự án:** `back-end-note.md` mục 7, các dòng 🟡 chưa giải.
 - **Phiên ý tưởng sạch:** chạy `python scripts/tao_phien_sach.py` (xem `docs/phien-sach/`), mở phiên Claude MỚI trong thư
   mục nó tạo — không mở trong repo.
