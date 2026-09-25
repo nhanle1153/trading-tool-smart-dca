@@ -1191,7 +1191,7 @@ commit này, `Phien: 12c579bc`. Khoá 🔒 bốn việc DR cùng commit.
 | Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
 |---|---|---|---|---|
 | TD-0421 | **Mở cửa CHỌN từ 25/09/2026** — `DR-IQ-04`: tiêu chí + hạn ngạch `DR-Q1-2027` hiệu lực sớm (dùng trước lượt quý 1/2027, không thêm lượt); khối `MO_SOM` được `cat_khoi` cắt tường minh khối `DR-IQ-03` (chủ dự án: *"Dùng luôn từ ngày hôm nay 25/09"*) | ✅ | TD-0420 | Code + test + DR commit; full suite Docker 0 failed; audit sổ ý tưởng sạch |
-| TD-0422 | **Script canh thư mục phiên sạch** `scripts/canh_phien_sach.py` — tự nộp `cho-nop/don-N.yaml`, tự ghi dòng ✅/🛑 đã lọc vào `ket-qua-nop.txt` trong thư mục phiên sạch; `cho-nop/to-chon.yaml` chỉ chọn khi chủ dự án gõ xác nhận (chủ dự án: "bắt đầu code" 25/09/2026) | 🔒 | TD-0419 | Test + chạy thật một lần; full suite Docker 0 failed |
+| TD-0422 | **Script canh thư mục phiên sạch** `scripts/canh_phien_sach.py` — tự nộp `cho-nop/don-N.yaml`, tự ghi dòng ✅/🛑 đã lọc vào `ket-qua-nop.txt` trong thư mục phiên sạch; `cho-nop/to-chon.yaml` chỉ chọn khi chủ dự án gõ xác nhận (chủ dự án: "bắt đầu code" 25/09/2026) | ✅ | TD-0419 | Test + chạy thật một lần; full suite Docker 0 failed |
 
 **Đặt chỗ mã (N12 mục 4):** `TD-0421` + `DR-IQ-04`; `TD-0422` đặt chỗ commit riêng, commit này, `Phien: 12c579bc`.
 
