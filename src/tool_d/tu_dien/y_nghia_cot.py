@@ -347,17 +347,24 @@ Y_NGHIA: dict[tuple[str, str], NghiaCot] = {
 #    trong schema đo được (bắt tên bịa/tên đã đổi), và phải có nghĩa trong
 #    `Y_NGHIA` (bắt việc đọc một trường chưa ai tra).
 TOOL_D_DOC_THEM: dict[tuple[str, str], tuple[str, ...]] = {
-    ("trades", "id"): ("user_data/strategies/ZoneAbsorption.py",),
+    ("trades", "id"): (
+        "src/tool_d/ops/do_d10_dca.py",
+        "user_data/strategies/ZoneAbsorption.py",
+    ),
     ("trades", "is_open"): ("user_data/strategies/ZoneAbsorption.py",),
     ("trades", "leverage"): ("user_data/strategies/ZoneAbsorption.py",),
     ("orders", "status"): (
         "src/tool_d/gap_ms.py",
+        "src/tool_d/ops/do_d10_dca.py",
         "user_data/strategies/ZoneAbsorption.py",
     ),
     ("orders", "amount"): (
         "src/tool_d/gap_ms.py",
+        "src/tool_d/ops/do_d10_dca.py",
         "user_data/strategies/ZoneAbsorption.py",
     ),
+    ("orders", "average"): ("src/tool_d/ops/do_d10_dca.py",),
+    ("orders", "filled"): ("src/tool_d/ops/do_d10_dca.py",),
 }
 
 

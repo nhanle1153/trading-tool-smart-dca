@@ -188,6 +188,13 @@ def build_parser() -> argparse.ArgumentParser:
         "Rổ config/d10_ro.yaml phải đã commit. Đã có dòng D10 đang mở thì TỪ CHỐI.",
     )
     parser.add_argument(
+        "--d10-do",
+        action="store_true",
+        help="TD-0385 (DR-D11-01 §5) — đo BA ngưỡng D10 (lệnh DCA CtrlD10) trên DB live + Decision Log live, ghi hiện vật "
+        "docs/du-lieu-do/d10-ket-qua-<trial>.json và kết cục (SEAL + CONSUME) vào dòng D10 đang mở. Đợt chưa kết thúc "
+        "(còn lệnh vào mở / chưa có lệnh) thì TỪ CHỐI, sổ không đổi.",
+    )
+    parser.add_argument(
         "--close-d1-gate",
         action="store_true",
         help="TD-0110 — đóng cổng D1, ghi runtime_state.json.d1_complete. Chạy được đúng một lần.",
@@ -357,6 +364,37 @@ def d10_dat_cho(*, registry_path: Path = DEFAULT_REGISTRY_PATH, repo_dir: Path =
         return EXIT_DON_TU_CHOI, f"🛑 TỪ CHỐI đặt chỗ D10 — sổ KHÔNG bị đụng tới.\n{type(exc).__name__}: {exc}"
     audit_exit, audit_text = run_audit()
     return audit_exit, f"✅ Đã đặt chỗ {trial_id} (CTRL đo vận hành, đợt D10) vào {registry_path}.\n{audit_text}"
+
+
+def d10_do(
+    *,
+    registry_path: Path = DEFAULT_REGISTRY_PATH,
+    db_url: str | None = None,
+    decision_log: Path | None = None,
+    repo_dir: Path = Path("."),
+) -> tuple[int, str]:
+    """TD-0385 — đo ba ngưỡng D10 và ghi kết cục vào dòng D10 đang mở, rồi tự audit. Mọi lỗi (chưa có dòng D10, DB live
+    chưa có, đợt chưa kết thúc, số hỏng, chạy ngoài ảnh project) ⇒ TỪ CHỐI, sổ không đổi dòng nào."""
+    from tool_d.ledger.decision_log import duong_dan_decision_log
+    from tool_d.ops.do_d10_dca import DoD10DcaError
+    from tool_d.ops.live_d10 import DB_URL_LIVE
+    from tool_d.ops.so_d10 import ghi_ket_cuc_d10_dca
+
+    try:
+        trial_id, duong, kq = ghi_ket_cuc_d10_dca(
+            ledger=TrialLedger(registry_path),
+            db_url=db_url or DB_URL_LIVE,
+            decision_log=decision_log or duong_dan_decision_log("live"),
+            repo_dir=repo_dir,
+        )
+    except (LedgerError, DoD10DcaError, OSError, ValueError, RuntimeError) as exc:
+        return EXIT_DON_TU_CHOI, f"🛑 TỪ CHỐI đo/ghi kết cục D10 — sổ KHÔNG đổi.\n{type(exc).__name__}: {exc}"
+    audit_exit, audit_text = run_audit()
+    ly_do = "\n".join(f"  - {x}" for x in kq["ly_do"])
+    return audit_exit, (
+        f"✅ D10 {trial_id}: {kq['verdict']} (đạt điều kiện D12: {kq['dat_dieu_kien_d12']}). Hiện vật {duong}.\n"
+        f"{ly_do}\n{audit_text}"
+    )
 
 
 def nop_de_xuat_doi_tham_so(de_xuat_path: Path) -> tuple[int, str]:
@@ -1612,6 +1650,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.d10_dat_cho:
         exit_code, text = d10_dat_cho()
+        print(text)
+        return exit_code
+
+    if args.d10_do:
+        exit_code, text = d10_do()
         print(text)
         return exit_code
 

@@ -1,0 +1,49 @@
+{
+  "mo_ta": "TD-0385: bo do ba nguong D10 (DCA). M1 = bo loc filled > 0 (bay average TD-0441: lenh huy van co average); M2 = phan quyet gap_ms khong doi du 30 su kien (n < 30 phai INCONCLUSIVE, khong REJECTED); M3 = lenh CTRL duoc tinh dat dieu kien D12 (DR-D10-02 Q1 cam); M4 = bo qua lo mu post-only (DR-D11-01 5.3); M5 = bo chan DB live chua ton tai (init_db tu tao DB rong, bo do bao 0 lenh nhu da do).",
+  "module": "tool_d.ops.do_d10_dca",
+  "file": "src/tool_d/ops/do_d10_dca.py",
+  "khoi_dong": ["khop = [x for x in lenh_cua_trade if x.vai_tro == \"vao\" and x.da_khop is not None and x.da_khop > 0]"],
+  "bien_the": {
+    "M0": null,
+    "M1": "khop = [x for x in lenh_cua_trade if x.vai_tro == \"vao\" and x.da_khop is not None]",
+    "M2": {
+      "khoi_dong": ["if gap.n >= DU_SU_KIEN_DOI_SL and gap.p99 is not None and gap.p99 > NGUONG_GAP_MS_P99:"],
+      "thay": "if gap.p99 is not None and gap.p99 > NGUONG_GAP_MS_P99:"
+    },
+    "M3": {
+      "khoi_dong": ["dat_dieu_kien_d12=verdict == \"KEPT\" and d6.so_voi_delta_r)"],
+      "thay": "dat_dieu_kien_d12=verdict == \"KEPT\")"
+    },
+    "M4": {
+      "khoi_dong": ["if lo_mu:"],
+      "thay": "if False:"
+    },
+    "M5": {
+      "khoi_dong": ["if not Path(db_url[len(tien_to):]).is_file():"],
+      "thay": "if False:"
+    }
+  },
+  "tests": ["tests/unit/test_td0385_do_d10_dca.py"],
+  "ky_vong": {"M0": "xanh", "M1": "do", "M2": "do", "M3": "do", "M4": "do", "M5": "do"},
+  "ky_vong_do_gom": {
+    "M1": [
+      "tests/unit/test_td0385_do_d10_dca.py::TestD6::test_tranche_theo_moc_khop_khong_theo_thu_tu_dua_vao",
+      "tests/unit/test_td0385_do_d10_dca.py::TestD6::test_bay_average_lenh_huy_khong_khop_khong_vao_d6",
+      "tests/unit/test_td0385_do_d10_dca.py::TestDuongSanXuat::test_do_tron_db_that"
+    ],
+    "M2": [
+      "tests/unit/test_td0385_do_d10_dca.py::TestDanhGia::test_duoi_30_su_kien_thi_inconclusive_khong_thay_bang_max"
+    ],
+    "M3": [
+      "tests/unit/test_td0385_do_d10_dca.py::TestDanhGia::test_kept_nhung_ctrl_khong_bao_gio_dat_d12",
+      "tests/unit/test_td0385_do_d10_dca.py::TestGhiKetCuc::test_seal_roi_consume_hien_vat_du"
+    ],
+    "M4": [
+      "tests/unit/test_td0385_do_d10_dca.py::TestDanhGia::test_bat_ky_lo_mu_post_only_nao_thi_trinh_chu_du_an",
+      "tests/unit/test_td0385_do_d10_dca.py::TestDuongSanXuat::test_do_tron_db_that"
+    ],
+    "M5": [
+      "tests/unit/test_td0385_do_d10_dca.py::TestDuongSanXuat::test_db_live_chua_co_thi_pending_va_khong_tao_file"
+    ]
+  }
+}
