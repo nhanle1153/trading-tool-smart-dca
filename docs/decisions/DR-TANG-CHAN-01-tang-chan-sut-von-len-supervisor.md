@@ -72,3 +72,25 @@ sự kiện đặt lại đỉnh; DR này chỉ chốt NƠI thi hành.
 
 - `TD-0270` (⏸, cờ 🚩 *"xem lại trước D10 của ứng viên kế tiếp"*): phần Supervisor của nó chuyển sang Khối 44.
 - `MT-40`: đóng khi `TD-0434`…`TD-0438` ✅.
+
+## 8. Bổ sung 27/09/2026 — trần "3 HALT / chu kỳ 100 lệnh đóng" (chủ dự án chốt phương án (a))
+
+**Câu hỏi:** §12c.5 (`spec:4756-4758`): *"TRẦN SỐ LẦN HALT: 3 lần trong một chu kỳ 100 lệnh đóng. Lần thứ 4 → ABORT bất
+kể dd bao nhiêu."* Hai con số 3 và 100 chỉ có trong chữ spec, KHÔNG có trong `tool_d_config.yaml` ⇒ N4 cấm viết cứng.
+
+**Chốt (a)** (chủ dự án, 27/09/2026, phiên mã `809d6cd8` đề xuất): thêm khoá Tầng C
+`tier_c.tran_halt: { so_lan: 3, chu_ky_lenh_dong: 100 }` vào `tool_d_config.yaml` — giá trị CHÉP từ spec, không phải
+số mới; Supervisor khai lại trong `HANG_SO_KHAI_LAI` (§6.6(2)) và `L-Z44` đối chiếu hai bản khai, đúng đường thang
+5/8/20 đang đi. ❌ Loại (b) viết thẳng vào mã kèm trích dẫn: hai bản khai của cùng một con số mà không máy nào đối chiếu.
+
+**Nghĩa đã chốt khi thi hành (`TD-0434`):**
+- Chu kỳ = khối cố định theo §12c.1: lệnh đóng thứ `k` thuộc chu kỳ `k // chu_ky_lenh_dong`.
+- Một lần HALT = một lần CHUYỂN sang HALT (gọi lại `/stopentry` mỗi vòng không phải lần HALT mới).
+- Lần HALT thứ `so_lan + 1` trong cùng chu kỳ ⇒ ABORT (cùng đường ABORT §4 điều 2: lưu cờ đỏ → `/stop` → sự kiện `ABORT`).
+- Nguồn đếm: `GET /api/v1/profit` → `closed_trade_count` (mọi lệnh đã đóng trong DB của bot, `rpc.py:594-623`,
+  Freqtrade 2026.8; khai ở `api-integration-rules.md` 4.2 v1.7).
+- Không đọc được số lệnh lúc chuyển sang HALT ⇒ lần HALT đó được tính vào MỌI chu kỳ (chỉ có thể làm ABORT tới SỚM
+  hơn, không bao giờ muộn hơn — lệch về phía an toàn; N6: không bịa một con số lệnh).
+
+**Hệ quả biết trước:** đổi `tool_d_config.yaml` đổi `config_hash` của các lần chạy SAU (không lần nào đã ghi sổ); không
+thêm bậc tự do (Tầng C, không vào kiểm kê DOF — `dof.py` chỉ đọc `tier_b`).
