@@ -1,0 +1,27 @@
+{
+  "mo_ta": "TD-0426 (MT-40, DR-D6D8-01 4.2): dinh equity dat lai o DUNG hai su kien co ghi so. M1 = bo ABORT (chu trinh moi thua huong dinh cu); M2 = bo dich dinh khi NAP_RUT (rut von thanh HALT oan); M3 = bo kiem bam dong da ap (so sua duoc); M4 = cho lot loai su kien thu ba; M5 = khong luu bo dem (restart ap lai su kien cu).",
+  "module": "tool_d.equity_peak",
+  "file": "src/tool_d/equity_peak.py",
+  "khoi_dong": ["dinh = None"],
+  "bien_the": {
+    "M0": null,
+    "M1": "pass",
+    "M2": {"khoi_dong": ["dinh += sk.so_tien  # type: ignore[operator]"], "thay": "pass"},
+    "M3": {"khoi_dong": ["if _bam_cac_dong([d for d, _ in ds[:da_ap]]) != bam:"], "thay": "if False:"},
+    "M4": {"khoi_dong": ["if loai not in LOAI_SU_KIEN:"], "thay": "if False:"},
+    "M5": {"khoi_dong": ["\"so_su_kien_da_ap\": trang_thai.so_su_kien_da_ap,"], "thay": "\"so_su_kien_da_ap\": 0,"}
+  },
+  "tests": [
+    "tests/lock/test_td0426_su_kien_dat_lai_dinh.py",
+    "tests/lock/test_td0238_dinh_equity_ben_vung_qua_restart.py",
+    "tests/unit/test_equity_peak.py"
+  ],
+  "ky_vong": {"M0": "xanh", "M1": "do", "M2": "do", "M3": "do", "M4": "do", "M5": "do"},
+  "ky_vong_do_gom": {
+    "M1": ["tests/lock/test_td0426_su_kien_dat_lai_dinh.py::TestDuongSanXuat::test_ABORT_mo_chu_trinh_moi_dinh_moi_la_equity_lan_doc_ke_tiep"],
+    "M2": ["tests/lock/test_td0426_su_kien_dat_lai_dinh.py::TestDuongSanXuat::test_rut_CO_ghi_so_thi_dinh_DICH_dung_so_tien_va_khong_HALT"],
+    "M3": ["tests/lock/test_td0426_su_kien_dat_lai_dinh.py::TestSoSuKien::test_sua_dong_DA_AP_thi_TU_CHOI"],
+    "M4": ["tests/lock/test_td0426_su_kien_dat_lai_dinh.py::TestDuongSanXuat::test_su_kien_THU_BA_trong_so_thi_TU_CHOI[HALT]"],
+    "M5": ["tests/lock/test_td0426_su_kien_dat_lai_dinh.py::TestDuongSanXuat::test_restart_KHONG_ap_lai_su_kien_da_ap"]
+  }
+}

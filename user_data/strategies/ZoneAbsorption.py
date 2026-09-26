@@ -139,8 +139,9 @@ from tool_d.entry_confirmation import bat_dieu_kien_c_cua_arm, quet_xac_nhan_zon
 from tool_d.equity_peak import (
     DinhEquityBenVung,
     DinhEquityError,
-    dinh_equity_moi,
+    cap_nhat_dinh,
     doc_dinh_equity,
+    duong_dan_so_su_kien,
     duong_dan_theo_runmode,
     luu_dinh_equity,
 )
@@ -368,6 +369,9 @@ class ZoneAbsorption(IStrategy):
         self._gia_luc_dat: dict[str, tuple[float, float]] = {}
         self._halt: set[str] = set()      # pair đang bị HALT tại lúc định cỡ
         self._dinh_equity: float | None = None
+        # TD-0426 (MT-40) — trạng thái ĐẦY ĐỦ của đỉnh (gồm số dòng sổ sự kiện đã áp). `_dinh_equity` là bản phản
+        # chiếu của `.dinh` cho người đọc cũ, KHÔNG phải nguồn thứ hai: chỉ `_dd_pct()`/`bot_start()` gán cả hai.
+        self._trang_thai_dinh: DinhEquityBenVung | None = None
         # TD-0238 (MT-40) — nạp lại đỉnh equity bền vững ở bot_start(), KHÔNG
         # ở đây: `self.dp`/`self.wallets` chưa sẵn sàng lúc __init__ chạy.
         # TD-0353 — `None` = chọn theo runmode ở `bot_start()` (dry-run và live TÁCH file, N11). Test gán
@@ -410,6 +414,7 @@ class ZoneAbsorption(IStrategy):
                 f"đỉnh equity đã lưu ở đơn vị {da_luu.stake_currency!r}, cấu hình hiện "
                 f"tại là {self.config['stake_currency']!r} — không âm thầm trộn đơn vị"
             )
+        self._trang_thai_dinh = da_luu
         self._dinh_equity = da_luu.dinh
 
     def bot_loop_start(self, current_time: datetime, **kwargs) -> None:
@@ -2219,19 +2224,21 @@ class ZoneAbsorption(IStrategy):
 
     def _dd_pct(self) -> float:
         """TD-0238 (MT-40) — đỉnh (`self._dinh_equity`) nay đi qua
-        `dinh_equity_moi()` và được ghi bền vững mỗi khi có đỉnh mới
+        `cap_nhat_dinh()` (TD-0426: áp sổ sự kiện `NAP_RUT`/`ABORT` rồi
+        `dinh_equity_moi()`) và được ghi bền vững mỗi khi trạng thái đổi
         (chỉ ở live/dry_run — `_ben_vung_hoa_equity` do `bot_start()` đặt).
         Hợp đồng trả về (một `float` phần trăm) không đổi."""
         if not self.wallets:
             return 0.0
         tong = float(self.wallets.get_total(self.config["stake_currency"]))
         stake_currency = self.config["stake_currency"]
-        dinh_cu = (
-            DinhEquityBenVung(dinh=self._dinh_equity, stake_currency=stake_currency)
-            if self._dinh_equity is not None else None
-        )
-        dinh_moi = dinh_equity_moi(dinh_cu, tong_hien_tai=tong, stake_currency=stake_currency)
-        if self._dinh_equity is None or dinh_moi.dinh > self._dinh_equity:
+        # TD-0426 (MT-40, `DR-D6D8-01` §4.2): mỗi lần đọc áp các dòng MỚI của sổ sự kiện (`NAP_RUT` dịch đỉnh,
+        # `ABORT` mở chu trình mới) — đúng HAI sự kiện, không gì khác đặt lại đỉnh. Backtest: không sổ, không đĩa.
+        so = duong_dan_so_su_kien(self._duong_dan_dinh_equity) if self._ben_vung_hoa_equity else None
+        dinh_moi = cap_nhat_dinh(self._trang_thai_dinh, tong_hien_tai=tong, stake_currency=stake_currency,
+                                 so_su_kien=so)
+        if dinh_moi != self._trang_thai_dinh:
+            self._trang_thai_dinh = dinh_moi
             self._dinh_equity = dinh_moi.dinh
             if self._ben_vung_hoa_equity:
                 luu_dinh_equity(dinh_moi, self._duong_dan_dinh_equity)
