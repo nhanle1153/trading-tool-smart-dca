@@ -4464,3 +4464,30 @@ cửa mới từ chối, đúng thiết kế. Vá bằng repo git nhỏ có hi�
 - **(b) Hạn "`dd_state.json` quá cũ": dùng lại, KHÔNG cần con số mới.** `heartbeat_watchdog.NGUONG_HEARTBEAT_CU_S = 300`
   (heartbeat cũ hơn 300 s = tiến trình đi kèm đã chết), Supervisor chạy một vòng mỗi `DEFAULT_CHU_KY_S = 60` s ⇒ 300 s =
   lỡ 5 vòng liền. Cùng nghĩa "tiến trình giám sát còn sống không" ⇒ import chính hằng đó, không khai lần hai.
+
+
+## 27/09/2026 — Đo 418/429 trên đường Freqtrade/ccxt (phiên mã `bcfaf7f8`, `TD-0443`, `DR-CONG-AN-TOAN-01` §3.1(b))
+
+Đọc mã nguồn **trong image** (`freqtrade 2026.8`, Python 3.14.7, ccxt 4.5.76), không đoán. 0 trial, không chạm dữ liệu.
+Câu hỏi: bot đặt lệnh qua Freqtrade/ccxt — đường này xử 418 (cấm IP) và 429 (quá tần suất) thế nào? Test cũ (`TD-0241`)
+chỉ phủ client riêng của Tool D (`binance_public.py`).
+
+- **Ánh xạ HTTP của ccxt** (`binanceusdm().httpExceptions`): `418 → DDoSProtection`, `429 → RateLimitExceeded`.
+- 🔴 **`RateLimitExceeded` KHÔNG phải lớp con của `DDoSProtection`** trong ccxt 4.5.76 — MRO đo được:
+  `RateLimitExceeded → NetworkError → OperationFailed → BaseError`; `DDoSProtection → NetworkError → …`. Hai anh em.
+- **Freqtrade không có một dòng nào nhắc `RateLimit`** (`grep -rn RateLimit` toàn gói = 0). Các hàm gọi sàn bắt
+  `except ccxt.DDoSProtection → DDosProtection` rồi `except (ccxt.OperationFailed, ccxt.ExchangeError) → TemporaryError`
+  (vd `exchange.py:1517-1521`, `create_order`).
+  ⇒ **418** đi nhánh `DDosProtection`; **429** rơi xuống nhánh `TemporaryError` chung.
+- **Bộ thử lại** `exchange/common.py:177` `retrier` (`API_RETRY_COUNT = 4`): chỉ `DDosProtection | RetryableOrderError`
+  được trễ tăng dần `calculate_backoff = (max − còn)² + 1` ⇒ 1 · 2 · 5 · 10 s. **429 được thử lại 4 lần NGAY, không trễ.**
+- **Hết lượt thử:** `worker.py:200-202` bắt `TemporaryError`, ngủ `RETRY_TIMEOUT = 30` s rồi chạy vòng kế — **bot không
+  dừng**, cứ mỗi ~30 s lại gọi sàn tiếp, kể cả khi IP đang bị cấm (418).
+- **Bộ giới hạn chủ động** của ccxt bật sẵn (`enableRateLimit = True`, `rateLimit = 50` ms) — nhưng theo TỪNG tiến trình.
+  Dry-run D11 và live D10 là hai tiến trình chung một IP (`DR-D10-02` Q4) ⇒ trọng số cộng dồn, không bộ nào thấy bộ kia.
+- **Tầng Tool D phản ứng hôm nay:** Risk Supervisor (profile `d10`) gọi sàn trên CÙNG IP; lỗi 418 ở lời gọi của chính nó ⇒
+  `phan_loai_ma_loi` → `DUNG_HAN` ⇒ cờ đỏ vĩnh viễn + `/stop` bot (`risk_supervisor.py:89-116`,
+  `ops/risk_supervisor_daemon.py:193`), đã có test. ⇒ Cấm IP (418) **có** tầng chặn, gián tiếp, trễ tối đa một chu kỳ
+  Supervisor (60 s), và hôm nay chỉ dừng MỘT bot (phần "mọi bot cùng tài khoản" là `TD-0442`).
+- **Khoảng hở còn lại:** 429 trên đường Freqtrade không có trễ ⇒ dồn nhanh hơn về 418. Không sửa được bên trong Freqtrade
+  (cấm vá thư viện). Cách giảm thuộc quyết định của chủ dự án — trình ở báo cáo phiên, **chưa làm gì**.
