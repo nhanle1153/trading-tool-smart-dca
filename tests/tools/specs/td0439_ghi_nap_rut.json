@@ -1,0 +1,12 @@
+{
+  "mo_ta": "TD-0439: lenh ghi nap/rut. M1 = ghi vao so CANH file trang thai chung chung thay vi so cua Supervisor (so khac chu dinh => Supervisor khong bao gio thay, rut von thanh HALT oan).",
+  "module": "tool_d.ops.ghi_nap_rut",
+  "file": "src/tool_d/ops/ghi_nap_rut.py",
+  "khoi_dong": ["so = duong_dan_so_su_kien(duong_dan_dinh_supervisor(state_path or duong_dan_theo_runmode(runmode)))"],
+  "bien_the": {"M0": null, "M1": "so = duong_dan_so_su_kien(Path('runs/zone_absorption') / runmode / 'equity_peak_state.json')"},
+  "tests": ["tests/unit/test_td0439_ghi_nap_rut.py"],
+  "ky_vong": {"M0": "xanh", "M1": "do"},
+  "ky_vong_do_gom": {
+    "M1": ["tests/unit/test_td0439_ghi_nap_rut.py::TestGhi::test_dau_cuoi_rut_co_ghi_so_thi_supervisor_khong_doc_thanh_sut"]
+  }
+}
