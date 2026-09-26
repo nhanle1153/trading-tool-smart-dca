@@ -1249,7 +1249,7 @@ commit này, `Phien: 12c579bc`. Khoá 🔒 bốn việc DR cùng commit.
 
 | Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
 |---|---|---|---|---|
-| TD-0431 | **Loại 4 `khoa_da_ghi_xong` trong `ledger/backlog_check.py`**: dòng 🔒 (hoặc 🔓) mà ô sau ô trạng thái mang `✅ **dd/mm/yyyy` — tự mâu thuẫn trên CHÍNH dòng đó, so khớp cơ học, không cần `git log` | 🔒 | TD-0331 ✅ | Test hàm thuần + ảnh chụp lịch sử THẬT `git show 37f2fd1~1:TASKS.md` phải báo đúng `TD-0386` loại 4 và KHÔNG báo `TD-0405`/`TD-0427`; `TASKS.md` hiện tại 0 ca loại 4; phá thật bằng công cụ `TD-0329`; full suite Docker 0 đỏ |
+| TD-0431 | **Loại 4 `khoa_da_ghi_xong` trong `ledger/backlog_check.py`**: dòng 🔒 (hoặc 🔓) mà ô sau ô trạng thái mang `✅ **dd/mm/yyyy` — tự mâu thuẫn trên CHÍNH dòng đó, so khớp cơ học, không cần `git log` | ✅ `fe8b328` | TD-0331 ✅ | Test hàm thuần + ảnh chụp lịch sử THẬT `git show 37f2fd1~1:TASKS.md` phải báo đúng `TD-0386` loại 4 và KHÔNG báo `TD-0405`/`TD-0427`; `TASKS.md` hiện tại 0 ca loại 4; phá thật bằng công cụ `TD-0329`; full suite Docker 0 đỏ — ✅ **26/09/2026:** ảnh chụp thật `37f2fd1~1` ⇒ loại 4 đúng `TD-0386`, `TD-0405`/`TD-0427` chỉ loại 1; E6 `--kiem-backlog` trên `TASKS.md` hiện tại 0 ca loại 4 (còn `TD-0405` loại 1, việc đang dở); phá thật 5 biến thể, mỗi cái đỏ đúng 1 test dự đoán; full suite Docker **3897 passed, 0 failed** (HEAD `aeedb65` + thay đổi) |
 
 **Đặt chỗ mã (N12 mục 7c):** `TD-0431`, commit này, `Phien: 9f739290`.
 
