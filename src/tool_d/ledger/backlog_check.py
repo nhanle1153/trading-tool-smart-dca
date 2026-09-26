@@ -13,6 +13,14 @@ Ba loại phát hiện, MỌI loại chỉ là CẢNH BÁO:
   2. ``trang_thai_lan``: ô trạng thái mang ≥ 2 ký hiệu (*"🔓 ⏸"*) — không thể đúng cả hai.
   3. ``nghi_lech_tam_dung``: ô trạng thái KHÔNG có ⏸ (cũng không ✅/❌) nhưng dòng mang cụm
      *"⏸ TẠM DỪNG"* — cụm quy ước của `DR-IQ-01` §6 ("ghi ⏸ + mốc").
+  4. ``khoa_da_ghi_xong`` (`TD-0431`, 26/09/2026): ô trạng thái 🔒/🔓 nhưng một ô SAU ô tên việc
+     mang dấu hoàn tất kèm ngày (*"✅ **24/09/2026:**"*, *"✅ **Xong 19/09/2026"*) — dòng tự mâu
+     thuẫn với CHÍNH nó. Sự cố sinh ra loại này: `TD-0386` còn 🔒 hai ngày dù commit hoàn tất
+     `ff42b18` đã ghi dấu đó; loại 1 CÓ báo nhưng lẫn giữa các việc nhiều chặng đang dở hợp lệ
+     (`TD-0405`, `TD-0427`), nên không ai tách ra được. Loại 4 không cần `git log`, và khác loại 1
+     ở chỗ không có ca "bình thường" — gặp là sửa ô trạng thái (hoặc bỏ dấu ✅ nếu chỉ một phần
+     xong: ghi "phần (i) xong" thay vì "✅ **ngày**"). ⏸ không xét: việc tạm dừng có thể mang dấu
+     xong của một phần đã làm trước khi dừng.
 
 🔴 **Vì sao KHÔNG nối vào `run_audit()` hay cổng đóng:**
   • Loại 1 KHÔNG phải lỗi khi đứng một mình: việc nhiều chặng (`TD-0189`) có commit mã việc
@@ -39,9 +47,12 @@ KY_HIEU = ("🔓", "🔒", "✅", "⏸", "❌")
 LOAI_KHOA_CO_COMMIT = "khoa_co_commit"
 LOAI_TRANG_THAI_LAN = "trang_thai_lan"
 LOAI_NGHI_LECH_TAM_DUNG = "nghi_lech_tam_dung"
+LOAI_KHOA_DA_GHI_XONG = "khoa_da_ghi_xong"
 
 _RE_MA = re.compile(r"^TD-\d{4}$")
 _RE_TAM_DUNG = re.compile(r"⏸\s*\**\s*TẠM DỪNG")
+# Đo 26/09/2026 trên `TASKS.md` thật: khớp 64 dòng ✅, 0 dòng 🔒/🔓/⏸ (trước khi sửa `TD-0386`: đúng 1, là nó).
+_RE_DA_GHI_XONG = re.compile(r"✅\s*\*\*[^*]{0,25}?\d{1,2}/\d{1,2}/\d{4}")
 _RE_DAU_TACH = re.compile(r"^\|[\s:|-]+\|$")
 
 DEFAULT_TASKS_PATH = Path("TASKS.md")
@@ -145,6 +156,12 @@ def tim_van_de(
         if not any(k in d.trang_thai for k in ("⏸", "✅", "❌")):
             if any(_RE_TAM_DUNG.search(o) for o in d.o_khac):
                 van_de.append(VanDe(LOAI_NGHI_LECH_TAM_DUNG, d.ma, d.so_dong, f"trạng thái {d.trang_thai!r} nhưng dòng mang cụm '⏸ TẠM DỪNG'"))
+        if len(ky) == 1 and ky[0] in ("🔒", "🔓"):
+            for o in d.o_khac[1:]:  # bỏ ô tên việc: nó có thể kể lịch sử việc khác
+                m = _RE_DA_GHI_XONG.search(o)
+                if m:
+                    van_de.append(VanDe(LOAI_KHOA_DA_GHI_XONG, d.ma, d.so_dong, f"trạng thái {d.trang_thai!r} nhưng dòng đã ghi {m.group(0)!r}"))
+                    break
     return van_de
 
 
@@ -196,12 +213,14 @@ def bao_cao(
         LOAI_KHOA_CO_COMMIT: "🔒 quên đóng?",
         LOAI_TRANG_THAI_LAN: "trạng thái lẫn",
         LOAI_NGHI_LECH_TAM_DUNG: "nghi lệch tạm dừng",
+        LOAI_KHOA_DA_GHI_XONG: "đã ghi xong, chưa lật trạng thái",
     }
     for v in sorted(van_de, key=lambda x: (x.loai, x.so_dong)):
         dong_bao.append(f"  [{ten[v.loai]}] {v.ma} (TASKS.md:{v.so_dong}): {v.mo_ta}")
     if van_de:
         dong_bao.append(
             "  ↳ Loại '🔒 quên đóng?' là BÌNH THƯỜNG với việc nhiều chặng — kiểm tay trước khi đóng "
-            "(N12 mục 3, 7f); loại 'nghi lệch' là heuristic, có thể báo động giả."
+            "(N12 mục 3, 7f); loại 'nghi lệch' là heuristic, có thể báo động giả; loại 'đã ghi xong' "
+            "là dòng tự mâu thuẫn — không có ca bình thường."
         )
     return (1 if van_de else 0), "\n".join(dong_bao)

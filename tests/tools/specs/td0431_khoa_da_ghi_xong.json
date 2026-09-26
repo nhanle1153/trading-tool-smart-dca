@@ -1,0 +1,50 @@
+{
+  "mo_ta": "TD-0431: nghiem thu rang cua test loai 4 (khoa_da_ghi_xong) trong backlog_check. `tests` la CHI file test_td0431; moi bien the pha MOT hanh vi va test PHAI do dung cho do. Nam vi tri pha: bo 🔓 khoi tap xet, them ⏸ vao tap xet, xet ca o ten viec, bo doi hoi ngay trong dau xong, bo chot 'dung mot ky hieu'.",
+  "module": "tool_d.ledger.backlog_check",
+  "file": "src/tool_d/ledger/backlog_check.py",
+  "khoi_dong": [
+    "if len(ky) == 1 and ky[0] in (\"🔒\", \"🔓\"):"
+  ],
+  "bien_the": {
+    "M0": null,
+    "M1": "if len(ky) == 1 and ky[0] in (\"🔒\",):",
+    "M2": "if len(ky) == 1 and ky[0] in (\"🔒\", \"🔓\", \"⏸\"):",
+    "M3": {
+      "khoi_dong": ["for o in d.o_khac[1:]:  # bỏ ô tên việc: nó có thể kể lịch sử việc khác"],
+      "thay": "for o in d.o_khac:"
+    },
+    "M4": {
+      "khoi_dong": ["_RE_DA_GHI_XONG = re.compile(r\"✅\\s*\\*\\*[^*]{0,25}?\\d{1,2}/\\d{1,2}/\\d{4}\")"],
+      "thay": "_RE_DA_GHI_XONG = re.compile(r\"✅\")"
+    },
+    "M5": "if ky and ky[0] in (\"🔒\", \"🔓\"):"
+  },
+  "tests": [
+    "tests/unit/test_td0431_khoa_da_ghi_xong.py"
+  ],
+  "ky_vong": {
+    "M0": "xanh",
+    "M1": "do",
+    "M2": "do",
+    "M3": "do",
+    "M4": "do",
+    "M5": "do"
+  },
+  "ky_vong_do_gom": {
+    "M1": [
+      "tests/unit/test_td0431_khoa_da_ghi_xong.py::TestLoai4::test_mo_ma_da_ghi_xong_cung_bao"
+    ],
+    "M2": [
+      "tests/unit/test_td0431_khoa_da_ghi_xong.py::TestLoai4::test_trang_thai_da_dong_hay_tam_dung_thi_khong_bao"
+    ],
+    "M3": [
+      "tests/unit/test_td0431_khoa_da_ghi_xong.py::TestLoai4::test_dau_xong_chi_o_o_ten_viec_thi_khong_bao"
+    ],
+    "M4": [
+      "tests/unit/test_td0431_khoa_da_ghi_xong.py::TestLoai4::test_dau_xong_khong_kem_ngay_thi_khong_bao"
+    ],
+    "M5": [
+      "tests/unit/test_td0431_khoa_da_ghi_xong.py::TestLoai4::test_trang_thai_lan_chi_bao_loai_2"
+    ]
+  }
+}
