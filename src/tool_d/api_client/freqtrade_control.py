@@ -49,12 +49,21 @@ class FreqtradeAuthError(FreqtradeControlError):
     hiện đúng lúc cần dừng bot NHANH nhất)."""
 
 
+class FreqtradeBatLaiBotError(FreqtradeControlError):
+    """TD-0434 (`api-integration-rules.md` 4.4d luật 1) — `/stopentry` vừa chuyển một bot `STOPPED` sang `PAUSED`, tức
+    BẬT LẠI vòng lặp của một bot đã dừng hẳn (`rpc.py:998-1004`). Không được xảy ra; tầng gọi phải `/stop` ngay."""
+
+
+#: `rpc.py:1000-1004` (Freqtrade 2026.8) — chuỗi trả về khi `/stopentry` gặp bot `STOPPED`.
+_DAU_HIEU_BAT_LAI = "starting bot with trader in paused state"
+
+
 def _goi_dung_mot_lan(
-    base_url: str, path: str, *, username: str, password: str, timeout: float
+    base_url: str, path: str, *, username: str, password: str, timeout: float, method: str = "POST"
 ) -> dict:
     url = f"{base_url.rstrip('/')}{path}"
     tin = base64.b64encode(f"{username}:{password}".encode("utf-8")).decode("ascii")
-    req = urllib.request.Request(url, method="POST", headers={"Authorization": f"Basic {tin}"})
+    req = urllib.request.Request(url, method=method, headers={"Authorization": f"Basic {tin}"})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310
             return json.loads(resp.read())
@@ -92,12 +101,64 @@ def dung_bot(
     chờ thật giữa các lần thử — cùng khuôn `latency_samples_ms` cho phép
     tiêm hàm thời gian.
     """
+    return _goi_co_thu_lai(
+        base_url, "/api/v1/stop", username=username, password=password, timeout=timeout,
+        so_lan_thu_lai=so_lan_thu_lai, cho_giua_cac_lan_s=cho_giua_cac_lan_s, ham_ngu=ham_ngu,
+        viec="dừng được bot",
+    )
+
+
+def tam_ngung_mo_lenh(
+    base_url: str,
+    *,
+    username: str,
+    password: str,
+    timeout: float = DEFAULT_TIMEOUT_S,
+    so_lan_thu_lai: int = SO_LAN_THU_LAI_MAC_DINH,
+    cho_giua_cac_lan_s: float = CHO_GIUA_CAC_LAN_S,
+    ham_ngu: Callable[[float], None] = time.sleep,
+) -> dict:
+    """TD-0434 — `POST /api/v1/stopentry`: HALT (§12c.5 bước 1) — ngừng MỞ lệnh mới và bơm thêm, vị thế đang mở chạy tiếp.
+
+    Idempotent khi bot `RUNNING`/`PAUSED` (`rpc.py:991-1004`). 🔴 Gọi khi bot `STOPPED` thì Freqtrade BẬT LẠI vòng lặp ở
+    `PAUSED` — tầng gọi PHẢI không gọi hàm này khi có cờ đỏ (`api-integration-rules.md` 4.4d luật 1); nếu vẫn xảy ra, hàm
+    này nhận ra chuỗi trả về và raise `FreqtradeBatLaiBotError` để tầng gọi `/stop` ngay, không im lặng.
+    """
+    kq = _goi_co_thu_lai(
+        base_url, "/api/v1/stopentry", username=username, password=password, timeout=timeout,
+        so_lan_thu_lai=so_lan_thu_lai, cho_giua_cac_lan_s=cho_giua_cac_lan_s, ham_ngu=ham_ngu,
+        viec="tạm ngừng được việc mở lệnh",
+    )
+    if _DAU_HIEU_BAT_LAI in str(kq.get("status", "")):
+        raise FreqtradeBatLaiBotError(
+            f"{base_url}/api/v1/stopentry vừa BẬT LẠI một bot đang dừng hẳn ({kq!r}) — phải /stop ngay"
+        )
+    return kq
+
+
+def _goi_co_thu_lai(
+    base_url: str,
+    path: str,
+    *,
+    username: str,
+    password: str,
+    timeout: float,
+    so_lan_thu_lai: int,
+    cho_giua_cac_lan_s: float,
+    ham_ngu: Callable[[float], None],
+    viec: str,
+    method: str = "POST",
+) -> dict:
+    """R5 bounded retry DÙNG CHUNG cho mọi lời gọi control API (R1 — một đường ra): 401 không retry; lỗi khác thử lại
+    tối đa `so_lan_thu_lai` lần, nghỉ cố định; hết lượt thì RAISE, không nuốt."""
     if so_lan_thu_lai < 1:
         raise ValueError(f"so_lan_thu_lai phải >= 1, nhận: {so_lan_thu_lai}")
     loi_cuoi: FreqtradeControlError | None = None
     for lan in range(1, so_lan_thu_lai + 1):
         try:
-            return _goi_dung_mot_lan(base_url, "/api/v1/stop", username=username, password=password, timeout=timeout)
+            return _goi_dung_mot_lan(
+                base_url, path, username=username, password=password, timeout=timeout, method=method
+            )
         except FreqtradeAuthError:
             raise
         except FreqtradeControlError as exc:
@@ -106,6 +167,6 @@ def dung_bot(
                 ham_ngu(cho_giua_cac_lan_s)
     assert loi_cuoi is not None  # vòng lặp trên luôn gán trước khi tới đây
     raise FreqtradeControlError(
-        f"KHÔNG dừng được bot qua {base_url}/api/v1/stop sau {so_lan_thu_lai} lần thử — "
+        f"KHÔNG {viec} qua {base_url}{path} sau {so_lan_thu_lai} lần thử — "
         f"lỗi lần cuối: {loi_cuoi}"
     ) from loi_cuoi

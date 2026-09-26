@@ -1,0 +1,21 @@
+{
+  "mo_ta": "TD-0434 (DR-TANG-CHAN-01): quyet dinh THUAN cua tang chan sut von. M1 = bo nguong HALT (dung hinh 'khai 5/8/20 ma khong dong ma nao chan'); M2 = ABORT tu go (ha xuong HALT khi dd trong dai 8-20); M3 = bo ABORT; M4 = co_do bo hai ly do moi (ABORT, leo thang) — luat 1: goi /stopentry khi bot STOPPED = bat lai bot.",
+  "module": "tool_d.risk_supervisor",
+  "file": "src/tool_d/risk_supervisor.py",
+  "khoi_dong": ["if dd_pct > hang_so.dd_halt_pct:"],
+  "bien_the": {
+    "M0": null,
+    "M1": "if False:",
+    "M2": {"khoi_dong": ["if muc_cu == ABORT or dd_pct is None:"], "thay": "if dd_pct is None:"},
+    "M3": {"khoi_dong": ["if dd_pct > hang_so.dd_abort_pct:"], "thay": "if False:"},
+    "M4": {"khoi_dong": ["return self.la_thanh_ly or self.breaker.dung_han or self.muc_tang_chan == ABORT or self.leo_thang_dung"], "thay": "return self.la_thanh_ly or self.breaker.dung_han"}
+  },
+  "tests": ["tests/unit/test_td0434_tang_chan_supervisor.py"],
+  "ky_vong": {"M0": "xanh", "M1": "do", "M2": "do", "M3": "do", "M4": "do"},
+  "ky_vong_do_gom": {
+    "M1": ["tests/unit/test_td0434_tang_chan_supervisor.py::TestMotVongGiamSat::test_vuot_8_thi_HALT_goi_stopentry_bot_van_song"],
+    "M2": ["tests/unit/test_td0434_tang_chan_supervisor.py::TestQuyetDinhThuan::test_ABORT_khong_tu_go[9.0]"],
+    "M3": ["tests/unit/test_td0434_tang_chan_supervisor.py::TestMotVongGiamSat::test_vuot_20_thi_ABORT_dung_THU_TU_luu_stop_su_kien"],
+    "M4": ["tests/unit/test_td0434_tang_chan_supervisor.py::TestMotVongGiamSat::test_CO_DO_thi_KHONG_BAO_GIO_goi_stopentry"]
+  }
+}

@@ -380,6 +380,49 @@ class TrangThaiBenVung:
 
     breaker: TrangThaiBreaker
     la_thanh_ly: bool = False
+    #: TD-0434 (`DR-TANG-CHAN-01`) — mức tầng chặn sụt vốn: `BINH_THUONG` / `HALT` / `ABORT`. `ABORT` là cờ đỏ, không tự gỡ.
+    muc_tang_chan: str = "BINH_THUONG"
+    #: TD-0434 — `/stopentry` thất bại hết lượt (hoặc lỡ bật lại bot) nên đã leo thang `/stop`: cờ đỏ, không tự gỡ.
+    leo_thang_dung: bool = False
+
+    @property
+    def co_do(self) -> bool:
+        """Cờ đỏ DỪNG TOÀN HỆ THỐNG (§6.6(2)) — mọi lý do, một chỗ hỏi. Có cờ đỏ ⇒ KHÔNG gọi `/stopentry`
+        (`api-integration-rules.md` 4.4d luật 1: gọi nó khi bot `STOPPED` là BẬT LẠI bot)."""
+        return self.la_thanh_ly or self.breaker.dung_han or self.muc_tang_chan == ABORT or self.leo_thang_dung
+
+
+# ═══ TD-0434 (`DR-TANG-CHAN-01`, §12c.5) — tầng chặn sụt vốn: quyết định THUẦN, không gọi mạng ═══
+
+BINH_THUONG = "BINH_THUONG"
+HALT = "HALT"
+ABORT = "ABORT"
+MUC_TANG_CHAN = (BINH_THUONG, HALT, ABORT)
+
+
+def quyet_dinh_tang_chan(
+    muc_cu: str, *, dd_pct: float | None, hang_so: HangSoKhaiLai = HANG_SO_KHAI_LAI,
+) -> str:
+    """Mức kế tiếp từ mức cũ + mức sụt đo được, đúng thang §12c.5 (*"dd > 8% → HALT"*, *"dd > 20% → ABORT"* — so sánh
+    NGẶT, dùng `HANG_SO_KHAI_LAI` khai lại có chủ đích §6.6(2), `L-Z44` canh khớp cấu hình).
+
+    - `ABORT` giữ nguyên mãi (cờ đỏ, không tự gỡ).
+    - `dd_pct is None` (chưa đo được, N6) ⇒ giữ nguyên mức — không bịa "an toàn", không bịa "sụt".
+    - `HALT` KHÔNG tự về `BINH_THUONG` khi dd hồi: điều kiện mở lại là việc của `TD-0437` (§12c.5 bước 2 — mở lại theo
+      THỜI GIAN, không theo kết quả; mở theo dd hồi là phương án deadlock spec đã bác).
+    - Bậc 5% (nửa cỡ lệnh) KHÔNG ở đây: đó là phép nhân cỡ lệnh của chiến lược (`TD-0435`).
+    """
+    if muc_cu not in MUC_TANG_CHAN:
+        raise RiskSupervisorError(f"mức tầng chặn {muc_cu!r} không hợp lệ — chỉ {MUC_TANG_CHAN}")
+    if muc_cu == ABORT or dd_pct is None:
+        return muc_cu
+    if math.isnan(dd_pct) or dd_pct < 0:
+        raise RiskSupervisorError(f"dd_pct phải hữu hạn và ≥ 0, nhận {dd_pct}")
+    if dd_pct > hang_so.dd_abort_pct:
+        return ABORT
+    if dd_pct > hang_so.dd_halt_pct:
+        return HALT
+    return muc_cu
 
 
 def luu_trang_thai(trang_thai: TrangThaiBenVung, duong_dan: Path) -> None:
@@ -398,6 +441,8 @@ def luu_trang_thai(trang_thai: TrangThaiBenVung, duong_dan: Path) -> None:
             "backoff_s": trang_thai.breaker.backoff_s,
         },
         "la_thanh_ly": trang_thai.la_thanh_ly,
+        "muc_tang_chan": trang_thai.muc_tang_chan,
+        "leo_thang_dung": trang_thai.leo_thang_dung,
     }
     tam = duong_dan.with_name(duong_dan.name + ".dang-ghi")
     tam.write_text(json.dumps(noi_dung, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -424,7 +469,17 @@ def doc_trang_thai(duong_dan: Path) -> TrangThaiBenVung:
             thoi_diem_mo=(datetime.fromisoformat(b["thoi_diem_mo"]) if b["thoi_diem_mo"] else None),
             backoff_s=b["backoff_s"],
         )
-        return TrangThaiBenVung(breaker=breaker, la_thanh_ly=tho["la_thanh_ly"])
+        # TD-0434: file ghi TRƯỚC khi có tầng chặn không có hai khoá này — lúc đó chưa từng có HALT/ABORT/leo thang, nên
+        # mặc định là sự thật, không phải đoán. Có khoá mà sai kiểu ⇒ raise như mọi khoá khác (có thể đang che cờ đỏ).
+        muc = tho.get("muc_tang_chan", BINH_THUONG)
+        leo_thang = tho.get("leo_thang_dung", False)
+        if muc not in MUC_TANG_CHAN:
+            raise ValueError(f"muc_tang_chan {muc!r} không hợp lệ")
+        if type(leo_thang) is not bool:
+            raise ValueError(f"leo_thang_dung phải là bool, nhận {leo_thang!r}")
+        return TrangThaiBenVung(
+            breaker=breaker, la_thanh_ly=tho["la_thanh_ly"], muc_tang_chan=muc, leo_thang_dung=leo_thang,
+        )
     except (json.JSONDecodeError, OSError, KeyError, TypeError, ValueError) as exc:
         raise RiskSupervisorError(
             f"trạng thái đã lưu ở {duong_dan} tồn tại nhưng KHÔNG đọc được: {exc} — "

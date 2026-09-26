@@ -1,0 +1,44 @@
+{
+  "mo_ta": "TD-0434 (DR-TANG-CHAN-01): mot vong giam sat. M1 = khong luu co do truoc khi /stop (stop loi thi main ghi de mat co ABORT); M2 = HALT that bai khong leo thang (bot tiep tuc mo lenh khi dang HALT); M3 = khong goi lai /stopentry moi vong (HALT mat sau restart bot). Chot co do dau vong duoc pha o td0434_quyet_dinh M4 (thuoc tinh co_do).",
+  "module": "tool_d.ops.risk_supervisor_daemon",
+  "file": "src/tool_d/ops/risk_supervisor_daemon.py",
+  "khoi_dong": [
+    "luu_truoc_fn(trang_thai_moi)  # ABORT: cờ đỏ xuống đĩa TRƯỚC /stop"
+  ],
+  "bien_the": {
+    "M0": null,
+    "M1": "pass",
+    "M2": {
+      "khoi_dong": [
+        "except FreqtradeControlError as exc:  # gồm `FreqtradeBatLaiBotError`"
+      ],
+      "thay": "except ZeroDivisionError as exc:"
+    },
+    "M3": {
+      "khoi_dong": [
+        "tam_ngung_fn()"
+      ],
+      "thay": "pass"
+    }
+  },
+  "tests": [
+    "tests/unit/test_td0434_tang_chan_supervisor.py"
+  ],
+  "ky_vong": {
+    "M0": "xanh",
+    "M1": "do",
+    "M2": "do",
+    "M3": "do"
+  },
+  "ky_vong_do_gom": {
+    "M1": [
+      "tests/unit/test_td0434_tang_chan_supervisor.py::TestMotVongGiamSat::test_vuot_20_thi_ABORT_dung_THU_TU_luu_stop_su_kien"
+    ],
+    "M2": [
+      "tests/unit/test_td0434_tang_chan_supervisor.py::TestMotVongGiamSat::test_HALT_khong_thi_hanh_duoc_thi_LEO_THANG_stop_co_do[loi0]"
+    ],
+    "M3": [
+      "tests/unit/test_td0434_tang_chan_supervisor.py::TestMotVongGiamSat::test_dang_HALT_goi_lai_stopentry_MOI_VONG"
+    ]
+  }
+}

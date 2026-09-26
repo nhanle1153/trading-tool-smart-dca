@@ -44,11 +44,12 @@ from __future__ import annotations
 
 import argparse
 import logging
+import math
 import os
 import sys
 import time
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -63,9 +64,26 @@ from tool_d.api_client.binance_public import (
     trang_thai_breaker_hien_tai,
     validate_credentials_for_live,
 )
-from tool_d.api_client.freqtrade_control import FreqtradeControlError, dung_bot
+from tool_d.api_client.freqtrade_control import (
+    FreqtradeAuthError,
+    FreqtradeControlError,
+    dung_bot,
+    tam_ngung_mo_lenh,
+)
 from tool_d.config.loader import load_tool_d_config, resolve
+from tool_d.equity_peak import (
+    ABORT as SU_KIEN_ABORT,
+    TEN_FILE as TEN_FILE_DINH,
+    SuKienDinh,
+    cap_nhat_dinh,
+    doc_dinh_equity,
+    duong_dan_so_su_kien,
+    ghi_su_kien,
+    luu_dinh_equity,
+)
 from tool_d.risk_supervisor import (
+    ABORT,
+    HALT,
     RiskSupervisorError,
     TrangThaiBenVung,
     doc_snapshot_an_toan,
@@ -73,6 +91,7 @@ from tool_d.risk_supervisor import (
     kiem_khai_lai_khop_ban_goc,
     luu_trang_thai,
     phat_hien_thanh_ly,
+    quyet_dinh_tang_chan,
 )
 
 _LOG = logging.getLogger("tool_d.ops.risk_supervisor_daemon")
@@ -120,6 +139,10 @@ def chay_mot_vong_giam_sat(
     doc_breaker_hien_tai_fn: Callable[[], object],
     tu_thoi_diem_ms: int,
     dung_bot_fn: Callable[[], object],
+    tinh_dd_fn: Callable[[object], float | None] | None = None,
+    tam_ngung_fn: Callable[[], object] | None = None,
+    ghi_abort_fn: Callable[[], None] | None = None,
+    luu_truoc_fn: Callable[[TrangThaiBenVung], None] | None = None,
 ) -> tuple[TrangThaiBenVung, bool]:
     """MỘT vòng: đọc snapshot ba endpoint (cô lập lỗi từng endpoint,
     §6.6(4)) → đọc lại breaker THẬT của `binance_public` → phát hiện thanh
@@ -137,7 +160,7 @@ def chay_mot_vong_giam_sat(
     failure (đủ lỗi liên tiếp) đã có breaker của `binance_public` xử lý
     (backoff/`dung_han`), không cần thêm cơ chế thứ hai ở đây.
     """
-    if trang_thai.la_thanh_ly or trang_thai.breaker.dung_han:
+    if trang_thai.co_do:
         return trang_thai, True
 
     snap = doc_snapshot_an_toan(
@@ -170,7 +193,109 @@ def chay_mot_vong_giam_sat(
         dung_bot_fn()
         return trang_thai_moi, True
 
+    if tinh_dd_fn is None:  # tầng chặn sụt vốn chưa nối — `main()` luôn nối (có test AST canh)
+        return trang_thai_moi, False
+    return _tang_chan_sut_von(
+        trang_thai, trang_thai_moi, snap["account"], tinh_dd_fn=tinh_dd_fn, tam_ngung_fn=tam_ngung_fn,
+        ghi_abort_fn=ghi_abort_fn, luu_truoc_fn=luu_truoc_fn, dung_bot_fn=dung_bot_fn,
+    )
+
+
+def _tang_chan_sut_von(
+    trang_thai: TrangThaiBenVung,
+    trang_thai_moi: TrangThaiBenVung,
+    kq_account,
+    *,
+    tinh_dd_fn: Callable[[object], float | None],
+    tam_ngung_fn: Callable[[], object] | None,
+    ghi_abort_fn: Callable[[], None] | None,
+    luu_truoc_fn: Callable[[TrangThaiBenVung], None] | None,
+    dung_bot_fn: Callable[[], object],
+) -> tuple[TrangThaiBenVung, bool]:
+    """TD-0434 (`DR-TANG-CHAN-01`, §12c.5) — phần CỨNG của thang sụt vốn cho MỌI chiến lược.
+
+    > 20% ⇒ ABORT: LƯU cờ đỏ → `/stop` → ghi sự kiện `ABORT` vào sổ đỉnh. Thứ tự có chủ đích: ghi sự kiện trước (đặt lại
+    đỉnh) mà `/stop` thất bại thì lần khởi động sau không có cờ đỏ, đỉnh đã mới ⇒ bot chạy tiếp như chưa từng sụt.
+    > 8% ⇒ HALT: `/stopentry` MỖI vòng (HALT không sống qua restart bot — 4.4d luật 2). Thất bại hết lượt, hoặc lỡ bật lại
+    một bot đã dừng ⇒ leo thang: LƯU cờ đỏ → `/stop`.
+    Chưa đọc được account ⇒ dd `None` ⇒ giữ nguyên mức (N6); lỗi đọc kéo dài đã có breaker của `binance_public` lo.
+    """
+    if kq_account.doc_duoc:
+        dd = tinh_dd_fn(kq_account.gia_tri)
+    else:
+        dd = None
+        _LOG.warning("không đọc được account vòng này — giữ nguyên mức tầng chặn: %s", kq_account.loi)
+    muc_moi = quyet_dinh_tang_chan(trang_thai.muc_tang_chan, dd_pct=dd)
+    trang_thai_moi = replace(trang_thai_moi, muc_tang_chan=muc_moi)
+    if muc_moi != trang_thai.muc_tang_chan:  # R8: log khi CHUYỂN, không lặp mỗi vòng
+        _LOG.critical("TẦNG CHẶN SỤT VỐN: %s → %s (dd=%.4f%%)", trang_thai.muc_tang_chan, muc_moi, dd)
+
+    if muc_moi == ABORT:
+        if luu_truoc_fn is not None:
+            luu_truoc_fn(trang_thai_moi)  # ABORT: cờ đỏ xuống đĩa TRƯỚC /stop
+        dung_bot_fn()
+        if ghi_abort_fn is not None:
+            ghi_abort_fn()
+        return trang_thai_moi, True
+
+    if muc_moi == HALT:
+        if tam_ngung_fn is None:
+            raise RiskSupervisorError("mức HALT nhưng không có tam_ngung_fn — không được lặng lẽ để bot mở lệnh")
+        try:
+            tam_ngung_fn()
+        except FreqtradeAuthError:
+            raise
+        except FreqtradeControlError as exc:  # gồm `FreqtradeBatLaiBotError`
+            _LOG.critical("HALT không thi hành được (%s) — leo thang /stop + cờ đỏ", exc)
+            trang_thai_moi = replace(trang_thai_moi, leo_thang_dung=True)
+            if luu_truoc_fn is not None:
+                luu_truoc_fn(trang_thai_moi)
+            dung_bot_fn()
+            return trang_thai_moi, True
+
     return trang_thai_moi, False
+
+
+#: `GET /fapi/v2/account` của tài khoản USDⓈ-M: `totalMarginBalance` tính bằng USDT (tài sản gốc) = số dư ví + lãi/lỗ CHƯA
+#: chốt — đúng thước §12c.5 (`spec:4713-4714`). Đỉnh bền vững ghi bằng đơn vị này.
+DON_VI_EQUITY_SAN = "USDT"
+
+
+def duong_dan_dinh_supervisor(state_path: Path) -> Path:
+    """Đỉnh của Supervisor nằm CẠNH file trạng thái của chính nó (`DR-TANG-CHAN-01` §4 điều 1) — mỗi Supervisor (dry-run,
+    live) một thư mục, một đỉnh, một sổ sự kiện (N11). Supervisor là chủ DUY NHẤT của đỉnh này."""
+    return state_path.parent / TEN_FILE_DINH
+
+
+def dd_tu_account(account: object, *, duong_dan_dinh: Path) -> float | None:
+    """Mức sụt % từ snapshot account, qua `equity_peak.cap_nhat_dinh()` (áp sổ `NAP_RUT`/`ABORT` của `TD-0426`).
+
+    Không đọc được `totalMarginBalance` hoặc nó ≤ 0 ⇒ `None` (N6 — chưa đo được, không bịa). File đỉnh HỎNG ⇒ raise
+    `DinhEquityError` (không tự coi là sạch — có thể đang che một đỉnh thật), daemon dừng và lộ ra.
+    """
+    try:
+        tong = float(account["totalMarginBalance"])  # type: ignore[index]
+    except (KeyError, TypeError, ValueError) as exc:
+        _LOG.warning("account thiếu/sai totalMarginBalance (%s) — dd chưa đo được vòng này", exc)
+        return None
+    if not math.isfinite(tong) or tong <= 0:
+        _LOG.warning("totalMarginBalance = %r — không lấy làm equity, dd chưa đo được vòng này", tong)
+        return None
+    cu = doc_dinh_equity(duong_dan_dinh)
+    moi = cap_nhat_dinh(cu, tong_hien_tai=tong, stake_currency=DON_VI_EQUITY_SAN,
+                        so_su_kien=duong_dan_so_su_kien(duong_dan_dinh))
+    if moi != cu:
+        luu_dinh_equity(moi, duong_dan_dinh)
+    return max(0.0, (moi.dinh - tong) / moi.dinh * 100.0)
+
+
+def ghi_su_kien_abort(duong_dan_dinh: Path, *, now: datetime) -> None:
+    """ABORT ⇒ một dòng `ABORT` trong sổ đỉnh (`DR-D6D8-01` §4.2 sự kiện (b)): chu trình giả thuyết mới bắt đầu với đỉnh mới."""
+    ghi_su_kien(
+        duong_dan_so_su_kien(duong_dan_dinh),
+        SuKienDinh(loai=SU_KIEN_ABORT, stake_currency=DON_VI_EQUITY_SAN, luc_utc=now.isoformat(),
+                   ghi_chu="Risk Supervisor: dd > dd_abort_pct (§12c.5) — ABORT, cờ đỏ, bot đã /stop"),
+    )
 
 
 @dataclass(frozen=True)
@@ -226,7 +351,7 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover — khung CL
         return EXIT_L44_MISMATCH
 
     trang_thai = doc_trang_thai(tham_so.state_path)
-    if trang_thai.la_thanh_ly or trang_thai.breaker.dung_han:
+    if trang_thai.co_do:
         _LOG.critical(
             "cờ đỏ đã ghi từ lần chạy trước (%s) — KHÔNG tự khởi động lại, cần can thiệp thủ công",
             tham_so.state_path,
@@ -234,9 +359,18 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover — khung CL
         return EXIT_CO_DO_TU_LAN_CHAY_TRUOC
 
     tu_thoi_diem_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
+    duong_dan_dinh = duong_dan_dinh_supervisor(tham_so.state_path)
+    # TD-0434: bản MỚI NHẤT đã lưu. `luu_truoc_fn` lưu cờ đỏ TRƯỚC khi gọi /stop; nếu /stop thất bại, nhánh except dưới
+    # phải lưu lại ĐÚNG bản này — lưu `trang_thai` (bản đầu vòng) sẽ ghi đè mất cờ đỏ vừa đặt.
+    da_luu: list[TrangThaiBenVung] = [trang_thai]
+
+    def _luu_truoc(t: TrangThaiBenVung) -> None:
+        luu_trang_thai(t, tham_so.state_path)
+        da_luu[0] = t
 
     vong = 0
     while tham_so.max_iterations is None or vong < tham_so.max_iterations:
+        da_luu[0] = trang_thai
         try:
             trang_thai, nen_dung = chay_mot_vong_giam_sat(
                 trang_thai,
@@ -251,6 +385,13 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover — khung CL
                 dung_bot_fn=lambda: dung_bot(
                     tham_so.freqtrade_api_base_url, username=ft_username, password=ft_password
                 ),
+                # TD-0434 (`DR-TANG-CHAN-01`) — tầng chặn sụt vốn cho MỌI chiến lược. Có test AST canh bốn khoá này.
+                tinh_dd_fn=lambda account: dd_tu_account(account, duong_dan_dinh=duong_dan_dinh),
+                tam_ngung_fn=lambda: tam_ngung_mo_lenh(
+                    tham_so.freqtrade_api_base_url, username=ft_username, password=ft_password
+                ),
+                ghi_abort_fn=lambda: ghi_su_kien_abort(duong_dan_dinh, now=datetime.now(timezone.utc)),
+                luu_truoc_fn=_luu_truoc,
             )
         except FreqtradeControlError as exc:
             # KHÔNG nuốt: "không dừng được bot khi tài khoản đã thanh lý"
@@ -258,17 +399,19 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover — khung CL
             # (nếu vòng trước đã đặt cờ) rồi thoát khác 0, không lặng lẽ
             # tiếp tục vòng lặp coi như chưa có gì xảy ra.
             _LOG.critical("KHÔNG dừng được bot qua Freqtrade API: %s", exc)
-            luu_trang_thai(trang_thai, tham_so.state_path)
+            luu_trang_thai(da_luu[0], tham_so.state_path)
             return EXIT_KHONG_DUNG_DUOC_BOT
         luu_trang_thai(trang_thai, tham_so.state_path)
         vong += 1
 
         if nen_dung:
             _LOG.critical(
-                "Risk Supervisor DỪNG sau %d vòng — la_thanh_ly=%s dung_han=%s",
+                "Risk Supervisor DỪNG sau %d vòng — la_thanh_ly=%s dung_han=%s muc_tang_chan=%s leo_thang_dung=%s",
                 vong,
                 trang_thai.la_thanh_ly,
                 trang_thai.breaker.dung_han,
+                trang_thai.muc_tang_chan,
+                trang_thai.leo_thang_dung,
             )
             return EXIT_DA_DUNG_VI_CO_DO
 
