@@ -1241,6 +1241,18 @@ commit này, `Phien: 12c579bc`. Khoá 🔒 bốn việc DR cùng commit.
 
 **Đặt chỗ mã (N12 mục 7c bản khôi phục):** `TD-0429`, `TD-0430`, commit này, `Phien: 518225e3`.
 
+## Khối 43 — Loại cảnh báo backlog chắc chắn: 🔒 mà ô nghiệm thu đã ghi xong (mở 26/09/2026, chủ dự án gõ "bắt đầu code")
+
+> Sự cố: `TD-0386` còn 🔒 hai ngày dù commit hoàn tất `ff42b18` đã ghi `✅ **24/09/2026:**` vào ô nghiệm thu. `--kiem-backlog`
+> (`TD-0331`) CÓ báo — nhưng ở loại 1, lẫn với `TD-0405`/`TD-0427` là việc nhiều chặng đang dở hợp lệ ⇒ không ai phân biệt được.
+> Giữ quyết định `OQ-15`: chỉ báo, không chặn, không nối `run_audit()`. 0 trial, không chạm dữ liệu.
+
+| Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
+|---|---|---|---|---|
+| TD-0431 | **Loại 4 `khoa_da_ghi_xong` trong `ledger/backlog_check.py`**: dòng 🔒 (hoặc 🔓) mà ô sau ô trạng thái mang `✅ **dd/mm/yyyy` — tự mâu thuẫn trên CHÍNH dòng đó, so khớp cơ học, không cần `git log` | 🔒 | TD-0331 ✅ | Test hàm thuần + ảnh chụp lịch sử THẬT `git show 37f2fd1~1:TASKS.md` phải báo đúng `TD-0386` loại 4 và KHÔNG báo `TD-0405`/`TD-0427`; `TASKS.md` hiện tại 0 ca loại 4; phá thật bằng công cụ `TD-0329`; full suite Docker 0 đỏ |
+
+**Đặt chỗ mã (N12 mục 7c):** `TD-0431`, commit này, `Phien: 9f739290`.
+
 ---
 
 ## Việc đã biết là sẽ có, chưa mở
