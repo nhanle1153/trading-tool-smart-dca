@@ -1255,6 +1255,29 @@ commit này, `Phien: 12c579bc`. Khoá 🔒 bốn việc DR cùng commit.
 
 ---
 
+## Khối 44 — Tầng chặn sụt vốn lên Risk Supervisor cho MỌI chiến lược (mở 26/09/2026, chủ dự án chọn phương án C, `DR-TANG-CHAN-01`)
+
+> `MT-40` phần còn lại. Chủ dự án chọn **C — Supervisor làm chủ, chiến lược làm theo**: Supervisor (tiến trình riêng, §6.6)
+> là chủ DUY NHẤT của đỉnh + mức sụt khi chạy dài, đo trên equity gồm lãi/lỗ chưa chốt (§12c.5), thi hành HALT
+> (`/stopentry`) và ABORT (`/stop` + cờ đỏ); chiến lược chỉ giữ bậc 5% nửa cỡ lệnh, đọc mức sụt Supervisor công bố. Bối cảnh:
+> thang 5/8/20 hôm nay chỉ sống trong `ZoneAbsorption` (`RoFunding` không có tầng nào), và `HANG_SO_KHAI_LAI` của Supervisor
+> khai 5/8/20 mà không dòng mã nào dùng để chặn. Không chạm dữ liệu thị trường, 0 trial. Thay phạm vi `TD-0270` phần Supervisor.
+
+| Mã việc | Nội dung | TT | Phụ thuộc | Tiêu chí XONG |
+|---|---|---|---|---|
+| TD-0432 | 🚪 **`DR-TANG-CHAN-01`** — chốt kiến trúc phương án C | 🔒 | — | DR commit RIÊNG và TRƯỚC mọi dòng mã |
+| TD-0433 | **ĐO hai điều trước khi code** (không đoán): (a) Freqtrade dry-run `/api/v1/balance` có gồm lãi/lỗ chưa chốt không — quyết nguồn equity của Supervisor ở dry-run; (b) hạn *"`dd_state.json` quá cũ"* dùng lại được nhịp heartbeat watchdog (`TD-0209`) không — cần con số mới thì TRÌNH chủ dự án | 🔓 | TD-0432 | Bằng chứng đọc mã nguồn Freqtrade trong image + ghi `docs/research-log.md`; câu (b) có câu trả lời hoặc đã trình |
+| TD-0434 | **Supervisor tính đỉnh + mức sụt và thi hành HALT/ABORT** — dùng lại `equity_peak.py` + sổ sự kiện `TD-0426` (file riêng dưới `runs/risk_supervisor/<runmode>/`), dùng `HANG_SO_KHAI_LAI`; > 8% ⇒ `/stopentry`; > 20% hoặc HALT thứ 4 / 100 lệnh đóng ⇒ `/stop` + cờ đỏ + ghi `ABORT`, không tự gỡ | 🔓 | TD-0433 | Test thuần chuỗi equity giả ⇒ đúng thời điểm từng lệnh; `L-Z44` xanh; phá thật trong bộ nhớ; full suite Docker 0 failed |
+| TD-0435 | **`dd_state.json` + hàm đọc DÙNG CHUNG cho chiến lược** — Supervisor ghi nguyên tử, có mốc giờ; chiến lược áp bậc 5% (nửa cỡ lệnh) qua MỘT hàm; thiếu/cũ ⇒ không mở lệnh mới (fail-closed); backtest giữ công thức hiện tại (không đổi số đã đo); nối `ZoneAbsorption` + `RoFunding` | 🔓 | TD-0434 | Test qua đường sản xuất: thiếu/cũ ⇒ không mở; 6% ⇒ nửa cỡ; backtest không đổi; full suite Docker 0 failed |
+| TD-0436 | **Test khoá AST** — mọi chiến lược trong `user_data/strategies/` chạy được live/dry-run phải gọi hàm đọc dùng chung trong đường định cỡ (khuôn `TD-0427`) | 🔓 | TD-0435 | Có răng: bỏ lời gọi ⇒ đỏ; full suite Docker 0 failed |
+| TD-0437 | **Mở lại sau HALT** (§12c.5 bước 2) — Supervisor kiểm (a) hết vị thế, (b) qua 2 × `max_hold_bars` kể từ vị thế cuối đóng, (c) có dòng research-log xác nhận; đủ cả ba mới cho `/start`, mở lại ở nửa cỡ; 0 hằng số mới | 🔓 | TD-0434 | Test thiếu từng điều kiện ⇒ không mở; full suite Docker 0 failed |
+| TD-0438 | **Supervisor cho dry-run D11** (parity, quy tắc 9 / N11) — service mới + file cấu hình PHỦ bật API điều khiển chỉ nghe localhost (khuôn `DR-D11-03` §2.3: KHÔNG sửa `config/freqtrade/config.json` dùng chung); nguồn equity theo kết quả `TD-0433`(a) | 🔓 | TD-0433, TD-0434 | Chạy thật dry-run với Supervisor, ép một HALT bằng sổ sự kiện giả ở thư mục tạm — không tiền; full suite Docker 0 failed |
+| TD-0439 | **Lệnh ghi `NAP_RUT` cho người vận hành** — bọc `equity_peak.ghi_su_kien()`, nhắc quy ước ghi nạp TRƯỚC / rút SAU; ghi vào sổ của Supervisor (chủ đỉnh duy nhất) | 🔓 | TD-0434 | Test + chạy thật một lần trên thư mục tạm; full suite Docker 0 failed |
+
+**Đặt chỗ mã (N12 mục 7c):** `TD-0432`…`TD-0439` + `DR-TANG-CHAN-01`, commit này, `Phien: 809d6cd8`.
+
+---
+
 ## Việc đã biết là sẽ có, chưa mở
 
 | Giai đoạn | Nội dung | Chặn bởi |
