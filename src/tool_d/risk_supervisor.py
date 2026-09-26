@@ -395,6 +395,12 @@ class TrangThaiBenVung:
     #: TD-0435 — mức sụt % đo ở vòng GẦN NHẤT, để daemon công bố vào `dd_state.json`. CHỈ trong bộ nhớ, KHÔNG ghi đĩa
     #: (`luu_trang_thai` bỏ qua): số cũ sau restart không được đọc lại như số mới (N6 — thà để trống).
     dd_pct_cuoi: float | None = None
+    #: TD-0437 — lúc CHUYỂN sang HALT, và lúc Supervisor THẤY hết vị thế lần đầu sau đó (trễ ≤ 1 vòng so với thật ⇒ chờ
+    #: lâu hơn một chút, phía an toàn). Ghi đĩa: Supervisor restart không được làm lại đồng hồ chờ từ đầu hay bỏ qua nó.
+    luc_halt: datetime | None = None
+    luc_het_vi_the: datetime | None = None
+    #: TD-0437 — điều kiện mở lại còn thiếu ở vòng trước; chỉ để log khi ĐỔI (R8). Không ghi đĩa.
+    thieu_mo_lai_cuoi: tuple[str, ...] = ()
 
     @property
     def co_do(self) -> bool:
@@ -408,9 +414,9 @@ class TrangThaiBenVung:
 BINH_THUONG = "BINH_THUONG"
 HALT = "HALT"
 ABORT = "ABORT"
-MUC_TANG_CHAN = (BINH_THUONG, HALT, ABORT)
-#: TD-0435/TD-0437 (§12c.5 BƯỚC 3) — mở lại sau HALT ở NỬA cỡ, giữ tới khi dd ≤ soft. Chuyển mức thuộc `TD-0437`.
+#: TD-0435/TD-0437 (§12c.5 BƯỚC 3) — mở lại sau HALT ở NỬA cỡ, giữ tới khi dd ≤ soft; trong mức này chỉ còn ABORT > abort.
 NUA_CO = "NUA_CO"
+MUC_TANG_CHAN = (BINH_THUONG, HALT, ABORT, NUA_CO)
 
 
 # ═══ TD-0435 (`DR-TANG-CHAN-01` §4 điều 3) — `dd_state.json`: Supervisor CÔNG BỐ, chiến lược ĐỌC ═══
@@ -478,9 +484,38 @@ def quyet_dinh_tang_chan(
         raise RiskSupervisorError(f"dd_pct phải hữu hạn và ≥ 0, nhận {dd_pct}")
     if dd_pct > hang_so.dd_abort_pct:
         return ABORT
+    if muc_cu == NUA_CO:
+        # TD-0437 (§12c.5 BƯỚC 3–4): mở lại lúc dd còn > halt (HALT không đóng ép, dd đứng yên) ⇒ HALT lại ở đây là
+        # đúng deadlock spec đã bác. Trong NUA_CO chỉ ABORT (ở trên) hoặc hồi về ≤ soft mới đổi mức.
+        return BINH_THUONG if dd_pct <= hang_so.dd_soft_pct else NUA_CO
     if dd_pct > hang_so.dd_halt_pct:
         return HALT
     return muc_cu
+
+
+def dieu_kien_mo_lai(
+    *,
+    so_vi_the_mo: int | None,
+    luc_het_vi_the: datetime | None,
+    now: datetime,
+    cho_toi_thieu: timedelta,
+    co_xac_nhan: bool,
+) -> list[str]:
+    """TD-0437 (§12c.5 BƯỚC 2) — điều kiện mở lại sau HALT còn THIẾU; rỗng ⇔ được mở lại. CẢ BA:
+    (a) mọi vị thế đã đóng · (b) đã qua `cho_toi_thieu` (= 2 × `max_hold_bars`) kể từ lúc hết vị thế · (c) người vận hành
+    ghi xác nhận vào research-log (không phải phê duyệt — chỉ xác nhận đã nhìn). Không đọc được ⇒ coi là CHƯA đủ (N6)."""
+    thieu: list[str] = []
+    if so_vi_the_mo is None:
+        thieu.append("(a) không đọc được số vị thế đang mở")
+    elif so_vi_the_mo > 0:
+        thieu.append(f"(a) còn {so_vi_the_mo} vị thế đang mở")
+    if luc_het_vi_the is None:
+        thieu.append("(b) chưa có mốc hết vị thế")
+    elif now - luc_het_vi_the < cho_toi_thieu:
+        thieu.append(f"(b) mới {now - luc_het_vi_the} kể từ lúc hết vị thế, cần {cho_toi_thieu}")
+    if not co_xac_nhan:
+        thieu.append("(c) chưa có dòng XAC_NHAN_MO_LAI_HALT trong research-log sau lúc HALT")
+    return thieu
 
 
 def ap_tran_halt(
@@ -535,6 +570,8 @@ def luu_trang_thai(trang_thai: TrangThaiBenVung, duong_dan: Path) -> None:
         "muc_tang_chan": trang_thai.muc_tang_chan,
         "leo_thang_dung": trang_thai.leo_thang_dung,
         "moc_halt": list(trang_thai.moc_halt),
+        "luc_halt": trang_thai.luc_halt.isoformat() if trang_thai.luc_halt else None,
+        "luc_het_vi_the": trang_thai.luc_het_vi_the.isoformat() if trang_thai.luc_het_vi_the else None,
     }
     tam = duong_dan.with_name(duong_dan.name + ".dang-ghi")
     tam.write_text(json.dumps(noi_dung, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -572,9 +609,15 @@ def doc_trang_thai(duong_dan: Path) -> TrangThaiBenVung:
         moc = tho.get("moc_halt", [])  # file trước TD-0434 chặng 2: chưa từng đếm HALT — sự thật, không đoán
         if not isinstance(moc, list) or any(m is not None and (type(m) is not int or m < 0) for m in moc):
             raise ValueError(f"moc_halt phải là danh sách số nguyên ≥ 0 hoặc null, nhận {moc!r}")
+        moc_gio = {}
+        for k in ("luc_halt", "luc_het_vi_the"):  # file trước TD-0437: chưa từng có HALT được theo dõi ⇒ None là sự thật
+            v = tho.get(k)
+            moc_gio[k] = None if v is None else datetime.fromisoformat(v)
+            if moc_gio[k] is not None and moc_gio[k].tzinfo is None:
+                raise ValueError(f"{k} phải có múi giờ, nhận {v!r}")
         return TrangThaiBenVung(
             breaker=breaker, la_thanh_ly=tho["la_thanh_ly"], muc_tang_chan=muc, leo_thang_dung=leo_thang,
-            moc_halt=tuple(moc),
+            moc_halt=tuple(moc), **moc_gio,
         )
     except (json.JSONDecodeError, OSError, KeyError, TypeError, ValueError) as exc:
         raise RiskSupervisorError(

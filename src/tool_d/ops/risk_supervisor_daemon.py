@@ -45,12 +45,13 @@ from __future__ import annotations
 import argparse
 import logging
 import math
+import re
 import os
 import sys
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, replace
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from tool_d.api_client.binance_public import (
@@ -68,7 +69,9 @@ from tool_d.api_client.freqtrade_control import (
     FreqtradeAuthError,
     FreqtradeControlError,
     doc_so_lenh_dong,
+    doc_so_vi_the_mo,
     dung_bot,
+    mo_lai_bot,
     tam_ngung_mo_lenh,
 )
 from tool_d.config.loader import load_tool_d_config, resolve
@@ -88,7 +91,9 @@ from tool_d.risk_supervisor import (
     HALT,
     RiskSupervisorError,
     TrangThaiBenVung,
+    NUA_CO,
     ap_tran_halt,
+    dieu_kien_mo_lai,
     TEN_FILE_DD_STATE,
     ghi_dd_state,
     doc_snapshot_an_toan,
@@ -159,6 +164,7 @@ def chay_mot_vong_giam_sat(
     ghi_abort_fn: Callable[[], None] | None = None,
     luu_truoc_fn: Callable[[TrangThaiBenVung], None] | None = None,
     doc_so_lenh_dong_fn: Callable[[], int] | None = None,
+    mo_lai: NoiMoLai | None = None,
 ) -> tuple[TrangThaiBenVung, bool]:
     """MỘT vòng: đọc snapshot ba endpoint (cô lập lỗi từng endpoint,
     §6.6(4)) → đọc lại breaker THẬT của `binance_public` → phát hiện thanh
@@ -217,8 +223,52 @@ def chay_mot_vong_giam_sat(
     return _tang_chan_sut_von(
         trang_thai, trang_thai_moi, snap["account"], tinh_dd_fn=tinh_dd_fn, tam_ngung_fn=tam_ngung_fn,
         ghi_abort_fn=ghi_abort_fn, luu_truoc_fn=luu_truoc_fn, dung_bot_fn=dung_bot_fn,
-        doc_so_lenh_dong_fn=doc_so_lenh_dong_fn,
+        doc_so_lenh_dong_fn=doc_so_lenh_dong_fn, mo_lai=mo_lai, now=now,
     )
+
+
+@dataclass(frozen=True)
+class NoiMoLai:
+    """TD-0437 (§12c.5 bước 2) — mọi thứ cần để mở lại sau HALT. Thiếu bộ này ⇒ không bao giờ tự mở lại (phía an toàn)."""
+
+    doc_so_vi_the_mo_fn: Callable[[], int]
+    mo_lai_fn: Callable[[], object]
+    co_xac_nhan_fn: Callable[[datetime], bool]  # nhận `luc_halt`
+    cho_toi_thieu: timedelta  # 2 × max_hold_bars_4h × 4 h
+
+
+def _thu_mo_lai(t: TrangThaiBenVung, mo_lai: NoiMoLai, *, now: datetime) -> tuple[TrangThaiBenVung, bool]:
+    """Đủ (a)(b)(c) ⇒ `/start` rồi mức `NUA_CO` (§12c.5 BƯỚC 3). Không đủ ⇒ giữ HALT, log danh sách thiếu khi nó ĐỔI (R8).
+    Cờ đỏ không tới được đây (`chay_mot_vong_giam_sat` trả sớm) — 4.4d luật 3."""
+    try:
+        so_mo: int | None = mo_lai.doc_so_vi_the_mo_fn()
+    except FreqtradeAuthError:
+        raise
+    except FreqtradeControlError as exc:
+        _LOG.warning("không đọc được số vị thế đang mở (%s) — chưa mở lại", exc)
+        so_mo = None
+    luc_het = t.luc_het_vi_the
+    if so_mo == 0 and luc_het is None:
+        luc_het = now
+    elif so_mo is not None and so_mo > 0:
+        luc_het = None
+    co_xac_nhan = t.luc_halt is not None and mo_lai.co_xac_nhan_fn(t.luc_halt)
+    thieu = dieu_kien_mo_lai(so_vi_the_mo=so_mo, luc_het_vi_the=luc_het, now=now,
+                             cho_toi_thieu=mo_lai.cho_toi_thieu, co_xac_nhan=co_xac_nhan)
+    t = replace(t, luc_het_vi_the=luc_het)
+    if thieu:
+        if tuple(thieu) != t.thieu_mo_lai_cuoi:
+            _LOG.info("HALT — chưa mở lại, còn thiếu: %s", " | ".join(thieu))
+        return replace(t, thieu_mo_lai_cuoi=tuple(thieu)), False
+    try:
+        mo_lai.mo_lai_fn()
+    except FreqtradeAuthError:
+        raise
+    except FreqtradeControlError as exc:
+        _LOG.critical("đủ điều kiện mở lại nhưng /start lỗi (%s) — giữ HALT, thử lại vòng sau", exc)
+        return t, False
+    _LOG.critical("TẦNG CHẶN SỤT VỐN: HALT → %s (đủ (a)(b)(c) §12c.5, /start) — nửa cỡ tới khi dd ≤ soft", NUA_CO)
+    return replace(t, muc_tang_chan=NUA_CO, luc_halt=None, luc_het_vi_the=None, thieu_mo_lai_cuoi=()), True
 
 
 def _doc_so_lenh_dong_an_toan(doc_so_lenh_dong_fn: Callable[[], int] | None) -> int | None:
@@ -245,6 +295,8 @@ def _tang_chan_sut_von(
     luu_truoc_fn: Callable[[TrangThaiBenVung], None] | None,
     dung_bot_fn: Callable[[], object],
     doc_so_lenh_dong_fn: Callable[[], int] | None = None,
+    mo_lai: NoiMoLai | None = None,
+    now: datetime | None = None,
 ) -> tuple[TrangThaiBenVung, bool]:
     """TD-0434 (`DR-TANG-CHAN-01`, §12c.5) — phần CỨNG của thang sụt vốn cho MỌI chiến lược.
 
@@ -267,6 +319,10 @@ def _tang_chan_sut_von(
             so_lenh_dong=_doc_so_lenh_dong_an_toan(doc_so_lenh_dong_fn),
         )
     trang_thai_moi = replace(trang_thai_moi, muc_tang_chan=muc_moi, moc_halt=moc_halt, dd_pct_cuoi=dd)
+    if muc_moi == HALT and trang_thai.muc_tang_chan != HALT:  # TD-0437: bắt đầu đồng hồ HALT mới
+        trang_thai_moi = replace(trang_thai_moi, luc_halt=now, luc_het_vi_the=None, thieu_mo_lai_cuoi=())
+    elif muc_moi != HALT and (trang_thai_moi.luc_halt is not None or trang_thai_moi.luc_het_vi_the is not None):
+        trang_thai_moi = replace(trang_thai_moi, luc_halt=None, luc_het_vi_the=None, thieu_mo_lai_cuoi=())
     if muc_moi != trang_thai.muc_tang_chan:  # R8: log khi CHUYỂN, không lặp mỗi vòng
         _LOG.critical("TẦNG CHẶN SỤT VỐN: %s → %s (dd=%.4f%%)", trang_thai.muc_tang_chan, muc_moi, dd)
 
@@ -278,7 +334,12 @@ def _tang_chan_sut_von(
             ghi_abort_fn()
         return trang_thai_moi, True
 
-    if muc_moi == HALT:
+    if muc_moi == HALT and mo_lai is not None and now is not None:
+        trang_thai_moi, da_mo = _thu_mo_lai(trang_thai_moi, mo_lai, now=now)
+        if da_mo:
+            return trang_thai_moi, False
+
+    if trang_thai_moi.muc_tang_chan == HALT:
         if tam_ngung_fn is None:
             raise RiskSupervisorError("mức HALT nhưng không có tam_ngung_fn — không được lặng lẽ để bot mở lệnh")
         try:
@@ -327,6 +388,31 @@ def dd_tu_account(account: object, *, duong_dan_dinh: Path) -> float | None:
     if moi != cu:
         luu_dinh_equity(moi, duong_dan_dinh)
     return max(0.0, (moi.dinh - tong) / moi.dinh * 100.0)
+
+
+#: TD-0437 (§12c.5 bước 2 (c)) — người vận hành xác nhận đã đọc `periodic_report.py` của kỳ HALT (không phải phê duyệt).
+#: Một dòng riêng trong `docs/research-log.md`: `XAC_NHAN_MO_LAI_HALT <runmode> <yyyy-mm-dd>` — ngày ≥ ngày HALT (UTC).
+DUONG_DAN_RESEARCH_LOG = Path("docs/research-log.md")
+_DONG_XAC_NHAN = re.compile(r"^XAC_NHAN_MO_LAI_HALT (live|dry_run) (\d{4}-\d{2}-\d{2})\s*$")
+
+
+def co_xac_nhan_mo_lai(duong_log: Path, *, runmode: str, luc_halt: datetime) -> bool:
+    """Có dòng xác nhận cho ĐÚNG runmode, ngày ≥ ngày HALT? Không đọc được file ⇒ `False` (chưa xác nhận — N6)."""
+    try:
+        noi_dung = duong_log.read_text(encoding="utf-8")
+    except OSError as exc:
+        _LOG.warning("không đọc được %s (%s) — coi như chưa xác nhận mở lại", duong_log, exc)
+        return False
+    ngay_halt = luc_halt.astimezone(timezone.utc).date()
+    for dong in noi_dung.splitlines():
+        m = _DONG_XAC_NHAN.match(dong.strip())
+        if m and m.group(1) == runmode:
+            try:
+                if datetime.strptime(m.group(2), "%Y-%m-%d").date() >= ngay_halt:
+                    return True
+            except ValueError:
+                continue
+    return False
 
 
 def ghi_su_kien_abort(duong_dan_dinh: Path, *, now: datetime) -> None:
@@ -424,6 +510,19 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover — khung CL
         luu_trang_thai(t, tham_so.state_path)
         da_luu[0] = t
 
+    # TD-0437 — "2 × max_hold_bars" (§12c.5 bước 2 (b)): Tầng B, đọc qua `resolve()` (daemon được phép import cấu hình,
+    # §6.6(2) chỉ cấm code bot) — KHÔNG khai lại: Tầng B chỉnh được, bản khai lại sẽ lệch âm thầm.
+    mo_lai = NoiMoLai(
+        doc_so_vi_the_mo_fn=lambda: doc_so_vi_the_mo(
+            tham_so.freqtrade_api_base_url, username=ft_username, password=ft_password
+        ),
+        mo_lai_fn=lambda: mo_lai_bot(tham_so.freqtrade_api_base_url, username=ft_username, password=ft_password),
+        co_xac_nhan_fn=lambda luc_halt: co_xac_nhan_mo_lai(
+            DUONG_DAN_RESEARCH_LOG, runmode=tham_so.runmode, luc_halt=luc_halt
+        ),
+        cho_toi_thieu=timedelta(hours=4 * 2 * int(resolve(cfg, "tier_b.max_hold_bars_4h"))),
+    )
+
     vong = 0
     while tham_so.max_iterations is None or vong < tham_so.max_iterations:
         da_luu[0] = trang_thai
@@ -451,6 +550,7 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover — khung CL
                 doc_so_lenh_dong_fn=lambda: doc_so_lenh_dong(
                     tham_so.freqtrade_api_base_url, username=ft_username, password=ft_password
                 ),
+                mo_lai=mo_lai,  # TD-0437 — mở lại sau HALT (§12c.5 bước 2–4)
             )
         except FreqtradeControlError as exc:
             # KHÔNG nuốt: "không dừng được bot khi tài khoản đã thanh lý"

@@ -1,0 +1,19 @@
+{
+  "mo_ta": "TD-0437 (12c.5 buoc 2-4): vong giam sat. M1 = coi nhu luon da co xac nhan (c) cua nguoi van hanh; M2 = vi the xuat hien lai khong dat lai dong ho cho; M3 = /start ma khong xet dieu kien nao.",
+  "module": "tool_d.ops.risk_supervisor_daemon",
+  "file": "src/tool_d/ops/risk_supervisor_daemon.py",
+  "khoi_dong": ["co_xac_nhan = t.luc_halt is not None and mo_lai.co_xac_nhan_fn(t.luc_halt)"],
+  "bien_the": {
+    "M0": null,
+    "M1": "co_xac_nhan = True",
+    "M2": {"khoi_dong": ["elif so_mo is not None and so_mo > 0:"], "thay": "elif False:"},
+    "M3": {"khoi_dong": ["if thieu:"], "thay": "if False:"}
+  },
+  "tests": ["tests/unit/test_td0437_mo_lai_sau_halt.py"],
+  "ky_vong": {"M0": "xanh", "M1": "do", "M2": "do", "M3": "do"},
+  "ky_vong_do_gom": {
+    "M1": ["tests/unit/test_td0437_mo_lai_sau_halt.py::TestKichBanMoLai::test_HALT_cho_het_vi_the_cho_du_gio_xac_nhan_roi_moi_mo_lai_NUA_CO"],
+    "M2": ["tests/unit/test_td0437_mo_lai_sau_halt.py::TestKichBanMoLai::test_vi_the_xuat_hien_lai_thi_dong_ho_cho_lam_lai"],
+    "M3": ["tests/unit/test_td0437_mo_lai_sau_halt.py::TestKichBanMoLai::test_HALT_cho_het_vi_the_cho_du_gio_xac_nhan_roi_moi_mo_lai_NUA_CO"]
+  }
+}

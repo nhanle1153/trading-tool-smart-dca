@@ -162,6 +162,46 @@ def doc_so_lenh_dong(
     return so
 
 
+def mo_lai_bot(
+    base_url: str,
+    *,
+    username: str,
+    password: str,
+    timeout: float = DEFAULT_TIMEOUT_S,
+    so_lan_thu_lai: int = SO_LAN_THU_LAI_MAC_DINH,
+    cho_giua_cac_lan_s: float = CHO_GIUA_CAC_LAN_S,
+    ham_ngu: Callable[[float], None] = time.sleep,
+) -> dict:
+    """TD-0437 — `POST /api/v1/start` (idempotent, `rpc.py:970-976`). CHỈ gọi khi đủ ba điều kiện §12c.5 bước 2 và KHÔNG
+    có cờ đỏ (`api-integration-rules.md` 4.4d luật 3) — hàm này không tự kiểm, tầng gọi chịu trách nhiệm."""
+    return _goi_co_thu_lai(
+        base_url, "/api/v1/start", username=username, password=password, timeout=timeout,
+        so_lan_thu_lai=so_lan_thu_lai, cho_giua_cac_lan_s=cho_giua_cac_lan_s, ham_ngu=ham_ngu,
+        viec="mở lại được bot",
+    )
+
+
+def doc_so_vi_the_mo(
+    base_url: str,
+    *,
+    username: str,
+    password: str,
+    timeout: float = DEFAULT_TIMEOUT_S,
+    so_lan_thu_lai: int = SO_LAN_THU_LAI_MAC_DINH,
+    cho_giua_cac_lan_s: float = CHO_GIUA_CAC_LAN_S,
+    ham_ngu: Callable[[float], None] = time.sleep,
+) -> int:
+    """TD-0437 — `GET /api/v1/status` → danh sách lệnh đang mở ⇒ số phần tử. Không phải danh sách ⇒ raise (N6: không đoán 0)."""
+    kq = _goi_co_thu_lai(
+        base_url, "/api/v1/status", username=username, password=password, timeout=timeout,
+        so_lan_thu_lai=so_lan_thu_lai, cho_giua_cac_lan_s=cho_giua_cac_lan_s, ham_ngu=ham_ngu,
+        viec="đọc được số vị thế đang mở", method="GET",
+    )
+    if not isinstance(kq, list):
+        raise FreqtradeControlError(f"{base_url}/api/v1/status: kỳ vọng danh sách lệnh đang mở, nhận {type(kq).__name__}")
+    return len(kq)
+
+
 def _goi_co_thu_lai(
     base_url: str,
     path: str,

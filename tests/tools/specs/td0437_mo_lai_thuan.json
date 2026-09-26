@@ -1,0 +1,17 @@
+{
+  "mo_ta": "TD-0437 (12c.5 buoc 2-4): tang thuan. M1 = NUA_CO HALT lai o dd > 8 (dung deadlock spec da bac); M2 = bo dieu kien (b) cho 2 x max_hold_bars.",
+  "module": "tool_d.risk_supervisor",
+  "file": "src/tool_d/risk_supervisor.py",
+  "khoi_dong": ["if muc_cu == NUA_CO:"],
+  "bien_the": {
+    "M0": null,
+    "M1": "if False:",
+    "M2": {"khoi_dong": ["elif now - luc_het_vi_the < cho_toi_thieu:"], "thay": "elif False:"}
+  },
+  "tests": ["tests/unit/test_td0437_mo_lai_sau_halt.py"],
+  "ky_vong": {"M0": "xanh", "M1": "do", "M2": "do"},
+  "ky_vong_do_gom": {
+    "M1": ["tests/unit/test_td0437_mo_lai_sau_halt.py::TestNuaCoThuan::test_NUA_CO_KHONG_HALT_lai_du_dd_tren_8"],
+    "M2": ["tests/unit/test_td0437_mo_lai_sau_halt.py::TestKichBanMoLai::test_HALT_cho_het_vi_the_cho_du_gio_xac_nhan_roi_moi_mo_lai_NUA_CO"]
+  }
+}
