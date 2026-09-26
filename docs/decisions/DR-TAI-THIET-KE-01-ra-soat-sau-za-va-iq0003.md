@@ -3,6 +3,18 @@
 > **Trạng thái: NHÁP — chủ dự án đọc và quyết §5.** Soạn 25/09/2026, phiên mã `12c579bc` (`TD-0416`, đặt chỗ `82fa025`).
 > **Chi phí:** 0 trial.
 
+> 🔄 **ĐÍNH CHÍNH TRẠNG THÁI 27/09/2026** (phiên mã `809d6cd8`, rà soát trước khi push) — chữ *"NHÁP — chủ dự án đọc và
+> quyết §5"* ở trên và tiêu đề §6 *"CHƯA ghi `back-end-note.md`"* đã **LỖI THỜI**; giữ nguyên làm lịch sử. File này là bản
+> rà soát, không phải nơi quyết — các câu đã được quyết ở chỗ khác, trỏ tới dưới đây (không chép lại):
+> - §5 câu 1 (độ mạnh thống kê) → `DR-VONG-DOI-01` §6 (a) + `DR-Q1-2027` (`fd00fb4`); máy kiểm ở cửa CHỌN `TD-0430` (`42828b4`).
+> - §5 câu 2 (rào, lockbox) → `DR-VONG-DOI-01` §6 (b)(c): giữ `N = 114` và `h`; `[T2,T3]` chuyển cho ứng viên kế tiếp
+>   (`DR-LOCKBOX-04` bổ sung, `aa86bac`).
+> - §5 câu 3 (vòng đời tổng quát) → `DR-VONG-DOI-01` (`fd00fb4`).
+> - §5 câu 4 (nhịp ý tưởng, hạn ngạch) → `DR-IQ-04` mở cửa CHỌN từ 25/09/2026 (`214f5ba`); hạn ngạch quý 1/2027 = 1 (`DR-Q1-2027`).
+> - §5 câu 5 (hạ tầng vận hành) → dry-run ZA LONG chạy lại không tiền để quan sát (`TD-0423`, `f2df3c3`); D10 dừng
+>   (`DR-KET-CUC-IQ0003-01`) và chỉ chạy khi ứng viên đã qua WFO (luật D10 ở `MT-78`, `dccc4ac`).
+> - §6 → ghi thành `MT-88` + `MT-89` (`6dd6e3c`), cả hai ✅ đã giải (`32f5cd1`).
+
 > 🔴 **PHIÊN IDEA/CHỌN KHÔNG ĐỌC FILE NÀY** (`DR-009`). Phiên soạn đã nhiễm: file này chỉ bàn **cấu trúc và quy trình**,
 > **không** sinh, gợi ý hay chấm ý tưởng giao dịch nào. Số đo chỉ được TRỎ tới, không chép lại.
 
