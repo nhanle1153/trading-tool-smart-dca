@@ -82,12 +82,15 @@ from tool_d.equity_peak import (
     ghi_su_kien,
     luu_dinh_equity,
 )
+from tool_d.tang_chan import RUNMODE_CO_SUPERVISOR, THU_MUC_SUPERVISOR
 from tool_d.risk_supervisor import (
     ABORT,
     HALT,
     RiskSupervisorError,
     TrangThaiBenVung,
     ap_tran_halt,
+    TEN_FILE_DD_STATE,
+    ghi_dd_state,
     doc_snapshot_an_toan,
     doc_trang_thai,
     kiem_khai_lai_khop_ban_goc,
@@ -98,7 +101,15 @@ from tool_d.risk_supervisor import (
 
 _LOG = logging.getLogger("tool_d.ops.risk_supervisor_daemon")
 
-DEFAULT_STATE_PATH = Path("runs/risk_supervisor/state.json")
+#: TD-0435 — mỗi runmode một Supervisor, một thư mục (`DR-TANG-CHAN-01` §4 điều 1, N11): trạng thái, đỉnh, sổ sự kiện,
+#: `dd_state.json` cùng nằm dưới `runs/risk_supervisor/<runmode>/`. Gốc dùng CHUNG với tầng đọc `tool_d.tang_chan`.
+TEN_FILE_TRANG_THAI = "state.json"
+
+
+def duong_dan_theo_runmode(runmode: str) -> Path:
+    if runmode not in RUNMODE_CO_SUPERVISOR:
+        raise ValueError(f"runmode {runmode!r} không có Supervisor — chỉ {RUNMODE_CO_SUPERVISOR}")
+    return THU_MUC_SUPERVISOR / runmode / TEN_FILE_TRANG_THAI
 DEFAULT_CHU_KY_S = 60.0  # cùng bậc chu kỳ watchdog TD-0209 (Mục 4.4b)
 DEFAULT_FREQTRADE_API_BASE_URL = "http://127.0.0.1:8080"
 
@@ -113,6 +124,8 @@ EXIT_L44_MISMATCH = 101
 EXIT_CO_DO_TU_LAN_CHAY_TRUOC = 102
 EXIT_DA_DUNG_VI_CO_DO = 103
 EXIT_KHONG_DUNG_DUOC_BOT = 104
+#: TD-0435 — runmode chưa có nguồn equity (dry_run tới TD-0438). 116: 99–115 đã dùng (test canh ở TD-0425).
+EXIT_RUNMODE_CHUA_HO_TRO = 116
 
 
 def _boc_loi_binance(ham: Callable[[], object]) -> Callable[[], object]:
@@ -253,7 +266,7 @@ def _tang_chan_sut_von(
             trang_thai.muc_tang_chan, muc_moi, moc_halt=moc_halt,
             so_lenh_dong=_doc_so_lenh_dong_an_toan(doc_so_lenh_dong_fn),
         )
-    trang_thai_moi = replace(trang_thai_moi, muc_tang_chan=muc_moi, moc_halt=moc_halt)
+    trang_thai_moi = replace(trang_thai_moi, muc_tang_chan=muc_moi, moc_halt=moc_halt, dd_pct_cuoi=dd)
     if muc_moi != trang_thai.muc_tang_chan:  # R8: log khi CHUYỂN, không lặp mỗi vòng
         _LOG.critical("TẦNG CHẶN SỤT VỐN: %s → %s (dd=%.4f%%)", trang_thai.muc_tang_chan, muc_moi, dd)
 
@@ -327,6 +340,7 @@ def ghi_su_kien_abort(duong_dan_dinh: Path, *, now: datetime) -> None:
 
 @dataclass(frozen=True)
 class ThamSoCli:
+    runmode: str
     state_path: Path
     chu_ky_s: float
     freqtrade_api_base_url: str
@@ -335,7 +349,10 @@ class ThamSoCli:
 
 def _doc_tham_so(argv: list[str] | None) -> ThamSoCli:
     parser = argparse.ArgumentParser(description="TD-0241 — Risk Supervisor daemon (§6.6)")
-    parser.add_argument("--state-path", type=Path, default=DEFAULT_STATE_PATH)
+    parser.add_argument("--runmode", required=True, choices=RUNMODE_CO_SUPERVISOR,
+                        help="TD-0435: live (sàn thật) hay dry_run (ví giấy của Freqtrade, TD-0438)")
+    parser.add_argument("--state-path", type=Path, default=None,
+                        help="mặc định runs/risk_supervisor/<runmode>/state.json")
     parser.add_argument("--chu-ky-s", type=float, default=DEFAULT_CHU_KY_S)
     parser.add_argument("--freqtrade-api-base-url", default=DEFAULT_FREQTRADE_API_BASE_URL)
     parser.add_argument(
@@ -347,7 +364,8 @@ def _doc_tham_so(argv: list[str] | None) -> ThamSoCli:
     )
     args = parser.parse_args(argv)
     return ThamSoCli(
-        state_path=args.state_path,
+        runmode=args.runmode,
+        state_path=args.state_path if args.state_path is not None else duong_dan_theo_runmode(args.runmode),
         chu_ky_s=args.chu_ky_s,
         freqtrade_api_base_url=args.freqtrade_api_base_url,
         max_iterations=args.max_iterations,
@@ -357,6 +375,16 @@ def _doc_tham_so(argv: list[str] | None) -> ThamSoCli:
 def main(argv: list[str] | None = None) -> int:  # pragma: no cover — khung CLI, xem test cho chay_mot_vong_giam_sat
     logging.basicConfig(level=logging.INFO)
     tham_so = _doc_tham_so(argv)
+    if tham_so.runmode != "live":
+        _LOG.critical("runmode %r chưa có nguồn equity (TD-0438) — từ chối chạy", tham_so.runmode)
+        return EXIT_RUNMODE_CHUA_HO_TRO
+    # Cạnh file trạng thái; với đường mặc định trùng đúng `tang_chan.duong_dan_dd_state(runmode)` mà chiến lược đọc.
+    duong_dd_state = tham_so.state_path.parent / TEN_FILE_DD_STATE
+
+    def _cong_bo(t: TrangThaiBenVung) -> None:
+        # TD-0435 — MỖI vòng (kể cả khi không đổi: mốc giờ tươi là bằng chứng Supervisor còn sống cho chiến lược đọc).
+        ghi_dd_state(duong_dd_state, muc=t.muc_tang_chan, dd_pct=t.dd_pct_cuoi, co_do=t.co_do,
+                     now=datetime.now(timezone.utc))
 
     try:
         api_key, api_secret = validate_credentials_for_live()  # fail-closed, 0 byte ra mạng nếu thiếu
@@ -379,6 +407,7 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover — khung CL
 
     trang_thai = doc_trang_thai(tham_so.state_path)
     if trang_thai.co_do:
+        _cong_bo(trang_thai)  # chiến lược thấy cờ đỏ NGAY, không đợi file cũ quá hạn
         _LOG.critical(
             "cờ đỏ đã ghi từ lần chạy trước (%s) — KHÔNG tự khởi động lại, cần can thiệp thủ công",
             tham_so.state_path,
@@ -430,8 +459,10 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover — khung CL
             # tiếp tục vòng lặp coi như chưa có gì xảy ra.
             _LOG.critical("KHÔNG dừng được bot qua Freqtrade API: %s", exc)
             luu_trang_thai(da_luu[0], tham_so.state_path)
+            _cong_bo(da_luu[0])
             return EXIT_KHONG_DUNG_DUOC_BOT
         luu_trang_thai(trang_thai, tham_so.state_path)
+        _cong_bo(trang_thai)
         vong += 1
 
         if nen_dung:

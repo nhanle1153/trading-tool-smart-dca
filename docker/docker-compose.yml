@@ -119,7 +119,7 @@ services:
   risk-supervisor-d10:
     <<: *base
     profiles: ["d10"]
-    entrypoint: ["python", "-m", "tool_d.ops.risk_supervisor_daemon", "--freqtrade-api-base-url", "http://127.0.0.1:8081"]
+    entrypoint: ["python", "-m", "tool_d.ops.risk_supervisor_daemon", "--runmode", "live", "--freqtrade-api-base-url", "http://127.0.0.1:8081"]
     # Dùng CHUNG mạng với `live-d10` để `127.0.0.1:8081` (control API chỉ nghe localhost — config.risk_supervisor.json)
     # là chính bot D10. Giải TODO "topology daemon ↔ Freqtrade" của `risk_supervisor_daemon.py` (DR-D11-03).
     network_mode: "service:live-d10"

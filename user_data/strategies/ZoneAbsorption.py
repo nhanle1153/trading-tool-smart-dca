@@ -162,6 +162,7 @@ from tool_d.ops.heartbeat_watchdog import TRANG_THAI_BINH_THUONG
 from tool_d.ops.thong_bao_lenh import soan_tin_vao_lenh
 from tool_d.post_only import bi_san_tu_choi, ly_do_tu_choi
 from tool_d.vao_ra_lenh import sinh_ban_ghi_vao_lenh
+from tool_d.tang_chan import RUNMODE_CO_SUPERVISOR, mult_dd_tu_supervisor
 from tool_d.sizing import (
     HeSoMult,
     KeHoachCoLenh,
@@ -1168,11 +1169,7 @@ class ZoneAbsorption(IStrategy):
             ),
             zss=mult_zss(float(d["zs"])),
             corr=mult_corr(corr_pool=self._corr_pool(pair), nguong=tuple(resolve(self._cfg, "tier_b.mult_corr_thresholds"))),
-            dd=mult_dd(
-                dd_pct=self._dd_pct(),
-                soft_pct=float(resolve(self._cfg, "tier_c.dd_ladder_pct.soft")),
-                halt_pct=float(resolve(self._cfg, "tier_c.dd_ladder_pct.halt")),
-            ),
+            dd=self._mult_dd(current_time),
             edge=mult_edge(edge_ratio=None, so_lenh_live=0, nguong=float(resolve(self._cfg, "tier_frozen.mult_edge_thr.value"))),
             deploy=mult_deploy(deployed_ratio=self._deployed_ratio(), nguong=float(resolve(self._cfg, "tier_frozen.mult_deploy_thr.value"))),
         )
@@ -2221,6 +2218,21 @@ class ZoneAbsorption(IStrategy):
         df, _ = self.dp.get_analyzed_dataframe(pair=pair, timeframe=self.timeframe)
         dong = df["close"].to_numpy(dtype=float)[-(CUA_SO_CORR_NEN_1H + 1):]
         return np.diff(np.log(dong))
+
+    def _mult_dd(self, now: datetime) -> float:
+        """TD-0435 (`DR-TANG-CHAN-01` phương án C) — hệ số `dd` của định cỡ lệnh.
+
+        live/dry-run: Supervisor là chủ DUY NHẤT của đỉnh + mức sụt (equity gồm lãi/lỗ chưa chốt, §12c.5) ⇒ đọc qua
+        `tang_chan.mult_dd_tu_supervisor()`; thiếu/cũ ⇒ 0 (không mở lệnh). `_dd_pct()` KHÔNG còn nối vào định cỡ ở hai
+        runmode này (mã + test TD-0238/TD-0426 giữ nguyên, chỉ không được gọi ở đây).
+        backtest: không có Supervisor ⇒ công thức cũ `_dd_pct()` — không đổi một con số nào đã đo.
+        """
+        soft = float(resolve(self._cfg, "tier_c.dd_ladder_pct.soft"))
+        halt = float(resolve(self._cfg, "tier_c.dd_ladder_pct.halt"))
+        runmode = self.dp.runmode.value if getattr(self, "dp", None) is not None else None
+        if runmode in RUNMODE_CO_SUPERVISOR:
+            return mult_dd_tu_supervisor(runmode, now=now, soft_pct=soft, halt_pct=halt)
+        return mult_dd(dd_pct=self._dd_pct(), soft_pct=soft, halt_pct=halt)
 
     def _dd_pct(self) -> float:
         """TD-0238 (MT-40) — đỉnh (`self._dinh_equity`) nay đi qua

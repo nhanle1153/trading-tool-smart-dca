@@ -28,6 +28,8 @@ from tool_d.ops.heartbeat import Heartbeat, duong_dan_heartbeat, ghi_heartbeat  
 from tool_d.ops.heartbeat_watchdog import TRANG_THAI_BINH_THUONG  # noqa: E402
 from tool_d.ops.ngan_sach_d10_ro import TrangThaiD10Ro, xet_vao_lenh  # noqa: E402
 from tool_d.ro_funding import RoFundingError  # noqa: E402
+from tool_d.config.loader import resolve  # noqa: E402
+from tool_d.tang_chan import RUNMODE_CO_SUPERVISOR, mult_dd_tu_supervisor  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -95,8 +97,38 @@ class RoFundingD10(RoFunding):
             pair, order_type, amount, rate, time_in_force, current_time, entry_tag, side, **kwargs
         ):
             return False
+        if self._mult_dd(current_time) <= 0.0:  # TD-0435 — Supervisor HALT/ABORT/cờ đỏ/không sống ⇒ không mở lệnh
+            logger.info("D10_RO TU_CHOI %s %s: tầng chặn sụt vốn (Supervisor) — hệ số dd = 0", side, pair)
+            return False
         ly_do = xet_vao_lenh(self._trang_thai_d10(), ky_quy_lenh=amount * rate / self._don_bay_san, now=_utc(current_time))
         if ly_do:
             logger.info("D10_RO TU_CHOI %s %s: %s", side, pair, " | ".join(ly_do))
             return False
         return True
+
+    def _mult_dd(self, now: datetime) -> float:
+        """TD-0435 (`DR-TANG-CHAN-01`) — bậc 5% (nửa cỡ) do Supervisor công bố, CHỈ ở live/dry-run. Đặt ở lớp con D10, KHÔNG
+        sửa `RoFunding.py` (file ứng viên IQ-0003, `DR-BIEN-THE-01`): lớp gốc chỉ chạy backtest, và IQ-0003 đã đo không có thang."""
+        runmode = self.dp.runmode.value if getattr(self, "dp", None) is not None else None
+        if runmode not in RUNMODE_CO_SUPERVISOR:
+            return 1.0
+        return mult_dd_tu_supervisor(
+            runmode, now=_utc(now),
+            soft_pct=float(resolve(self._cfg, "tier_c.dd_ladder_pct.soft")),
+            halt_pct=float(resolve(self._cfg, "tier_c.dd_ladder_pct.halt")),
+        )
+
+    def custom_stake_amount(
+        self, pair, current_time, current_rate, proposed_stake, min_stake, max_stake, leverage, entry_tag, side, **kwargs
+    ) -> float:
+        """Cỡ của `RoFunding` × hệ số dd của Supervisor. Freqtrade gọi hàm này TRƯỚC `confirm_trade_entry` ⇒ hệ số 0 phải
+        chặn ở đây luôn. Nửa cỡ rơi dưới `min_stake` ⇒ RAISE (khuôn của lớp cha — không để Freqtrade cắt/bỏ im lặng)."""
+        m = self._mult_dd(current_time)
+        if m <= 0.0:
+            raise RoFundingError(f"{pair}: tầng chặn sụt vốn — hệ số dd = 0 (Supervisor HALT/ABORT/cờ đỏ/không sống)")
+        stake = super().custom_stake_amount(
+            pair, current_time, current_rate, proposed_stake, min_stake, max_stake, leverage, entry_tag, side, **kwargs
+        ) * m
+        if min_stake is not None and stake < min_stake:
+            raise RoFundingError(f"{pair}: stake × {m} = {stake:.4f} < min_stake {min_stake:.4f} — không cắt ngầm")
+        return stake

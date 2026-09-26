@@ -1,0 +1,21 @@
+{
+  "mo_ta": "TD-0435 (DR-TANG-CHAN-01 4 dieu 3): ham doc dung chung cua chien luoc. M1 = bo kiem 'dd_state cu' (Supervisor chet ma bot van mo lenh theo so cu); M2 = bo qua co do; M3 = NUA_CO ve du co; M4 = BINH_THUONG chua do duoc dd bi coi la 0% (bia so).",
+  "module": "tool_d.tang_chan",
+  "file": "src/tool_d/tang_chan.py",
+  "khoi_dong": ["if tuoi_s > NGUONG_HEARTBEAT_CU_S or tuoi_s < -NGUONG_HEARTBEAT_CU_S:"],
+  "bien_the": {
+    "M0": null,
+    "M1": "if False:",
+    "M2": {"khoi_dong": ["if st.co_do or st.muc in (HALT, ABORT):"], "thay": "if st.muc in (HALT, ABORT):"},
+    "M3": {"khoi_dong": ["return mult_dd(dd_pct=halt_pct, soft_pct=soft_pct, halt_pct=halt_pct)"], "thay": "return 1.0"},
+    "M4": {"khoi_dong": ["if st.dd_pct is None:"], "thay": "if False:"}
+  },
+  "tests": ["tests/unit/test_td0435_dd_state_tang_chan.py"],
+  "ky_vong": {"M0": "xanh", "M1": "do", "M2": "do", "M3": "do", "M4": "do"},
+  "ky_vong_do_gom": {
+    "M1": ["tests/unit/test_td0435_dd_state_tang_chan.py::TestHamDocDungChung::test_cu_qua_han_heartbeat_thi_0"],
+    "M2": ["tests/unit/test_td0435_dd_state_tang_chan.py::TestHamDocDungChung::test_co_do_thi_0_du_muc_binh_thuong"],
+    "M3": ["tests/unit/test_td0435_dd_state_tang_chan.py::TestHamDocDungChung::test_NUA_CO_van_nua_co_du_dd_da_nho"],
+    "M4": ["tests/unit/test_td0435_dd_state_tang_chan.py::TestHamDocDungChung::test_binh_thuong_chua_do_duoc_dd_thi_0"]
+  }
+}

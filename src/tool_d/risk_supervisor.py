@@ -392,6 +392,9 @@ class TrangThaiBenVung:
     leo_thang_dung: bool = False
     #: TD-0434 chặng 2 — số lệnh ĐÃ ĐÓNG tại mỗi lần CHUYỂN sang HALT (trần §12c.5); `None` = lúc đó không đọc được số lệnh.
     moc_halt: tuple[int | None, ...] = ()
+    #: TD-0435 — mức sụt % đo ở vòng GẦN NHẤT, để daemon công bố vào `dd_state.json`. CHỈ trong bộ nhớ, KHÔNG ghi đĩa
+    #: (`luu_trang_thai` bỏ qua): số cũ sau restart không được đọc lại như số mới (N6 — thà để trống).
+    dd_pct_cuoi: float | None = None
 
     @property
     def co_do(self) -> bool:
@@ -406,6 +409,53 @@ BINH_THUONG = "BINH_THUONG"
 HALT = "HALT"
 ABORT = "ABORT"
 MUC_TANG_CHAN = (BINH_THUONG, HALT, ABORT)
+#: TD-0435/TD-0437 (§12c.5 BƯỚC 3) — mở lại sau HALT ở NỬA cỡ, giữ tới khi dd ≤ soft. Chuyển mức thuộc `TD-0437`.
+NUA_CO = "NUA_CO"
+
+
+# ═══ TD-0435 (`DR-TANG-CHAN-01` §4 điều 3) — `dd_state.json`: Supervisor CÔNG BỐ, chiến lược ĐỌC ═══
+
+TEN_FILE_DD_STATE = "dd_state.json"
+
+
+@dataclass(frozen=True)
+class DdState:
+    """Điều Supervisor công bố mỗi vòng. `co_do` tách riêng khỏi `muc`: thanh lý / breaker / leo thang đều là cờ đỏ mà
+    `muc` vẫn có thể là `BINH_THUONG`/`HALT` — chiến lược phải thấy cả hai."""
+
+    muc: str
+    dd_pct: float | None
+    co_do: bool
+    luc_utc: datetime
+
+
+def ghi_dd_state(duong_dan: Path, *, muc: str, dd_pct: float | None, co_do: bool, now: datetime) -> None:
+    """Ghi NGUYÊN TỬ (khuôn `luu_trang_thai`) — chiến lược đọc file này mỗi lần định cỡ, không được thấy file dở."""
+    if muc not in (*MUC_TANG_CHAN, NUA_CO):
+        raise RiskSupervisorError(f"muc {muc!r} không hợp lệ")
+    if now.tzinfo is None:
+        raise RiskSupervisorError("now phải có múi giờ (UTC)")
+    duong_dan.parent.mkdir(parents=True, exist_ok=True)
+    noi_dung = {"muc": muc, "dd_pct": dd_pct, "co_do": co_do, "luc_utc": now.isoformat()}
+    tam = duong_dan.with_name(duong_dan.name + ".dang-ghi")
+    tam.write_text(json.dumps(noi_dung, ensure_ascii=False), encoding="utf-8")
+    tam.replace(duong_dan)
+
+
+def doc_dd_state(duong_dan: Path) -> DdState:
+    """Thiếu file / hỏng / sai kiểu ⇒ RAISE `RiskSupervisorError` — tầng đọc (`tang_chan.py`) biến mọi raise thành
+    "không mở lệnh" (fail-closed). Không có giá trị mặc định nào ở đây."""
+    try:
+        tho = json.loads(duong_dan.read_text(encoding="utf-8"))
+        muc, dd, co_do = tho["muc"], tho["dd_pct"], tho["co_do"]
+        luc = datetime.fromisoformat(tho["luc_utc"])
+        if muc not in (*MUC_TANG_CHAN, NUA_CO) or type(co_do) is not bool or luc.tzinfo is None:
+            raise ValueError(f"dd_state sai hình: {tho!r}")
+        if dd is not None and (isinstance(dd, bool) or not isinstance(dd, (int, float)) or not math.isfinite(dd) or dd < 0):
+            raise ValueError(f"dd_pct {dd!r} không hợp lệ")
+        return DdState(muc=muc, dd_pct=None if dd is None else float(dd), co_do=co_do, luc_utc=luc)
+    except (json.JSONDecodeError, OSError, KeyError, TypeError, ValueError) as exc:
+        raise RiskSupervisorError(f"không đọc được {duong_dan}: {exc}") from exc
 
 
 def quyet_dinh_tang_chan(
