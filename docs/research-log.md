@@ -4444,3 +4444,23 @@ cửa mới từ chối, đúng thiết kế. Vá bằng repo git nhỏ có hi�
 - **Dừng:** `docker compose -f docker/docker-compose.yml --profile van_hanh stop dryrun dryrun-watchdog`.
 - 🔴 **Đính chính dòng "Chạy lại" của mục 25/09 bên trên** (giữ nguyên chữ cũ): phải NÊU TÊN hai dịch vụ như lệnh ở trên.
   `up -d` trơn cũng bật `tests`, `freqtrade`, `lockbox` (ba dịch vụ không gắn profile).
+
+
+## 26/09/2026 — Đo hai điều trước khi code Khối 44 (phiên mã `809d6cd8`, `TD-0433`, `DR-TANG-CHAN-01` §5)
+
+Đọc mã nguồn Freqtrade **trong image** (`freqtrade 2026.8`, Python 3.14.7, ccxt 4.5.76), không đoán. 0 trial, không chạm dữ liệu.
+
+- **(a) Dry-run `/api/v1/balance` có gồm lãi/lỗ chưa chốt không? — CÓ, với một bẫy.**
+  - `wallets.py` `_update_dry()`: chế độ futures dựng `PositionWallet` cho MỖI lệnh đang mở (`position.amount`,
+    `leverage`, `collateral = stake_amount`, `side`); tiền rảnh = vốn đầu + lãi đã chốt − stake đang dùng.
+  - `rpc.py` `_rpc_balance()` (dòng 835–960): `total` = tiền rảnh (futures lấy `balance.free`, vì `total` đã gồm stake bị
+    khoá) + Σ vị thế `est_stake = collateral + lãi/lỗ chưa đòn bẩy` theo giá hiện tại (`get_conversion_rate`).
+  - 🔴 **Bẫy:** lấy giá lỗi (`ExchangeError`/`PricingError`) hoặc giá rỗng ⇒ `est_stake` giữ nguyên `collateral` — lãi/lỗ
+    chưa chốt của vị thế đó **rơi mất lặng lẽ**, chỉ có một dòng `logger.warning`. Supervisor đọc `total` không phân biệt
+    được. ⇒ `TD-0438` phải tự kiểm (vd đối chiếu từng mục `is_position` với giá, hoặc tự tính từ `/api/v1/status`) —
+    không tin `total` trơn. Ghi thành điều kiện của `TD-0438`, không tự quyết cách ở đây.
+  - Đối chứng: `wallets.get_total()` mà `ZoneAbsorption._dd_pct()` đang dùng = vốn đầu + lãi ĐÃ chốt — xác nhận lại khoảng
+    hở §12c.5 đã ghi ở `equity_peak.py`.
+- **(b) Hạn "`dd_state.json` quá cũ": dùng lại, KHÔNG cần con số mới.** `heartbeat_watchdog.NGUONG_HEARTBEAT_CU_S = 300`
+  (heartbeat cũ hơn 300 s = tiến trình đi kèm đã chết), Supervisor chạy một vòng mỗi `DEFAULT_CHU_KY_S = 60` s ⇒ 300 s =
+  lỡ 5 vòng liền. Cùng nghĩa "tiến trình giám sát còn sống không" ⇒ import chính hằng đó, không khai lần hai.
