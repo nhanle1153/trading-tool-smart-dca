@@ -41,6 +41,11 @@
 | `GET /fapi/v2/account`, `GET /fapi/v2/positionRisk` (Risk Supervisor, TD-0241) | GET | ☑ Có | Cùng nhóm weight REST public KÝ, chịu `tier_c.api_calls_per_min` (Cấp C) | 10 | ☑ Có |
 | `GET /fapi/v1/forceOrders?autoCloseType=LIQUIDATION` (Risk Supervisor, TD-0241) | GET | ☑ Có | Cùng nhóm weight REST public KÝ | 10 | ☑ Có |
 | `POST /api/v1/stop` (Freqtrade cục bộ, TD-0241) | POST | ☑ Có *(xác nhận qua mã nguồn `rpc.py:978` — gọi khi đã `STOPPED` trả `"already stopped"`, không lỗi)* | Không công bố (control API cục bộ, không phải Binance) | 10 | ☑ Có *(R5 bounded — tối đa 5 lần, backoff cố định 2s; 401 KHÔNG retry, xem 4.3)* |
+| `POST /api/v1/stopentry` (Freqtrade cục bộ, HALT, `TD-0434`, `DR-TANG-CHAN-01`; bí danh `/pause`, `/stopbuy`) | POST | ☑ Có **khi bot `RUNNING`/`PAUSED`** *(`rpc.py:991-1004`: `RUNNING`→`PAUSED`, `PAUSED` giữ nguyên)* — 🔴 **KHÔNG khi `STOPPED`**: chuyển `STOPPED`→`PAUSED` = BẬT LẠI vòng lặp, xem 4.4d luật 1 | Không công bố | 10 | ☑ Có *(như `/stop`: tối đa 5 lần, 2s cố định; 401 không retry)* |
+| `POST /api/v1/start` (Freqtrade cục bộ, mở lại sau HALT, `TD-0437`) | POST | ☑ Có *(`rpc.py:970-976`: đã `RUNNING` ⇒ `"already running"`)* | Không công bố | 10 | ☑ Có *(như trên; CHỈ gọi khi đủ ba điều kiện §12c.5 bước 2, xem 4.4d luật 3)* |
+| `GET /api/v1/profit` (Freqtrade cục bộ, đếm lệnh đã đóng cho trần "3 HALT / 100 lệnh", `TD-0434`) | GET | ☑ Có | Không công bố | 10 | ☑ Có *(đọc lỗi ⇒ `unreadable`, KHÔNG coi là 0 lệnh — N6)* |
+| `GET /api/v1/balance` (Freqtrade cục bộ, equity dry-run, `TD-0438`) | GET | ☑ Có | Không công bố | 10 | ☑ Có *(🔴 `total` có thể rơi lặng lẽ lãi/lỗ chưa chốt khi lấy giá lỗi — `rpc.py:896-915`, đo `TD-0433`; không tin `total` trơn, xem 4.4d luật 4)* |
+| `GET /api/v1/status` (Freqtrade cục bộ, lệnh đang mở + lãi/lỗ chưa chốt, dry-run, `TD-0438`) | GET | ☑ Có | Không công bố | 10 | ☑ Có |
 | `GET data.binance.vision/data/futures/um/monthly/klines/<SYM>/1d/<SYM>-1d-<YYYY-MM>.zip` (`doc_quote_volume_1d_thang`) | GET | ☑ Có | Không công bố; KHÔNG áp `tier_c.api_calls_per_min` (trần đó của `fapi.binance.com`) — dùng CHUNG breaker R3 | 60 | ☑ Có *(bên gọi chạy lại; 404 = DỮ KIỆN `NenThangKhongCoError`, không retry, không tính lỗi breaker)* |
 | `GET data.binance.vision/data/futures/um/monthly/<loai>/<SYM>/[<khung>/]<file>.zip` (`doc_csv_thang_kho`: nến, mark, `fundingRate`… theo THÁNG, `TD-0247`) | GET | ☑ Có | Như trên | 120 | ☑ Có *(404 = `NenThangKhongCoError`; lỗi khác / zip hỏng / 0 hàng ⇒ `KhoLuuTruError`)* |
 | `GET data.binance.vision/data/futures/um/daily/aggTrades/<SYM>/<SYM>-aggTrades-<YYYY-MM-DD>.zip` (`tai_dump_agg_trades`) | GET | ☑ Có | Như trên | 120 | ☑ Có *(có cache đĩa, đổi tên nguyên tử; 404 = `AggTradesNotFoundError`)* |
@@ -75,6 +80,7 @@
 | Telegram 5xx / timeout / lỗi kết nối | ☑ Retry được | KHÔNG backoff nội bộ — một lần thử, thất bại thì ghi log cục bộ + giữ nguyên trạng thái "chưa báo", vòng poll 60s kế tiếp tự thử lại (4.4b) |
 | Freqtrade control API 401 (Unauthorized — sai username/password, TD-0241) | ☑ Lỗi logic | Không retry — lỗi CẤU HÌNH cục bộ (`.env` sai), raise `FreqtradeAuthError` ngay ở lần gọi đầu tiên |
 | Freqtrade control API 5xx / timeout / lỗi kết nối (TD-0241) | ☑ Retry được | Backoff CỐ ĐỊNH 2s (không luỹ tiến — sự kiện dừng khẩn cấp cần thử nhanh, không phải tiết kiệm tài nguyên), tối đa 5 lần rồi RAISE (không nuốt) |
+| Freqtrade `/stopentry` trả `"starting bot with trader in paused state…"` (bot đang `STOPPED`, `TD-0434`) | ☑ Lỗi logic | KHÔNG được xảy ra — Supervisor phải chặn TRƯỚC (4.4d luật 1). Gặp chuỗi này nghĩa là vừa BẬT LẠI một bot đã dừng hẳn ⇒ gọi `/stop` ngay + cờ đỏ + log mức cao nhất |
 | `apiRestrictions` -2014 / -2015 (API key sai định dạng / key sai, IP không trong whitelist, hoặc thiếu quyền) | ☑ Lỗi logic | Không retry — TỪ CHỐI bật D10 + log mức cao nhất. Ghi chú: gọi từ IP ngoài whitelist mà nhận -2015 là whitelist ĐANG hoạt động, nhưng bộ chạy vẫn phải dừng vì không đọc được cấu hình tài khoản (`DR-D10-02` Q3) |
 | `apiRestrictions` -1021 (timestamp ngoài `recvWindow`) | ☑ Lỗi logic | Không retry — lệch đồng hồ máy chạy, lỗi CẤU HÌNH cục bộ; TỪ CHỐI bật D10 |
 | `apiRestrictions` 5xx / timeout / lỗi kết nối | ☑ Retry được | Qua breaker R3 hiện có; hết lượt hoặc breaker mở ⇒ TỪ CHỐI bật D10 (fail-closed: không đọc được thì coi như KHÔNG an toàn) |
@@ -161,6 +167,35 @@ khi code (`TD-0384`) là gọi thật MỘT lần bằng key tài khoản phụ,
 | R11 timeout | 10 s, như mọi endpoint Binance khác |
 | R12 quota | Không có hạn mức ngày; weight 1 so với trần phút |
 
+### 4.4d. Tầng chặn sụt vốn ở Risk Supervisor — mở rộng dịch vụ #5 (`DR-TANG-CHAN-01`, Khối 44, khai 26/09/2026)
+
+Dịch vụ #5 (Freqtrade REST cục bộ) nay có thêm năm đường ở 4.2. Bốn luật, sinh từ đọc mã nguồn Freqtrade 2026.8 trong
+image (`TD-0433`, `docs/research-log.md` 26/09/2026) — không có chúng thì mã sai theo cách không ai thấy:
+
+1. 🔴 **Có cờ đỏ (ABORT / `LIQUIDATED` / breaker `dung_han`) ⇒ TUYỆT ĐỐI không gọi `/stopentry`.** Gọi nó khi bot `STOPPED`
+   chuyển sang `PAUSED` = vòng lặp chạy lại (`rpc.py:998-1004`) ⇒ một lần HALT nhầm sẽ GỠ ABORT.
+2. **HALT không sống qua lần khởi động lại bot**: Freqtrade đọc lại `initial_state` từ cấu hình (`freqtradebot.py:148-149`;
+   dry-run đặt `running`). ⇒ Khi trạng thái Supervisor là HALT, gọi lại `/stopentry` **mỗi vòng** (idempotent khi
+   `RUNNING`/`PAUSED`, luật 1 vẫn áp).
+3. `/start` CHỈ gọi từ `TD-0437`, khi đủ cả ba điều kiện §12c.5 bước 2; không bao giờ gọi khi có cờ đỏ.
+4. Equity dry-run từ `/balance` + `/status` (`TD-0438`): `total` rơi lặng lẽ lãi/lỗ chưa chốt của vị thế lấy giá lỗi ⇒ phải
+   phát hiện được và trả `unreadable` (N6), không coi `total` là đủ.
+
+| Mục | Quyết định |
+|---|---|
+| R1 single egress | Mọi đường qua `src/tool_d/api_client/freqtrade_control.py` sẵn có (hàm dùng chung `_goi_dung_mot_lan`) — không module HTTP thứ hai |
+| R2 rate limit | Nhịp vòng Supervisor 60 s (`risk_supervisor_daemon.DEFAULT_CHU_KY_S`); tối đa ~3 lời gọi/vòng; API cục bộ, không chịu trần Binance |
+| R3 circuit breaker | Như `/stop`: tối đa 5 lần, 2 s cố định, rồi raise; `/stopentry` thất bại hết lượt ⇒ leo thang `/stop` + cờ đỏ (không để bot tiếp tục mở lệnh khi đang HALT) |
+| R4 phân biệt mã lỗi | 401 không retry; 5xx/timeout retry; chuỗi `"starting bot with trader in paused state"` = lỗi logic (4.3) |
+| R5 bounded loop | Vòng Supervisor đã có; mỗi lời gọi bounded 5 lần |
+| R6 kill switch | Không đổi: không bật Supervisor = không gọi |
+| R7 tách môi trường | Dry-run và live mỗi bên một Supervisor, một cổng API localhost riêng, một thư mục trạng thái `runs/risk_supervisor/<runmode>/` (N11) |
+| R8 log dedup | Log khi trạng thái CHUYỂN (bình thường → HALT → ABORT), không lặp mỗi vòng dù gọi lại `/stopentry` |
+| R9 idempotency | `/stopentry` (khi không `STOPPED`), `/start`, `/stop` idempotent theo mã nguồn; GET chỉ đọc |
+| R10 secret | Username/password control API qua biến môi trường như `/stop` hiện có |
+| R11 timeout | 10 s |
+| R12 quota | Không hạn mức |
+
 ## 5. Bảng nghiệm thu — TD-0197, 09/09/2026
 
 Chạy lần đầu sau khi TD-0197 nối R2/R3 vào `src/tool_d/api_client/binance_public.py` (đã có gọi
@@ -199,3 +234,4 @@ bắt buộc nghiệm thu lại trong context sạch riêng khi D3.5 viết code
 | 1.4 | 14/09/2026 | TD-0209: "bắt đầu code" — dựng tầng thuần (`src/tool_d/ops/{heartbeat,telegram_client,heartbeat_watchdog}.py`), 56 test Docker. Đổi 1 tham số lúc code (retry Telegram: bỏ backoff nội bộ 3 lần, dùng chu kỳ poll 60s làm cơ chế thử lại — ghi tại chỗ ở 4.4b, không xoá đề xuất cũ). Chưa nối vào Freqtrade/launcher thật |
 | 1.5 | 25/09/2026 | Khai bù dịch vụ #6 `data.binance.vision` vào Mục 4.1–4.2 (lệnh "chuẩn hóa và lưu", phiên mã `143375ad`). Bốn đường đọc đã dùng từ `TD-0162`/`TD-0230`/`TD-0231`/`TD-0247` mà **chưa từng được khai** (nợ cũ, phát hiện khi chuẩn bị `TD-0391`) + đường nến 1d theo NGÀY mới cho rổ `XAC_NHAN` (`DR-XAC-NHAN-01` §9) — khai TRƯỚC khi code theo quy tắc 17. Không đổi dòng cũ nào; R1 giữ nguyên: mọi đường nằm trong `src/tool_d/api_client/binance_public.py` |
 | 1.6 | 25/09/2026 | Thêm dịch vụ **#7** Binance SAPI ký `GET /sapi/v1/account/apiRestrictions` vào Mục 4.1–4.3 + mục **4.4c** (bảng quyết định + R1–R12) cho máy kiểm bảo mật tài khoản phụ D10 (`DR-D10-02` Q3, chốt `5bb2b58`). Lệnh "chuẩn hóa và lưu" 25/09/2026, phiên mã `dd89043d`. Chỉ THÊM, không sửa/xoá dòng nào có sẵn. Hoàn tất điều kiện quy tắc 17 cho phần này TRƯỚC "bắt đầu code" `TD-0384`. Tên trường trả về CHƯA verify bằng gọi thật |
+| 1.7 | 26/09/2026 | Mở rộng dịch vụ #5 (Freqtrade REST cục bộ) cho tầng chặn sụt vốn ở Risk Supervisor (`DR-TANG-CHAN-01`, Khối 44): năm dòng 4.2 (`/stopentry`, `/start`, `/profit`, `/balance`, `/status`), một dòng 4.3, mục **4.4d** (bốn luật đọc từ mã nguồn Freqtrade 2026.8 + R1–R12). Lệnh "chuẩn hóa và lưu" 26/09/2026, phiên mã `809d6cd8`. Chỉ THÊM, không sửa/xoá dòng nào có sẵn (dòng #5 ở 4.1 giữ nguyên chữ `POST /api/v1/stop`; phạm vi mở rộng ghi ở 4.4d). Hoàn tất điều kiện quy tắc 17 TRƯỚC khi code `TD-0434`/`TD-0437`/`TD-0438` |
