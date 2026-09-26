@@ -68,6 +68,7 @@ from tool_d.api_client.binance_public import (
 from tool_d.api_client.freqtrade_control import (
     FreqtradeAuthError,
     FreqtradeControlError,
+    doc_json_get,
     doc_so_lenh_dong,
     doc_so_vi_the_mo,
     dung_bot,
@@ -91,6 +92,7 @@ from tool_d.risk_supervisor import (
     HALT,
     RiskSupervisorError,
     TrangThaiBenVung,
+    TrangThaiBreaker,
     NUA_CO,
     ap_tran_halt,
     dieu_kien_mo_lai,
@@ -129,8 +131,6 @@ EXIT_L44_MISMATCH = 101
 EXIT_CO_DO_TU_LAN_CHAY_TRUOC = 102
 EXIT_DA_DUNG_VI_CO_DO = 103
 EXIT_KHONG_DUNG_DUOC_BOT = 104
-#: TD-0435 — runmode chưa có nguồn equity (dry_run tới TD-0438). 116: 99–115 đã dùng (test canh ở TD-0425).
-EXIT_RUNMODE_CHUA_HO_TRO = 116
 
 
 def _boc_loi_binance(ham: Callable[[], object]) -> Callable[[], object]:
@@ -390,6 +390,39 @@ def dd_tu_account(account: object, *, duong_dan_dinh: Path) -> float | None:
     return max(0.0, (moi.dinh - tong) / moi.dinh * 100.0)
 
 
+
+def equity_dry_run(balance: object, profit: object) -> float | None:
+    """TD-0438 (`TD-0433`) — equity của ví giấy Freqtrade = `/balance.starting_capital` + `/profit.profit_all_coin`
+    (lãi/lỗ đã chốt + CHƯA chốt, §12c.5). KHÔNG dùng `/balance.total`: lấy giá lỗi thì nó rơi lặng lẽ lãi/lỗ chưa chốt
+    (`rpc.py:896-915`); `profit_all_coin` thì thành NaN (`rpc.py:556-563`) ⇒ lộ ra ⇒ ở đây trả `None` (N6)."""
+    try:
+        von = balance["starting_capital"]  # type: ignore[index]
+        lai = profit["profit_all_coin"]  # type: ignore[index]
+    except (KeyError, TypeError) as exc:
+        _LOG.warning("dry-run: thiếu starting_capital/profit_all_coin (%s) — equity chưa đo được", exc)
+        return None
+    for ten, v in (("starting_capital", von), ("profit_all_coin", lai)):
+        if isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v):
+            _LOG.warning("dry-run: %s = %r (NaN/null ⇔ có vị thế lấy giá lỗi) — equity chưa đo được", ten, v)
+            return None
+    return float(von) + float(lai)
+
+
+def _boc_loi_freqtrade(ham: Callable[[], object]) -> Callable[[], object]:
+    """Cùng vai `_boc_loi_binance`: `doc_snapshot_an_toan` chỉ cô lập `RiskSupervisorError`. 401 KHÔNG bọc — lỗi cấu hình
+    phải làm daemon dừng và lộ ra, không thành một vòng "chưa đọc được" lặp mãi."""
+
+    def goi() -> object:
+        try:
+            return ham()
+        except FreqtradeAuthError:
+            raise
+        except FreqtradeControlError as exc:
+            raise RiskSupervisorError(str(exc)) from exc
+
+    return goi
+
+
 #: TD-0437 (§12c.5 bước 2 (c)) — người vận hành xác nhận đã đọc `periodic_report.py` của kỳ HALT (không phải phê duyệt).
 #: Một dòng riêng trong `docs/research-log.md`: `XAC_NHAN_MO_LAI_HALT <runmode> <yyyy-mm-dd>` — ngày ≥ ngày HALT (UTC).
 DUONG_DAN_RESEARCH_LOG = Path("docs/research-log.md")
@@ -461,9 +494,6 @@ def _doc_tham_so(argv: list[str] | None) -> ThamSoCli:
 def main(argv: list[str] | None = None) -> int:  # pragma: no cover — khung CLI, xem test cho chay_mot_vong_giam_sat
     logging.basicConfig(level=logging.INFO)
     tham_so = _doc_tham_so(argv)
-    if tham_so.runmode != "live":
-        _LOG.critical("runmode %r chưa có nguồn equity (TD-0438) — từ chối chạy", tham_so.runmode)
-        return EXIT_RUNMODE_CHUA_HO_TRO
     # Cạnh file trạng thái; với đường mặc định trùng đúng `tang_chan.duong_dan_dd_state(runmode)` mà chiến lược đọc.
     duong_dd_state = tham_so.state_path.parent / TEN_FILE_DD_STATE
 
@@ -472,11 +502,14 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover — khung CL
         ghi_dd_state(duong_dd_state, muc=t.muc_tang_chan, dd_pct=t.dd_pct_cuoi, co_do=t.co_do,
                      now=datetime.now(timezone.utc))
 
-    try:
-        api_key, api_secret = validate_credentials_for_live()  # fail-closed, 0 byte ra mạng nếu thiếu
-    except BinanceCredentialsMissingError as exc:
-        _LOG.critical(str(exc))
-        return EXIT_MISSING_API_CREDENTIALS
+    la_dry_run = tham_so.runmode == "dry_run"
+    api_key = api_secret = ""
+    if not la_dry_run:  # TD-0438: dry-run là ví giấy của Freqtrade — không có tài khoản sàn để đọc, không cần key Binance
+        try:
+            api_key, api_secret = validate_credentials_for_live()  # fail-closed, 0 byte ra mạng nếu thiếu
+        except BinanceCredentialsMissingError as exc:
+            _LOG.critical(str(exc))
+            return EXIT_MISSING_API_CREDENTIALS
 
     ft_username = os.environ.get(ENV_FT_USERNAME, "")
     ft_password = os.environ.get(ENV_FT_PASSWORD, "")
@@ -523,6 +556,28 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover — khung CL
         cho_toi_thieu=timedelta(hours=4 * 2 * int(resolve(cfg, "tier_b.max_hold_bars_4h"))),
     )
 
+    if la_dry_run:
+        # TD-0438 — dựng "account" có ĐÚNG trường `totalMarginBalance` từ ví giấy ⇒ `dd_tu_account`/đỉnh/sổ sự kiện dùng
+        # lại NGUYÊN, không nhánh tính thứ hai. Ví giấy không có thanh lý thật, không có breaker Binance ⇒ rỗng tường minh.
+        def _account_dry_run() -> object:
+            eq = equity_dry_run(
+                doc_json_get(tham_so.freqtrade_api_base_url, "/api/v1/balance", username=ft_username, password=ft_password),
+                doc_json_get(tham_so.freqtrade_api_base_url, "/api/v1/profit", username=ft_username, password=ft_password),
+            )
+            return {} if eq is None else {"totalMarginBalance": eq}
+
+        doc_account_fn = _boc_loi_freqtrade(_account_dry_run)
+        doc_position_fn = lambda: []  # noqa: E731
+        doc_force_orders_fn = lambda: []  # noqa: E731
+        doc_breaker_fn = TrangThaiBreaker
+    else:
+        doc_account_fn = lambda: get_account_info(api_key=api_key, api_secret=api_secret)  # noqa: E731
+        doc_position_fn = lambda: get_position_risk(api_key=api_key, api_secret=api_secret)  # noqa: E731
+        doc_force_orders_fn = lambda: get_force_orders(  # noqa: E731
+            api_key=api_key, api_secret=api_secret, start_time_ms=tu_thoi_diem_ms
+        )
+        doc_breaker_fn = trang_thai_breaker_hien_tai
+
     vong = 0
     while tham_so.max_iterations is None or vong < tham_so.max_iterations:
         da_luu[0] = trang_thai
@@ -530,12 +585,10 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover — khung CL
             trang_thai, nen_dung = chay_mot_vong_giam_sat(
                 trang_thai,
                 now=datetime.now(timezone.utc),
-                doc_account_fn=lambda: get_account_info(api_key=api_key, api_secret=api_secret),
-                doc_position_fn=lambda: get_position_risk(api_key=api_key, api_secret=api_secret),
-                doc_force_orders_fn=lambda: get_force_orders(
-                    api_key=api_key, api_secret=api_secret, start_time_ms=tu_thoi_diem_ms
-                ),
-                doc_breaker_hien_tai_fn=trang_thai_breaker_hien_tai,
+                doc_account_fn=doc_account_fn,
+                doc_position_fn=doc_position_fn,
+                doc_force_orders_fn=doc_force_orders_fn,
+                doc_breaker_hien_tai_fn=doc_breaker_fn,
                 tu_thoi_diem_ms=tu_thoi_diem_ms,
                 dung_bot_fn=lambda: dung_bot(
                     tham_so.freqtrade_api_base_url, username=ft_username, password=ft_password

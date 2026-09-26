@@ -46,7 +46,7 @@ from tool_d.config.loader import load_tool_d_config, resolve
 from tool_d.notional import build_symbol_filters, san_tool_d
 from tool_d.ops.ctrl_d10 import CtrlD10Error, UngVienRo, chon_ro, doc_tham_so
 from tool_d.measurement.gitinfo import GitInfoError, kiem_cay_khop_head
-from tool_d.ops.dry_run import EXIT_CAY_LECH_HEAD, bien_moi_truong_telegram
+from tool_d.ops.dry_run import CAU_HINH_API_SERVER, EXIT_CAY_LECH_HEAD, bien_moi_truong_telegram
 from tool_d.ops.kiem_bao_mat_d10 import BaoMatD10Error, kiem_truoc_khi_bat
 from tool_d.ops.ngan_sach_d10_ro import NganSachD10RoError, von_ro_d10
 from tool_d.pool_giai_doan import POOL_HOM_NAY
@@ -60,7 +60,6 @@ CHIEN_LUOC_HOP_LE = (TEN_CHIEN_LUOC_RO, TEN_CHIEN_LUOC_CTRL)
 CHIEN_LUOC_FILE_PHU = "RoFunding"
 KHOA_CAU_HINH_D10 = "tool_d_d10"
 CAU_HINH_FREQTRADE_GOC = Path("config/freqtrade/config.json")
-CAU_HINH_API_SERVER = Path("config/freqtrade/config.risk_supervisor.json")  # TD-0241: control API cho Risk Supervisor
 RO_D10 = Path("config/d10_ro.yaml")
 #: Thư mục trạng thái vận hành của D10 — dưới `runs/` (đã `.gitignore`), TÁCH khỏi dry-run (N11).
 THU_MUC_VAN_HANH = Path("runs/van_hanh/live")

@@ -1,0 +1,12 @@
+{
+  "mo_ta": "TD-0438: nguon equity dry-run. M1 = bo kiem NaN/null o starting_capital/profit_all_coin (vi the lay gia loi => equity NaN lot vao do sut, hoac bia so).",
+  "module": "tool_d.ops.risk_supervisor_daemon",
+  "file": "src/tool_d/ops/risk_supervisor_daemon.py",
+  "khoi_dong": ["if isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v):"],
+  "bien_the": {"M0": null, "M1": "if False:"},
+  "tests": ["tests/unit/test_td0438_supervisor_dry_run.py"],
+  "ky_vong": {"M0": "xanh", "M1": "do"},
+  "ky_vong_do_gom": {
+    "M1": ["tests/unit/test_td0438_supervisor_dry_run.py::TestEquityDryRun::test_khong_doc_duoc_thi_None_khong_bia[balance0-profit0]"]
+  }
+}

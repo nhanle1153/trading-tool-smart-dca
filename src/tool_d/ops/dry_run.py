@@ -43,6 +43,9 @@ EXIT_CAY_LECH_HEAD = 115
 
 TEN_CHIEN_LUOC = "ZoneAbsorption"
 CAU_HINH_FREQTRADE_GOC = Path("config/freqtrade/config.json")
+#: TD-0438 (`DR-TANG-CHAN-01` §4 điều 6, parity N11) — control API cho Risk Supervisor, CHỈ nghe 127.0.0.1 (DR-D11-03 §2.3).
+#: Một định nghĩa, `live_d10` import lại (không khai lần hai).
+CAU_HINH_API_SERVER = Path("config/freqtrade/config.risk_supervisor.json")
 #: Thư mục trạng thái vận hành của dry-run — dưới `runs/` (đã `.gitignore`), TÁCH khỏi live (N11).
 THU_MUC_VAN_HANH = Path("runs/van_hanh/dry_run")
 TEN_FILE_CAU_HINH_PHU = "cfg.json"
@@ -143,6 +146,7 @@ def lenh_freqtrade(cau_hinh: CauHinhDryRun) -> list[str]:
     return [
         "freqtrade", "trade",
         "--config", str(cau_hinh.duong_dan),
+        "--config", str(CAU_HINH_API_SERVER),  # TD-0438 — Supervisor dry-run dừng/tạm ngừng/mở lại được bot
         "--strategy", TEN_CHIEN_LUOC,
         "--strategy-path", "user_data/strategies",
         "--userdir", "user_data",

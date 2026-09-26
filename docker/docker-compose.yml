@@ -65,6 +65,28 @@ services:
     env_file:
       - path: ../.env.telegram
         required: false
+      # TD-0438 (`DR-TANG-CHAN-01` §4 điều 6) — tài khoản control API (bot bật `config.risk_supervisor.json`, chỉ nghe
+      # 127.0.0.1) để Supervisor dry-run tạm ngừng/dừng/mở lại được bot. `required: true`: thiếu file thì KHÔNG khởi
+      # động — thiếu tài khoản thì Freqtrade từ chối cấu hình API, và bot không có Supervisor thì KHÔNG mở lệnh (TD-0435).
+      - path: ../.env.dryrun
+        required: true
+    volumes:
+      - ..:/workspace
+      - /workspace/lockbox/data
+
+  # TD-0438 — Risk Supervisor cho dry-run (parity với `risk-supervisor-d10`, N11): đo sụt vốn trên ví giấy
+  # (`/balance.starting_capital` + `/profit.profit_all_coin`), công bố `runs/risk_supervisor/dry_run/dd_state.json`,
+  # thi hành HALT/ABORT/mở lại. Chung mạng với `dryrun` để `127.0.0.1:8081` là chính bot đó.
+  risk-supervisor-dryrun:
+    <<: *base
+    profiles: ["van_hanh"]
+    entrypoint: ["python", "-m", "tool_d.ops.risk_supervisor_daemon", "--runmode", "dry_run", "--freqtrade-api-base-url", "http://127.0.0.1:8081"]
+    network_mode: "service:dryrun"
+    depends_on: ["dryrun"]
+    restart: unless-stopped
+    env_file:
+      - path: ../.env.dryrun
+        required: true
     volumes:
       - ..:/workspace
       - /workspace/lockbox/data

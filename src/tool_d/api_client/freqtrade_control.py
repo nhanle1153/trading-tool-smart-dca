@@ -202,6 +202,31 @@ def doc_so_vi_the_mo(
     return len(kq)
 
 
+def doc_json_get(
+    base_url: str,
+    path: str,
+    *,
+    username: str,
+    password: str,
+    timeout: float = DEFAULT_TIMEOUT_S,
+    so_lan_thu_lai: int = SO_LAN_THU_LAI_MAC_DINH,
+    cho_giua_cac_lan_s: float = CHO_GIUA_CAC_LAN_S,
+    ham_ngu: Callable[[float], None] = time.sleep,
+) -> dict:
+    """TD-0438 — GET một endpoint ĐỌC đã khai (`/api/v1/balance`, `/api/v1/profit` — `api-integration-rules.md` 4.2 v1.7)
+    qua cùng đường ra + thử lại. Không phải object JSON ⇒ raise (N6)."""
+    if path not in ("/api/v1/balance", "/api/v1/profit"):
+        raise ValueError(f"{path} chưa khai ở api-integration-rules.md 4.2 cho đường đọc này")
+    kq = _goi_co_thu_lai(
+        base_url, path, username=username, password=password, timeout=timeout,
+        so_lan_thu_lai=so_lan_thu_lai, cho_giua_cac_lan_s=cho_giua_cac_lan_s, ham_ngu=ham_ngu,
+        viec=f"đọc được {path}", method="GET",
+    )
+    if not isinstance(kq, dict):
+        raise FreqtradeControlError(f"{base_url}{path}: kỳ vọng object JSON, nhận {type(kq).__name__}")
+    return kq
+
+
 def _goi_co_thu_lai(
     base_url: str,
     path: str,

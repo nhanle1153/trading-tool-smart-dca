@@ -270,7 +270,11 @@ class TestTelegramTichHopFreqtrade:
     def test_compose_hai_service_nap_env_file_khong_bat_buoc(self) -> None:
         sv = TestComposeCachLyLockbox._services()
         for ten in ("dryrun", "dryrun-watchdog"):
-            assert sv[ten]["env_file"] == [{"path": "../.env.telegram", "required": False}], ten
+            # TD-0438: `dryrun` nạp THÊM `.env.dryrun` (tài khoản control API cho Supervisor) — dòng Telegram giữ nguyên,
+            # ở đúng vị trí đầu; khẳng định về Telegram KHÔNG đổi.
+            assert sv[ten]["env_file"][0] == {"path": "../.env.telegram", "required": False}, ten
+        assert sv["dryrun-watchdog"]["env_file"] == [{"path": "../.env.telegram", "required": False}]
+        assert sv["dryrun"]["env_file"][1:] == [{"path": "../.env.dryrun", "required": True}]
         # Tên biến không còn truyền trần qua `environment` (đó là chỗ phải nhớ `--env-file`).
         moi_truong = sv["dryrun-watchdog"].get("environment") or []
         assert not any(str(d).startswith("TELEGRAM_") for d in moi_truong), moi_truong

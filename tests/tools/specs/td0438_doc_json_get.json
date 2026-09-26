@@ -1,0 +1,12 @@
+{
+  "mo_ta": "TD-0438: doc_json_get chi cho hai duong DA KHAI o api-integration-rules 4.2 (quy tac 17). M1 = bo danh sach cho phep (goi duoc duong chua khai).",
+  "module": "tool_d.api_client.freqtrade_control",
+  "file": "src/tool_d/api_client/freqtrade_control.py",
+  "khoi_dong": ["if path not in (\"/api/v1/balance\", \"/api/v1/profit\"):"],
+  "bien_the": {"M0": null, "M1": "if False:"},
+  "tests": ["tests/unit/test_td0438_supervisor_dry_run.py"],
+  "ky_vong": {"M0": "xanh", "M1": "do"},
+  "ky_vong_do_gom": {
+    "M1": ["tests/unit/test_td0438_supervisor_dry_run.py::TestDocJsonGet::test_duong_chua_khai_thi_tu_choi_khong_goi_mang"]
+  }
+}
