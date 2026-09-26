@@ -1,0 +1,25 @@
+{
+  "mo_ta": "TD-0427 (MT-71): ca goi liq_buffer_ke_hoach ngoai pham vi phai do khi ham thoi fail-closed. M1 = bo chot sl sai phia (ham tra ty so am thay vi nem loi); M2 = de TypeError lot ra o chieu SHORT thay vi ThanhLyError doc duoc (cua ho thu hai cua MT-71).",
+  "module": "tool_d.ablation.thanh_ly",
+  "file": "src/tool_d/ablation/thanh_ly.py",
+  "khoi_dong": ["if mau <= 0:"],
+  "bien_the": {
+    "M0": null,
+    "M1": "if False:",
+    "M2": {
+      "khoi_dong": ["except TypeError as e:  # hàm được tiêm chỉ nhận 5 đối số — fail-closed, ĐỌC ĐƯỢC, không nuốt"],
+      "thay": "except ZeroDivisionError as e:"
+    }
+  },
+  "tests": ["tests/lock/test_td0427_pham_vi_tang_do.py"],
+  "ky_vong": {"M0": "xanh", "M1": "do", "M2": "do"},
+  "ky_vong_do_gom": {
+    "M1": [
+      "tests/lock/test_td0427_pham_vi_tang_do.py::TestLiqBufferNgoaiPhamVi::test_sl_sai_phia_thi_NEM_LOI[99.5-False]",
+      "tests/lock/test_td0427_pham_vi_tang_do.py::TestLiqBufferNgoaiPhamVi::test_sl_sai_phia_thi_NEM_LOI[95.0-True]"
+    ],
+    "M2": [
+      "tests/lock/test_td0427_pham_vi_tang_do.py::TestLiqBufferNgoaiPhamVi::test_chieu_SHORT_voi_ham_5_doi_so_thi_NEM_ThanhLyError_khong_phai_TypeError"
+    ]
+  }
+}
