@@ -211,6 +211,11 @@ Y_NGHIA: dict[tuple[str, str], NghiaCot] = {
     ("orders", "ft_amount"): NghiaCot(
         "Khối lượng Freqtrade YÊU CẦU (khác `amount` do sàn báo về)", _tm("95")
     ),
+    ("orders", "ft_price"): NghiaCot(
+        "Giá Freqtrade YÊU CẦU, CHƯA làm tròn theo bước giá — giá kế hoạch `p_i` "
+        "của phép đo lệch khớp D6 (`DR-D35-01` §4). Khác `price` (đã làm tròn)",
+        _tm("96"),
+    ),
     ("orders", "order_id"): NghiaCot(
         "Mã order do SÀN cấp. Tool D dùng làm khoá chống trùng của Decision Log "
         "(§8.3) — mỗi tranche một sự kiện",
@@ -222,8 +227,34 @@ Y_NGHIA: dict[tuple[str, str], NghiaCot] = {
         _tm("100"),
         "open · closed · canceled · expired · rejected",
     ),
+    ("orders", "order_type"): NghiaCot(
+        "Loại lệnh theo CCXT (khoá `type` của sàn)",
+        _tm("102 · 207"),
+        "limit · market · stop_market",
+    ),
+    ("orders", "price"): NghiaCot(
+        "Giá lệnh ĐÃ làm tròn theo bước giá, theo sàn báo về. Là giá ĐẶT, không phải "
+        "giá khớp",
+        _tm("104 · 209"),
+    ),
+    ("orders", "average"): NghiaCot(
+        "Giá khớp trung bình theo sàn báo về. 🔴 CHỈ có nghĩa khi `filled > 0`: ở "
+        "dry-run Freqtrade gán `average = giá đặt` ngay lúc TẠO lệnh "
+        "(`/freqtrade/freqtrade/exchange/exchange.py:1181`), nên lệnh huỷ/chưa khớp "
+        "vẫn mang `average` khác NULL — đọc không lọc `filled` là báo khớp giả",
+        _tm("105 · 212"),
+    ),
     ("orders", "amount"): NghiaCot(
         "Khối lượng order theo SÀN báo về. Khối lượng ĐÃ khớp là `filled`", _tm("106")
+    ),
+    ("orders", "filled"): NghiaCot(
+        "Khối lượng ĐÃ khớp theo sàn báo về. `0` ở trạng thái kết thúc = không khớp "
+        "(NO_FILL); `0 < filled < amount` = khớp một phần",
+        _tm("107 · 211"),
+    ),
+    ("orders", "remaining"): NghiaCot(
+        "Khối lượng CHƯA khớp theo sàn báo về",
+        _tm("108 · 213"),
     ),
     ("orders", "order_date"): NghiaCot(
         "Thời điểm order được TẠO. Mốc kết thúc khoảng trống không-SL", _tm("111")

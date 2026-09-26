@@ -37,7 +37,7 @@ là ảnh chụp mã nguồn Freqtrade tại thời điểm đọc, không phả
 
 ### Ba trạng thái của cột *Ý nghĩa* — vì sao không điền cho đủ
 
-- **đã tra** (50/109 cột): ý nghĩa đọc ra từ mã nguồn Freqtrade, có `file:line` kèm theo.
+- **đã tra** (56/109 cột): ý nghĩa đọc ra từ mã nguồn Freqtrade, có `file:line` kèm theo.
 - **⏳ chưa tra cứu**: chưa ai đọc mã cho cột này.
 
 Quy tắc 7 cấm *"suy đoán ý nghĩa từ tên trường"*. Điền nốt phần còn lại bằng suy đoán sẽ
@@ -91,7 +91,7 @@ wallet_history   pairlocks   KeyValueStore    (độc lập, không khoá ngoạ
 
 ## Bảng: orders
 
-**26 cột** · đã tra ý nghĩa: **10/26**
+**26 cột** · đã tra ý nghĩa: **16/26**
 
 | Trường | Kiểu dữ liệu | Ý nghĩa (định nghĩa rõ, không nhập nhằng) | Bắt buộc? | Giá trị hợp lệ | Ràng buộc/Khóa ngoại | Dùng bởi (module/function nào) | Version | Ngày cập nhật |
 |---|---|---|---|---|---|---|---|---|
@@ -101,18 +101,18 @@ wallet_history   pairlocks   KeyValueStore    (độc lập, không khoá ngoạ
 | `ft_pair` | VARCHAR(25) | ⏳ chưa tra cứu | ✅ | — | — | — | v1.0 | 14/09/2026 |
 | `ft_is_open` | BOOLEAN | ⏳ chưa tra cứu | ✅ | — | — | — | v1.0 | 14/09/2026 |
 | `ft_amount` | FLOAT | Khối lượng Freqtrade YÊU CẦU (khác `amount` do sàn báo về) — _nguồn: `/freqtrade/freqtrade/persistence/trade_model.py:95`_ | ✅ | — | — | `user_data/strategies/CtrlD10.py::CtrlD10._ghi_gap_ms` · `user_data/strategies/ZoneAbsorption.py::ZoneAbsorption._ghi_gap_ms` | v1.0 | 14/09/2026 |
-| `ft_price` | FLOAT | ⏳ chưa tra cứu | ✅ | — | — | — | v1.0 | 14/09/2026 |
+| `ft_price` | FLOAT | Giá Freqtrade YÊU CẦU, CHƯA làm tròn theo bước giá — giá kế hoạch `p_i` của phép đo lệch khớp D6 (`DR-D35-01` §4). Khác `price` (đã làm tròn) — _nguồn: `/freqtrade/freqtrade/persistence/trade_model.py:96`_ | ✅ | — | — | — | v1.0 | 14/09/2026 |
 | `ft_cancel_reason` | VARCHAR(255) | ⏳ chưa tra cứu | — | — | — | — | v1.0 | 14/09/2026 |
 | `order_id` | VARCHAR(255) | Mã order do SÀN cấp. Tool D dùng làm khoá chống trùng của Decision Log (§8.3) — mỗi tranche một sự kiện — _nguồn: `/freqtrade/freqtrade/persistence/trade_model.py:99`_ | ✅ | — | — | `src/tool_d/gap_ms.py::sinh_ban_ghi_doi_sl` · `user_data/strategies/CtrlD10.py::CtrlD10._ghi_gap_ms` · `user_data/strategies/CtrlD10.py::CtrlD10.order_filled` · `user_data/strategies/ZoneAbsorption.py::ZoneAbsorption._ghi_gap_ms` · `user_data/strategies/ZoneAbsorption.py::ZoneAbsorption._ghi_vao_lenh` | v1.0 | 14/09/2026 |
 | `status` | VARCHAR(255) | Trạng thái order theo CCXT. `canceled` là mốc suy ra khoảng trống không-SL (`gap_ms`) — _nguồn: `/freqtrade/freqtrade/persistence/trade_model.py:100`_ | — | open · closed · canceled · expired · rejected | — | `src/tool_d/gap_ms.py` · `user_data/strategies/ZoneAbsorption.py` | v1.0 | 14/09/2026 |
 | `symbol` | VARCHAR(25) | ⏳ chưa tra cứu | — | — | — | — | v1.0 | 14/09/2026 |
-| `order_type` | VARCHAR(50) | ⏳ chưa tra cứu | — | — | — | — | v1.0 | 14/09/2026 |
+| `order_type` | VARCHAR(50) | Loại lệnh theo CCXT (khoá `type` của sàn) — _nguồn: `/freqtrade/freqtrade/persistence/trade_model.py:102 · 207`_ | — | limit · market · stop_market | — | — | v1.0 | 14/09/2026 |
 | `side` | VARCHAR(25) | ⏳ chưa tra cứu | — | — | — | — | v1.0 | 14/09/2026 |
-| `price` | FLOAT | ⏳ chưa tra cứu | — | — | — | — | v1.0 | 14/09/2026 |
-| `average` | FLOAT | ⏳ chưa tra cứu | — | — | — | — | v1.0 | 14/09/2026 |
+| `price` | FLOAT | Giá lệnh ĐÃ làm tròn theo bước giá, theo sàn báo về. Là giá ĐẶT, không phải giá khớp — _nguồn: `/freqtrade/freqtrade/persistence/trade_model.py:104 · 209`_ | — | — | — | — | v1.0 | 14/09/2026 |
+| `average` | FLOAT | Giá khớp trung bình theo sàn báo về. 🔴 CHỈ có nghĩa khi `filled > 0`: ở dry-run Freqtrade gán `average = giá đặt` ngay lúc TẠO lệnh (`/freqtrade/freqtrade/exchange/exchange.py:1181`), nên lệnh huỷ/chưa khớp vẫn mang `average` khác NULL — đọc không lọc `filled` là báo khớp giả — _nguồn: `/freqtrade/freqtrade/persistence/trade_model.py:105 · 212`_ | — | — | — | — | v1.0 | 14/09/2026 |
 | `amount` | FLOAT | Khối lượng order theo SÀN báo về. Khối lượng ĐÃ khớp là `filled` — _nguồn: `/freqtrade/freqtrade/persistence/trade_model.py:106`_ | — | — | — | `src/tool_d/gap_ms.py` · `user_data/strategies/ZoneAbsorption.py` | v1.0 | 14/09/2026 |
-| `filled` | FLOAT | ⏳ chưa tra cứu | — | — | — | — | v1.0 | 14/09/2026 |
-| `remaining` | FLOAT | ⏳ chưa tra cứu | — | — | — | — | v1.0 | 14/09/2026 |
+| `filled` | FLOAT | Khối lượng ĐÃ khớp theo sàn báo về. `0` ở trạng thái kết thúc = không khớp (NO_FILL); `0 < filled < amount` = khớp một phần — _nguồn: `/freqtrade/freqtrade/persistence/trade_model.py:107 · 211`_ | — | — | — | — | v1.0 | 14/09/2026 |
+| `remaining` | FLOAT | Khối lượng CHƯA khớp theo sàn báo về — _nguồn: `/freqtrade/freqtrade/persistence/trade_model.py:108 · 213`_ | — | — | — | — | v1.0 | 14/09/2026 |
 | `cost` | FLOAT | ⏳ chưa tra cứu | — | — | — | — | v1.0 | 14/09/2026 |
 | `stop_price` | FLOAT | ⏳ chưa tra cứu | — | — | — | — | v1.0 | 14/09/2026 |
 | `order_date` | DATETIME | Thời điểm order được TẠO. Mốc kết thúc khoảng trống không-SL — _nguồn: `/freqtrade/freqtrade/persistence/trade_model.py:111`_ | — | — | — | `src/tool_d/gap_ms.py::sinh_ban_ghi_doi_sl` · `user_data/strategies/CtrlD10.py::CtrlD10._ghi_gap_ms` · `user_data/strategies/ZoneAbsorption.py::ZoneAbsorption._ghi_gap_ms` | v1.0 | 14/09/2026 |
