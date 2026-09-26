@@ -67,6 +67,7 @@ from tool_d.api_client.binance_public import (
 from tool_d.api_client.freqtrade_control import (
     FreqtradeAuthError,
     FreqtradeControlError,
+    doc_so_lenh_dong,
     dung_bot,
     tam_ngung_mo_lenh,
 )
@@ -86,6 +87,7 @@ from tool_d.risk_supervisor import (
     HALT,
     RiskSupervisorError,
     TrangThaiBenVung,
+    ap_tran_halt,
     doc_snapshot_an_toan,
     doc_trang_thai,
     kiem_khai_lai_khop_ban_goc,
@@ -143,6 +145,7 @@ def chay_mot_vong_giam_sat(
     tam_ngung_fn: Callable[[], object] | None = None,
     ghi_abort_fn: Callable[[], None] | None = None,
     luu_truoc_fn: Callable[[TrangThaiBenVung], None] | None = None,
+    doc_so_lenh_dong_fn: Callable[[], int] | None = None,
 ) -> tuple[TrangThaiBenVung, bool]:
     """MỘT vòng: đọc snapshot ba endpoint (cô lập lỗi từng endpoint,
     §6.6(4)) → đọc lại breaker THẬT của `binance_public` → phát hiện thanh
@@ -182,7 +185,10 @@ def chay_mot_vong_giam_sat(
     else:
         _LOG.warning("không đọc được forceOrders vòng này: %s", kq_force_orders.loi)
 
-    trang_thai_moi = TrangThaiBenVung(breaker=breaker_moi, la_thanh_ly=la_thanh_ly_moi)
+    # `replace` từ trạng thái cũ, KHÔNG dựng lại từ hai trường: dựng lại thì ở nhánh THANH LÝ ngay dưới, trạng thái ghi
+    # xuống đĩa mất `muc_tang_chan`/`moc_halt` (bot đang HALT mà hồ sơ ghi BINH_THUONG, mất đếm HALT). Không nguy hiểm — cờ
+    # đỏ vẫn bật — nhưng là hồ sơ sai. (Nhánh tầng chặn bên dưới đọc từ `trang_thai` nên không bị; phá thật TD-0434 chặng 2.)
+    trang_thai_moi = replace(trang_thai, breaker=breaker_moi, la_thanh_ly=la_thanh_ly_moi)
 
     if trang_thai_moi.la_thanh_ly or trang_thai_moi.breaker.dung_han:
         _LOG.critical(
@@ -198,7 +204,21 @@ def chay_mot_vong_giam_sat(
     return _tang_chan_sut_von(
         trang_thai, trang_thai_moi, snap["account"], tinh_dd_fn=tinh_dd_fn, tam_ngung_fn=tam_ngung_fn,
         ghi_abort_fn=ghi_abort_fn, luu_truoc_fn=luu_truoc_fn, dung_bot_fn=dung_bot_fn,
+        doc_so_lenh_dong_fn=doc_so_lenh_dong_fn,
     )
+
+
+def _doc_so_lenh_dong_an_toan(doc_so_lenh_dong_fn: Callable[[], int] | None) -> int | None:
+    """Không có hàm / đọc lỗi ⇒ `None` (N6) — `ap_tran_halt` tính mốc `None` vào MỌI chu kỳ (phía an toàn)."""
+    if doc_so_lenh_dong_fn is None:
+        return None
+    try:
+        return doc_so_lenh_dong_fn()
+    except FreqtradeAuthError:
+        raise
+    except FreqtradeControlError as exc:
+        _LOG.warning("không đọc được số lệnh đã đóng lúc chuyển HALT (%s) — mốc None, tính vào mọi chu kỳ", exc)
+        return None
 
 
 def _tang_chan_sut_von(
@@ -211,6 +231,7 @@ def _tang_chan_sut_von(
     ghi_abort_fn: Callable[[], None] | None,
     luu_truoc_fn: Callable[[TrangThaiBenVung], None] | None,
     dung_bot_fn: Callable[[], object],
+    doc_so_lenh_dong_fn: Callable[[], int] | None = None,
 ) -> tuple[TrangThaiBenVung, bool]:
     """TD-0434 (`DR-TANG-CHAN-01`, §12c.5) — phần CỨNG của thang sụt vốn cho MỌI chiến lược.
 
@@ -226,7 +247,13 @@ def _tang_chan_sut_von(
         dd = None
         _LOG.warning("không đọc được account vòng này — giữ nguyên mức tầng chặn: %s", kq_account.loi)
     muc_moi = quyet_dinh_tang_chan(trang_thai.muc_tang_chan, dd_pct=dd)
-    trang_thai_moi = replace(trang_thai_moi, muc_tang_chan=muc_moi)
+    moc_halt = trang_thai.moc_halt
+    if muc_moi == HALT and trang_thai.muc_tang_chan != HALT:  # CHUYỂN sang HALT ⇒ trần §12c.5 (TD-0434 chặng 2)
+        muc_moi, moc_halt = ap_tran_halt(
+            trang_thai.muc_tang_chan, muc_moi, moc_halt=moc_halt,
+            so_lenh_dong=_doc_so_lenh_dong_an_toan(doc_so_lenh_dong_fn),
+        )
+    trang_thai_moi = replace(trang_thai_moi, muc_tang_chan=muc_moi, moc_halt=moc_halt)
     if muc_moi != trang_thai.muc_tang_chan:  # R8: log khi CHUYỂN, không lặp mỗi vòng
         _LOG.critical("TẦNG CHẶN SỤT VỐN: %s → %s (dd=%.4f%%)", trang_thai.muc_tang_chan, muc_moi, dd)
 
@@ -392,6 +419,9 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover — khung CL
                 ),
                 ghi_abort_fn=lambda: ghi_su_kien_abort(duong_dan_dinh, now=datetime.now(timezone.utc)),
                 luu_truoc_fn=_luu_truoc,
+                doc_so_lenh_dong_fn=lambda: doc_so_lenh_dong(
+                    tham_so.freqtrade_api_base_url, username=ft_username, password=ft_password
+                ),
             )
         except FreqtradeControlError as exc:
             # KHÔNG nuốt: "không dừng được bot khi tài khoản đã thanh lý"

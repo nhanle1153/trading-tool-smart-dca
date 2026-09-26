@@ -1,0 +1,21 @@
+{
+  "mo_ta": "TD-0434 chang 2 (DR-TANG-CHAN-01 8 (a), 12c.5 spec:4756): tran '3 HALT / chu ky 100 lenh dong'. M1 = bo tran (HALT lan 4 khong ABORT); M2 = chu ky truot thay vi khoi co dinh 12c.1 (dem moi lan); M3 = moc None (khong doc duoc so lenh) KHONG tinh vao chu ky nao — lech ve phia NGUY HIEM; M4 = goi lai /stopentry moi vong bi dem la lan HALT moi.",
+  "module": "tool_d.risk_supervisor",
+  "file": "src/tool_d/risk_supervisor.py",
+  "khoi_dong": ["if cung_chu_ky > hang_so.tran_halt_so_lan:"],
+  "bien_the": {
+    "M0": null,
+    "M1": "if False:",
+    "M2": {"khoi_dong": ["cung_chu_ky = sum(1 for m in moc_moi if m is None or m // hang_so.chu_ky_lenh_dong == chu_ky)"], "thay": "cung_chu_ky = len(moc_moi)"},
+    "M3": {"khoi_dong": ["cung_chu_ky = sum(1 for m in moc_moi if m is None or m // hang_so.chu_ky_lenh_dong == chu_ky)"], "thay": "cung_chu_ky = sum(1 for m in moc_moi if m is not None and m // hang_so.chu_ky_lenh_dong == chu_ky)"},
+    "M4": {"khoi_dong": ["if muc_moi != HALT or muc_cu == HALT:"], "thay": "if muc_moi != HALT:"}
+  },
+  "tests": ["tests/unit/test_td0434_tang_chan_supervisor.py"],
+  "ky_vong": {"M0": "xanh", "M1": "do", "M2": "do", "M3": "do", "M4": "do"},
+  "ky_vong_do_gom": {
+    "M1": ["tests/unit/test_td0434_tang_chan_supervisor.py::TestTranHaltThuan::test_ba_lan_HALT_cung_chu_ky_van_HALT_lan_bon_ABORT"],
+    "M2": ["tests/unit/test_td0434_tang_chan_supervisor.py::TestTranHaltThuan::test_chu_ky_la_KHOI_CO_DINH_khong_truot"],
+    "M3": ["tests/unit/test_td0434_tang_chan_supervisor.py::TestTranHaltThuan::test_khong_doc_duoc_so_lenh_thi_tinh_vao_MOI_chu_ky_phia_an_toan"],
+    "M4": ["tests/unit/test_td0434_tang_chan_supervisor.py::TestTranHaltThuan::test_goi_lai_HALT_moi_vong_KHONG_phai_lan_HALT_moi"]
+  }
+}

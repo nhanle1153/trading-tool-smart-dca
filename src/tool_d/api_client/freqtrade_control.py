@@ -136,6 +136,32 @@ def tam_ngung_mo_lenh(
     return kq
 
 
+def doc_so_lenh_dong(
+    base_url: str,
+    *,
+    username: str,
+    password: str,
+    timeout: float = DEFAULT_TIMEOUT_S,
+    so_lan_thu_lai: int = SO_LAN_THU_LAI_MAC_DINH,
+    cho_giua_cac_lan_s: float = CHO_GIUA_CAC_LAN_S,
+    ham_ngu: Callable[[float], None] = time.sleep,
+) -> int:
+    """TD-0434 chặng 2 — `GET /api/v1/profit` → `closed_trade_count`: mọi lệnh ĐÃ ĐÓNG trong DB của bot (`rpc.py:594-623`,
+    Freqtrade 2026.8 — lọc `close_date >= epoch`). Nguồn đếm chu kỳ cho trần HALT §12c.5 (`DR-TANG-CHAN-01` §8).
+
+    Trường thiếu / sai kiểu / âm ⇒ `FreqtradeControlError` — KHÔNG trả 0 (N6: "0 lệnh" là một con số, "không đọc được" thì không).
+    """
+    kq = _goi_co_thu_lai(
+        base_url, "/api/v1/profit", username=username, password=password, timeout=timeout,
+        so_lan_thu_lai=so_lan_thu_lai, cho_giua_cac_lan_s=cho_giua_cac_lan_s, ham_ngu=ham_ngu,
+        viec="đọc được số lệnh đã đóng", method="GET",
+    )
+    so = kq.get("closed_trade_count") if isinstance(kq, dict) else None
+    if type(so) is not int or so < 0:
+        raise FreqtradeControlError(f"{base_url}/api/v1/profit: closed_trade_count không hợp lệ ({so!r})")
+    return so
+
+
 def _goi_co_thu_lai(
     base_url: str,
     path: str,

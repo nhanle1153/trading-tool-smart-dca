@@ -123,6 +123,7 @@ tier_c: # 🔒 KHOÁ — KHÔNG có ô nhập, ghi ở đây
   dg8_enabled: true # bật/tắt: CẤM
   k_swing_confirm: 3 # 🆕 v6 — CHUYỂN TỪ tier_b/frozen
   dd_ladder_pct: { soft: 5, halt: 8, abort: 20 } # 🆕 v6 — §12c.5 ✅ DR-D0PRE-04 (TD-0042), Hạng 0. halt == tier_a.daily_loss_budget_pct
+  tran_halt: { so_lan: 3, chu_ky_lenh_dong: 100 } # 🆕 TD-0434 — §12c.5 spec:4756 "3 lần trong một chu kỳ 100 lệnh đóng, lần thứ 4 → ABORT" (chu kỳ §12c.1). CHÉP từ spec, không số mới; ✅ DR-TANG-CHAN-01 §8 (a). Supervisor khai lại + L-Z44
   data_split: { t0: "2024-04-09", t1: "2025-06-12", t2: "2026-01-29", t3: "2026-09-06" } # 🆕 TD-0094 — ✅ DR-D0PRE-07 (TD-0084), niêm phong "commit, không sửa". t2 = ranh giới LOCKBOX tuyệt đối, E1/E2/E3 cấm mọi timerange vượt t2
   lockbox: # 🆕 TD-0309 — ✅ DR-LOCKBOX-01 (vii): CẤU TRÚC, không phải tham số, không tính DOF (dof.py:104 chỉ đọc tier_b); đổi = DR mới
     seal_mien_khai_pool: ["lockbox_seal_1.json"] # MT-60: seal 1 niêm phong 102 mã pool.yaml TRƯỚC khi có rổ theo giai đoạn nên KHÔNG khai rổ; bị thay bởi bản cấp lại (TD-0310), không bao giờ được chạm. Miễn ≠ đạt: verify_lockbox vẫn in dòng riêng

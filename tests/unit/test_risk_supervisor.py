@@ -207,6 +207,9 @@ class TestKhaiLaiCoChuDich:
                 # quay về KeyError chứ không âm thầm xanh — nới ở đây là
                 # nới thấy được.
                 "tier_frozen.mult_deploy_thr.value": HANG_SO_KHAI_LAI.tran_margin_ty_le,
+                # TD-0434 chặng 2 — cùng tiền lệ TD-0241: dạy thêm hai đường trần HALT, KHẲNG ĐỊNH không đổi.
+                "tier_c.tran_halt.so_lan": HANG_SO_KHAI_LAI.tran_halt_so_lan,
+                "tier_c.tran_halt.chu_ky_lenh_dong": HANG_SO_KHAI_LAI.chu_ky_lenh_dong,
             }[duong_dan]
 
         lech = kiem_khai_lai_khop_ban_goc(gia_lap, doc_resolve=resolve_gia)

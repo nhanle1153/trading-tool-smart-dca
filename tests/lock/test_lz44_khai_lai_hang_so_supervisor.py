@@ -90,6 +90,9 @@ DUONG_DAN_GOC: dict[str, str] = {
     # §6.8f là GỐC của 0,85; `mult_deploy_thr` là bên MƯỢN — xem
     # `admission.py:80-88`. KHÔNG thêm khoá YAML thứ ba cho cùng con số.
     "tran_margin_ty_le": "tier_frozen.mult_deploy_thr.value",
+    # TD-0434 — trần HALT §12c.5 (DR-TANG-CHAN-01 §8 (a)): khoá Tầng C MỚI, chép từ spec:4756.
+    "tran_halt_so_lan": "tier_c.tran_halt.so_lan",
+    "chu_ky_lenh_dong": "tier_c.tran_halt.chu_ky_lenh_dong",
 }
 
 #: Tiền tố module bị CẤM xuất hiện trong `import` cấp cao nhất của

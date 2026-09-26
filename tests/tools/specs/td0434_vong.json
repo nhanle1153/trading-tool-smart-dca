@@ -1,5 +1,5 @@
 {
-  "mo_ta": "TD-0434 (DR-TANG-CHAN-01): mot vong giam sat. M1 = khong luu co do truoc khi /stop (stop loi thi main ghi de mat co ABORT); M2 = HALT that bai khong leo thang (bot tiep tuc mo lenh khi dang HALT); M3 = khong goi lai /stopentry moi vong (HALT mat sau restart bot). Chot co do dau vong duoc pha o td0434_quyet_dinh M4 (thuoc tinh co_do).",
+  "mo_ta": "TD-0434 (DR-TANG-CHAN-01): mot vong giam sat. M1 = khong luu co do truoc khi /stop (stop loi thi main ghi de mat co ABORT); M2 = HALT that bai khong leo thang (bot tiep tuc mo lenh khi dang HALT); M3 = khong goi lai /stopentry moi vong (HALT mat sau restart bot). Chot co do dau vong duoc pha o td0434_quyet_dinh M4 (thuoc tinh co_do). M4 (chang 2) = dung lai trang thai tu HAI truong: nhanh thanh ly ghi ho so mat muc_tang_chan/moc_halt.",
   "module": "tool_d.ops.risk_supervisor_daemon",
   "file": "src/tool_d/ops/risk_supervisor_daemon.py",
   "khoi_dong": [
@@ -19,6 +19,12 @@
         "tam_ngung_fn()"
       ],
       "thay": "pass"
+    },
+    "M4": {
+      "khoi_dong": [
+        "trang_thai_moi = replace(trang_thai, breaker=breaker_moi, la_thanh_ly=la_thanh_ly_moi)"
+      ],
+      "thay": "trang_thai_moi = TrangThaiBenVung(breaker=breaker_moi, la_thanh_ly=la_thanh_ly_moi)"
     }
   },
   "tests": [
@@ -28,7 +34,8 @@
     "M0": "xanh",
     "M1": "do",
     "M2": "do",
-    "M3": "do"
+    "M3": "do",
+    "M4": "do"
   },
   "ky_vong_do_gom": {
     "M1": [
@@ -39,6 +46,9 @@
     ],
     "M3": [
       "tests/unit/test_td0434_tang_chan_supervisor.py::TestMotVongGiamSat::test_dang_HALT_goi_lai_stopentry_MOI_VONG"
+    ],
+    "M4": [
+      "tests/unit/test_td0434_tang_chan_supervisor.py::TestTranHaltTrongVong::test_thanh_ly_giua_luc_HALT_thi_ho_so_giu_muc_va_moc_halt"
     ]
   }
 }

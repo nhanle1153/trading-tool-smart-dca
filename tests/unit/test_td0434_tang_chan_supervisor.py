@@ -21,6 +21,7 @@ import pytest
 from tool_d.api_client.freqtrade_control import (
     FreqtradeBatLaiBotError,
     FreqtradeControlError,
+    doc_so_lenh_dong,
     tam_ngung_mo_lenh,
 )
 from tool_d.equity_peak import NAP_RUT, SuKienDinh, doc_so_su_kien, duong_dan_so_su_kien, ghi_su_kien
@@ -40,6 +41,7 @@ from tool_d.risk_supervisor import (
     TrangThaiBreaker,
     doc_trang_thai,
     luu_trang_thai,
+    ap_tran_halt,
     quyet_dinh_tang_chan,
 )
 
@@ -152,7 +154,7 @@ class _Ghi:
         self.goi.append(f"luu:{t.muc_tang_chan}:{t.leo_thang_dung}")
 
 
-def _vong(tt: TrangThaiBenVung, ghi: _Ghi, *, dd: float | None, account=None, force_orders=None):
+def _vong(tt: TrangThaiBenVung, ghi: _Ghi, *, dd: float | None, account=None, force_orders=None, so_lenh=None):
     return chay_mot_vong_giam_sat(
         tt,
         now=T0,
@@ -166,6 +168,7 @@ def _vong(tt: TrangThaiBenVung, ghi: _Ghi, *, dd: float | None, account=None, fo
         tam_ngung_fn=ghi.tam_ngung,
         ghi_abort_fn=ghi.ghi_abort,
         luu_truoc_fn=ghi.luu,
+        doc_so_lenh_dong_fn=(lambda: so_lenh) if so_lenh is not None else None,
     )
 
 
@@ -272,7 +275,9 @@ class TestMainGiuCoDoKhiStopLoi:
             if isinstance(n, ast.Call) and getattr(n.func, "id", "") == "chay_mot_vong_giam_sat"
         ]
         assert len(goi) == 1
-        assert {"tinh_dd_fn", "tam_ngung_fn", "ghi_abort_fn", "luu_truoc_fn"} <= {k.arg for k in goi[0].keywords}
+        assert {"tinh_dd_fn", "tam_ngung_fn", "ghi_abort_fn", "luu_truoc_fn", "doc_so_lenh_dong_fn"} <= {
+            k.arg for k in goi[0].keywords
+        }
 
 
 class TestDdTuAccount:
@@ -324,3 +329,124 @@ class TestTamNgungMoLenh:
                                               "Run /start to enable entries."})
             with pytest.raises(FreqtradeBatLaiBotError):
                 tam_ngung_mo_lenh("http://127.0.0.1:8081", username="u", password="p")
+
+
+# ═══ TD-0434 chặng 2 — trần "3 HALT / chu kỳ 100 lệnh đóng" (§12c.5 spec:4756, DR-TANG-CHAN-01 §8 (a)) ═══
+
+
+class TestTranHaltThuan:
+    def test_hang_so_khop_spec(self) -> None:
+        assert (HANG_SO_KHAI_LAI.tran_halt_so_lan, HANG_SO_KHAI_LAI.chu_ky_lenh_dong) == (3, 100)
+
+    def test_ba_lan_HALT_cung_chu_ky_van_HALT_lan_bon_ABORT(self) -> None:
+        moc: tuple = ()
+        for so_lenh in (10, 40, 70):
+            muc, moc = ap_tran_halt(BINH_THUONG, HALT, moc_halt=moc, so_lenh_dong=so_lenh)
+            assert muc == HALT
+        muc, moc = ap_tran_halt(BINH_THUONG, HALT, moc_halt=moc, so_lenh_dong=99)
+        assert muc == ABORT and moc == (10, 40, 70, 99)
+
+    def test_chu_ky_la_KHOI_CO_DINH_khong_truot(self) -> None:
+        """§12c.1: lệnh 99 thuộc chu kỳ 0, lệnh 100 thuộc chu kỳ 1 — ba HALT cũ ở chu kỳ 0 không tính sang chu kỳ 1."""
+        muc, moc = ap_tran_halt(BINH_THUONG, HALT, moc_halt=(10, 40, 99), so_lenh_dong=100)
+        assert muc == HALT and moc == (10, 40, 99, 100)
+
+    def test_goi_lai_HALT_moi_vong_KHONG_phai_lan_HALT_moi(self) -> None:
+        assert ap_tran_halt(HALT, HALT, moc_halt=(1, 2, 3), so_lenh_dong=4) == (HALT, (1, 2, 3))
+
+    def test_khong_phai_HALT_thi_khong_dem(self) -> None:
+        assert ap_tran_halt(BINH_THUONG, BINH_THUONG, moc_halt=(1,), so_lenh_dong=5) == (BINH_THUONG, (1,))
+        assert ap_tran_halt(BINH_THUONG, ABORT, moc_halt=(1,), so_lenh_dong=5) == (ABORT, (1,))
+
+    def test_khong_doc_duoc_so_lenh_thi_tinh_vao_MOI_chu_ky_phia_an_toan(self) -> None:
+        muc, moc = ap_tran_halt(BINH_THUONG, HALT, moc_halt=(5, 250, 480), so_lenh_dong=None)
+        assert muc == ABORT and moc == (5, 250, 480, None), "không biết chu kỳ ⇒ đếm mọi lần, ABORT sớm hơn không muộn hơn"
+        muc, _ = ap_tran_halt(BINH_THUONG, HALT, moc_halt=(None, None), so_lenh_dong=150)
+        assert muc == HALT
+        muc, _ = ap_tran_halt(BINH_THUONG, HALT, moc_halt=(None, None, 120), so_lenh_dong=150)
+        assert muc == ABORT, "mốc None cũ tính vào cả chu kỳ hiện tại"
+
+    @pytest.mark.parametrize("so_lenh", [-1, 1.5, True, "10"])
+    def test_so_lenh_rac_thi_raise(self, so_lenh) -> None:
+        with pytest.raises(RiskSupervisorError):
+            ap_tran_halt(BINH_THUONG, HALT, moc_halt=(), so_lenh_dong=so_lenh)
+
+
+class TestTranHaltBenVung:
+    def test_ghi_doc_lai_moc_halt_gom_None(self, tmp_path) -> None:
+        p = tmp_path / "state.json"
+        luu_trang_thai(_tt(HALT, moc_halt=(12, None, 40)), p)
+        assert doc_trang_thai(p).moc_halt == (12, None, 40)
+
+    def test_file_TRUOC_chang_2_doc_duoc_moc_rong(self, tmp_path) -> None:
+        p = tmp_path / "state.json"
+        luu_trang_thai(_tt(), p)
+        tho = json.loads(p.read_text(encoding="utf-8"))
+        del tho["moc_halt"]
+        p.write_text(json.dumps(tho), encoding="utf-8")
+        assert doc_trang_thai(p).moc_halt == ()
+
+    @pytest.mark.parametrize("moc", [[-1], [1.5], ["3"], {"a": 1}])
+    def test_moc_sai_kieu_thi_raise(self, tmp_path, moc) -> None:
+        p = tmp_path / "state.json"
+        luu_trang_thai(_tt(), p)
+        tho = json.loads(p.read_text(encoding="utf-8"))
+        tho["moc_halt"] = moc
+        p.write_text(json.dumps(tho), encoding="utf-8")
+        with pytest.raises(RiskSupervisorError):
+            doc_trang_thai(p)
+
+
+class TestTranHaltTrongVong:
+    def test_moc_halt_SONG_qua_nhieu_vong(self) -> None:
+        g = _Ghi()
+        tt, _ = _vong(_tt(), g, dd=9.0, so_lenh=42)
+        assert tt.moc_halt == (42,)
+        tt, _ = _vong(tt, g, dd=9.0, so_lenh=43)
+        tt, _ = _vong(tt, g, dd=None)
+        assert tt.moc_halt == (42,) and tt.muc_tang_chan == HALT
+
+    def test_thanh_ly_giua_luc_HALT_thi_ho_so_giu_muc_va_moc_halt(self) -> None:
+        """Hồi quy (phá thật chặng 2): trước đây nhánh thanh lý dựng lại trạng thái từ HAI trường ⇒ hồ sơ ghi xuống mất
+        `muc_tang_chan`/`moc_halt`. Cờ đỏ vẫn bật nên không nguy hiểm, nhưng hồ sơ sai."""
+        g = _Ghi()
+        tt, dung = _vong(_tt(HALT, moc_halt=(42,)), g, dd=12.0, force_orders=[{"time": 5000}])
+        assert dung is True and tt.la_thanh_ly and tt.co_do
+        assert (tt.muc_tang_chan, tt.moc_halt) == (HALT, (42,))
+
+    def test_lan_HALT_thu_4_trong_chu_ky_thi_ABORT_dung_thu_tu_khong_stopentry(self) -> None:
+        g = _Ghi()
+        tt, dung = _vong(_tt(moc_halt=(110, 130, 150)), g, dd=9.0, so_lenh=170)
+        assert tt.muc_tang_chan == ABORT and dung is True and tt.moc_halt == (110, 130, 150, 170)
+        assert g.goi == [f"luu:{ABORT}:False", "stop", "su_kien_abort"]
+
+    def test_doc_so_lenh_loi_thi_moc_None(self) -> None:
+        g = _Ghi()
+
+        def loi():
+            raise FreqtradeControlError("mô phỏng: /profit lỗi")
+
+        tt, dung = chay_mot_vong_giam_sat(
+            _tt(), now=T0, doc_account_fn=lambda: {}, doc_position_fn=lambda: [],
+            doc_force_orders_fn=lambda: [], doc_breaker_hien_tai_fn=lambda: TrangThaiBreaker(),
+            tu_thoi_diem_ms=1000, dung_bot_fn=g.dung_bot, tinh_dd_fn=lambda _a: 9.0,
+            tam_ngung_fn=g.tam_ngung, ghi_abort_fn=g.ghi_abort, luu_truoc_fn=g.luu, doc_so_lenh_dong_fn=loi,
+        )
+        assert (tt.muc_tang_chan, tt.moc_halt, dung, g.goi) == (HALT, (None,), False, ["stopentry"])
+
+
+class TestDocSoLenhDong:
+    def test_goi_GET_profit_tra_so_nguyen(self) -> None:
+        with patch("tool_d.api_client.freqtrade_control.urllib.request.urlopen") as m:
+            m.return_value = _resp({"closed_trade_count": 57, "trade_count": 60})
+            assert doc_so_lenh_dong("http://127.0.0.1:8081", username="u", password="p") == 57
+        req = m.call_args[0][0]
+        assert req.full_url == "http://127.0.0.1:8081/api/v1/profit" and req.get_method() == "GET"
+
+    @pytest.mark.parametrize("payload", [{}, {"closed_trade_count": None}, {"closed_trade_count": -1},
+                                         {"closed_trade_count": 1.0}])
+    def test_truong_thieu_hoac_rac_thi_RAISE_khong_tra_0(self, payload) -> None:
+        with patch("tool_d.api_client.freqtrade_control.urllib.request.urlopen") as m:
+            m.return_value = _resp(payload)
+            with pytest.raises(FreqtradeControlError, match="closed_trade_count"):
+                doc_so_lenh_dong("http://127.0.0.1:8081", username="u", password="p")

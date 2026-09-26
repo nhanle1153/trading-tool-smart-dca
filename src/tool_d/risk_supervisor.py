@@ -213,6 +213,8 @@ class HangSoKhaiLai:
     dd_halt_pct: float
     dd_abort_pct: float
     tran_margin_ty_le: float  # 0.85 — xem §6.8f
+    tran_halt_so_lan: int  # TD-0434 — §12c.5: số lần HALT tối đa trong một chu kỳ; lần kế tiếp ⇒ ABORT
+    chu_ky_lenh_dong: int  # TD-0434 — §12c.1: một chu kỳ = khối cố định bao nhiêu lệnh đã đóng
 
 
 # 🔴 KHAI LẠI CÓ CHỦ ĐÍCH — §6.6(2): "Supervisor KHÔNG import code bot",
@@ -229,6 +231,8 @@ HANG_SO_KHAI_LAI = HangSoKhaiLai(
     dd_halt_pct=8.0,  # DR-D0PRE-04 (== tier_a.daily_loss_budget_pct)
     dd_abort_pct=20.0,  # DR-D0PRE-04
     tran_margin_ty_le=0.85,  # §6.8f
+    tran_halt_so_lan=3,  # spec:4756 — DR-TANG-CHAN-01 §8 (a)
+    chu_ky_lenh_dong=100,  # spec:4756 + §12c.1 — DR-TANG-CHAN-01 §8 (a)
 )
 
 
@@ -265,6 +269,8 @@ def kiem_khai_lai_khop_ban_goc(
         # KHÔNG thêm khoá YAML mới, vì đó là nguồn sự thật thứ ba cho cùng
         # một số (bài học MT-03) và sẽ đụng kế toán DOF.
         ("tran_margin_ty_le", "tier_frozen.mult_deploy_thr.value"),
+        ("tran_halt_so_lan", "tier_c.tran_halt.so_lan"),  # TD-0434, DR-TANG-CHAN-01 §8 (a)
+        ("chu_ky_lenh_dong", "tier_c.tran_halt.chu_ky_lenh_dong"),
     )
     for truong, duong_dan in doi_chieu:
         that = float(doc_resolve(cfg_that, duong_dan))
@@ -384,6 +390,8 @@ class TrangThaiBenVung:
     muc_tang_chan: str = "BINH_THUONG"
     #: TD-0434 — `/stopentry` thất bại hết lượt (hoặc lỡ bật lại bot) nên đã leo thang `/stop`: cờ đỏ, không tự gỡ.
     leo_thang_dung: bool = False
+    #: TD-0434 chặng 2 — số lệnh ĐÃ ĐÓNG tại mỗi lần CHUYỂN sang HALT (trần §12c.5); `None` = lúc đó không đọc được số lệnh.
+    moc_halt: tuple[int | None, ...] = ()
 
     @property
     def co_do(self) -> bool:
@@ -425,6 +433,39 @@ def quyet_dinh_tang_chan(
     return muc_cu
 
 
+def ap_tran_halt(
+    muc_cu: str,
+    muc_moi: str,
+    *,
+    moc_halt: tuple[int | None, ...],
+    so_lenh_dong: int | None,
+    hang_so: HangSoKhaiLai = HANG_SO_KHAI_LAI,
+) -> tuple[str, tuple[int | None, ...]]:
+    """TD-0434 chặng 2 (`DR-TANG-CHAN-01` §8 (a), §12c.5 `spec:4756`): *"3 lần trong một chu kỳ 100 lệnh đóng. Lần thứ 4
+    → ABORT bất kể dd bao nhiêu."* Trả `(mức, mốc HALT mới)`.
+
+    - Chỉ một lần CHUYỂN sang HALT (`muc_cu != HALT`, `muc_moi == HALT`) mới là một lần HALT — gọi lại `/stopentry` mỗi
+      vòng không phải lần HALT mới.
+    - Chu kỳ = khối CỐ ĐỊNH §12c.1: lệnh đóng thứ `k` thuộc chu kỳ `k // chu_ky_lenh_dong`.
+    - Lần HALT thứ `tran_halt_so_lan + 1` trong cùng chu kỳ ⇒ ABORT.
+    - `so_lenh_dong is None` (không đọc được, N6) ⇒ mốc `None`, và mốc `None` được tính vào MỌI chu kỳ: chỉ làm ABORT tới
+      SỚM hơn, không bao giờ muộn hơn — lệch về phía an toàn, không bịa một con số lệnh.
+    """
+    if muc_moi != HALT or muc_cu == HALT:
+        return muc_moi, moc_halt
+    if so_lenh_dong is not None and (type(so_lenh_dong) is not int or so_lenh_dong < 0):
+        raise RiskSupervisorError(f"so_lenh_dong phải là số nguyên ≥ 0 hoặc None, nhận {so_lenh_dong!r}")
+    moc_moi = (*moc_halt, so_lenh_dong)
+    if so_lenh_dong is None:
+        cung_chu_ky = len(moc_moi)  # không biết đang ở chu kỳ nào ⇒ đếm mọi lần — phía an toàn
+    else:
+        chu_ky = so_lenh_dong // hang_so.chu_ky_lenh_dong
+        cung_chu_ky = sum(1 for m in moc_moi if m is None or m // hang_so.chu_ky_lenh_dong == chu_ky)
+    if cung_chu_ky > hang_so.tran_halt_so_lan:
+        return ABORT, moc_moi
+    return HALT, moc_moi
+
+
 def luu_trang_thai(trang_thai: TrangThaiBenVung, duong_dan: Path) -> None:
     """Ghi NGUYÊN TỬ (file tạm + `rename`) — cùng khuôn
     `binance_public.tai_dump_agg_trades()`: tiến trình chết giữa chừng
@@ -443,6 +484,7 @@ def luu_trang_thai(trang_thai: TrangThaiBenVung, duong_dan: Path) -> None:
         "la_thanh_ly": trang_thai.la_thanh_ly,
         "muc_tang_chan": trang_thai.muc_tang_chan,
         "leo_thang_dung": trang_thai.leo_thang_dung,
+        "moc_halt": list(trang_thai.moc_halt),
     }
     tam = duong_dan.with_name(duong_dan.name + ".dang-ghi")
     tam.write_text(json.dumps(noi_dung, indent=2, ensure_ascii=False), encoding="utf-8")
@@ -477,8 +519,12 @@ def doc_trang_thai(duong_dan: Path) -> TrangThaiBenVung:
             raise ValueError(f"muc_tang_chan {muc!r} không hợp lệ")
         if type(leo_thang) is not bool:
             raise ValueError(f"leo_thang_dung phải là bool, nhận {leo_thang!r}")
+        moc = tho.get("moc_halt", [])  # file trước TD-0434 chặng 2: chưa từng đếm HALT — sự thật, không đoán
+        if not isinstance(moc, list) or any(m is not None and (type(m) is not int or m < 0) for m in moc):
+            raise ValueError(f"moc_halt phải là danh sách số nguyên ≥ 0 hoặc null, nhận {moc!r}")
         return TrangThaiBenVung(
             breaker=breaker, la_thanh_ly=tho["la_thanh_ly"], muc_tang_chan=muc, leo_thang_dung=leo_thang,
+            moc_halt=tuple(moc),
         )
     except (json.JSONDecodeError, OSError, KeyError, TypeError, ValueError) as exc:
         raise RiskSupervisorError(
