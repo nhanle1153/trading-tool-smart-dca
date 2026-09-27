@@ -49,6 +49,7 @@ from tool_d.measurement.gitinfo import GitInfoError, kiem_cay_khop_head
 from tool_d.ops.dry_run import CAU_HINH_API_SERVER, EXIT_CAY_LECH_HEAD, bien_moi_truong_telegram
 from tool_d.ops.kiem_bao_mat_d10 import BaoMatD10Error, kiem_truoc_khi_bat
 from tool_d.ops.ngan_sach_d10_ro import NganSachD10RoError, von_ro_d10
+from tool_d.ops.risk_supervisor_daemon import ly_do_khong_bat_tien_that
 from tool_d.pool_giai_doan import POOL_HOM_NAY
 
 #: `DR-D10-02` §6 (MT-87): D10 đo cho ứng viên IQ-0003 ⇒ `RoFundingD10` là MẶC ĐỊNH. `CtrlD10` giữ làm công cụ phụ.
@@ -70,6 +71,8 @@ TEN_FILE_LOG = "freqtrade.log"
 #: Nối tiếp dải exit code riêng của dự án (99 = thiếu credential, TD-0242).
 EXIT_BAO_MAT_D10 = 100
 EXIT_RO_D10 = 101
+#: TD-0442 — cờ đỏ tài khoản / Supervisor live đang giữ cờ đỏ (nối tiếp dải chung: 116 = `ghi_nap_rut`).
+EXIT_CO_DO_SUPERVISOR = 117
 
 
 class LiveD10Error(RuntimeError):
@@ -259,6 +262,10 @@ def main(argv: list[str] | None = None) -> None:  # pragma: no cover — exec ti
     except BinanceCredentialsMissingError as exc:
         print(str(exc), file=sys.stderr, flush=True)
         sys.exit(EXIT_MISSING_API_CREDENTIALS)
+    ly_do_co_do = ly_do_khong_bat_tien_that()  # 1a — TD-0442: cờ đỏ tài khoản / Supervisor live, TRƯỚC mọi lời gọi mạng
+    if ly_do_co_do is not None:
+        print(f"TỪ CHỐI bật D10 — {ly_do_co_do}", file=sys.stderr, flush=True)
+        sys.exit(EXIT_CO_DO_SUPERVISOR)
     try:
         # 1b — TD-0425 (MT-86): cây làm việc khớp HEAD ở vùng bot nạp, TRƯỚC mọi lời gọi mạng. Mount `..:/workspace` ⇒
         # không có chốt này thì tiền thật chạy mã/cấu hình chưa commit (sự cố dry-run 25/09/2026, cùng khuôn mount).

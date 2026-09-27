@@ -97,6 +97,8 @@ from tool_d.risk_supervisor import (
     ap_tran_halt,
     dieu_kien_mo_lai,
     TEN_FILE_DD_STATE,
+    doc_co_do_tai_khoan,
+    ghi_co_do_tai_khoan,
     ghi_dd_state,
     doc_snapshot_an_toan,
     doc_trang_thai,
@@ -117,6 +119,30 @@ def duong_dan_theo_runmode(runmode: str) -> Path:
     if runmode not in RUNMODE_CO_SUPERVISOR:
         raise ValueError(f"runmode {runmode!r} không có Supervisor — chỉ {RUNMODE_CO_SUPERVISOR}")
     return THU_MUC_SUPERVISOR / runmode / TEN_FILE_TRANG_THAI
+
+
+#: TD-0442 — cờ đỏ cấp TÀI KHOẢN sàn, MỘT file cho mọi Supervisor live (mọi container gắn cùng repo). Dry-run là ví giấy
+#: của Freqtrade, không có tài khoản sàn ⇒ không đọc, không ghi file này.
+DUONG_DAN_CO_DO_TAI_KHOAN = THU_MUC_SUPERVISOR / "live" / "co_do_tai_khoan.json"
+
+
+def ly_do_khong_bat_tien_that(
+    *, duong_trang_thai: Path | None = None, duong_co_do_tai_khoan: Path = DUONG_DAN_CO_DO_TAI_KHOAN
+) -> str | None:
+    """Chốt cho MỌI bộ khởi chạy tiền thật (TD-0442): cờ đỏ tài khoản, hoặc Supervisor live đã ghi cờ đỏ ⇒ lý do từ chối.
+    File trạng thái hỏng ⇒ cũng từ chối (có thể đang che cờ đỏ — `doc_trang_thai`, N6). `None` ⇔ được bật."""
+    ly_do = doc_co_do_tai_khoan(duong_co_do_tai_khoan)
+    if ly_do is not None:
+        return f"cờ đỏ TÀI KHOẢN: {ly_do} — xử lý xong rồi người vận hành xoá {duong_co_do_tai_khoan}"
+    duong = duong_trang_thai if duong_trang_thai is not None else duong_dan_theo_runmode("live")
+    try:
+        t = doc_trang_thai(duong)
+    except (RiskSupervisorError, ValueError, KeyError, TypeError, OSError) as exc:
+        return f"không đọc được trạng thái Supervisor live {duong} ({exc}) — có thể đang che cờ đỏ"
+    if t.co_do:
+        return (f"Supervisor live đang giữ cờ đỏ ({duong}: la_thanh_ly={t.la_thanh_ly} dung_han={t.breaker.dung_han} "
+                f"muc={t.muc_tang_chan} leo_thang={t.leo_thang_dung}) — không tự gỡ (§6.6(2))")
+    return None
 DEFAULT_CHU_KY_S = 60.0  # cùng bậc chu kỳ watchdog TD-0209 (Mục 4.4b)
 DEFAULT_FREQTRADE_API_BASE_URL = "http://127.0.0.1:8080"
 
@@ -165,6 +191,8 @@ def chay_mot_vong_giam_sat(
     luu_truoc_fn: Callable[[TrangThaiBenVung], None] | None = None,
     doc_so_lenh_dong_fn: Callable[[], int] | None = None,
     mo_lai: NoiMoLai | None = None,
+    doc_co_do_tai_khoan_fn: Callable[[], str | None] | None = None,
+    ghi_co_do_tai_khoan_fn: Callable[[str], None] | None = None,
 ) -> tuple[TrangThaiBenVung, bool]:
     """MỘT vòng: đọc snapshot ba endpoint (cô lập lỗi từng endpoint,
     §6.6(4)) → đọc lại breaker THẬT của `binance_public` → phát hiện thanh
@@ -181,9 +209,20 @@ def chay_mot_vong_giam_sat(
     "chưa đọc được" phải khác "đã đo và biết là False"). Trường hợp sustained
     failure (đủ lỗi liên tiếp) đã có breaker của `binance_public` xử lý
     (backoff/`dung_han`), không cần thêm cơ chế thứ hai ở đây.
+
+    TD-0442 — cờ đỏ CẤP TÀI KHOẢN (chỉ runmode live nối hai hàm cuối): Supervisor KHÁC đã ghi cờ ⇒ `/stop` bot của mình
+    ngay, trước mọi lời gọi sàn; tự mình phát hiện thanh lý / 418 ⇒ GHI cờ TRƯỚC khi `/stop` (bot kia không phải chờ
+    `/stop` của mình thành công mới biết).
     """
     if trang_thai.co_do:
         return trang_thai, True
+
+    if doc_co_do_tai_khoan_fn is not None:
+        ly_do_tk = doc_co_do_tai_khoan_fn()
+        if ly_do_tk is not None:
+            _LOG.critical("CỜ ĐỎ TÀI KHOẢN (%s) — gọi dừng bot", ly_do_tk)
+            dung_bot_fn()
+            return trang_thai, True
 
     snap = doc_snapshot_an_toan(
         {
@@ -215,6 +254,8 @@ def chay_mot_vong_giam_sat(
             trang_thai_moi.la_thanh_ly,
             trang_thai_moi.breaker.dung_han,
         )
+        if ghi_co_do_tai_khoan_fn is not None:
+            ghi_co_do_tai_khoan_fn("LIQUIDATED" if trang_thai_moi.la_thanh_ly else "BINANCE_418_DUNG_HAN")
         dung_bot_fn()
         return trang_thai_moi, True
 
@@ -496,13 +537,15 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover — khung CL
     tham_so = _doc_tham_so(argv)
     # Cạnh file trạng thái; với đường mặc định trùng đúng `tang_chan.duong_dan_dd_state(runmode)` mà chiến lược đọc.
     duong_dd_state = tham_so.state_path.parent / TEN_FILE_DD_STATE
+    la_dry_run = tham_so.runmode == "dry_run"
+
+    def _co_do_tai_khoan() -> str | None:  # TD-0442 — chỉ live có tài khoản sàn
+        return None if la_dry_run else doc_co_do_tai_khoan(DUONG_DAN_CO_DO_TAI_KHOAN)
 
     def _cong_bo(t: TrangThaiBenVung) -> None:
         # TD-0435 — MỖI vòng (kể cả khi không đổi: mốc giờ tươi là bằng chứng Supervisor còn sống cho chiến lược đọc).
-        ghi_dd_state(duong_dd_state, muc=t.muc_tang_chan, dd_pct=t.dd_pct_cuoi, co_do=t.co_do,
-                     now=datetime.now(timezone.utc))
-
-    la_dry_run = tham_so.runmode == "dry_run"
+        ghi_dd_state(duong_dd_state, muc=t.muc_tang_chan, dd_pct=t.dd_pct_cuoi,
+                     co_do=t.co_do or _co_do_tai_khoan() is not None, now=datetime.now(timezone.utc))
     api_key = api_secret = ""
     if not la_dry_run:  # TD-0438: dry-run là ví giấy của Freqtrade — không có tài khoản sàn để đọc, không cần key Binance
         try:
@@ -525,6 +568,12 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover — khung CL
         return EXIT_L44_MISMATCH
 
     trang_thai = doc_trang_thai(tham_so.state_path)
+    co_tk_luc_dau = _co_do_tai_khoan()
+    if co_tk_luc_dau is not None:
+        _cong_bo(trang_thai)
+        _LOG.critical("cờ đỏ TÀI KHOẢN (%s) — KHÔNG khởi động, cần can thiệp thủ công (%s)", co_tk_luc_dau,
+                      DUONG_DAN_CO_DO_TAI_KHOAN)
+        return EXIT_CO_DO_TU_LAN_CHAY_TRUOC
     if trang_thai.co_do:
         _cong_bo(trang_thai)  # chiến lược thấy cờ đỏ NGAY, không đợi file cũ quá hạn
         _LOG.critical(
@@ -604,6 +653,12 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover — khung CL
                     tham_so.freqtrade_api_base_url, username=ft_username, password=ft_password
                 ),
                 mo_lai=mo_lai,  # TD-0437 — mở lại sau HALT (§12c.5 bước 2–4)
+                # TD-0442 — cờ đỏ cấp tài khoản: dry-run (ví giấy) không nối.
+                doc_co_do_tai_khoan_fn=None if la_dry_run else _co_do_tai_khoan,
+                ghi_co_do_tai_khoan_fn=None if la_dry_run else (
+                    lambda ly_do: ghi_co_do_tai_khoan(DUONG_DAN_CO_DO_TAI_KHOAN, ly_do=ly_do,
+                                                      nguon=str(tham_so.state_path), now=datetime.now(timezone.utc))
+                ),
             )
         except FreqtradeControlError as exc:
             # KHÔNG nuốt: "không dừng được bot khi tài khoản đã thanh lý"

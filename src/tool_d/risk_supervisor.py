@@ -464,6 +464,38 @@ def doc_dd_state(duong_dan: Path) -> DdState:
         raise RiskSupervisorError(f"không đọc được {duong_dan}: {exc}") from exc
 
 
+# ════ TD-0442 (`DR-CONG-AN-TOAN-01` §3.1(d)) — cờ đỏ CẤP TÀI KHOẢN ════
+# Thanh lý / cấm IP (418) là sự kiện của TÀI KHOẢN, không của một bot. API điều khiển mỗi bot chỉ nghe localhost trong
+# mạng riêng của nó (`DR-D11-03` §2.1) ⇒ một Supervisor không với tới bot khác. Nên: mỗi bot live có Supervisor riêng;
+# Supervisor nào phát hiện thì GHI cờ chung trên đĩa, mọi Supervisor khác thấy cờ ở vòng kế tiếp thì `/stop` bot của nó,
+# mọi bộ khởi chạy tiền thật từ chối bật. Không tự gỡ — người vận hành xoá file sau khi đã xử lý (§6.6(2)).
+
+
+def ghi_co_do_tai_khoan(duong_dan: Path, *, ly_do: str, nguon: str, now: datetime) -> None:
+    """Ghi NGUYÊN TỬ một lần. Đã có cờ ⇒ GIỮ bản đầu (lý do gốc quan trọng hơn lý do sau), không ghi đè."""
+    if now.tzinfo is None:
+        raise RiskSupervisorError("now phải có múi giờ (UTC)")
+    if duong_dan.exists():
+        return
+    duong_dan.parent.mkdir(parents=True, exist_ok=True)
+    noi_dung = {"ly_do": ly_do, "nguon": nguon, "luc_utc": now.isoformat()}
+    tam = duong_dan.with_name(duong_dan.name + ".dang-ghi")
+    tam.write_text(json.dumps(noi_dung, ensure_ascii=False), encoding="utf-8")
+    tam.replace(duong_dan)
+
+
+def doc_co_do_tai_khoan(duong_dan: Path) -> str | None:
+    """`None` ⇔ chưa có cờ. Có file ⇒ trả lý do. File có mà hỏng ⇒ vẫn là CỜ ĐỎ (không đọc được lý do không có nghĩa là
+    không có cờ — N6), trả chuỗi nói rõ file hỏng."""
+    if not duong_dan.exists():
+        return None
+    try:
+        tho = json.loads(duong_dan.read_text(encoding="utf-8"))
+        return f"{tho['ly_do']} (nguồn {tho['nguon']}, {tho['luc_utc']})"
+    except (json.JSONDecodeError, OSError, KeyError, TypeError) as exc:
+        return f"file cờ đỏ tài khoản {duong_dan} có nhưng đọc hỏng ({exc}) — vẫn coi là CỜ ĐỎ"
+
+
 def quyet_dinh_tang_chan(
     muc_cu: str, *, dd_pct: float | None, hang_so: HangSoKhaiLai = HANG_SO_KHAI_LAI,
 ) -> str:

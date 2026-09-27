@@ -1,0 +1,33 @@
+{
+  "mo_ta": "TD-0442: thanh ly / 418 => dung moi bot cung tai khoan qua co do cap tai khoan. M1 = Supervisor khac bo qua co tai khoan (chi bot phat hien moi dung); M2 = phat hien thanh ly ma khong ghi co (bot kia khong bao gio biet); M3 = bo khoi chay khong doc trang thai Supervisor live (chi doc co tai khoan).",
+  "module": "tool_d.ops.risk_supervisor_daemon",
+  "file": "src/tool_d/ops/risk_supervisor_daemon.py",
+  "khoi_dong": ["if ly_do_tk is not None:"],
+  "bien_the": {
+    "M0": null,
+    "M1": "if False:",
+    "M2": {
+      "khoi_dong": ["if ghi_co_do_tai_khoan_fn is not None:"],
+      "thay": "if False:"
+    },
+    "M3": {
+      "khoi_dong": ["if t.co_do:"],
+      "thay": "if False:"
+    }
+  },
+  "tests": ["tests/unit/test_td0442_co_do_tai_khoan.py"],
+  "ky_vong": {"M0": "xanh", "M1": "do", "M2": "do", "M3": "do"},
+  "ky_vong_do_gom": {
+    "M1": [
+      "tests/unit/test_td0442_co_do_tai_khoan.py::TestHaiBotCungTaiKhoan::test_thanh_ly_o_bot_a_thi_ca_hai_bot_nhan_stop",
+      "tests/unit/test_td0442_co_do_tai_khoan.py::TestHaiBotCungTaiKhoan::test_418_o_bot_a_thi_bot_b_cung_dung"
+    ],
+    "M2": [
+      "tests/unit/test_td0442_co_do_tai_khoan.py::TestHaiBotCungTaiKhoan::test_thanh_ly_o_bot_a_thi_ca_hai_bot_nhan_stop",
+      "tests/unit/test_td0442_co_do_tai_khoan.py::TestHaiBotCungTaiKhoan::test_418_o_bot_a_thi_bot_b_cung_dung"
+    ],
+    "M3": [
+      "tests/unit/test_td0442_co_do_tai_khoan.py::TestBoKhoiChayTuChoi::test_supervisor_live_giu_co_do_thi_tu_choi"
+    ]
+  }
+}
