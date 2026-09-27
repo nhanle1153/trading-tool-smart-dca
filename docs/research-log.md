@@ -4491,3 +4491,22 @@ chỉ phủ client riêng của Tool D (`binance_public.py`).
   Supervisor (60 s), và hôm nay chỉ dừng MỘT bot (phần "mọi bot cùng tài khoản" là `TD-0442`).
 - **Khoảng hở còn lại:** 429 trên đường Freqtrade không có trễ ⇒ dồn nhanh hơn về 418. Không sửa được bên trong Freqtrade
   (cấm vá thư viện). Cách giảm thuộc quyết định của chủ dự án — trình ở báo cáo phiên, **chưa làm gì**.
+
+
+## 27/09/2026 — Bật Risk Supervisor cho dry-run + dry-run chạy lại trên mã Khối 44 (phiên mã `809d6cd8`, `TD-0435`…`TD-0439`)
+
+- **Chủ dự án chọn** *"Tạo và khởi động"*. Bot vẫn không tiền, chỉ quan sát; 0 trial; không chạm dữ liệu thị trường.
+- **Trước khi bật:** `config/`, `src/`, `user_data/strategies/` khớp HEAD `9067dbd` (chốt `TD-0425` sẽ chặn nếu lệch).
+  Tạo `.env.dryrun` (5 biến control API, giá trị NGẪU NHIÊN từ `secrets`, không in, `.gitignore` dòng 23 bắt — `git status`
+  không thấy).
+- **Bật 2026-09-27 00:28:48 UTC:** `docker compose -f docker/docker-compose.yml --profile van_hanh up -d dryrun dryrun-watchdog
+  risk-supervisor-dryrun` (gọi TÊN từng service — xem đính chính 25/09). `dryrun` được tạo lại (env_file đổi), Supervisor mới.
+- **Kiểm sau:** bot in `dry-run @ 9067dbd…: 102 cặp`; `Dry run is enabled`; `ZoneAbsorption`; control API `127.0.0.1:8081`
+  (không ra ngoài); `Changing state to: RUNNING`. Supervisor vòng ĐẦU (00:29:03) gặp `Connection refused` vì API bot chưa lên
+  ⇒ công bố `dd_pct: null` ⇒ chiến lược KHÔNG mở lệnh (fail-closed, đúng thiết kế). Vòng sau (00:31:06): `dd_state.json`
+  `{"muc": "BINH_THUONG", "dd_pct": 0.0, "co_do": false}`; đỉnh bền vững khởi tạo `750.0606 USDT` (vốn ví giấy + lãi nhỏ đã có),
+  `so_su_kien_da_ap = 0`.
+- **Từ giờ ở dry-run:** mức sụt đo trên equity GỒM lãi/lỗ chưa chốt (`/balance.starting_capital` + `/profit.profit_all_coin`);
+  ZA áp bậc 5% theo Supervisor; > 8% ⇒ `/stopentry`; > 20% hoặc HALT thứ 4 / 100 lệnh ⇒ `/stop` + cờ đỏ; mở lại sau HALT cần
+  dòng `XAC_NHAN_MO_LAI_HALT dry_run <yyyy-mm-dd>` ở file này (§12c.5 bước 2 (c)).
+- **Dừng:** `docker compose -f docker/docker-compose.yml --profile van_hanh stop dryrun dryrun-watchdog risk-supervisor-dryrun`.
