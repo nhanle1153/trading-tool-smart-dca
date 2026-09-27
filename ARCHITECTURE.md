@@ -181,9 +181,15 @@ tool-d-smart-dca/                  ← git root = E:\Trading Tool_Smart DCA
 │  │                cục bộ của Freqtrade, TD-0241)
 │  ├─ risk_supervisor.py  ← §6.6, tầng THUẦN (breaker, đối chiếu L-Z44,
 │  │                         phát hiện thanh lý, bền vững hoá trạng thái)
+│  │                         + tầng chặn sụt vốn THUẦN: HALT/ABORT/trần HALT/
+│  │                         mở lại NUA_CO + dd_state.json (Khối 44, DR-TANG-CHAN-01)
+│  ├─ tang_chan.py  ← chiến lược ĐỌC dd_state của Supervisor, bậc 5% nửa cỡ
+│  │                   (TD-0435; test khoá TD-0436 buộc mọi chiến lược lên tiền gọi)
 │  └─ ops/          heartbeat · heartbeat_watchdog · telegram_client
 │                    (TD-0209) · risk_supervisor_daemon (TD-0241) — tiến
 │                    trình VẬN HÀNH, KHÔNG phải entrypoint đo lường (xem 3.3)
+│                    · ghi_nap_rut (TD-0439 — người vận hành ghi nạp/rút vào sổ
+│                    đỉnh của Supervisor; cũng KHÔNG phải entrypoint)
 ├─ entrypoints/                    ← ĐÚNG 8 file, không hơn (xem 3.3)
 ├─ tests/lock/                     ← 1 file / 1 test khoá L-Zxx
 ├─ tests/unit/  tests/fixtures/
@@ -194,6 +200,10 @@ tool-d-smart-dca/                  ← git root = E:\Trading Tool_Smart DCA
 │                                    runs/risk_supervisor/state.json (TD-0241,
 │                                    bền vững hoá breaker/cờ LIQUIDATED qua
 │                                    restart) — cả hai gitignored
+│                                    🔄 Khối 44: runs/risk_supervisor/<runmode>/ (live, dry_run)
+│                                    = state.json · equity_peak_state.json · equity_peak_events.jsonl
+│                                    · dd_state.json — mỗi runmode một Supervisor (service compose
+│                                    risk-supervisor-d10 · risk-supervisor-dryrun), chủ đỉnh DUY NHẤT
 └─ docker/                         ← Dockerfile · docker-compose.yml
 ```
 
@@ -422,3 +432,4 @@ mô tả cả ba sổ JSONL này thì phải **sinh/kiểm tự động từ sch
 | 19/09/2026 | Sổ ý tưởng thành **nhật ký sự kiện** (`DR-IQ-02`, TD-0326): cây `ledger/` thêm `idea_events`; bảng schema hiện hành, dòng `idea_queue.jsonl` thêm `TD-0326`; schema thêm `VOIDED` · `voided_at` · `void_reason`; E6 thêm cờ `--chon-y-tuong` · `--huy-chon` — **KHÔNG phải entrypoint thứ 9**, `entrypoints/` vẫn đúng 8 file | Sổ ý tưởng coi mỗi dòng là một đơn; không có luật chuyển trạng thái, không có công cụ ghi `SELECTED`; `TD-0126`/`TD-0124` so/đếm mọi dòng | Mỗi dòng một sự kiện trên `idea_id`, trạng thái dựng lại bằng `duyet_so()` dùng chung cho cửa ghi và audit (cùng khuôn N8 của sổ trial); đơn = dòng đầu của mã | `MT-65` (chọn `IQ-0002` trước hiệu lực làm `TD-0120` đỏ vĩnh viễn, chặn mọi cổng và E1) lộ ra ba lỗ gốc; chủ dự án chọn phương án (b) 19/09/2026. Lệnh *"chuẩn hóa và lưu"* 19/09/2026, phiên `2febd25e` |
 | 19/09/2026 | D4 dựng, khoá đo (`DR-D4-14`, Khối 30): cây thêm `bo_chay/` (thiếu từ Khối 27) + `ablation/`; dòng `gates/` thêm `arm_record · ket_cuc · d4_gate · d0_9` | E3 dừng ở `NotImplementedError`; cây không có `bo_chay/`; D4/D9 có thể mỗi bên một bộ đánh giá Nhánh 1 | E3 → `ablation/chay_lo` → `bo_chay/chay_mot_luot`, khoá `D4_DO_TAM_DUNG` chặn TRƯỚC đặt chỗ; số cho gate đọc từ export (`ablation/chi_so_export`); gate D4 (`d0_9`) và D9 (`d9_gate`) dùng CHUNG `thresholds.evaluate_branch1(..., arm)` + `TIEU_CHI_KHAI` | Chủ dự án chốt `DR-D4-14`/`DR-D4-15`; N1/MT-03 cấm hai nguồn ngưỡng. ⚠️ Dòng `gates/` vẫn thiếu `cache_policy` · `d0_pre` — ngoài phạm vi (quy tắc 4) |
 | 20/09/2026 | Lô 4 sau `DR-D4-14` (`TD-0346`…`TD-0348`, `TD-0261`): cây `ablation/` thêm `thanh_ly` · `dem_mo_ta`; cây `ledger/` thêm `timerange` (có từ `TD-0094` nhưng chưa từng được liệt kê) kèm `cua_so_tap` | Cây `ablation/` chỉ có `khoa_do` · `ban_ghi` · `chay_lo` · `chi_so_export`; cây `ledger/` không có `timerange` | `ablation/thanh_ly` (giá thanh lý TIÊM vào, `liq_buffer` theo kế hoạch) · `ablation/dem_mo_ta` (đếm số lệnh, CTRL dạng thứ ba) · `ledger/timerange` (biên tập + cửa sổ nửa mở) | Lệnh *"chuẩn hóa và lưu"* 20/09/2026 (phiên mã `69768527`). Chỉ nối vào cây; không đổi sơ đồ luồng. ⚠️ Cây chưa phản ánh phần phiên `58cebb70` (lô `DR-D4-19`) và Khối 31 (`DR-TRIEN-KHAI-01`) — thuộc phiên đó, không ghi hộ |
+| 27/09/2026 | Tầng chặn sụt vốn lên Risk Supervisor cho MỌI chiến lược (`DR-TANG-CHAN-01` phương án C, Khối 44 `TD-0432`…`TD-0439`): cây thêm `tang_chan.py` · `ops/ghi_nap_rut`; chú thích `risk_supervisor.py` + `runs/risk_supervisor/<runmode>/` | Thang 5/8/20 chỉ sống trong `ZoneAbsorption` (đo trên lãi/lỗ ĐÃ chốt); `RoFunding` không có tầng nào; Supervisor khai 5/8/20 mà không dùng; một `runs/risk_supervisor/state.json`, chỉ live | Supervisor (tiến trình riêng) là chủ đỉnh DUY NHẤT, đo trên equity gồm lãi/lỗ chưa chốt, thi hành HALT `/stopentry` · ABORT `/stop` + cờ đỏ · trần 3 HALT/100 lệnh · mở lại `NUA_CO`; công bố `dd_state.json`, chiến lược đọc qua `tang_chan` cho bậc 5%; mỗi runmode một thư mục + một service (dry-run có Supervisor riêng — parity N11). **Không thêm entrypoint** (vẫn 8, L-Z36) | Lệnh *"chuẩn hóa và lưu"* 27/09/2026 (phiên mã `809d6cd8`). ⚠️ Dòng `ops/` vẫn thiếu `dry_run` · `live_d10` · `ctrl_d10`… của phiên khác — ngoài phạm vi (quy tắc 4) |
