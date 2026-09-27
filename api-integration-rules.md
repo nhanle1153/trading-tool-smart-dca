@@ -180,6 +180,10 @@ image (`TD-0433`, `docs/research-log.md` 26/09/2026) — không có chúng thì 
 3. `/start` CHỈ gọi từ `TD-0437`, khi đủ cả ba điều kiện §12c.5 bước 2; không bao giờ gọi khi có cờ đỏ.
 4. Equity dry-run từ `/balance` + `/status` (`TD-0438`): `total` rơi lặng lẽ lãi/lỗ chưa chốt của vị thế lấy giá lỗi ⇒ phải
    phát hiện được và trả `unreadable` (N6), không coi `total` là đủ.
+   🔄 **Đính chính 27/09/2026 (v1.8), giữ nguyên chữ trên:** thi hành (`TD-0438`, `1007633`) dùng `/balance` + **`/profit`**
+   thay `/status` — equity = `/balance.starting_capital` + `/profit.profit_all_coin` (`equity_dry_run()`). Lý do: lấy giá lỗi
+   thì `profit_all_coin` thành NaN (`rpc.py:556-563`) ⇒ LỘ ra, còn `/balance.total` rơi lặng lẽ. Cả hai đường đã khai ở 4.2;
+   `doc_json_get()` chỉ cho `/balance` và `/profit` (danh sách cho phép, có test). `/status` vẫn dùng — đếm vị thế cho `TD-0437`.
 
 | Mục | Quyết định |
 |---|---|
@@ -235,3 +239,4 @@ bắt buộc nghiệm thu lại trong context sạch riêng khi D3.5 viết code
 | 1.5 | 25/09/2026 | Khai bù dịch vụ #6 `data.binance.vision` vào Mục 4.1–4.2 (lệnh "chuẩn hóa và lưu", phiên mã `143375ad`). Bốn đường đọc đã dùng từ `TD-0162`/`TD-0230`/`TD-0231`/`TD-0247` mà **chưa từng được khai** (nợ cũ, phát hiện khi chuẩn bị `TD-0391`) + đường nến 1d theo NGÀY mới cho rổ `XAC_NHAN` (`DR-XAC-NHAN-01` §9) — khai TRƯỚC khi code theo quy tắc 17. Không đổi dòng cũ nào; R1 giữ nguyên: mọi đường nằm trong `src/tool_d/api_client/binance_public.py` |
 | 1.6 | 25/09/2026 | Thêm dịch vụ **#7** Binance SAPI ký `GET /sapi/v1/account/apiRestrictions` vào Mục 4.1–4.3 + mục **4.4c** (bảng quyết định + R1–R12) cho máy kiểm bảo mật tài khoản phụ D10 (`DR-D10-02` Q3, chốt `5bb2b58`). Lệnh "chuẩn hóa và lưu" 25/09/2026, phiên mã `dd89043d`. Chỉ THÊM, không sửa/xoá dòng nào có sẵn. Hoàn tất điều kiện quy tắc 17 cho phần này TRƯỚC "bắt đầu code" `TD-0384`. Tên trường trả về CHƯA verify bằng gọi thật |
 | 1.7 | 26/09/2026 | Mở rộng dịch vụ #5 (Freqtrade REST cục bộ) cho tầng chặn sụt vốn ở Risk Supervisor (`DR-TANG-CHAN-01`, Khối 44): năm dòng 4.2 (`/stopentry`, `/start`, `/profit`, `/balance`, `/status`), một dòng 4.3, mục **4.4d** (bốn luật đọc từ mã nguồn Freqtrade 2026.8 + R1–R12). Lệnh "chuẩn hóa và lưu" 26/09/2026, phiên mã `809d6cd8`. Chỉ THÊM, không sửa/xoá dòng nào có sẵn (dòng #5 ở 4.1 giữ nguyên chữ `POST /api/v1/stop`; phạm vi mở rộng ghi ở 4.4d). Hoàn tất điều kiện quy tắc 17 TRƯỚC khi code `TD-0434`/`TD-0437`/`TD-0438` |
+| 1.8 | 27/09/2026 | Đính chính 4.4d luật 4 cho khớp thi hành `TD-0438`: nguồn equity dry-run là `/balance` + `/profit` (không phải `/status`) — lý do và bằng chứng nối ngay dưới luật 4. Không thêm đường gọi mới (cả hai đã khai ở v1.7). Lệnh "chuẩn hóa và lưu" 27/09/2026, phiên mã `809d6cd8`. Chỉ THÊM, không sửa/xoá chữ nào |
