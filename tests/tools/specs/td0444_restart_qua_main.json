@@ -1,0 +1,22 @@
+{
+  "mo_ta": "TD-0444 (B): restart qua main() that cua Risk Supervisor. M1 = khong luu dinh equity (moi lan khoi dong dinh ve so du hien tai => dd 0, ABORT khong bao gio no - dung loi MT-40 cu). M2 = khong luu trang thai cuoi vong: DU DOAN XANH vi hai lop chong - co do tai khoan (thanh ly) va luu_truoc_fn (ABORT luu co do TRUOC /stop) - ghi lai de biet lop nao dang gach.",
+  "module": "tool_d.ops.risk_supervisor_daemon",
+  "file": "src/tool_d/ops/risk_supervisor_daemon.py",
+  "khoi_dong": ["luu_dinh_equity(moi, duong_dan_dinh)"],
+  "bien_the": {
+    "M0": null,
+    "M1": "pass",
+    "M2": {
+      "khoi_dong": ["luu_trang_thai(trang_thai, tham_so.state_path)"],
+      "thay": "pass"
+    }
+  },
+  "tests": ["tests/unit/test_td0444_restart_va_key.py"],
+  "ky_vong": {"M0": "xanh", "M1": "do", "M2": "xanh"},
+  "ky_vong_do_gom": {
+    "M1": [
+      "tests/unit/test_td0444_restart_va_key.py::TestBRestartQuaMainThat::test_dinh_equity_song_qua_restart",
+      "tests/unit/test_td0444_restart_va_key.py::TestBRestartQuaMainThat::test_abort_song_qua_restart"
+    ]
+  }
+}

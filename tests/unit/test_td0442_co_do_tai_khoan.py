@@ -129,11 +129,12 @@ def _main(path: Path) -> ast.FunctionDef:
 
 
 def _ten_goi(ham: ast.FunctionDef) -> list[str]:
-    return [
-        n.func.id if isinstance(n.func, ast.Name) else n.func.attr
-        for n in ast.walk(ham)
-        if isinstance(n, ast.Call) and isinstance(n.func, (ast.Name, ast.Attribute))
+    """Tên các lời gọi theo THỨ TỰ NGUỒN — `ast.walk` duyệt theo chiều rộng, dùng thẳng thứ tự đó để so trước/sau là sai."""
+    goi = [
+        n for n in ast.walk(ham) if isinstance(n, ast.Call) and isinstance(n.func, (ast.Name, ast.Attribute))
     ]
+    goi.sort(key=lambda n: (n.lineno, n.col_offset))
+    return [n.func.id if isinstance(n.func, ast.Name) else n.func.attr for n in goi]
 
 
 class TestNoiDay:
